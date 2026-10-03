@@ -140,3 +140,42 @@ test('comercio entre combates', () => {
   assert.strictEqual(b.hero.inv.yelmo.id, 'y');
   assert.strictEqual(a.hero.inv.pociones[0].id, 'p');
 });
+
+test('golpe graduado del torneo', () => {
+  assert.deepStrictEqual([0, 2, 3, 4, 5, 6].map((n) => C.pvpDamage(n, 5)), [0, 0, 1, 2, 3, 3]);
+  assert.deepStrictEqual([1, 2, 3, 4].map((n) => C.pvpDamage(n, 4)), [0, 1, 2, 3]);
+  assert.strictEqual(C.pvpMinResults(5), 3);
+
+  // Un héroe con 3 dados que solo saca 3 resultados hace 1 de daño.
+  const g = new Game('T', { rng: () => F.blanco });
+  const a = g.addPlayer('A');
+  const b = g.addPlayer('B');
+  g.act(a.id, 'setHero', { raza: 'humano', clase: 'guerrero' }); // Fuerza 12: 3 dados
+  g.act(b.id, 'setHero', { raza: 'humano', clase: 'guerrero' });
+  g.act(a.id, 'start');
+  g.round = 13;
+  g.act(a.id, 'ready');
+  g.act(b.id, 'ready');
+  const m = g.tournament.matches[0];
+  const att = g.player(m.attacker);
+  const def = g.player(m.attacker === a.id ? b.id : a.id);
+  g.act(att.id, 'roll', {});
+  g.act(att.id, 'concede');
+  assert.strictEqual(def.hero.vida, def.hero.base.vida - 1);
+  assert.strictEqual(m.attacker, def.id);
+});
+
+test('caer a 0 Vida conserva el equipo salvo el mejor objeto', () => {
+  const { g, p } = soloGame(() => F.negro);
+  p.hero.vida = 1;
+  const inv = p.hero.inv;
+  inv.botas = { id: 'b', tipo: 'equipo', slot: 'botas', bonus: 1, nombre: 'Botas +1' };
+  inv.yelmo = { id: 'y', tipo: 'equipo', slot: 'yelmo', bonus: 4, nombre: 'Yelmo +4' };
+  inv.pociones.push({ id: 'p', tipo: 'pocion', efecto: 'curacion', valor: 2, nombre: 'Poción' });
+  g.act(p.id, 'chooseMonster', { index: 0 });
+  g.act(p.id, 'roll', {});
+  g.act(p.id, 'concede');
+  assert.strictEqual(p.hero.inv.yelmo, null);
+  assert.strictEqual(p.hero.inv.botas.id, 'b');
+  assert.strictEqual(p.hero.inv.pociones.length, 0);
+});

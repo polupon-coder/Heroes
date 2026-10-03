@@ -116,6 +116,12 @@ function fight(game, p) {
     game.act(p.id, 'roll', { hold });
     return true;
   }
+  // En el torneo el daño es graduado: fija con el Maná los dados que pueda.
+  if (cb.kind === 'duelo' && !cb.manaUsed && game.fixableDice(p) > 0 && free.length && missing.length) {
+    const n = Math.min(game.fixableDice(p), free.length, missing.length);
+    game.act(p.id, 'mana', { assign: free.slice(0, n).map((index) => ({ index, face: cb.combo[0] })) });
+    return true;
+  }
   game.act(p.id, 'concede', {});
   return true;
 }

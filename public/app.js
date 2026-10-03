@@ -275,7 +275,7 @@ function renderLobby() {
             <button class="btn small" data-a="addBot" ${S.players.length >= 4 ? 'disabled' : ''}>+ Añadir bot</button>
           </div>
           <h4 style="margin-top:14px">Opciones</h4>
-          <div class="row small">Resultados necesarios para golpear en el Torneo:
+          <div class="row small">Resultados para el golpe completo (3 de daño) en el Torneo:
             ${[4, 5].map((n) => `<button class="btn tiny ${S.settings.pvpHits === n ? 'selected' : ''}" data-a="pvpHits" data-n="${n}">${n}</button>`).join('')}
           </div>
           <div class="row" style="margin-top:14px">
@@ -598,7 +598,9 @@ function renderCombat(p, controllable) {
 
   let controls = '';
   let result = '';
-  if (cb.status === 'victoria') result = `<div class="result win">¡Victoria!</div>`;
+  if (cb.kind === 'duelo' && cb.damage !== undefined) {
+    result = cb.damage > 0 ? `<div class="result win">💥 ¡Golpe! −${cb.damage} Vida</div>` : '<div class="result lose">Ataque fallido</div>';
+  } else if (cb.status === 'victoria') result = `<div class="result win">¡Victoria!</div>`;
   else if (cb.status === 'derrota') result = `<div class="result lose">Derrota</div>`;
   else if (cb.status === 'cancelado') result = `<div class="muted">Combate terminado</div>`;
 
@@ -620,7 +622,8 @@ function renderCombat(p, controllable) {
           ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">🎲 Tirar dados</button>' : ''}
           ${cb.rolls > 0 && left > 0 ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>🎲 Relanzar ${rerollN} dado(s)</button>` : ''}
           ${cb.rolls > 0 && !cb.manaUsed && fijables > 0 ? `<button class="btn" data-a="manaMode">✨ Usar Maná (fijar ${fijables})</button>` : ''}
-          ${cb.rolls > 0 ? `<button class="btn ${cb.rolls >= 3 ? 'danger' : 'small'}" data-a="concede">${cb.rolls >= 3 ? 'Aceptar derrota' : 'Rendirse'}</button>` : ''}
+          ${cb.rolls > 0 && cb.kind === 'duelo' ? `<button class="btn ${cb.rolls >= 3 ? 'danger' : 'small'}" data-a="endAttack">Terminar ataque (${duelDamage(cb, faces)} de daño)</button>` : ''}
+          ${cb.rolls > 0 && cb.kind !== 'duelo' ? `<button class="btn ${cb.rolls >= 3 ? 'danger' : 'small'}" data-a="concede">${cb.rolls >= 3 ? 'Aceptar derrota' : 'Rendirse'}</button>` : ''}
         </div>`;
     }
   }
@@ -641,12 +644,19 @@ function renderCombat(p, controllable) {
   </div>`;
 }
 
+// Golpe graduado: con N exigidos, N → 3 daño, N−1 → 2, N−2 → 1.
+function duelDamage(cb, faces) {
+  const hits = cb.combo.length;
+  const n = Math.min(hits, faces.filter((f) => f === cb.combo[0] || f === 'blanco').length);
+  return Math.max(0, 3 - (hits - n));
+}
+
 function renderTournament() {
   const t = S.tournament;
   const rank = `
     <div class="card">
       <h2>🏆 Torneo</h2>
-      <p class="muted small">Para golpear hay que sacar ${S.settings.pvpHits} resultados del color del rival (el blanco vale como comodín). Cada golpe quita 3 de Vida.</p>
+      <p class="muted small">El atacante saca resultados del color del rival (el blanco vale como comodín). Daño: ${S.settings.pvpHits - 2} resultados → 1, ${S.settings.pvpHits - 1} → 2, ${S.settings.pvpHits} → 3. Puedes terminar el ataque cuando quieras.</p>
       <h4>Clasificación (Fuerza + Maná)</h4>
       ${t.ranking.map((id, i) => { const x = byId(id); return `<div class="fighter">${i + 1}. ${chip(x.color)} ${esc(x.name)} <span class="hp">${x.hero.puntuacion}</span></div>`; }).join('')}
     </div>`;
@@ -783,6 +793,7 @@ document.addEventListener('click', (e) => {
     case 'manaOk':
       act('mana', { assign: [...ui.manaPick].map(([index, face]) => ({ index, face })) });
       break;
+    case 'endAttack': act('concede'); break;
     case 'concede':
       if (confirm('¿Aceptar la derrota?')) act('concede');
       break;

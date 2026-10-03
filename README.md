@@ -62,7 +62,8 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 | Cambio | Antes | Ahora |
 | --- | --- | --- |
 | Fuerza base | 2 | **10**, y ninguna combinación de Raza + Clase baja de 10 (los héroes empiezan con 2–3 dados) |
-| Golpes en el torneo (por defecto) | 4 resultados | **5** resultados (se puede elegir 4 en la sala) |
+| Golpes en el torneo | 4 resultados = 3 de daño, si no 0 | **Golpe graduado**: 3 resultados del color del rival → 1 de daño, 4 → 2, 5 → 3 (en la sala se puede elegir 4 como golpe completo: 2 → 1, 3 → 2, 4 → 3). El atacante puede terminar su ataque cuando quiera. |
+| Caer a 0 Vida en la Fase 1 (regla 9) | pierde todo el equipo y los consumibles | pierde **todos los consumibles y su objeto de equipo de más Fuerza**, conserva el resto y recupera la Vida inicial |
 | Quién ataca primero en el torneo | — | el de menos Fuerza + Maná |
 
 | Nivel | Monstruo | Combinación |
@@ -80,7 +81,7 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 | 11 | Quimera | 🔴🔴🔵🟢🟡 |
 | 12 | Dragón | 🔴🔵🟢🟡🟡 |
 
-Resultado medido con bots: se gana el 98 % de los combates de nivel 1, en torno al 60–70 % de los de nivel 7 a 12, y el 47 % de los de nivel 6, el más duro; 0,55 caídas por héroe; Fuerza media de 21 al llegar al torneo; duelos de unos 9 ataques; el primer clasificado gana en torno al 65 % de las partidas.
+Resultado medido con bots: se gana casi el 100 % de los combates de nivel 1, en torno al 60–70 % de los de nivel 7 a 12, y el 46 % de los de nivel 6, el más duro; 0,54 caídas por héroe; Fuerza media de 21 al llegar al torneo; duelos de unos 6 ataques; menos del 1 % de duelos en los que nadie puede hacer daño; el primer clasificado gana en torno al 63 % de las partidas.
 
 ## Decisiones tomadas donde el reglamento no lo especifica
 
@@ -99,5 +100,5 @@ Son provisionales y fáciles de cambiar:
 11. **Rendirse:** se puede aceptar la derrota en cualquier momento tras la primera tirada.
 12. **Hay una última fase «entre combates»** después de la ronda 12 para preparar el torneo.
 13. **Torneo:** ataca primero quien tenga **menos** Fuerza + Maná (el más fuerte ya tiene la ventaja de elegir rival). Cada ataque es un combate (Maná una vez por ataque). Los empates en la clasificación se deshacen por Vida y luego al azar.
-14. **Duelos imposibles:** si un héroe tiene menos dados que los resultados necesarios para golpear, pierde su turno. Si **ninguno** de los dos puede golpear, gana quien tenga más Vida (y si empatan, más Fuerza + Maná).
+14. **Duelos imposibles:** si un héroe no tiene dados suficientes para hacer al menos 1 de daño (3 dados con el golpe completo de 5), pierde su turno. Si **ninguno** de los dos puede hacer daño, gana quien tenga más Vida (y si empatan, más Fuerza + Maná).
 15. **Menos de 4 jugadores** (para pruebas): con 3 jugadores, el primer clasificado pasa directamente a la final; con 2, se juega solo la final.

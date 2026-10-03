@@ -164,13 +164,20 @@ class Game {
   }
 
   knockout(p) {
-    // Regla 9: pierde equipo y consumibles y vuelve a sus valores iniciales.
-    p.hero.inv = I.emptyInventory();
+    // Regla 9 (suavizada): pierde todas las Pociones y Pergaminos y su objeto
+    // de equipo de más Fuerza, y recupera la Vida inicial.
+    const inv = p.hero.inv;
+    const best = I.equippedItems(inv).sort((a, b) => b.bonus - a.bonus)[0];
+    if (best) I.removeItem(inv, best.id);
+    inv.pociones = [];
+    inv.pergaminos = [];
     p.hero.pending = [];
     p.hero.vida = p.hero.base.vida;
     p.hero.caidas += 1;
     this.trades = this.trades.filter((t) => t.from !== p.id && t.to !== p.id);
-    this.say(`💀 ${p.name} cae a 0 Vida: pierde todo su equipo y vuelve a sus valores iniciales.`);
+    this.say(
+      `💀 ${p.name} cae a 0 Vida: pierde sus consumibles${best ? ` y ${best.nombre}` : ''} y recupera su Vida inicial.`
+    );
   }
 
   // ---------------------------------------------------------------- Fase 1
@@ -378,7 +385,7 @@ class Game {
     cb.status = won ? 'victoria' : 'derrota';
     p.hero.manaDebt = 0;
     if (cb.kind === 'monstruo') this.endMonsterCombat(p, won);
-    else this.endDuelAttack(p, won);
+    else this.endDuelAttack(p);
   }
 
   endMonsterCombat(p, won) {
@@ -464,22 +471,23 @@ class Game {
     const att = this.player(m.attacker);
     const def = this.player(m.attacker === m.a ? m.b : m.a);
     const hits = this.settings.pvpHits;
-    const attCan = this.diceCount(att) >= hits;
-    const defCan = this.diceCount(def) >= hits;
+    const min = C.pvpMinResults(hits);
+    const attCan = this.diceCount(att) >= min;
+    const defCan = this.diceCount(def) >= min;
     if (!attCan && !defCan) {
-      // Ninguno puede reunir la combinación: el duelo no terminaría nunca.
+      // Ninguno puede hacer daño: el duelo no terminaría nunca.
       const pick = [att, def].sort(
         (x, y) => y.hero.vida - x.hero.vida || this.tourneyScore(y) - this.tourneyScore(x)
       )[0];
       this.say(
-        `Ningún héroe tiene dados suficientes para golpear (${hits}). Gana ${pick.name} por tener más Vida.`
+        `Ningún héroe tiene dados suficientes para hacer daño (${min}). Gana ${pick.name} por tener más Vida.`
       );
       this.endMatch(m, pick.id);
       return;
     }
     m.turns += 1;
     if (!attCan) {
-      this.say(`${att.name} no tiene dados suficientes para atacar (necesita ${hits}) y pierde el turno.`);
+      this.say(`${att.name} no tiene dados suficientes para atacar (necesita ${min}) y pierde el turno.`);
       m.attacker = def.id;
       this.startAttack(m);
       return;
@@ -492,12 +500,21 @@ class Game {
     });
   }
 
-  endDuelAttack(p, won) {
+  duelResults(p) {
+    const color = p.combat.combo[0];
+    return p.combat.dice.filter((d) => d.face === color || d.face === 'blanco').length;
+  }
+
+  endDuelAttack(p) {
     const m = this.matchOf(p);
     const def = this.player(m.attacker === m.a ? m.b : m.a);
-    if (won) {
-      def.hero.vida = Math.max(0, def.hero.vida - C.PVP_DAMAGE);
-      this.say(`💥 ${p.name} golpea a ${def.name}: −${C.PVP_DAMAGE} Vida (le quedan ${def.hero.vida}).`);
+    const n = this.duelResults(p);
+    const dmg = C.pvpDamage(n, this.settings.pvpHits);
+    p.combat.damage = dmg;
+    p.combat.status = dmg > 0 ? 'victoria' : 'derrota';
+    if (dmg > 0) {
+      def.hero.vida = Math.max(0, def.hero.vida - dmg);
+      this.say(`💥 ${p.name} saca ${Math.min(n, this.settings.pvpHits)} resultado(s) ${def.color} y golpea a ${def.name}: −${dmg} Vida (le quedan ${def.hero.vida}).`);
       if (def.hero.vida <= 0) {
         this.endMatch(m, p.id);
         return;

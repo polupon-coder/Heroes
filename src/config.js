@@ -106,13 +106,24 @@ const MAX_SCROLLS = 3;
 // Regla 29.
 const MANA_PER_CURSE = 5;
 
-// Reglas 34 y 36.
+// Reglas 34 y 36, con golpe graduado: el daño depende de cuántos resultados
+// del color del rival se consiguen. Con 5 exigidos: 3 → 1, 4 → 2, 5 → 3 daño.
 const PVP_DAMAGE = 3;
 const DEFAULT_PVP_HITS = 5;
 
-// Seguridad del torneo: si ninguno de los dos puede reunir la combinación
-// (tiene menos dados que los resultados exigidos), el duelo no podría terminar.
-// En ese caso gana quien tenga más Vida (luego Fuerza+Maná, luego azar).
+function pvpDamage(results, hits) {
+  const n = Math.min(results, hits);
+  return Math.max(0, PVP_DAMAGE - (hits - n));
+}
+
+// Resultados mínimos para hacer al menos 1 de daño.
+function pvpMinResults(hits) {
+  return hits - PVP_DAMAGE + 1;
+}
+
+// Seguridad del torneo: si ninguno de los dos tiene dados suficientes para hacer
+// daño, el duelo no podría terminar. En ese caso gana quien tenga más Vida
+// (luego Fuerza+Maná).
 
 module.exports = {
   COLORS,
@@ -136,5 +147,7 @@ module.exports = {
   MAX_SCROLLS,
   MANA_PER_CURSE,
   PVP_DAMAGE,
+  pvpDamage,
+  pvpMinResults,
   DEFAULT_PVP_HITS,
 };

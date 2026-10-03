@@ -53,6 +53,7 @@ Railway o Fly.io también sirven: es una app Node normal que escucha en la varia
 | `src/bot.js` | Jugador automático sencillo. |
 | `src/server.js` | Servidor web y salas en tiempo real (Socket.IO). |
 | `public/` | Interfaz web (HTML/CSS/JS sin dependencias). |
+| `public/img/heroes/` | Retratos de los héroes, uno por Raza + Clase: `raza-clase.webp` (por ejemplo `elfo-mago.webp`). Si falta uno, la web muestra «Retrato pendiente». |
 | `test/` | Tests: `npm test` (incluye cientos de partidas completas simuladas con bots). |
 
 ## Cambios de equilibrio respecto al reglamento v0.2

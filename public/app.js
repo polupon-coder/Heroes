@@ -57,6 +57,16 @@ function chip(color) { return `<span class="chip ${color}" title="${COLOR_LABEL[
 function raceName(p) { return p.raza && DATA ? DATA.razas[p.raza].nombre : '¿Raza?'; }
 function className(p) { return p.clase && DATA ? DATA.clases[p.clase].nombre : '¿Clase?'; }
 
+// Retrato del héroe (Raza + Clase). Si aún no hay ilustración, un marco vacío.
+function portrait(raza, clase, size = 'md', extra = '') {
+  const key = raza && clase ? `${raza}-${clase}` : null;
+  const has = key && DATA && (DATA.retratos || []).includes(key);
+  const alt = raza && clase && DATA ? `${DATA.razas[raza].nombre} ${DATA.clases[clase].nombre}` : 'Héroe';
+  if (has) return `<img class="portrait ${size}" src="img/heroes/${key}.webp" alt="${esc(alt)}" loading="lazy" ${extra}>`;
+  return `<div class="portrait ${size} missing" ${extra}>${raza && clase ? 'Retrato pendiente' : '?'}</div>`;
+}
+function heroPortrait(p, size = 'md') { return portrait(p.raza, p.clase, size); }
+
 function die(face, { cls = '', attrs = '', sm = false } = {}) {
   const f = face || 'empty';
   return `<div class="die ${sm ? 'sm' : ''} ${f} ${cls}" ${attrs} title="${FACE_LABEL[face] || ''}"></div>`;
@@ -248,6 +258,7 @@ function renderLobby() {
   const link = `${location.origin}${location.pathname}?sala=${S.code}`;
   const rows = S.players.map((x) => `
     <div class="player-row">
+      ${heroPortrait(x, 'sm')}
       ${chip(x.color)}
       <div style="flex:1"><b>${esc(x.name)}</b>${x.id === S.host ? ' 👑' : ''} ${x.bot ? '<span class="badge">bot</span>' : ''}
         ${!x.connected && !x.bot ? '<span class="badge off">desconectado</span>' : ''}
@@ -290,13 +301,18 @@ function renderLobby() {
       <div class="row" style="margin-bottom:12px">
         ${['rojo', 'azul', 'verde', 'amarillo'].map((c) => `<button class="btn small ${p.color === c ? 'selected' : ''}" data-a="color" data-c="${c}">${chip(c)} ${COLOR_LABEL[c]}</button>`).join('')}
       </div>
+      <div class="hero-pick">
+        ${portrait(p.raza, p.clase, 'xl')}
+        <div>
       <h4>Raza</h4>
       <div class="choice-grid">
-        ${Object.entries(DATA.razas).map(([k, r]) => `<button class="btn choice ${p.raza === k ? 'selected' : ''}" data-a="raza" data-k="${k}">${r.nombre}<span class="mods">${mods(r)}</span></button>`).join('')}
+        ${Object.entries(DATA.razas).map(([k, r]) => `<button class="btn choice ${p.raza === k ? 'selected' : ''}" data-a="raza" data-k="${k}">${portrait(k, p.clase || 'guerrero', 'xs')}<span>${r.nombre}<span class="mods">${mods(r)}</span></span></button>`).join('')}
       </div>
       <h4>Clase</h4>
       <div class="choice-grid">
-        ${Object.entries(DATA.clases).map(([k, c]) => `<button class="btn choice ${p.clase === k ? 'selected' : ''}" data-a="clase" data-k="${k}">${c.nombre}<span class="mods">${mods(c)}</span></button>`).join('')}
+        ${Object.entries(DATA.clases).map(([k, c]) => `<button class="btn choice ${p.clase === k ? 'selected' : ''}" data-a="clase" data-k="${k}">${p.raza ? portrait(p.raza, k, 'xs') : ''}<span>${c.nombre}<span class="mods">${mods(c)}</span></span></button>`).join('')}
+      </div>
+        </div>
       </div>
       ${preview ? `
         <h4>Resultado: ${raceName(p)} ${className(p)}</h4>
@@ -347,8 +363,9 @@ function renderSheet() {
 
   return `
   <div class="card">
+    <div class="sheet-portrait">${heroPortrait(p, 'xl')}<div class="tag">${raceName(p)} · ${className(p)}</div></div>
     <div class="hero-title">${chip(p.color)}<h2 style="margin:0">${esc(p.name)}</h2></div>
-    <div class="muted">${raceName(p)} ${className(p)} · color ${COLOR_LABEL[p.color]}</div>
+    <div class="muted">Color ${COLOR_LABEL[p.color]}</div>
     <div class="row small" style="margin-top:8px"><span>❤ Vida ${h.vida} / ${h.base.vida}</span></div>
     <div class="bar"><i style="width:${pct}%"></i></div>
     <div class="stats">
@@ -403,10 +420,15 @@ function renderOthers() {
     return `
     <div class="card other">
       <div class="top">${chip(p.color)}<span class="name">${esc(p.name)}</span>${p.bot ? '<span class="badge">bot</span>' : ''}${!p.connected && !p.bot ? '<span class="badge off">desconectado</span>' : ''}${st}</div>
-      <div class="meta">${raceName(p)} ${className(p)}</div>
-      <div class="meta">❤ ${h.vida}/${h.base.vida} · 💪 ${h.fuerza} (🎲${h.dados}) · ✨ ${h.manaDisponible}${h.curses ? ` · ☠${h.curses}` : ''}</div>
-      <div class="bar"><i style="width:${pct}%"></i></div>
-      <div class="meta">${equip || 'Sin objetos'}</div>
+      <div class="body">
+        ${heroPortrait(p, 'md')}
+        <div class="info">
+          <div class="meta">${raceName(p)} ${className(p)}</div>
+          <div class="meta">❤ ${h.vida}/${h.base.vida} · 💪 ${h.fuerza} (🎲${h.dados}) · ✨ ${h.manaDisponible}${h.curses ? ` · ☠${h.curses}` : ''}</div>
+          <div class="bar"><i style="width:${pct}%"></i></div>
+          <div class="meta">${equip || 'Sin objetos'}</div>
+        </div>
+      </div>
       ${mini}
     </div>`;
   }).join('');
@@ -658,13 +680,13 @@ function renderTournament() {
       <h2>🏆 Torneo</h2>
       <p class="muted small">El atacante saca resultados del color del rival (el blanco vale como comodín). Daño: ${S.settings.pvpHits - 2} resultados → 1, ${S.settings.pvpHits - 1} → 2, ${S.settings.pvpHits} → 3. Puedes terminar el ataque cuando quieras.</p>
       <h4>Clasificación (Fuerza + Maná)</h4>
-      ${t.ranking.map((id, i) => { const x = byId(id); return `<div class="fighter">${i + 1}. ${chip(x.color)} ${esc(x.name)} <span class="hp">${x.hero.puntuacion}</span></div>`; }).join('')}
+      ${t.ranking.map((id, i) => { const x = byId(id); return `<div class="fighter">${i + 1}. ${heroPortrait(x, 'xs')} ${chip(x.color)} ${esc(x.name)} <span class="hp">${x.hero.puntuacion}</span></div>`; }).join('')}
     </div>`;
   let choose = '';
   if (t.stage === 'eleccion') {
     if (t.ranking[0] === S.me) {
       choose = `<div class="card"><h3>Elige rival para tu semifinal</h3><div class="row">
-        ${t.ranking.slice(1).map((id) => { const x = byId(id); return `<button class="btn" data-a="rival" data-id="${id}">${chip(x.color)} ${esc(x.name)} · ❤${x.hero.vida} · F+M ${x.hero.puntuacion}</button>`; }).join('')}
+        ${t.ranking.slice(1).map((id) => { const x = byId(id); return `<button class="btn choice" data-a="rival" data-id="${id}">${heroPortrait(x, 'sm')} ${chip(x.color)} ${esc(x.name)} · ❤${x.hero.vida} · F+M ${x.hero.puntuacion}</button>`; }).join('')}
       </div></div>`;
     } else {
       choose = `<div class="card muted">${esc(byId(t.ranking[0]).name)} está eligiendo rival…</div>`;
@@ -675,7 +697,7 @@ function renderTournament() {
     const b = byId(m.b);
     const live = !m.winner;
     const att = byId(m.attacker);
-    const fighter = (x) => `<div class="fighter ${m.winner === x.id ? 'win' : ''}">${chip(x.color)} ${esc(x.name)} ${live && m.attacker === x.id ? '⚔' : ''}<span class="hp">❤ ${x.hero.vida}</span></div>`;
+    const fighter = (x) => `<div class="fighter ${m.winner === x.id ? 'win' : ''}">${heroPortrait(x, 'sm')} ${chip(x.color)} ${esc(x.name)} ${live && m.attacker === x.id ? '⚔' : ''}<span class="hp">❤ ${x.hero.vida}</span></div>`;
     return `
     <div class="card match ${live ? 'live' : ''}">
       <h3>${esc(m.label)}${m.winner ? ` · gana ${esc(byId(m.winner).name)}` : ''}</h3>
@@ -694,6 +716,7 @@ function renderEnd() {
   return `
   <div class="card winner-banner">
     <div class="crown">👑</div>
+    ${heroPortrait(w, 'lg')}
     <h1>${esc(w.name)}</h1>
     <p>${raceName(w)} ${className(w)} gana la partida con ${w.hero.vida} de Vida.</p>
     <button class="btn primary" data-a="leave">Volver al inicio</button>

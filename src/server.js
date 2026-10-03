@@ -7,6 +7,7 @@ const express = require('express');
 const { Server } = require('socket.io');
 const { Game, GameError } = require('./game');
 const { botStep } = require('./bot');
+const fs = require('fs');
 const C = require('./config');
 
 const PORT = process.env.PORT || 3000;
@@ -18,6 +19,16 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
+function listPortraits() {
+  try {
+    return fs.readdirSync(path.join(__dirname, '..', 'public', 'img', 'heroes'))
+      .filter((f) => f.endsWith('.webp'))
+      .map((f) => f.replace('.webp', ''));
+  } catch {
+    return [];
+  }
+}
+
 app.get('/api/datos', (req, res) => {
   res.json({
     razas: C.RACES,
@@ -26,6 +37,7 @@ app.get('/api/datos', (req, res) => {
     minFuerza: C.MIN_FUERZA_INICIAL,
     monstruos: C.MONSTERS,
     colores: C.COLORS,
+    retratos: listPortraits(),
   });
 });
 app.get('/healthz', (req, res) => res.send('ok'));

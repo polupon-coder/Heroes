@@ -18,7 +18,7 @@ function baseStats(raza, clase) {
   return {
     vida: C.BASE_STATS.vida + r.vida + c.vida,
     mana: C.BASE_STATS.mana + r.mana + c.mana,
-    fuerza: C.BASE_STATS.fuerza + r.fuerza + c.fuerza,
+    fuerza: Math.max(C.MIN_FUERZA_INICIAL, C.BASE_STATS.fuerza + r.fuerza + c.fuerza),
   };
 }
 
@@ -445,8 +445,10 @@ class Game {
   addMatch(label, a, b) {
     const pa = this.player(a);
     const pb = this.player(b);
-    // Ataca primero quien tenga más Fuerza + Maná.
-    const first = this.tourneyScore(pb) > this.tourneyScore(pa) ? b : a;
+    // Ataca primero quien tenga menos Fuerza + Maná (compensa al más débil;
+    // el más fuerte ya tuvo la ventaja de elegir rival). Empate: menos Vida.
+    const weaker = this.tourneyScore(pa) - this.tourneyScore(pb) || pa.hero.vida - pb.hero.vida;
+    const first = weaker <= 0 ? a : b;
     const m = { id: this.tournament.matches.length, label, a, b, attacker: first, winner: null, turns: 0 };
     this.tournament.matches.push(m);
     this.say(`⚔ ${label}: ${pa.name} contra ${pb.name}. Empieza atacando ${this.player(first).name}.`);

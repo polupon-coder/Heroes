@@ -14,8 +14,10 @@ function seq(values) {
 // Valor de rng que produce cada cara.
 const F = { rojo: 0.01, azul: 0.2, verde: 0.4, amarillo: 0.55, negro: 0.7, blanco: 0.9 };
 
-test('ejemplo del reglamento: Humano Guerrero 14/6/4', () => {
-  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 14, mana: 6, fuerza: 4 });
+test('Humano Guerrero 14/6/12 y Fuerza inicial mínima 10', () => {
+  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 14, mana: 6, fuerza: 12 });
+  assert.strictEqual(baseStats('gnomo', 'mago').fuerza, 10);
+  assert.strictEqual(baseStats('durgan', 'barbaro').fuerza, 15);
 });
 
 test('tablas de Fuerza y Maná', () => {
@@ -56,9 +58,9 @@ function soloGame(rng, raza = 'humano', clase = 'guerrero') {
 }
 
 test('combate: tres tiradas, conservar dados y maldición', () => {
-  const { g, p } = soloGame(() => 0.01);
+  const { g, p } = soloGame(() => F.blanco);
   g.act(p.id, 'chooseMonster', { index: 0 });
-  assert.strictEqual(p.combat.diceCount, 1);
+  assert.strictEqual(p.combat.diceCount, 3);
   g.act(p.id, 'roll', {});
   assert.strictEqual(p.combat.status, 'victoria');
   assert.strictEqual(p.stage, 'recompensa');
@@ -80,8 +82,7 @@ test('caer a 0 Vida en Fase 1 reinicia el héroe', () => {
   p.hero.inv.botas = { id: 'x', tipo: 'equipo', slot: 'botas', bonus: 1, nombre: 'Botas +1' };
   g.act(p.id, 'chooseMonster', { index: 0 });
   g.act(p.id, 'roll', {});
-  // Gnomo Mago tiene Maná 11 -> puede fijar; fija negro para perder.
-  g.act(p.id, 'mana', { assign: [{ index: 0, face: 'negro' }] });
+  g.act(p.id, 'concede');
   assert.strictEqual(g.phase, 'prep'); // ronda terminada (derrota)
   assert.strictEqual(p.hero.vida, p.hero.base.vida);
   assert.strictEqual(p.hero.inv.botas, null);
@@ -94,6 +95,7 @@ test('duelo del torneo: 4 del color del rival, 3 de daño por golpe', () => {
   const b = g.addPlayer('B');
   for (const p of [a, b]) g.act(p.id, 'setHero', { raza: 'durgan', clase: 'barbaro' });
   g.act(a.id, 'start');
+  g.settings.pvpHits = 4;
   for (const p of [a, b]) p.hero.inv.armadura = { id: p.id + 'arm', tipo: 'equipo', slot: 'armadura', bonus: 20, nombre: 'Coraza' };
   g.round = 13;
   g.act(a.id, 'ready');

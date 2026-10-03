@@ -55,6 +55,33 @@ Railway o Fly.io también sirven: es una app Node normal que escucha en la varia
 | `public/` | Interfaz web (HTML/CSS/JS sin dependencias). |
 | `test/` | Tests: `npm test` (incluye cientos de partidas completas simuladas con bots). |
 
+## Cambios de equilibrio respecto al reglamento v0.2
+
+Probados con 400 partidas simuladas por bots (`src/config.js`):
+
+| Cambio | Antes | Ahora |
+| --- | --- | --- |
+| Fuerza base | 2 | **10**, y ninguna combinación de Raza + Clase baja de 10 (los héroes empiezan con 2–3 dados) |
+| Golpes en el torneo (por defecto) | 4 resultados | **5** resultados (se puede elegir 4 en la sala) |
+| Quién ataca primero en el torneo | — | el de menos Fuerza + Maná |
+
+| Nivel | Monstruo | Combinación |
+| ---: | --- | --- |
+| 1 | Goblin | 🔴🔵 |
+| 2 | Orco | 🔴🔴 |
+| 3 | Necrófago | 🔵🟢🟢 |
+| 4 | Ogro | 🔴🔴🔴 |
+| 5 | Súcubo | 🔵🔵🟡 |
+| 6 | Gólem | 🟢🟢🟢🟡 |
+| 7 | Trol | 🔴🔴🟢🟢 |
+| 8 | Espectro | 🔵🔵🔵🟡 |
+| 9 | Basilisco | 🟢🟢🟡🟡 |
+| 10 | Mantícora | 🔴🔵🟢🟡 |
+| 11 | Quimera | 🔴🔴🔵🟢🟡 |
+| 12 | Dragón | 🔴🔵🟢🟡🟡 |
+
+Resultado medido con bots: se gana el 98 % de los combates de nivel 1, en torno al 60–70 % de los de nivel 7 a 12, y el 47 % de los de nivel 6, el más duro; 0,55 caídas por héroe; Fuerza media de 21 al llegar al torneo; duelos de unos 9 ataques; el primer clasificado gana en torno al 65 % de las partidas.
+
 ## Decisiones tomadas donde el reglamento no lo especifica
 
 Son provisionales y fáciles de cambiar:
@@ -71,6 +98,6 @@ Son provisionales y fáciles de cambiar:
 10. **Maldición (regla 29):** afecta a los dados recién tirados que cuentan para la combinación; los dados fijados con Maná no se ven afectados. La magia se puede lanzar a partir de la ronda 2.
 11. **Rendirse:** se puede aceptar la derrota en cualquier momento tras la primera tirada.
 12. **Hay una última fase «entre combates»** después de la ronda 12 para preparar el torneo.
-13. **Torneo:** ataca primero quien tenga más Fuerza + Maná. Cada ataque es un combate (Maná una vez por ataque). Los empates en la clasificación se deshacen por Vida y luego al azar.
+13. **Torneo:** ataca primero quien tenga **menos** Fuerza + Maná (el más fuerte ya tiene la ventaja de elegir rival). Cada ataque es un combate (Maná una vez por ataque). Los empates en la clasificación se deshacen por Vida y luego al azar.
 14. **Duelos imposibles:** si un héroe tiene menos dados que los resultados necesarios para golpear, pierde su turno. Si **ninguno** de los dos puede golpear, gana quien tenga más Vida (y si empatan, más Fuerza + Maná).
 15. **Menos de 4 jugadores** (para pruebas): con 3 jugadores, el primer clasificado pasa directamente a la final; con 2, se juega solo la final.

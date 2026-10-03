@@ -50,7 +50,10 @@ function botStep(game, p) {
     if (p.stage === 'elegir') {
       const dice = game.diceCount(p);
       const doable = p.offers.map((m, i) => ({ m, i })).filter((x) => x.m.combo.length <= dice);
-      const pick = doable.length ? doable[doable.length - 1].i : 0;
+      // Prudencia: con poca Vida evita el monstruo que podría tumbarle.
+      const safe = doable.filter((x) => h.vida > x.m.dano * 2);
+      const pool = safe.length ? safe : doable;
+      const pick = pool.length ? pool[pool.length - 1].i : 0;
       game.act(p.id, 'chooseMonster', { index: pick });
       return true;
     }

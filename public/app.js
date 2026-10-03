@@ -233,7 +233,7 @@ function heroPreview(raza, clase) {
   if (!DATA || !raza || !clase) return null;
   const r = DATA.razas[raza];
   const c = DATA.clases[clase];
-  return { vida: DATA.base.vida + r.vida + c.vida, mana: DATA.base.mana + r.mana + c.mana, fuerza: DATA.base.fuerza + r.fuerza + c.fuerza };
+  return { vida: DATA.base.vida + r.vida + c.vida, mana: DATA.base.mana + r.mana + c.mana, fuerza: Math.max(DATA.minFuerza || 0, DATA.base.fuerza + r.fuerza + c.fuerza) };
 }
 
 function mods(x) {

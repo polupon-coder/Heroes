@@ -5,7 +5,10 @@
 const COLORS = ['rojo', 'azul', 'verde', 'amarillo'];
 const FACES = ['rojo', 'azul', 'verde', 'amarillo', 'negro', 'blanco'];
 
-const BASE_STATS = { vida: 10, mana: 5, fuerza: 2 };
+const BASE_STATS = { vida: 10, mana: 5, fuerza: 10 };
+
+// Ningún héroe empieza con menos Fuerza que esto (después de Raza y Clase).
+const MIN_FUERZA_INICIAL = 10;
 
 const RACES = {
   humano: { nombre: 'Humano', vida: 1, mana: 1, fuerza: 0 },
@@ -52,14 +55,15 @@ function levelsForRound(round) {
   return [round, round + 1, round + 2];
 }
 
-// Reglas 24 y 25.
+// Reglas 24 y 25. Combinaciones reajustadas para héroes con Fuerza inicial 10:
+// a más nivel, más dados exigidos y más repeticiones del mismo color.
 const MONSTERS = {
-  1: { nombre: 'Goblin', combo: ['rojo'] },
+  1: { nombre: 'Goblin', combo: ['rojo', 'azul'] },
   2: { nombre: 'Orco', combo: ['rojo', 'rojo'] },
-  3: { nombre: 'Necrófago', combo: ['azul', 'verde'] },
+  3: { nombre: 'Necrófago', combo: ['azul', 'verde', 'verde'] },
   4: { nombre: 'Ogro', combo: ['rojo', 'rojo', 'rojo'] },
   5: { nombre: 'Súcubo', combo: ['azul', 'azul', 'amarillo'] },
-  6: { nombre: 'Gólem', combo: ['verde', 'verde', 'verde'] },
+  6: { nombre: 'Gólem', combo: ['verde', 'verde', 'verde', 'amarillo'] },
   7: { nombre: 'Trol', combo: ['rojo', 'rojo', 'verde', 'verde'] },
   8: { nombre: 'Espectro', combo: ['azul', 'azul', 'azul', 'amarillo'] },
   9: { nombre: 'Basilisco', combo: ['verde', 'verde', 'amarillo', 'amarillo'] },
@@ -104,7 +108,7 @@ const MANA_PER_CURSE = 5;
 
 // Reglas 34 y 36.
 const PVP_DAMAGE = 3;
-const DEFAULT_PVP_HITS = 4;
+const DEFAULT_PVP_HITS = 5;
 
 // Seguridad del torneo: si ninguno de los dos puede reunir la combinación
 // (tiene menos dados que los resultados exigidos), el duelo no podría terminar.
@@ -114,6 +118,7 @@ module.exports = {
   COLORS,
   FACES,
   BASE_STATS,
+  MIN_FUERZA_INICIAL,
   RACES,
   CLASSES,
   diceForFuerza,

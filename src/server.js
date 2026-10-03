@@ -23,6 +23,7 @@ app.get('/api/datos', (req, res) => {
     razas: C.RACES,
     clases: C.CLASSES,
     base: C.BASE_STATS,
+    minFuerza: C.MIN_FUERZA_INICIAL,
     monstruos: C.MONSTERS,
     colores: C.COLORS,
   });

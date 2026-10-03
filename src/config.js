@@ -1,0 +1,135 @@
+'use strict';
+
+// Todas las tablas del reglamento v0.2. Cambiar aquí para equilibrar el juego.
+
+const COLORS = ['rojo', 'azul', 'verde', 'amarillo'];
+const FACES = ['rojo', 'azul', 'verde', 'amarillo', 'negro', 'blanco'];
+
+const BASE_STATS = { vida: 10, mana: 5, fuerza: 2 };
+
+const RACES = {
+  humano: { nombre: 'Humano', vida: 1, mana: 1, fuerza: 0 },
+  elfo: { nombre: 'Elfo', vida: 0, mana: 2, fuerza: 0 },
+  enano: { nombre: 'Enano', vida: 2, mana: 0, fuerza: 1 },
+  gnomo: { nombre: 'Gnomo', vida: -1, mana: 2, fuerza: -1 },
+  silvano: { nombre: 'Silvano', vida: 1, mana: 1, fuerza: 0 },
+  durgan: { nombre: 'Durgan', vida: 3, mana: -1, fuerza: 2 },
+  faunar: { nombre: 'Faunar', vida: 1, mana: 0, fuerza: 1 },
+};
+
+const CLASSES = {
+  guerrero: { nombre: 'Guerrero', vida: 3, mana: 0, fuerza: 2 },
+  mago: { nombre: 'Mago', vida: -1, mana: 4, fuerza: -1 },
+  ladron: { nombre: 'Ladrón', vida: 0, mana: 1, fuerza: 0 },
+  druida: { nombre: 'Druida', vida: 1, mana: 3, fuerza: 0 },
+  explorador: { nombre: 'Explorador', vida: 1, mana: 1, fuerza: 1 },
+  clerigo: { nombre: 'Clérigo', vida: 2, mana: 3, fuerza: 0 },
+  barbaro: { nombre: 'Bárbaro', vida: 4, mana: -1, fuerza: 3 },
+};
+
+// Regla 10: Fuerza -> dados (mínimo 1 dado, máximo 5).
+function diceForFuerza(fuerza) {
+  if (fuerza >= 21) return 5;
+  if (fuerza >= 16) return 4;
+  if (fuerza >= 11) return 3;
+  if (fuerza >= 6) return 2;
+  return 1;
+}
+
+// Regla 11: Maná -> dados cuyo resultado se puede elegir.
+function fixedDiceForMana(mana) {
+  if (mana < 5) return 0;
+  return Math.min(5, Math.floor(mana / 5));
+}
+
+const ROUNDS = 12;
+const MAX_ROLLS = 3;
+
+// Regla 21.
+function levelsForRound(round) {
+  if (round === 11) return [11];
+  if (round === 12) return [12];
+  return [round, round + 1, round + 2];
+}
+
+// Reglas 24 y 25.
+const MONSTERS = {
+  1: { nombre: 'Goblin', combo: ['rojo'] },
+  2: { nombre: 'Orco', combo: ['rojo', 'rojo'] },
+  3: { nombre: 'Necrófago', combo: ['azul', 'verde'] },
+  4: { nombre: 'Ogro', combo: ['rojo', 'rojo', 'rojo'] },
+  5: { nombre: 'Súcubo', combo: ['azul', 'azul', 'amarillo'] },
+  6: { nombre: 'Gólem', combo: ['verde', 'verde', 'verde'] },
+  7: { nombre: 'Trol', combo: ['rojo', 'rojo', 'verde', 'verde'] },
+  8: { nombre: 'Espectro', combo: ['azul', 'azul', 'azul', 'amarillo'] },
+  9: { nombre: 'Basilisco', combo: ['verde', 'verde', 'amarillo', 'amarillo'] },
+  10: { nombre: 'Mantícora', combo: ['rojo', 'azul', 'verde', 'amarillo'] },
+  11: { nombre: 'Quimera', combo: ['rojo', 'rojo', 'azul', 'verde', 'amarillo'] },
+  12: { nombre: 'Dragón', combo: ['rojo', 'azul', 'verde', 'amarillo', 'amarillo'] },
+};
+
+// Regla 23.
+function monsterDamage(level) {
+  if (level <= 3) return 1;
+  if (level <= 6) return 2;
+  if (level <= 9) return 3;
+  return 4;
+}
+
+// Regla 27.
+function equipmentBonus(level) {
+  if (level <= 2) return 1;
+  if (level <= 5) return 2;
+  if (level <= 8) return 3;
+  if (level <= 10) return 4;
+  return 5;
+}
+
+// Provisional: un arma a dos manos ocupa ambas manos, así que da algo más.
+const TWO_HANDED_EXTRA = 2;
+
+// Provisional: potencia de los consumibles según el nivel del monstruo.
+function consumablePower(level) {
+  return equipmentBonus(level) + 1; // 2..6
+}
+
+// Probabilidades de cada tipo de recompensa (suman 1).
+const REWARD_WEIGHTS = { equipo: 0.6, pocion: 0.2, pergamino: 0.2 };
+
+const MAX_POTIONS = 3;
+const MAX_SCROLLS = 3;
+
+// Regla 29.
+const MANA_PER_CURSE = 5;
+
+// Reglas 34 y 36.
+const PVP_DAMAGE = 3;
+const DEFAULT_PVP_HITS = 4;
+
+// Seguridad del torneo: si ninguno de los dos puede reunir la combinación
+// (tiene menos dados que los resultados exigidos), el duelo no podría terminar.
+// En ese caso gana quien tenga más Vida (luego Fuerza+Maná, luego azar).
+
+module.exports = {
+  COLORS,
+  FACES,
+  BASE_STATS,
+  RACES,
+  CLASSES,
+  diceForFuerza,
+  fixedDiceForMana,
+  ROUNDS,
+  MAX_ROLLS,
+  levelsForRound,
+  MONSTERS,
+  monsterDamage,
+  equipmentBonus,
+  TWO_HANDED_EXTRA,
+  consumablePower,
+  REWARD_WEIGHTS,
+  MAX_POTIONS,
+  MAX_SCROLLS,
+  MANA_PER_CURSE,
+  PVP_DAMAGE,
+  DEFAULT_PVP_HITS,
+};

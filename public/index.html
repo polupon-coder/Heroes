@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HÉROES</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">⚔ HÉROES</div>
+    <div id="status" class="status"></div>
+    <div id="roomInfo" class="room-info"></div>
+  </header>
+
+  <main id="home" class="screen hidden">
+    <section class="card home-card">
+      <h1>HÉROES</h1>
+      <p class="sub">Aventura y torneo para 4 héroes. Juega con tus amigos por internet.</p>
+      <label>Tu nombre
+        <input id="nameInput" maxlength="20" placeholder="Nombre del jugador">
+      </label>
+      <button id="createBtn" class="btn primary">Crear partida nueva</button>
+      <div class="or">o únete con un código</div>
+      <div class="row">
+        <input id="codeInput" maxlength="4" placeholder="CÓDIGO" class="code-input">
+        <button id="joinBtn" class="btn">Unirse</button>
+      </div>
+      <p id="homeError" class="error"></p>
+    </section>
+  </main>
+
+  <main id="app" class="screen hidden">
+    <div id="lobby" class="hidden"></div>
+    <div id="table" class="table hidden">
+      <aside id="sheet" class="col"></aside>
+      <section id="main" class="col main"></section>
+      <aside class="col side">
+        <div id="others"></div>
+        <div class="card">
+          <h3>Crónica</h3>
+          <div id="log" class="log"></div>
+        </div>
+      </aside>
+    </div>
+    <div class="card chat">
+      <div id="chatLog" class="chat-log"></div>
+      <form id="chatForm" class="row">
+        <input id="chatInput" maxlength="200" placeholder="Escribe al grupo…" autocomplete="off">
+        <button class="btn small">Enviar</button>
+      </form>
+    </div>
+  </main>
+
+  <div id="modal" class="modal hidden"></div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

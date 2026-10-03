@@ -1,0 +1,826 @@
+'use strict';
+
+const C = require('./config');
+const D = require('./dice');
+const I = require('./items');
+
+class GameError extends Error {}
+
+function fail(msg) {
+  throw new GameError(msg);
+}
+
+const COLOR_LABEL = { rojo: 'Rojo', azul: 'Azul', verde: 'Verde', amarillo: 'Amarillo' };
+
+function baseStats(raza, clase) {
+  const r = C.RACES[raza];
+  const c = C.CLASSES[clase];
+  return {
+    vida: C.BASE_STATS.vida + r.vida + c.vida,
+    mana: C.BASE_STATS.mana + r.mana + c.mana,
+    fuerza: C.BASE_STATS.fuerza + r.fuerza + c.fuerza,
+  };
+}
+
+class Game {
+  constructor(code, opts = {}) {
+    this.code = code;
+    this.rng = opts.rng || Math.random;
+    this.settings = { pvpHits: C.DEFAULT_PVP_HITS };
+    this.phase = 'lobby';
+    this.round = 0;
+    this.players = [];
+    this.trades = [];
+    this.tournament = null;
+    this.winner = null;
+    this.log = [];
+    this.version = 0;
+    this._id = 0;
+  }
+
+  nextId() {
+    this._id += 1;
+    return `o${this._id}`;
+  }
+
+  say(text) {
+    this.log.push({ n: this.log.length, text });
+    if (this.log.length > 300) this.log.splice(0, this.log.length - 300);
+  }
+
+  player(id) {
+    const p = this.players.find((x) => x.id === id);
+    if (!p) fail('Jugador desconocido');
+    return p;
+  }
+
+  // ---------------------------------------------------------------- Lobby
+
+  addPlayer(name, { bot = false } = {}) {
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (this.players.length >= 4) fail('La sala está llena (4 jugadores)');
+    const free = C.COLORS.filter((c) => !this.players.some((p) => p.color === c));
+    const n = this.players.length + 1;
+    const p = {
+      id: `p${this.nextId().slice(1)}`,
+      name: String(name || `Jugador ${n}`).slice(0, 20),
+      bot,
+      connected: true,
+      color: free[0],
+      raza: null,
+      clase: null,
+      ready: false,
+      hero: null,
+      stage: null,
+      offers: null,
+      monster: null,
+      combat: null,
+      rewards: null,
+    };
+    if (bot) {
+      const razas = Object.keys(C.RACES);
+      const clases = Object.keys(C.CLASSES);
+      p.raza = razas[Math.floor(this.rng() * razas.length)];
+      p.clase = clases[Math.floor(this.rng() * clases.length)];
+    }
+    this.players.push(p);
+    this.say(`${p.name} se une a la partida.`);
+    return p;
+  }
+
+  removePlayer(id) {
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    const p = this.player(id);
+    this.players = this.players.filter((x) => x !== p);
+    this.say(`${p.name} sale de la partida.`);
+  }
+
+  get hostId() {
+    const h = this.players.find((p) => !p.bot);
+    return h ? h.id : null;
+  }
+
+  // ---------------------------------------------------------------- Acciones
+
+  act(playerId, type, data = {}) {
+    const p = this.player(playerId);
+    const handler = ACTIONS[type];
+    if (!handler) fail('Acción desconocida');
+    handler.call(this, p, data || {});
+    this.version += 1;
+  }
+
+  // ---------------------------------------------------------------- Héroe
+
+  effFuerza(p) {
+    return p.hero.base.fuerza + I.equipmentFuerza(p.hero.inv);
+  }
+
+  availableMana(p) {
+    return p.hero.base.mana - p.hero.manaDebt;
+  }
+
+  diceCount(p) {
+    return C.diceForFuerza(this.effFuerza(p));
+  }
+
+  combatMana(p) {
+    const bonus = p.combat ? p.combat.manaBonus : 0;
+    return this.availableMana(p) + bonus;
+  }
+
+  tourneyScore(p) {
+    return this.effFuerza(p) + p.hero.base.mana;
+  }
+
+  createHero(p) {
+    const base = baseStats(p.raza, p.clase);
+    p.hero = {
+      base,
+      vida: base.vida,
+      inv: I.emptyInventory(),
+      manaDebt: 0,
+      curses: 0,
+      pending: [],
+      caidas: 0,
+      victorias: 0,
+    };
+  }
+
+  receiveItem(p, item, origin) {
+    const conflicts = I.tryPlace(p.hero.inv, item);
+    if (conflicts) {
+      p.hero.pending.push({ item, options: I.conflictOptions(p.hero.inv, item, conflicts) });
+      this.say(`${p.name} recibe ${item.nombre} (${origin}), pero debe decidir dónde guardarlo.`);
+    } else {
+      this.say(`${p.name} obtiene ${item.nombre} (${origin}).`);
+    }
+  }
+
+  heal(p, amount) {
+    const before = p.hero.vida;
+    p.hero.vida = Math.min(p.hero.base.vida, p.hero.vida + amount);
+    return p.hero.vida - before;
+  }
+
+  knockout(p) {
+    // Regla 9: pierde equipo y consumibles y vuelve a sus valores iniciales.
+    p.hero.inv = I.emptyInventory();
+    p.hero.pending = [];
+    p.hero.vida = p.hero.base.vida;
+    p.hero.caidas += 1;
+    this.trades = this.trades.filter((t) => t.from !== p.id && t.to !== p.id);
+    this.say(`💀 ${p.name} cae a 0 Vida: pierde todo su equipo y vuelve a sus valores iniciales.`);
+  }
+
+  // ---------------------------------------------------------------- Fase 1
+
+  startGame() {
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (this.players.length < 1) fail('No hay jugadores');
+    for (const p of this.players) {
+      if (!p.raza || !p.clase) fail(`${p.name} todavía no ha elegido Raza y Clase`);
+    }
+    for (const p of this.players) this.createHero(p);
+    this.round = 1;
+    this.say('⚔️ ¡Comienza la aventura! Preparad a vuestros héroes para la ronda 1.');
+    this.startPrep();
+  }
+
+  startPrep() {
+    this.phase = 'prep';
+    this.trades = [];
+    for (const p of this.players) {
+      p.ready = false;
+      p.stage = null;
+      p.offers = null;
+      p.monster = null;
+      p.combat = null;
+      p.rewards = null;
+    }
+  }
+
+  checkPrepDone() {
+    if (this.phase !== 'prep') return;
+    if (!this.players.every((p) => p.ready)) return;
+    this.trades = [];
+    if (this.round > C.ROUNDS) {
+      this.startTournament();
+      return;
+    }
+    this.phase = 'combat';
+    this.say(`— Ronda ${this.round} de ${C.ROUNDS} —`);
+    for (const p of this.players) {
+      p.ready = false;
+      p.stage = 'elegir';
+      p.offers = this.makeOffers();
+    }
+  }
+
+  makeOffers() {
+    const levels = [...C.levelsForRound(this.round)];
+    const chosen = [];
+    for (let k = 0; k < 2; k++) {
+      if (levels.length === 1) {
+        chosen.push(levels[0]);
+        continue;
+      }
+      const i = Math.floor(this.rng() * levels.length);
+      chosen.push(levels.splice(i, 1)[0]);
+    }
+    chosen.sort((a, b) => a - b);
+    return chosen.map((level) => {
+      const m = C.MONSTERS[level];
+      return {
+        level,
+        nombre: m.nombre,
+        combo: [...m.combo],
+        dano: C.monsterDamage(level),
+        rewards: [I.makeReward(this.rng, level, () => this.nextId()), I.makeReward(this.rng, level, () => this.nextId())],
+      };
+    });
+  }
+
+  checkRoundDone() {
+    if (this.phase !== 'combat') return;
+    if (!this.players.every((p) => p.stage === 'hecho')) return;
+    this.round += 1;
+    if (this.round > C.ROUNDS) {
+      this.say('🏁 Fin de la aventura. Última preparación antes del Torneo.');
+    } else {
+      this.say(`Entre combates: preparad la ronda ${this.round}.`);
+    }
+    this.startPrep();
+  }
+
+  // ---------------------------------------------------------------- Combate
+
+  newCombat(p, { kind, combo, label }) {
+    const combat = {
+      kind,
+      label,
+      combo,
+      diceCount: this.diceCount(p),
+      dice: [],
+      rolls: 0,
+      manaUsed: false,
+      manaBonus: 0,
+      cursesLeft: p.hero.curses,
+      status: 'activo',
+      events: [],
+    };
+    p.hero.curses = 0;
+    p.combat = combat;
+    if (combat.cursesLeft > 0) {
+      combat.events.push(`Arrastra ${combat.cursesLeft} maldición(es): deberá repetir dados exitosos.`);
+    }
+    return combat;
+  }
+
+  fixableDice(p) {
+    return C.fixedDiceForMana(this.combatMana(p));
+  }
+
+  roll(p, hold) {
+    const cb = this.activeCombat(p);
+    if (cb.rolls >= C.MAX_ROLLS) fail('Ya has hecho las 3 tiradas');
+    let newIdx;
+    if (cb.rolls === 0) {
+      cb.dice = Array.from({ length: cb.diceCount }, () => ({ face: null, held: false, fixed: false }));
+      newIdx = cb.dice.map((_, i) => i);
+    } else {
+      const holdSet = new Set((hold || []).map(Number));
+      cb.dice.forEach((d, i) => {
+        d.held = d.fixed || holdSet.has(i);
+      });
+      newIdx = cb.dice.map((d, i) => (d.held ? -1 : i)).filter((i) => i >= 0);
+      if (newIdx.length === 0) fail('Selecciona al menos un dado para volver a tirar');
+    }
+    for (const i of newIdx) cb.dice[i].face = D.rollFace(this.rng);
+    cb.rolls += 1;
+    const faces = () => cb.dice.map((d) => d.face);
+    cb.events.push(`Tirada ${cb.rolls}: ${newIdx.map((i) => cb.dice[i].face).join(', ')}`);
+
+    // Regla 29: cada maldición obliga a repetir un dado exitoso.
+    while (cb.cursesLeft > 0) {
+      const succ = D.successfulNewDice(faces(), newIdx, cb.combo);
+      if (succ.length === 0) break;
+      const i = succ[0];
+      const old = cb.dice[i].face;
+      cb.dice[i].face = D.rollFace(this.rng);
+      cb.cursesLeft -= 1;
+      cb.events.push(`☠ Maldición: el dado ${old} se repite → ${cb.dice[i].face}`);
+    }
+    for (const d of cb.dice) d.held = d.fixed;
+    this.afterCombatStep(p);
+  }
+
+  useMana(p, assign) {
+    const cb = this.activeCombat(p);
+    if (cb.rolls < 1) fail('Primero haz la primera tirada');
+    if (cb.manaUsed) fail('Ya has usado el Maná en este combate');
+    const k = this.fixableDice(p);
+    if (k <= 0) fail('Tu Maná no es suficiente para fijar dados (mínimo 5)');
+    if (!Array.isArray(assign) || assign.length === 0) fail('Elige qué dados fijar');
+    if (assign.length > k) fail(`Solo puedes fijar ${k} dado(s)`);
+    const seen = new Set();
+    for (const a of assign) {
+      const i = Number(a.index);
+      if (!Number.isInteger(i) || i < 0 || i >= cb.dice.length || seen.has(i)) fail('Dado no válido');
+      if (!C.FACES.includes(a.face)) fail('Color no válido');
+      if (cb.dice[i].fixed) fail('Ese dado ya está fijado');
+      seen.add(i);
+    }
+    for (const a of assign) {
+      const d = cb.dice[Number(a.index)];
+      d.face = a.face;
+      d.fixed = true;
+      d.held = true;
+    }
+    cb.manaUsed = true;
+    cb.events.push(`✨ Maná: fija ${assign.map((a) => a.face).join(', ')}`);
+    this.afterCombatStep(p);
+  }
+
+  activeCombat(p) {
+    if (!p.combat || p.combat.status !== 'activo') fail('No estás en combate');
+    if (this.phase === 'torneo') {
+      const m = this.matchOf(p);
+      if (!m || m.attacker !== p.id) fail('No es tu turno');
+    } else if (p.stage !== 'combate') fail('No estás en combate');
+    return p.combat;
+  }
+
+  canStillAct(p) {
+    const cb = p.combat;
+    if (cb.manaUsed && cb.dice.every((d) => d.fixed)) return false;
+    if (cb.rolls < C.MAX_ROLLS) return true;
+    if (cb.manaUsed) return false;
+    if (this.fixableDice(p) > 0) return true;
+    // ¿Podría alcanzar el umbral bebiendo una poción de maná?
+    const potential = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos]
+      .filter((it) => it.efecto === 'mana')
+      .reduce((s, it) => s + it.valor, 0);
+    return C.fixedDiceForMana(this.combatMana(p) + potential) > 0;
+  }
+
+  afterCombatStep(p) {
+    const cb = p.combat;
+    if (D.isSatisfied(cb.dice.map((d) => d.face), cb.combo)) {
+      this.endCombat(p, true);
+    } else if (!this.canStillAct(p)) {
+      this.endCombat(p, false);
+    }
+  }
+
+  endCombat(p, won) {
+    const cb = p.combat;
+    cb.status = won ? 'victoria' : 'derrota';
+    p.hero.manaDebt = 0;
+    if (cb.kind === 'monstruo') this.endMonsterCombat(p, won);
+    else this.endDuelAttack(p, won);
+  }
+
+  endMonsterCombat(p, won) {
+    const m = p.monster;
+    if (won) {
+      p.hero.victorias += 1;
+      p.stage = 'recompensa';
+      p.rewards = m.rewards;
+      this.say(`🗡 ${p.name} derrota a ${m.nombre} (nivel ${m.level}).`);
+    } else {
+      p.hero.vida -= m.dano;
+      this.say(`🩸 ${p.name} es derrotado por ${m.nombre} y pierde ${m.dano} de Vida.`);
+      if (p.hero.vida <= 0) this.knockout(p);
+      p.stage = 'hecho';
+      this.checkRoundDone();
+    }
+  }
+
+  // ---------------------------------------------------------------- Torneo
+
+  startTournament() {
+    for (const p of this.players) p.hero.pending = [];
+    const ranking = [...this.players]
+      .map((p) => ({ p, s: this.tourneyScore(p), v: p.hero.vida, r: this.rng() }))
+      .sort((a, b) => b.s - a.s || b.v - a.v || a.r - b.r)
+      .map((x) => x.p.id);
+    this.tournament = { ranking, matches: [], stage: null, champion: null };
+    this.phase = 'torneo';
+    this.say(
+      `🏆 ¡Comienza el Torneo! Clasificación (Fuerza + Maná): ${ranking
+        .map((id, i) => `${i + 1}. ${this.player(id).name} (${this.tourneyScore(this.player(id))})`)
+        .join(', ')}`
+    );
+    const n = ranking.length;
+    if (n === 1) {
+      this.finish(ranking[0]);
+    } else if (n === 2) {
+      this.startFinal(ranking[0], ranking[1]);
+    } else if (n === 3) {
+      this.tournament.bye = ranking[0];
+      this.say(`${this.player(ranking[0]).name} pasa directamente a la final por ser primero.`);
+      this.tournament.stage = 'semis';
+      this.startAttack(this.addMatch('Semifinal', ranking[1], ranking[2]));
+    } else {
+      this.tournament.stage = 'eleccion';
+      this.say(`${this.player(ranking[0]).name} elige rival para su semifinal.`);
+    }
+  }
+
+  chooseRival(p, rivalId) {
+    const t = this.tournament;
+    if (this.phase !== 'torneo' || t.stage !== 'eleccion') fail('No es momento de elegir rival');
+    if (t.ranking[0] !== p.id) fail('Solo el primer clasificado elige rival');
+    if (rivalId === p.id || !t.ranking.includes(rivalId)) fail('Rival no válido');
+    const others = t.ranking.filter((id) => id !== p.id && id !== rivalId);
+    t.stage = 'semis';
+    this.say(`${p.name} elige enfrentarse a ${this.player(rivalId).name}.`);
+    const m1 = this.addMatch('Semifinal 1', p.id, rivalId);
+    const m2 = this.addMatch('Semifinal 2', others[0], others[1]);
+    this.startAttack(m1);
+    this.startAttack(m2);
+  }
+
+  addMatch(label, a, b) {
+    const pa = this.player(a);
+    const pb = this.player(b);
+    // Ataca primero quien tenga más Fuerza + Maná.
+    const first = this.tourneyScore(pb) > this.tourneyScore(pa) ? b : a;
+    const m = { id: this.tournament.matches.length, label, a, b, attacker: first, winner: null, turns: 0 };
+    this.tournament.matches.push(m);
+    this.say(`⚔ ${label}: ${pa.name} contra ${pb.name}. Empieza atacando ${this.player(first).name}.`);
+    return m;
+  }
+
+  matchOf(p) {
+    if (!this.tournament) return null;
+    return this.tournament.matches.find((m) => !m.winner && (m.a === p.id || m.b === p.id)) || null;
+  }
+
+  startAttack(m) {
+    const att = this.player(m.attacker);
+    const def = this.player(m.attacker === m.a ? m.b : m.a);
+    const hits = this.settings.pvpHits;
+    const attCan = this.diceCount(att) >= hits;
+    const defCan = this.diceCount(def) >= hits;
+    if (!attCan && !defCan) {
+      // Ninguno puede reunir la combinación: el duelo no terminaría nunca.
+      const pick = [att, def].sort(
+        (x, y) => y.hero.vida - x.hero.vida || this.tourneyScore(y) - this.tourneyScore(x)
+      )[0];
+      this.say(
+        `Ningún héroe tiene dados suficientes para golpear (${hits}). Gana ${pick.name} por tener más Vida.`
+      );
+      this.endMatch(m, pick.id);
+      return;
+    }
+    m.turns += 1;
+    if (!attCan) {
+      this.say(`${att.name} no tiene dados suficientes para atacar (necesita ${hits}) y pierde el turno.`);
+      m.attacker = def.id;
+      this.startAttack(m);
+      return;
+    }
+    att.combat = null;
+    this.newCombat(att, {
+      kind: 'duelo',
+      combo: Array(hits).fill(def.color),
+      label: `Ataque contra ${def.name}`,
+    });
+  }
+
+  endDuelAttack(p, won) {
+    const m = this.matchOf(p);
+    const def = this.player(m.attacker === m.a ? m.b : m.a);
+    if (won) {
+      def.hero.vida = Math.max(0, def.hero.vida - C.PVP_DAMAGE);
+      this.say(`💥 ${p.name} golpea a ${def.name}: −${C.PVP_DAMAGE} Vida (le quedan ${def.hero.vida}).`);
+      if (def.hero.vida <= 0) {
+        this.endMatch(m, p.id);
+        return;
+      }
+    } else {
+      this.say(`🛡 ${p.name} falla su ataque contra ${def.name}.`);
+    }
+    m.attacker = def.id;
+    this.startAttack(m);
+  }
+
+  endMatch(m, winnerId) {
+    m.winner = winnerId;
+    for (const id of [m.a, m.b]) {
+      const pl = this.player(id);
+      if (pl.combat && pl.combat.status === 'activo') pl.combat.status = 'cancelado';
+    }
+    const w = this.player(winnerId);
+    this.say(`🏅 ${w.name} gana ${m.label}.`);
+    const t = this.tournament;
+    if (t.stage === 'final') {
+      this.finish(winnerId);
+      return;
+    }
+    if (t.matches.every((x) => x.winner)) {
+      const finalists = t.bye ? [t.bye, t.matches[0].winner] : t.matches.map((x) => x.winner);
+      this.startFinal(finalists[0], finalists[1]);
+    }
+  }
+
+  startFinal(a, b) {
+    this.tournament.stage = 'final';
+    this.startAttack(this.addMatch('Final', a, b));
+  }
+
+  finish(id) {
+    this.phase = 'fin';
+    this.winner = id;
+    this.tournament.champion = id;
+    this.say(`👑 ¡${this.player(id).name} GANA LA PARTIDA!`);
+  }
+
+  // ---------------------------------------------------------------- Vista
+
+  view(forId) {
+    const pub = (p) => {
+      const h = p.hero;
+      return {
+        id: p.id,
+        name: p.name,
+        bot: p.bot,
+        connected: p.connected,
+        color: p.color,
+        raza: p.raza,
+        clase: p.clase,
+        ready: p.ready,
+        stage: p.stage,
+        offers: p.offers,
+        monster: p.monster,
+        rewards: p.rewards,
+        combat: p.combat,
+        hero: h && {
+          base: h.base,
+          vida: h.vida,
+          fuerza: this.effFuerza(p),
+          mana: h.base.mana,
+          manaDisponible: this.availableMana(p),
+          manaCombate: this.combatMana(p),
+          dados: this.diceCount(p),
+          fijables: C.fixedDiceForMana(this.combatMana(p)),
+          inv: h.inv,
+          curses: h.curses,
+          pending: p.id === forId ? h.pending : h.pending.map(() => ({})),
+          caidas: h.caidas,
+          victorias: h.victorias,
+          puntuacion: this.tourneyScore(p),
+        },
+      };
+    };
+    return {
+      code: this.code,
+      me: forId,
+      host: this.hostId,
+      phase: this.phase,
+      round: this.round,
+      rounds: C.ROUNDS,
+      settings: this.settings,
+      players: this.players.map(pub),
+      trades: this.trades.filter((t) => t.from === forId || t.to === forId),
+      tournament: this.tournament,
+      winner: this.winner,
+      log: this.log.slice(-80),
+      version: this.version,
+    };
+  }
+}
+
+// ------------------------------------------------------------------ Acciones
+
+function requirePrep(game) {
+  if (game.phase !== 'prep') fail('Solo puedes hacer esto entre combates');
+}
+
+function requireNoPending(p) {
+  if (p.hero.pending.length) fail('Primero decide qué hacer con el objeto pendiente');
+}
+
+function useConsumable(game, p, data) {
+  const it = I.findItem(p.hero.inv, data.itemId);
+  if (!it || (it.tipo !== 'pocion' && it.tipo !== 'pergamino')) fail('No tienes ese consumible');
+  const inCombat = p.combat && p.combat.status === 'activo';
+  if (inCombat) game.activeCombat(p);
+  const myDuel = game.phase === 'torneo' && inCombat;
+  if (it.efecto === 'mana') {
+    if (!inCombat) fail('El Maná temporal se usa durante un combate');
+    if (p.combat.manaUsed) fail('Ya has usado el Maná en este combate');
+    p.combat.manaBonus += it.valor;
+    p.combat.events.push(`🧪 ${it.nombre}: Maná ${game.combatMana(p)} en este combate`);
+    I.removeItem(p.hero.inv, it.id);
+    game.say(`${p.name} usa ${it.nombre}.`);
+    return;
+  }
+  if (it.efecto === 'curacion') {
+    if (!inCombat && game.phase !== 'prep' && game.phase !== 'combat') fail('Ahora no puedes curarte');
+    if (game.phase === 'torneo' && !myDuel) fail('En el torneo solo puedes curarte en tu turno');
+    if (p.hero.vida >= p.hero.base.vida) fail('Ya tienes la Vida al máximo');
+    const healed = game.heal(p, it.valor);
+    I.removeItem(p.hero.inv, it.id);
+    game.say(`💚 ${p.name} usa ${it.nombre} y recupera ${healed} de Vida.`);
+    if (inCombat) p.combat.events.push(`💚 Recupera ${healed} de Vida`);
+    return;
+  }
+  if (it.efecto === 'robo') {
+    requirePrep(game);
+    const target = game.player(data.targetId);
+    if (target === p) fail('No puedes robarte a ti mismo');
+    const stolen = I.findItem(target.hero.inv, data.targetItemId);
+    if (!stolen) fail('Ese objeto ya no existe');
+    I.removeItem(p.hero.inv, it.id);
+    I.removeItem(target.hero.inv, stolen.id);
+    game.trades = game.trades.filter((t) => t.status !== 'pendiente' || ![t.from, t.to].includes(target.id));
+    game.say(`🦝 ${p.name} usa ${it.nombre} y roba ${stolen.nombre} a ${target.name}.`);
+    game.receiveItem(p, stolen, 'robo');
+    return;
+  }
+  fail('Efecto desconocido');
+}
+
+const ACTIONS = {
+  // Lobby
+  setHero(p, { raza, clase }) {
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (raza !== undefined) {
+      if (!C.RACES[raza]) fail('Raza no válida');
+      p.raza = raza;
+    }
+    if (clase !== undefined) {
+      if (!C.CLASSES[clase]) fail('Clase no válida');
+      p.clase = clase;
+    }
+  },
+  setColor(p, { color }) {
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (!C.COLORS.includes(color)) fail('Color no válido');
+    const other = this.players.find((x) => x.color === color && x !== p);
+    if (other) {
+      other.color = p.color; // intercambio
+    }
+    p.color = color;
+  },
+  setName(p, { name }) {
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    const n = String(name || '').trim().slice(0, 20);
+    if (n) p.name = n;
+  },
+  setSettings(p, { pvpHits }) {
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (p.id !== this.hostId) fail('Solo el anfitrión puede cambiar las opciones');
+    if (pvpHits !== undefined) {
+      if (![4, 5].includes(Number(pvpHits))) fail('Valor no válido');
+      this.settings.pvpHits = Number(pvpHits);
+    }
+  },
+  addBot(p) {
+    if (p.id !== this.hostId) fail('Solo el anfitrión puede añadir bots');
+    const names = ['Bot Aldric', 'Bot Brina', 'Bot Corvus', 'Bot Dalia'];
+    const name = names.find((n) => !this.players.some((x) => x.name === n)) || 'Bot';
+    this.addPlayer(name, { bot: true });
+  },
+  kick(p, { playerId }) {
+    if (p.id !== this.hostId) fail('Solo el anfitrión puede expulsar');
+    if (playerId === p.id) fail('No puedes expulsarte');
+    this.removePlayer(playerId);
+  },
+  start(p) {
+    if (p.id !== this.hostId) fail('Solo el anfitrión puede empezar');
+    this.startGame();
+  },
+
+  // Entre combates
+  ready(p, { value = true }) {
+    requirePrep(this);
+    if (value) requireNoPending(p);
+    p.ready = !!value;
+    this.checkPrepDone();
+  },
+  curse(p, { targetId, amount }) {
+    requirePrep(this);
+    if (this.round <= 1) fail('Todavía no ha habido combates');
+    const t = this.player(targetId);
+    if (t === p) fail('No puedes maldecirte a ti mismo');
+    const amt = Number(amount);
+    if (!Number.isInteger(amt) || amt < C.MANA_PER_CURSE || amt % C.MANA_PER_CURSE !== 0) {
+      fail(`El Maná se usa en bloques de ${C.MANA_PER_CURSE}`);
+    }
+    if (amt > this.availableMana(p)) fail('No tienes tanto Maná disponible');
+    const n = amt / C.MANA_PER_CURSE;
+    p.hero.manaDebt += amt;
+    t.hero.curses += n;
+    this.say(`🔮 ${p.name} gasta ${amt} de Maná y maldice a ${t.name}: repetirá ${n} dado(s) exitoso(s).`);
+  },
+  discard(p, { itemId }) {
+    if (this.phase !== 'prep' && this.phase !== 'combat') fail('Ahora no puedes descartar objetos');
+    const it = I.removeItem(p.hero.inv, itemId);
+    if (!it) fail('No tienes ese objeto');
+    this.say(`${p.name} descarta ${it.nombre}.`);
+  },
+  resolvePending(p, { choice }) {
+    const pend = p.hero.pending[0];
+    if (!pend) fail('No hay nada pendiente');
+    if (!pend.options.some((o) => o.id === choice)) fail('Opción no válida');
+    // Las opciones pudieron quedar obsoletas (comercio, robo...): recalcular.
+    const conflicts = I.tryPlace(p.hero.inv, pend.item);
+    p.hero.pending.shift();
+    if (!conflicts) {
+      this.say(`${p.name} guarda ${pend.item.nombre}.`);
+      return;
+    }
+    const opts = I.conflictOptions(p.hero.inv, pend.item, conflicts);
+    if (!opts.some((o) => o.id === choice)) {
+      p.hero.pending.unshift({ item: pend.item, options: opts });
+      fail('La situación ha cambiado, vuelve a elegir');
+    }
+    const { discarded } = I.resolveConflict(p.hero.inv, pend.item, choice);
+    this.say(`${p.name} se queda con ${choice === 'descartar' ? 'su equipo' : pend.item.nombre} y descarta ${discarded.map((d) => d.nombre).join(', ')}.`);
+  },
+  useItem(p, data) {
+    useConsumable(this, p, data);
+  },
+  proposeTrade(p, { toId, give = [], want = [] }) {
+    requirePrep(this);
+    const to = this.player(toId);
+    if (to === p) fail('No puedes comerciar contigo mismo');
+    if (!give.length && !want.length) fail('La oferta está vacía');
+    for (const id of give) if (!I.findItem(p.hero.inv, id)) fail('No tienes ese objeto');
+    for (const id of want) if (!I.findItem(to.hero.inv, id)) fail(`${to.name} no tiene ese objeto`);
+    const t = { id: this.nextId(), from: p.id, to: to.id, give: [...give], want: [...want], status: 'pendiente' };
+    this.trades.push(t);
+    this.say(`🤝 ${p.name} propone un intercambio a ${to.name}.`);
+  },
+  respondTrade(p, { tradeId, accept }) {
+    requirePrep(this);
+    const t = this.trades.find((x) => x.id === tradeId && x.status === 'pendiente');
+    if (!t) fail('Esa oferta ya no existe');
+    if (accept) {
+      if (t.to !== p.id) fail('Esa oferta no es para ti');
+      requireNoPending(p);
+      const from = this.player(t.from);
+      requireNoPending(from);
+      const giveItems = t.give.map((id) => I.findItem(from.hero.inv, id));
+      const wantItems = t.want.map((id) => I.findItem(p.hero.inv, id));
+      if (giveItems.some((x) => !x) || wantItems.some((x) => !x)) {
+        t.status = 'cancelada';
+        fail('Algún objeto de la oferta ya no está disponible');
+      }
+      for (const it of giveItems) I.removeItem(from.hero.inv, it.id);
+      for (const it of wantItems) I.removeItem(p.hero.inv, it.id);
+      t.status = 'aceptada';
+      this.say(`🤝 ${p.name} acepta el intercambio con ${from.name}.`);
+      for (const it of giveItems) this.receiveItem(p, it, 'comercio');
+      for (const it of wantItems) this.receiveItem(from, it, 'comercio');
+    } else {
+      if (t.to !== p.id && t.from !== p.id) fail('Esa oferta no es tuya');
+      t.status = t.to === p.id ? 'rechazada' : 'cancelada';
+      this.say(`${p.name} ${t.to === p.id ? 'rechaza' : 'retira'} una oferta de intercambio.`);
+    }
+    this.trades = this.trades.filter((x) => x.status === 'pendiente');
+  },
+
+  // Combate contra monstruos
+  chooseMonster(p, { index }) {
+    if (this.phase !== 'combat' || p.stage !== 'elegir') fail('No es momento de elegir monstruo');
+    const m = p.offers[Number(index)];
+    if (!m) fail('Monstruo no válido');
+    p.monster = m;
+    p.offers = null;
+    p.stage = 'combate';
+    this.newCombat(p, { kind: 'monstruo', combo: m.combo, label: `${m.nombre} (nivel ${m.level})` });
+    this.say(`${p.name} se enfrenta a ${m.nombre} (nivel ${m.level}).`);
+  },
+  roll(p, { hold }) {
+    this.roll(p, hold);
+  },
+  mana(p, { assign }) {
+    this.useMana(p, assign);
+  },
+  concede(p) {
+    const cb = this.activeCombat(p);
+    if (cb.rolls < 1) fail('Primero haz la primera tirada');
+    this.endCombat(p, false);
+  },
+  chooseReward(p, { index }) {
+    if (p.stage !== 'recompensa') fail('No hay recompensa que elegir');
+    const it = p.rewards[Number(index)];
+    if (!it) fail('Recompensa no válida');
+    p.rewards = null;
+    p.stage = 'hecho';
+    this.receiveItem(p, it, 'recompensa');
+    this.checkRoundDone();
+  },
+
+  // Torneo
+  chooseRival(p, { rivalId }) {
+    this.chooseRival(p, rivalId);
+  },
+};
+
+module.exports = { Game, GameError, baseStats, COLOR_LABEL };

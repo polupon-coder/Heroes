@@ -1019,3 +1019,4 @@ body::-webkit-scrollbar { display: none; }
 .lobby-heroes.v2 { padding-top: 6px; padding-bottom: 8px; gap: .8vh; min-height: calc(100vh - 90px); }
 .lobby-heroes.v2 .pick-bottom { padding-top: 4px; }
 .mini-hero .muted.small { font-size: .8rem; }
+.rival-info .life.thin { margin-bottom: 3px; }

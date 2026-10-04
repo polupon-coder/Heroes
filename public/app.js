@@ -571,9 +571,9 @@ function renderArena() {
       </div>
       <div class="rival-info">
         <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
-        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida}/${h.base.vida}</div>
         <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables)}</div>
         <div class="life thin"><i style="width:${pct}%"></i></div>
+        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida}/${h.base.vida}</div>
       </div>
     </div>`;
   }).join('');
@@ -822,7 +822,7 @@ function renderPrep() {
     <div class="prep-actions">
       ${p.ready
         ? '<button class="seal green" data-a="ready" data-v="0">Listo ✔</button>'
-        : `<button class="seal" data-a="ready" data-v="1">${torneo ? 'Listo para<br>el Torneo' : 'Listo para<br>el combate'}</button>`}
+        : `<button class="seal" data-a="ready" data-v="1">¡Listo!</button>`}
       <div class="prep-buttons">
         <button class="btn ${incoming ? 'alert' : ''}" data-a="prepWin" data-w="trade">Comerciar${incoming ? ` <span class="badge">${incoming}</span>` : ''}</button>
         <button class="btn" data-a="prepWin" data-w="curse" ${S.round <= 1 ? 'disabled title="Desde la ronda 2"' : ''}>Maleficio</button>

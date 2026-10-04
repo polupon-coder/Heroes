@@ -95,7 +95,7 @@ function matchDice(faces, combo) {
 }
 
 function itemIcon(it) {
-  const key = `${it.tipo === 'equipo' ? it.slot : it.tipo}-${it.grado || 1}`;
+  const key = `${it.tipo === 'equipo' ? it.forma || it.slot : it.tipo}-${it.grado || 1}`;
   if (DATA && (DATA.ilustracionesObjetos || []).includes(key)) {
     return `<img class="item-img" src="img/objetos/${key}.webp" alt="">`;
   }

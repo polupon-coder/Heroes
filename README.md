@@ -104,7 +104,7 @@ Son provisionales y fáciles de cambiar:
 2. **Monstruos de cada ronda.** Cada jugador recibe sus propios 2 monstruos, de dos niveles distintos de entre los posibles de la ronda. En las rondas 11 y 12 son el mismo monstruo, pero con recompensas distintas.
 3. **Recompensas visibles antes de elegir.** Las 2 recompensas de cada monstruo se generan al aparecer y se muestran en su carta.
 4. **Recompensas:** 60 % equipo, 20 % poción y 20 % pergamino. Consumibles: Maná +X, Curación +X o Robo (solo pergaminos), con X = calidad del equipo del nivel + 1.
-5. **Arma a dos manos:** da +2 de Fuerza más que un arma de una mano del mismo nivel.
+5. **Arma a dos manos (arco o hacha):** da +2 de Fuerza más que una espada de una mano del mismo nivel.
 6. **Sin mochila:** si un objeto nuevo no cabe, se elige en el momento qué descartar.
 7. **La curación no supera la Vida inicial** del héroe.
 8. **Fuerza 0 o menos = 1 dado** (por ejemplo, un Gnomo Mago tiene Fuerza 0).

@@ -2,7 +2,6 @@
 
 const C = require('./config');
 
-const TWO_HANDED_NAMES = ['Mandoble', 'Gran hacha', 'Martillo de guerra', 'Alabarda'];
 const SHIELD_NAMES = ['Rodela', 'Escudo', 'Pavés'];
 const HELMET_NAMES = ['Yelmo', 'Casco', 'Capucha reforzada'];
 const ARMOR_NAMES = ['Cota de malla', 'Armadura de cuero', 'Coraza'];
@@ -26,12 +25,16 @@ function pick(rng, list) {
 function makeEquipment(rng, level, nextId) {
   const slot = pick(rng, ['arma', 'arma', 'dosManos', 'escudo', 'yelmo', 'armadura', 'botas']);
   let bonus = C.equipmentBonus(level);
-  if (slot === 'dosManos') bonus += C.TWO_HANDED_EXTRA;
   // Grado I, II o III según la calidad (para su ilustración).
   const grado = bonus <= 2 ? 1 : bonus <= 3 ? 2 : 3;
+  if (slot === 'dosManos') bonus += C.TWO_HANDED_EXTRA;
+  // Las armas a dos manos pueden ser arcos o hachas.
+  const forma = slot === 'dosManos' ? pick(rng, ['arco', 'hacha']) : undefined;
   const names = {
     arma: [['Espada de hierro', 'Espada corta'], ['Espada de acero', 'Espada larga'], ['Espada rúnica', 'Espada élfica']][grado - 1],
-    dosManos: TWO_HANDED_NAMES,
+    dosManos: forma === 'arco'
+      ? [['Arco de caza', 'Arco corto'], ['Arco largo', 'Arco de tejo'], ['Arco élfico', 'Arco del bosque']][grado - 1]
+      : [['Hacha de guerra', 'Hacha de leñador'], ['Gran hacha', 'Hacha doble'], ['Hacha rúnica', 'Hacha de los reyes']][grado - 1],
     escudo: SHIELD_NAMES,
     yelmo: HELMET_NAMES,
     armadura: ARMOR_NAMES,
@@ -41,6 +44,7 @@ function makeEquipment(rng, level, nextId) {
     id: nextId(),
     tipo: 'equipo',
     slot,
+    forma,
     bonus,
     grado,
     nombre: `${pick(rng, names)} +${bonus}`,

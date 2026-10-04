@@ -202,6 +202,17 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 .reward { display: flex; gap: 8px; align-items: center; font-size: .95em; }
 .item-ico { font-size: 1.15em; }
 
+.monster-art { width: 100%; aspect-ratio: 3 / 4; max-height: 260px; object-fit: contain; object-position: center bottom; border-bottom: 1px dashed var(--line-soft); padding-bottom: 6px; }
+.combat.with-foe { display: grid; grid-template-columns: 170px 1fr; column-gap: 18px; }
+.combat.with-foe > .foe { grid-row: 1 / span 6; }
+.combat.with-foe > :not(.foe) { grid-column: 2; }
+.foe-art { width: 100%; aspect-ratio: 3 / 4; height: auto; object-fit: cover; border: 1px solid var(--line); border-radius: 3px; display: block; }
+@media (max-width: 720px) {
+  .combat.with-foe { grid-template-columns: 1fr; }
+  .combat.with-foe > .foe { grid-row: auto; max-width: 160px; margin: 0 auto; }
+  .combat.with-foe > :not(.foe) { grid-column: 1; }
+}
+
 /* ---- Dados ---- */
 .dice { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .die {

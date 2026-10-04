@@ -58,18 +58,18 @@ function levelsForRound(round) {
 // Reglas 24 y 25. Combinaciones reajustadas para héroes con Fuerza inicial 10:
 // a más nivel, más dados exigidos y más repeticiones del mismo color.
 const MONSTERS = {
-  1: { nombre: 'Goblin', combo: ['rojo', 'azul'] },
-  2: { nombre: 'Orco', combo: ['rojo', 'rojo'] },
-  3: { nombre: 'Necrófago', combo: ['azul', 'verde', 'verde'] },
-  4: { nombre: 'Ogro', combo: ['rojo', 'rojo', 'rojo'] },
-  5: { nombre: 'Súcubo', combo: ['azul', 'azul', 'amarillo'] },
-  6: { nombre: 'Gólem', combo: ['verde', 'verde', 'verde', 'amarillo'] },
-  7: { nombre: 'Trol', combo: ['rojo', 'rojo', 'verde', 'verde'] },
-  8: { nombre: 'Espectro', combo: ['azul', 'azul', 'azul', 'amarillo'] },
-  9: { nombre: 'Basilisco', combo: ['verde', 'verde', 'amarillo', 'amarillo'] },
-  10: { nombre: 'Mantícora', combo: ['rojo', 'azul', 'verde', 'amarillo'] },
-  11: { nombre: 'Quimera', combo: ['rojo', 'rojo', 'azul', 'verde', 'amarillo'] },
-  12: { nombre: 'Dragón', combo: ['rojo', 'azul', 'verde', 'amarillo', 'amarillo'] },
+  1: { nombre: 'Goblin', imagen: 'goblin', combo: ['rojo', 'azul'] },
+  2: { nombre: 'Orco', imagen: 'orco', combo: ['rojo', 'rojo'] },
+  3: { nombre: 'Necrófago', imagen: 'necrofago', combo: ['azul', 'verde', 'verde'] },
+  4: { nombre: 'Ogro', imagen: 'ogro', combo: ['rojo', 'rojo', 'rojo'] },
+  5: { nombre: 'Súcubo', imagen: 'sucubo', combo: ['azul', 'azul', 'amarillo'] },
+  6: { nombre: 'Gólem', imagen: 'golem', combo: ['verde', 'verde', 'verde', 'amarillo'] },
+  7: { nombre: 'Trol', imagen: 'trol', combo: ['rojo', 'rojo', 'verde', 'verde'] },
+  8: { nombre: 'Espectro', imagen: 'espectro', combo: ['azul', 'azul', 'azul', 'amarillo'] },
+  9: { nombre: 'Basilisco', imagen: 'basilisco', combo: ['verde', 'verde', 'amarillo', 'amarillo'] },
+  10: { nombre: 'Mantícora', imagen: 'manticora', combo: ['rojo', 'azul', 'verde', 'amarillo'] },
+  11: { nombre: 'Quimera', imagen: 'quimera', combo: ['rojo', 'rojo', 'azul', 'verde', 'amarillo'] },
+  12: { nombre: 'Dragón', imagen: 'dragon', combo: ['rojo', 'azul', 'verde', 'amarillo', 'amarillo'] },
 };
 
 // Regla 23.

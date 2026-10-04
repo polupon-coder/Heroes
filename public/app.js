@@ -67,6 +67,14 @@ function portrait(raza, clase, size = 'md', extra = '') {
 }
 function heroPortrait(p, size = 'md') { return portrait(p.raza, p.clase, size); }
 
+// Ilustración del monstruo (si existe).
+function monsterArt(m, cls = 'monster-art') {
+  if (!m || !m.imagen || !DATA) return '';
+  const key = `${m.imagen}-${m.variante || 1}`;
+  if (!(DATA.ilustracionesMonstruos || []).includes(key)) return '';
+  return `<img class="${cls}" src="img/monstruos/${key}.webp" alt="${esc(m.nombre)}" loading="lazy">`;
+}
+
 function die(face, { cls = '', attrs = '', sm = false } = {}) {
   const f = face || 'empty';
   return `<div class="die ${sm ? 'sm' : ''} ${f} ${cls}" ${attrs} title="${FACE_LABEL[face] || ''}"></div>`;
@@ -576,6 +584,7 @@ function monsterCard(m, i, p) {
   const tooHard = m.combo.length > p.hero.dados;
   return `
   <div class="monster">
+    ${monsterArt(m)}
     <div class="lvl">Nivel ${m.level} · si pierdes: −${m.dano} Vida</div>
     <div class="name">${esc(m.nombre)}</div>
     ${comboHtml(m.combo, false)}
@@ -651,8 +660,16 @@ function renderCombat(p, controllable) {
   }
 
   const holder = mine ? 'Tus dados' : `Dados de ${esc(p.name)}`;
+  let foe = '';
+  if (cb.kind === 'monstruo') foe = monsterArt(p.monster, 'foe-art');
+  else if (S.tournament) {
+    const m = S.tournament.matches.find((x) => !x.winner && (x.a === p.id || x.b === p.id));
+    const def = m && byId(m.a === p.id ? m.b : m.a);
+    if (def) foe = portrait(def.raza, def.clase, 'foe-art');
+  }
   return `
-  <div class="combat">
+  <div class="combat ${foe ? 'with-foe' : ''}">
+    ${foe ? `<div class="foe">${foe}</div>` : ''}
     <div class="row"><h2 style="margin:0">${esc(cb.label)}</h2><span class="spacer"></span>
       <span class="pill">Tirada ${cb.rolls}/3</span>
       <span class="pill">${cb.manaUsed ? 'Maná usado' : `Maná ${mine ? p.hero.manaCombate : ''} sin usar`}</span>

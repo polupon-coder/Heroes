@@ -241,6 +241,8 @@ class Game {
       return {
         level,
         nombre: m.nombre,
+        imagen: m.imagen,
+        variante: 1,
         combo: [...m.combo],
         dano: C.monsterDamage(level),
         rewards: [I.makeReward(this.rng, level, () => this.nextId()), I.makeReward(this.rng, level, () => this.nextId())],

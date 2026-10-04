@@ -19,9 +19,9 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
-function listPortraits() {
+function listImages(dir) {
   try {
-    return fs.readdirSync(path.join(__dirname, '..', 'public', 'img', 'heroes'))
+    return fs.readdirSync(path.join(__dirname, '..', 'public', 'img', dir))
       .filter((f) => f.endsWith('.webp'))
       .map((f) => f.replace('.webp', ''));
   } catch {
@@ -37,7 +37,8 @@ app.get('/api/datos', (req, res) => {
     minFuerza: C.MIN_FUERZA_INICIAL,
     monstruos: C.MONSTERS,
     colores: C.COLORS,
-    retratos: listPortraits(),
+    retratos: listImages('heroes'),
+    ilustracionesMonstruos: listImages('monstruos'),
   });
 });
 app.get('/healthz', (req, res) => res.send('ok'));

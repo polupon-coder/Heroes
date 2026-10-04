@@ -120,15 +120,6 @@ test('tamaños de monstruo: más colores, más daño y mejores recompensas', () 
 });
 
 
-test('no se puede elegir un monstruo con más esferas de las que tienes', () => {
-  const { g, p } = soloGame(() => F.blanco);
-  p.offers[0].combo = ['rojo', 'rojo', 'rojo', 'rojo', 'rojo'];
-  p.offers[1].combo = ['rojo', 'rojo', 'rojo', 'rojo'];
-  assert.throws(() => g.act(p.id, 'chooseMonster', { index: 0 }), /esferas/);
-  g.act(p.id, 'skipRound');
-  assert.strictEqual(g.phase, 'prep');
-  assert.strictEqual(g.round, 2);
-});
 
 test('nunca se ofrecen monstruos inasequibles y la partida empieza sola', () => {
   const g = new Game('T');
@@ -163,39 +154,7 @@ test('estadísticas iniciales: Maná mínimo 5 y Fuerza mínima 10', () => {
   }
 });
 
-test('el Maná da esferas blancas ya fijadas y los maleficios repiten esferas', () => {
-  const { g, p } = soloGame(() => F.negro, 'elfo', 'mago'); // Maná 13: 2 blancas
-  g.act(p.id, 'chooseMonster', { index: 0 });
-  const whites = p.combat.dice.filter((d) => d.fixed && d.face === 'blanco').length;
-  assert.strictEqual(whites, Math.min(2, p.combat.diceCount));
 
-  const g2 = soloGame(seq([0.5]), 'durgan', 'guerrero');
-  const q = g2.p;
-  q.hero.curses = 1;
-  g2.g.act(q.id, 'chooseMonster', { index: 0 });
-  q.combat.combo = ['rojo', 'rojo', 'rojo', 'rojo', 'rojo'];
-  g2.g.rng = seq([F.rojo, F.negro, F.negro, F.negro, F.negro]);
-  g2.g.act(q.id, 'roll', {});
-  assert.strictEqual(q.combat.cursesLeft, 0);
-});
-
-test('caer a 0 Vida: pierde consumibles y su mejor objeto', () => {
-  const { g, p } = soloGame(() => F.negro, 'durgan', 'guerrero');
-  p.hero.vida = 1;
-  const inv = p.hero.inv;
-  inv.botas = { id: 'b', tipo: 'equipo', slot: 'botas', bonus: 1, nombre: 'Botas +1' };
-  inv.yelmo = { id: 'y', tipo: 'equipo', slot: 'yelmo', bonus: 4, nombre: 'Yelmo +4' };
-  inv.pociones.push({ id: 'p', tipo: 'pocion', efecto: 'curacion', valor: 2, nombre: 'Poción' });
-  p.offers.forEach((m) => { m.combo = ['rojo', 'azul']; });
-  g.act(p.id, 'chooseMonster', { index: 0 });
-  fightOut(g, p);
-  assert.strictEqual(g.phase, 'prep');
-  assert.strictEqual(p.hero.vida, p.hero.base.vida);
-  assert.strictEqual(p.hero.inv.yelmo, null);
-  assert.strictEqual(p.hero.inv.botas.id, 'b');
-  assert.strictEqual(p.hero.inv.pociones.length, 0);
-  assert.strictEqual(p.hero.caidas, 1);
-});
 
 test('maleficios: uno recibido por ronda; comercio: uno por ronda', () => {
   const g = new Game('T');
@@ -239,4 +198,49 @@ test('duelo del torneo: golpe completo con 5 esferas del color rival', () => {
   assert.strictEqual(g.phase, 'fin');
   const w = g.player(g.winner);
   assert.strictEqual(w.hero.vida, w.hero.base.vida - Math.floor((w.hero.base.vida - 1) / 3) * 3);
+});
+
+test('dos monstruos a la vez: colores o formas, y se presenta contra uno', () => {
+  const { g, p } = soloGame(() => F.negro, 'elfo', 'mago'); // Maná 12: 2 blancas
+  assert.strictEqual(p.stage, 'combate');
+  assert.strictEqual(p.combat.targets.length, 2);
+  for (const m of p.offers) assert.ok(['color', 'forma'].includes(m.tipo));
+  const whites = p.combat.dice.filter((d) => d.fixed && d.face === 'blanco' && d.shape === 'estrella').length;
+  assert.strictEqual(whites, Math.min(2, p.combat.diceCount));
+  // Fuerza: un monstruo de formas fácil que se completa con comodines
+  p.offers[0] = { ...p.offers[0], tipo: 'forma', combo: ['rombo', 'rombo'] };
+  p.combat.targets[0] = { tipo: 'forma', combo: ['rombo', 'rombo'] };
+  p.combat.targets[1] = { tipo: 'color', combo: ['rojo', 'rojo', 'rojo'] };
+  g.act(p.id, 'roll', {});
+  assert.throws(() => g.act(p.id, 'present', { index: 1 }), /no completan/);
+  g.act(p.id, 'present', { index: 0 });
+  assert.strictEqual(p.stage, 'recompensa');
+  assert.strictEqual(p.monster, p.offers[0]);
+});
+
+test('maleficio: repite una esfera acertada', () => {
+  const { g, p } = soloGame(seq([0.5]), 'durgan', 'guerrero');
+  p.hero.curses = 1;
+  p.combat.cursesLeft = 1;
+  p.combat.targets = [{ tipo: 'color', combo: ['rojo', 'rojo', 'rojo', 'rojo', 'rojo'] }];
+  g.rng = seq([F.rojo, 0.01, F.negro, 0.7, F.negro, 0.7, F.negro, 0.7, F.negro, 0.7]);
+  g.act(p.id, 'roll', {});
+  assert.strictEqual(p.combat.cursesLeft, 0);
+});
+
+test('caer a 0 Vida: pierde consumibles y su mejor objeto', () => {
+  const { g, p } = soloGame(() => F.negro, 'durgan', 'guerrero');
+  p.hero.vida = 1;
+  const inv = p.hero.inv;
+  inv.botas = { id: 'b', tipo: 'equipo', slot: 'botas', bonus: 1, nombre: 'Botas +1' };
+  inv.yelmo = { id: 'y', tipo: 'equipo', slot: 'yelmo', bonus: 4, nombre: 'Yelmo +4' };
+  inv.pociones.push({ id: 'p', tipo: 'pocion', efecto: 'curacion', valor: 2, nombre: 'Poción' });
+  p.combat.targets = p.combat.targets.map((t) => ({ ...t, combo: t.tipo === 'color' ? ['rojo', 'azul', 'verde'] : ['circulo', 'cuadrado', 'rombo'] }));
+  fightOut(g, p);
+  assert.strictEqual(g.phase, 'prep');
+  assert.strictEqual(p.hero.vida, p.hero.base.vida);
+  assert.strictEqual(p.hero.inv.yelmo, null);
+  assert.strictEqual(p.hero.inv.botas.id, 'b');
+  assert.strictEqual(p.hero.inv.pociones.length, 0);
+  assert.strictEqual(p.hero.caidas, 1);
 });

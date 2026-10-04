@@ -4,6 +4,11 @@
 
 const COLORS = ['rojo', 'azul', 'verde', 'amarillo'];
 const FACES = ['rojo', 'azul', 'verde', 'amarillo', 'negro', 'blanco'];
+// Cada dado da también una forma: estrella = comodín, cruz = nada.
+const SHAPES = ['circulo', 'cuadrado', 'rombo', 'triangulo', 'cruz', 'estrella'];
+const FORMAS = ['circulo', 'cuadrado', 'rombo', 'triangulo'];
+// Cada monstruo puede pedir su combinación en colores o en formas (misma dificultad).
+const COLOR_TO_SHAPE = { rojo: 'circulo', azul: 'cuadrado', verde: 'rombo', amarillo: 'triangulo' };
 
 const BASE_STATS = { vida: 10, mana: 5, fuerza: 10 };
 
@@ -64,7 +69,7 @@ function levelsForRound(round) {
 // ilustraciones. Las combinaciones van ligadas al nivel (equilibradas para
 // héroes con Fuerza inicial 10).
 const MONSTERS = {
-  1: { nombre: 'Diablillo de los Bosques', imagen: 'diablillo', combo: ['rojo', 'azul'] },
+  1: { nombre: 'Diablillo', imagen: 'diablillo', combo: ['rojo', 'azul'] },
   2: { nombre: 'Goblin', imagen: 'goblin', combo: ['rojo', 'rojo'] },
   3: { nombre: 'Necrófago', imagen: 'necrofago', combo: ['azul', 'verde', 'verde'] },
   4: { nombre: 'Orco', imagen: 'orco', combo: ['rojo', 'rojo', 'rojo'] },
@@ -82,9 +87,9 @@ const MONSTERS = {
 // grande, más colores exige, más daño hace y mejores son sus recompensas
 // (se generan como si el monstruo fuera `recompensa` niveles más alto).
 const VARIANTS = {
-  1: { nombre: 'Pequeño', peso: 0.3, endurecer: false, extraColores: 0, dano: 0, recompensa: 0 },
-  2: { nombre: 'Mediano', peso: 0.4, endurecer: true, extraColores: 0, dano: 1, recompensa: 2 },
-  3: { nombre: 'Grande', peso: 0.3, endurecer: true, extraColores: 1, dano: 2, recompensa: 4 },
+  1: { nombre: 'Pequeño', peso: 0.15, endurecer: false, extraColores: 0, dano: 0, recompensa: 0 },
+  2: { nombre: 'Mediano', peso: 0.4, endurecer: true, extraColores: 1, dano: 1, recompensa: 2 },
+  3: { nombre: 'Grande', peso: 0.45, endurecer: true, extraColores: 2, dano: 2, recompensa: 4 },
 };
 const MAX_COMBO = 5;
 
@@ -101,7 +106,7 @@ function variantCombo(combo, variante) {
   const low = byFreq[byFreq.length - 1];
   if (v.endurecer && byFreq.length > 1) out[out.indexOf(low)] = top;
   for (let k = 0; k < v.extraColores && out.length < MAX_COMBO; k++) out.push(top);
-  const order = ['rojo', 'azul', 'verde', 'amarillo'];
+  const order = ['rojo', 'azul', 'verde', 'amarillo', 'circulo', 'cuadrado', 'rombo', 'triangulo'];
   return out.sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 
@@ -161,6 +166,9 @@ function pvpMinResults(hits) {
 module.exports = {
   COLORS,
   FACES,
+  SHAPES,
+  FORMAS,
+  COLOR_TO_SHAPE,
   BASE_STATS,
   MIN_FUERZA_INICIAL,
   MIN_MANA_INICIAL,

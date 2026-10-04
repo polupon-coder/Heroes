@@ -1,10 +1,17 @@
 'use strict';
 
-const { FACES } = require('./config');
+const { FACES, SHAPES } = require('./config');
 
+// Cada dado da a la vez un color y una forma.
 function rollFace(rng) {
   return FACES[Math.floor(rng() * FACES.length)];
 }
+function rollShape(rng) {
+  return SHAPES[Math.floor(rng() * SHAPES.length)];
+}
+
+// Comodín de cada tipo de desafío: blanco para colores, estrella para formas.
+const WILD = { color: 'blanco', forma: 'estrella' };
 
 function countNeeds(combo) {
   const needs = {};
@@ -12,20 +19,20 @@ function countNeeds(combo) {
   return needs;
 }
 
-// Asigna dados a la combinación: primero los de color exacto, después los
-// blancos como comodín. Devuelve los índices usados y cuántos faltan.
-function matchDice(faces, combo) {
+// Asigna dados a la combinación: primero los exactos y después los comodines.
+// Devuelve los índices usados y cuántos faltan.
+function matchDice(faces, combo, wild = 'blanco') {
   const needs = countNeeds(combo);
   const used = new Set();
   faces.forEach((f, i) => {
-    if (f !== 'blanco' && needs[f] > 0) {
+    if (f !== wild && needs[f] > 0) {
       needs[f]--;
       used.add(i);
     }
   });
   let missing = Object.values(needs).reduce((a, b) => a + b, 0);
   faces.forEach((f, i) => {
-    if (missing > 0 && f === 'blanco') {
+    if (missing > 0 && f === wild) {
       used.add(i);
       missing--;
     }
@@ -33,34 +40,32 @@ function matchDice(faces, combo) {
   return { used, missing };
 }
 
-function isSatisfied(faces, combo) {
-  return matchDice(faces, combo).missing === 0;
+function isSatisfied(faces, combo, wild = 'blanco') {
+  return matchDice(faces, combo, wild).missing === 0;
 }
 
-// Dados recién tirados que resultan "exitosos" (aportan a la combinación
-// una vez contados los dados que ya se tenían). Se usa para la maldición
-// de la regla 29. Los blancos que ya se tenían siguen siendo flexibles.
-function successfulNewDice(faces, newIndices, combo) {
+// Dados recién tirados que aportan a la combinación (para los maleficios).
+function successfulNewDice(faces, newIndices, combo, wild = 'blanco') {
   const newSet = new Set(newIndices);
   const needs = countNeeds(combo);
-  let oldWhites = 0;
+  let oldWild = 0;
   faces.forEach((f, i) => {
     if (newSet.has(i)) return;
-    if (f === 'blanco') oldWhites++;
+    if (f === wild) oldWild++;
     else if (needs[f] > 0) needs[f]--;
   });
   const ok = [];
   for (const i of newIndices) {
     const f = faces[i];
-    if (f !== 'blanco' && needs[f] > 0) {
+    if (f !== wild && needs[f] > 0) {
       needs[f]--;
       ok.push(i);
     }
   }
-  let left = Object.values(needs).reduce((a, b) => a + b, 0) - oldWhites;
+  let left = Object.values(needs).reduce((a, b) => a + b, 0) - oldWild;
   for (const i of newIndices) {
     if (left <= 0) break;
-    if (faces[i] === 'blanco') {
+    if (faces[i] === wild) {
       ok.push(i);
       left--;
     }
@@ -68,17 +73,22 @@ function successfulNewDice(faces, newIndices, combo) {
   return ok;
 }
 
-// Colores que aún faltan para completar la combinación.
-function missingColors(faces, combo) {
+// Lo que aún falta para completar la combinación.
+function missingColors(faces, combo, wild = 'blanco') {
   const needs = countNeeds(combo);
-  let whites = 0;
+  let w = 0;
   for (const f of faces) {
-    if (f === 'blanco') whites++;
+    if (f === wild) w++;
     else if (needs[f] > 0) needs[f]--;
   }
   const rest = [];
   for (const [c, n] of Object.entries(needs)) for (let k = 0; k < n; k++) rest.push(c);
-  return rest.slice(0, Math.max(0, rest.length - whites));
+  return rest.slice(0, Math.max(0, rest.length - w));
 }
 
-module.exports = { rollFace, matchDice, isSatisfied, successfulNewDice, missingColors, countNeeds };
+// Valores de los dados según el tipo de desafío.
+function valuesOf(dice, tipo) {
+  return dice.map((d) => (tipo === 'forma' ? d.shape : d.face));
+}
+
+module.exports = { rollFace, rollShape, WILD, matchDice, isSatisfied, successfulNewDice, missingColors, countNeeds, valuesOf };

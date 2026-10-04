@@ -60,28 +60,6 @@ function botStep(game, p) {
   }
 
   if (game.phase === 'combat') {
-    if (p.stage === 'elegir') {
-      // Valora cada monstruo: probabilidad de ganar × calidad de la recompensa,
-      // menos el riesgo de perder Vida (mucho más si podría tumbarle).
-      const dice = game.diceCount(p);
-      const fix = C.fixedDiceForMana(game.availableMana(p));
-      if (!p.offers.some((m) => m.combo.length <= dice)) {
-        game.act(p.id, 'skipRound', {});
-        return true;
-      }
-      let best = 0;
-      let bestScore = -Infinity;
-      p.offers.forEach((m, i) => {
-        if (m.combo.length > dice) return;
-        const pWin = winChance(dice, fix, m.combo, game.rng);
-        const reward = C.equipmentBonus(Math.min(12, m.level + C.VARIANTS[m.variante].recompensa));
-        const ko = h.vida <= m.dano ? 6 : 1;
-        const score = pWin * reward - (1 - pWin) * m.dano * 0.5 * ko;
-        if (score > bestScore) { bestScore = score; best = i; }
-      });
-      game.act(p.id, 'chooseMonster', { index: best });
-      return true;
-    }
     if (p.stage === 'combate') return fight(game, p);
     if (p.stage === 'recompensa') {
       let idx = 0;
@@ -108,29 +86,31 @@ function botStep(game, p) {
   return false;
 }
 
-// Estimación rápida por simulación de la probabilidad de ganar un combate.
-function winChance(dice, fix, combo, rng, trials = 120) {
-  if (combo.length > dice) return 0;
-  let wins = 0;
-  for (let t = 0; t < trials; t++) {
-    let faces = Array.from({ length: dice }, () => D.rollFace(rng));
-    for (let r = 1; r < C.MAX_ROLLS && !D.isSatisfied(faces, combo); r++) {
-      const { used } = D.matchDice(faces, combo);
-      faces = faces.map((f, i) => (used.has(i) ? f : D.rollFace(rng)));
-    }
-    if (D.isSatisfied(faces, combo) || D.matchDice(faces, combo).missing <= fix) wins++;
-  }
-  return wins / trials;
-}
-
 function fight(game, p) {
   const cb = p.combat;
   if (cb.rolls === 0) {
     game.act(p.id, 'roll', {});
     return true;
   }
-  const faces = cb.dice.map((d) => d.face);
-  const { used, missing } = D.matchDice(faces, cb.combo);
+  let used;
+  let missing;
+  if (cb.kind === 'monstruo') {
+    const st = game.targetStatus(cb);
+    // Presenta en cuanto completa alguno (prefiere el de más nivel).
+    const ok = st.map((x, i) => i).filter((i) => st[i].ok).sort((a, b) => p.offers[b].level - p.offers[a].level);
+    if (ok.length) {
+      game.act(p.id, 'present', { index: ok[0] });
+      return true;
+    }
+    // Persigue el que tenga menos esferas por conseguir (a igualdad, el de más nivel).
+    let t = 0;
+    st.forEach((x, i) => {
+      if (x.missing < st[t].missing || (x.missing === st[t].missing && p.offers[i].level > p.offers[t].level)) t = i;
+    });
+    ({ used, missing } = st[t]);
+  } else {
+    ({ used, missing } = D.matchDice(cb.dice.map((d) => d.face), cb.combo));
+  }
   // Poción de Maná si con ella se completan las esferas que faltan
   if (missing > 0) {
     const pot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');

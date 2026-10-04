@@ -226,8 +226,14 @@ class Game {
     this.say(`— Ronda ${this.round} de ${C.ROUNDS} —`);
     for (const p of this.players) {
       p.ready = false;
-      p.stage = 'elegir';
+      p.stage = 'combate';
       p.offers = this.makeOffers(p);
+      p.monster = null;
+      this.newCombat(p, {
+        kind: 'monstruo',
+        targets: p.offers.map((m) => ({ tipo: m.tipo, combo: m.combo })),
+        label: 'Combate',
+      });
     }
   }
 
@@ -241,6 +247,11 @@ class Game {
     // Si los dos han quedado iguales, el segundo baja un nivel para dar a elegir.
     if (fixed[0].level === fixed[1].level && fixed[0].variante === fixed[1].variante && fixed[1].level > 1) {
       fixed[1] = this.affordableOffer(dice, fixed[1].level - 1, 3);
+    }
+    // Normalmente uno pide colores y el otro formas.
+    if (fixed[0].tipo === fixed[1].tipo && this.rng() < 0.75) {
+      const o = fixed[1];
+      fixed[1] = this.makeOffer(o.level, o.variante, o.tipo === 'color' ? 'forma' : 'color');
     }
     return fixed.sort((a, b) => a.level - b.level);
   }
@@ -278,17 +289,20 @@ class Game {
     });
   }
 
-  makeOffer(level, variante) {
+  makeOffer(level, variante, tipo) {
     const m = C.MONSTERS[level];
     const v = C.VARIANTS[variante];
     const rewardLevel = Math.min(12, level + v.recompensa);
+    tipo = tipo || (this.rng() < 0.5 ? 'color' : 'forma');
+    const base = tipo === 'forma' ? m.combo.map((c) => C.COLOR_TO_SHAPE[c]) : m.combo;
     return {
+      tipo,
       level,
       nombre: m.nombre,
       imagen: m.imagen,
       variante,
       tamano: v.nombre,
-      combo: C.variantCombo(m.combo, variante),
+      combo: C.variantCombo(base, variante),
       dano: C.monsterDamage(level) + v.dano,
       rewards: [
         I.makeReward(this.rng, rewardLevel, () => this.nextId(), this._invHint),
@@ -311,11 +325,13 @@ class Game {
 
   // ---------------------------------------------------------------- Combate
 
-  newCombat(p, { kind, combo, label }) {
+  newCombat(p, { kind, combo, targets, label }) {
+    targets = targets || [{ tipo: 'color', combo }];
     const combat = {
       kind,
       label,
-      combo,
+      targets,
+      combo: targets[0].combo,
       diceCount: this.diceCount(p),
       dice: [],
       rolls: 0,
@@ -328,7 +344,7 @@ class Game {
     p.hero.curses = 0;
     p.combat = combat;
     // El Maná se convierte en esferas blancas (comodín) ya fijadas desde el principio.
-    combat.dice = Array.from({ length: combat.diceCount }, () => ({ face: null, held: false, fixed: false }));
+    combat.dice = Array.from({ length: combat.diceCount }, () => ({ face: null, shape: null, held: false, fixed: false }));
     this.applyWhites(p);
     if (combat.cursesLeft > 0) {
       combat.events.push(`Arrastra ${combat.cursesLeft} maldición(es): deberá repetir dados exitosos.`);
@@ -340,6 +356,21 @@ class Game {
     return C.fixedDiceForMana(this.combatMana(p));
   }
 
+  // Estado de cada objetivo del combate (qué dados usa y cuántos faltan).
+  targetStatus(cb) {
+    return cb.targets.map((t) => {
+      const r = D.matchDice(D.valuesOf(cb.dice, t.tipo), t.combo, D.WILD[t.tipo]);
+      return { ...r, ok: r.missing === 0 };
+    });
+  }
+
+  bestTarget(cb) {
+    const st = this.targetStatus(cb);
+    let best = 0;
+    st.forEach((x, i) => { if (x.missing < st[best].missing) best = i; });
+    return { ...st[best], index: best };
+  }
+
   // Asegura tantas esferas blancas fijadas como permita el Maná del combate.
   applyWhites(p) {
     const cb = p.combat;
@@ -347,12 +378,12 @@ class Game {
     let have = cb.dice.filter((d) => d.fixed).length;
     if (have >= want) return;
     // Primero las que aún no se han tirado o no sirven; después cualquiera.
-    const used = cb.rolls ? D.matchDice(cb.dice.map((d) => d.face), cb.combo).used : new Set();
+    const used = cb.rolls ? this.bestTarget(cb).used : new Set();
     const order = cb.dice.map((d, i) => i).filter((i) => !cb.dice[i].fixed)
       .sort((a, b) => (used.has(a) ? 1 : 0) - (used.has(b) ? 1 : 0));
     for (const i of order) {
       if (have >= want) break;
-      cb.dice[i] = { face: 'blanco', held: true, fixed: true };
+      cb.dice[i] = { face: 'blanco', shape: 'estrella', held: true, fixed: true };
       have += 1;
     }
     cb.manaUsed = true;
@@ -372,20 +403,24 @@ class Game {
       newIdx = cb.dice.map((d, i) => (d.held ? -1 : i)).filter((i) => i >= 0);
       if (newIdx.length === 0) fail('Selecciona al menos un dado para volver a tirar');
     }
-    for (const i of newIdx) cb.dice[i].face = D.rollFace(this.rng);
-    cb.rolls += 1;
-    const faces = () => cb.dice.map((d) => d.face);
-    cb.events.push(`Tirada ${cb.rolls}: ${newIdx.map((i) => cb.dice[i].face).join(', ')}`);
-
-    // Regla 29: cada maldición obliga a repetir un dado exitoso.
-    while (cb.cursesLeft > 0) {
-      const succ = D.successfulNewDice(faces(), newIdx, cb.combo);
-      if (succ.length === 0) break;
-      const i = succ[0];
-      const old = cb.dice[i].face;
+    const rollDie = (i) => {
       cb.dice[i].face = D.rollFace(this.rng);
+      cb.dice[i].shape = D.rollShape(this.rng);
+    };
+    for (const i of newIdx) rollDie(i);
+    cb.rolls += 1;
+    cb.events.push(`Tirada ${cb.rolls}`);
+
+    // Maleficio: cada uno obliga a repetir una esfera acertada.
+    while (cb.cursesLeft > 0) {
+      const succ = new Set();
+      for (const t of cb.targets) {
+        for (const i of D.successfulNewDice(D.valuesOf(cb.dice, t.tipo), newIdx, t.combo, D.WILD[t.tipo])) succ.add(i);
+      }
+      if (succ.size === 0) break;
+      rollDie([...succ][0]);
       cb.cursesLeft -= 1;
-      cb.events.push(`☠ Maldición: el dado ${old} se repite → ${cb.dice[i].face}`);
+      cb.events.push('Maleficio: una esfera acertada se repite');
     }
     for (const d of cb.dice) d.held = d.fixed;
     this.afterCombatStep(p);
@@ -430,9 +465,10 @@ class Game {
   canStillAct(p) {
     const cb = p.combat;
     if (cb.rolls < C.MAX_ROLLS && cb.dice.some((d) => !d.fixed)) return true;
-    // Sin tiradas: solo una poción de Maná que añada blancas suficientes puede salvarle.
+    if (cb.kind === 'monstruo' && this.targetStatus(cb).some((x) => x.ok)) return true; // falta presentarla
     if (cb.kind !== 'monstruo') return false;
-    const missing = D.matchDice(cb.dice.map((d) => d.face), cb.combo).missing;
+    // Sin tiradas: solo una poción de Maná que añada blancas suficientes puede salvarle.
+    const missing = this.bestTarget(cb).missing;
     const potential = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos]
       .filter((it) => it.efecto === 'mana')
       .reduce((s, it) => s + it.valor, 0);
@@ -442,11 +478,25 @@ class Game {
 
   afterCombatStep(p) {
     const cb = p.combat;
-    if (D.isSatisfied(cb.dice.map((d) => d.face), cb.combo)) {
+    if (cb.kind !== 'monstruo' && D.isSatisfied(cb.dice.map((d) => d.face), cb.combo)) {
       this.endCombat(p, true);
     } else if (!this.canStillAct(p)) {
       this.endCombat(p, false);
     }
+  }
+
+  // Presenta la combinación contra uno de los dos monstruos.
+  present(p, index) {
+    const cb = this.activeCombat(p);
+    if (cb.kind !== 'monstruo') fail('Solo contra monstruos');
+    if (cb.rolls < 1) fail('Primero lanza las esferas');
+    const st = this.targetStatus(cb)[Number(index)];
+    if (!st) fail('Monstruo no válido');
+    if (!st.ok) fail('Tus esferas no completan lo que pide este monstruo');
+    p.monster = p.offers[Number(index)];
+    cb.label = `${p.monster.nombre} ${p.monster.tamano.toLowerCase()}`;
+    cb.chosen = Number(index);
+    this.endCombat(p, true);
   }
 
   endCombat(p, won) {
@@ -458,6 +508,7 @@ class Game {
   }
 
   endMonsterCombat(p, won) {
+    if (!p.monster) p.monster = [...p.offers].sort((a, b) => a.dano - b.dano)[0];
     const m = p.monster;
     if (won) {
       p.hero.victorias += 1;
@@ -466,7 +517,7 @@ class Game {
       this.say(`🗡 ${p.name} derrota a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`);
     } else {
       p.hero.vida -= m.dano;
-      this.say(`🩸 ${p.name} es derrotado por ${m.nombre} y pierde ${m.dano} de Vida.`);
+      this.say(`🩸 ${p.name} no consigue derrotar a ningún monstruo: ${m.nombre} le quita ${m.dano} de Vida.`);
       if (p.hero.vida <= 0) this.knockout(p);
       p.stage = 'hecho';
       this.checkRoundDone();
@@ -915,27 +966,8 @@ const ACTIONS = {
   },
 
   // Combate contra monstruos
-  chooseMonster(p, { index }) {
-    if (this.phase !== 'combat' || p.stage !== 'elegir') fail('No es momento de elegir monstruo');
-    const m = p.offers[Number(index)];
-    if (!m) fail('Monstruo no válido');
-    if (m.combo.length > this.diceCount(p)) {
-      fail(`Necesitas ${m.combo.length} esferas y solo tienes ${this.diceCount(p)}`);
-    }
-    p.monster = m;
-    p.offers = null;
-    p.stage = 'combate';
-    this.newCombat(p, { kind: 'monstruo', combo: m.combo, label: `${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level})` });
-    this.say(`${p.name} se enfrenta a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`);
-  },
-  // Si ningún monstruo de la ronda es asequible, el héroe pasa sin combatir.
-  skipRound(p) {
-    if (this.phase !== 'combat' || p.stage !== 'elegir') fail('No es momento de pasar');
-    if (p.offers.some((m) => m.combo.length <= this.diceCount(p))) fail('Puedes enfrentarte a alguno de los monstruos');
-    p.offers = null;
-    p.stage = 'hecho';
-    this.say(`${p.name} no tiene esferas suficientes para ningún monstruo y pasa la ronda.`);
-    this.checkRoundDone();
+  present(p, { index }) {
+    this.present(p, index);
   },
   roll(p, { hold }) {
     this.roll(p, hold);

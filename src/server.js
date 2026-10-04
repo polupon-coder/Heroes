@@ -39,6 +39,7 @@ app.get('/api/datos', (req, res) => {
     colores: C.COLORS,
     retratos: listImages('heroes'),
     ilustracionesMonstruos: listImages('monstruos'),
+    ilustracionesObjetos: listImages('objetos'),
   });
 });
 app.get('/healthz', (req, res) => res.send('ok'));

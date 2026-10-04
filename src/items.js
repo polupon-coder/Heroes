@@ -2,7 +2,6 @@
 
 const C = require('./config');
 
-const WEAPON_NAMES = ['Daga', 'Espada', 'Maza', 'Hacha', 'Lanza corta'];
 const TWO_HANDED_NAMES = ['Mandoble', 'Gran hacha', 'Martillo de guerra', 'Alabarda'];
 const SHIELD_NAMES = ['Rodela', 'Escudo', 'Pavés'];
 const HELMET_NAMES = ['Yelmo', 'Casco', 'Capucha reforzada'];
@@ -28,8 +27,10 @@ function makeEquipment(rng, level, nextId) {
   const slot = pick(rng, ['arma', 'arma', 'dosManos', 'escudo', 'yelmo', 'armadura', 'botas']);
   let bonus = C.equipmentBonus(level);
   if (slot === 'dosManos') bonus += C.TWO_HANDED_EXTRA;
+  // Grado I, II o III según la calidad (para su ilustración).
+  const grado = bonus <= 2 ? 1 : bonus <= 3 ? 2 : 3;
   const names = {
-    arma: WEAPON_NAMES,
+    arma: [['Espada de hierro', 'Espada corta'], ['Espada de acero', 'Espada larga'], ['Espada rúnica', 'Espada élfica']][grado - 1],
     dosManos: TWO_HANDED_NAMES,
     escudo: SHIELD_NAMES,
     yelmo: HELMET_NAMES,
@@ -41,6 +42,7 @@ function makeEquipment(rng, level, nextId) {
     tipo: 'equipo',
     slot,
     bonus,
+    grado,
     nombre: `${pick(rng, names)} +${bonus}`,
   };
 }

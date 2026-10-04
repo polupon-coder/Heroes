@@ -95,9 +95,12 @@ function matchDice(faces, combo) {
 }
 
 function itemIcon(it) {
-  if (it.tipo === 'pocion' || it.tipo === 'pergamino') {
-    return `<img class="item-img" src="img/objetos/${it.tipo}-${it.grado || 1}.webp" alt="">`;
+  const key = `${it.tipo === 'equipo' ? it.slot : it.tipo}-${it.grado || 1}`;
+  if (DATA && (DATA.ilustracionesObjetos || []).includes(key)) {
+    return `<img class="item-img" src="img/objetos/${key}.webp" alt="">`;
   }
+  if (it.tipo === 'pocion') return '🧪';
+  if (it.tipo === 'pergamino') return '📜';
   return { arma: '🗡', dosManos: '⚔', escudo: '🛡', yelmo: '⛑', armadura: '🥋', botas: '🥾' }[it.slot] || '•';
 }
 

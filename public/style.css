@@ -1021,3 +1021,10 @@ body::-webkit-scrollbar { display: none; }
 .combat .dice-zone { margin-top: 10px; }
 .combat .controls { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 14px; }
 .combat .controls .row { margin: 0; }
+
+/* ===== Combate: esferas más separadas, aureola verde sin elevar, sin marcos ===== */
+.combat .dice-zone .dice { gap: 26px; }
+.die.held, .die.piece.held { transform: none; }
+.die.piece.fixed img, .die.piece.success img { filter: drop-shadow(0 0 3px rgba(79, 122, 58, 1)) drop-shadow(0 0 7px rgba(79, 122, 58, .85)); }
+.die.fixed { box-shadow: 0 0 0 3px rgba(79, 122, 58, .85), 0 0 12px rgba(79, 122, 58, .6); }
+.foe-card, .foe-card.ready, .foe-card.chosen { border-color: transparent !important; }

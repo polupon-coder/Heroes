@@ -919,3 +919,78 @@ body.at-home .home { padding: 18px; }
   .rival-info .spheres-row { margin: 2px 0; }
   .col-rivals > .rival { padding: 2px 4px 6px; }
 }
+
+/* ===== Portada: crédito en minúsculas ===== */
+.home-credit { font-family: var(--text); font-size: 1.25rem; letter-spacing: .04em; }
+
+/* ===== Sala: más aire abajo ===== */
+.lobby-step.room { padding-bottom: 46px; }
+.lobby-step.room .seat-grid { margin: 22px 0 30px; }
+.lobby-step.room .seal { margin-top: 6px; }
+.seat-card .seat-art { height: 210px; }
+
+/* ===== Elección de héroe: retrato central, opciones debajo, rivales en fila ===== */
+.lobby-heroes.v2 { display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 1280px; margin: 0 auto; padding: 16px 30px 20px; }
+.pick-center { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.portrait.pick { height: 34vh; width: calc(34vh * .75); }
+.pick-center .pick-name { margin-top: 0; font-size: 1.4em; }
+.pick-choices { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.choice-grid.row7 { grid-template-columns: repeat(7, 1fr); margin: 0; }
+.pick-bottom { width: 100%; display: flex; align-items: center; gap: 18px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.others-row { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.others-row .portrait.other { height: 20vh; width: 15vh; }
+.ready-side { flex: none; }
+@media (max-width: 900px) {
+  .choice-grid.row7 { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  .pick-bottom { flex-direction: column; }
+  .portrait.pick { height: 260px; width: 195px; }
+}
+
+/* ===== Mi héroe: más grande y algo más abajo ===== */
+@media (min-width: 1101px) and (min-height: 600px) {
+  .col-me .me-hero { padding-top: 2vh; }
+  .col-me .portrait.xl { height: 30vh; }
+  .col-me .me-name { margin-top: 0; }
+  .col-me .life { margin: 4px auto 2px; }
+  .col-me .me-sub { margin-bottom: 4px; }
+}
+
+/* ===== Sin barras de scroll ===== */
+.table3 > *, .col-stage > .card, .modal .card { scrollbar-width: none; }
+.table3 > *::-webkit-scrollbar, .col-stage > .card::-webkit-scrollbar, .modal .card::-webkit-scrollbar { display: none; }
+html, body { scrollbar-width: none; }
+body::-webkit-scrollbar { display: none; }
+
+/* ===== Entre combates: cuatro acciones ===== */
+.prep-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.prep-actions { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+.prep-buttons { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.prep-buttons .btn { min-width: 150px; font-size: 1.05rem; }
+.btn.alert { border-color: var(--rubric); color: var(--rubric-dark); }
+.badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 10px; background: var(--rubric); color: #fff; font-size: .75rem; margin-left: 4px; }
+.modal .card.prep-win { max-width: 640px; max-height: 88vh; overflow-y: auto; }
+.prep-win h3 { margin-top: 0; }
+.steal-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0; }
+.steal-item { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 92px; background: none; border: 1px solid transparent; border-radius: 14px; padding: 4px; cursor: pointer; font: .75rem var(--text); color: var(--ink); }
+.steal-item .ring { width: 54px; height: 54px; display: grid; place-items: center; }
+.steal-item .item-img { width: 54px; height: 54px; }
+.steal-item.selected { border-color: var(--gold); background: rgba(201, 163, 90, .25); }
+
+/* ===== Ajustes para que todo quepa en una pantalla ===== */
+.lobby-step.room { padding-top: 10px; padding-bottom: 3vh; }
+.room-big-code { font-size: min(3.4rem, 7vh); }
+.seat-card .seat-art { height: min(210px, 24vh); }
+.lobby-step.room .seat-grid { margin: 2vh 0 3vh; }
+.portrait.pick { height: 28vh; width: 21vh; }
+.others-row .portrait.other { height: 15vh; width: 11.25vh; }
+.lobby-heroes.v2 { gap: 1vh; padding-top: 10px; padding-bottom: 12px; }
+.lobby-heroes.v2 .seal { width: 100px; height: 100px; }
+.prep-win .modal-close { top: 6px; right: 10px; z-index: 3; font-size: 1.6rem; }
+@media (min-width: 1101px) and (min-height: 600px) {
+  .col-me .portrait.xl { height: 27vh; }
+  .col-me .tile .ring, .col-me .tile.empty .ring, .col-me .tile .ring .item-img { width: min(54px, 5.6vh); height: min(54px, 5.6vh); }
+  .col-me .tile > span:last-child { font-size: .6rem; min-height: 1.9em; line-height: 1.05; }
+  .col-me .glyphs { margin: 2px 0; }
+  .col-me .glyphs b { font-size: 1.2rem; }
+  .col-me .tiles { gap: 0 4px; }
+}

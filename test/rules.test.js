@@ -235,3 +235,29 @@ test('caer a 0 Vida: pierde consumibles y su mejor objeto', () => {
   assert.strictEqual(p.hero.inv.pociones.length, 0);
   assert.strictEqual(p.hero.caidas, 1);
 });
+
+test('robo con tirada: 1-2 roba, 3-5 pierde el Maná, uno por ronda', () => {
+  const mk = (rngVal) => {
+    const g = new Game('T', { rng: () => 0.5 });
+    const a = g.addPlayer('Ana');
+    const b = g.addPlayer('Beto');
+    for (const [pl, r] of [[a, 'humano'], [b, 'elfo']]) g.act(pl.id, 'setHero', { raza: r, clase: 'mago' });
+    for (const pl of g.players) pl.ready = true;
+    g.startGame();
+    g.phase = 'prep';
+    const it = { id: 'x1', tipo: 'pocion', efecto: 'curacion', valor: 2, nombre: 'Poción' };
+    b.hero.inv.pociones.push(it);
+    g.rng = () => rngVal;
+    g.act(a.id, 'stealRoll', { targetId: b.id, targetItemId: 'x1' });
+    return { g, a, b };
+  };
+  const ok = mk(0.1); // 1
+  assert.ok(ok.a.hero.inv.pociones.some((x) => x.id === 'x1'));
+  assert.ok(!ok.b.hero.inv.pociones.some((x) => x.id === 'x1'));
+  assert.throws(() => ok.g.act(ok.a.id, 'stealRoll', { targetId: ok.b.id, targetItemId: 'x1' }));
+  const bad = mk(0.6); // 4
+  assert.strictEqual(bad.g.availableMana(bad.a), 0);
+  assert.ok(bad.b.hero.inv.pociones.some((x) => x.id === 'x1'));
+  const nada = mk(0.95); // 6
+  assert.strictEqual(nada.g.availableMana(nada.a), nada.a.hero.base.mana);
+});

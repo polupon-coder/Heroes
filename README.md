@@ -40,7 +40,7 @@ Railway o Fly.io también sirven: es una app Node normal que escucha en la varia
 ## Cómo se juega en la web
 
 - **Sala:** el anfitrión crea la partida; los demás entran con el enlace o el código. El anfitrión puede añadir **bots** para completar los 4 jugadores y elegir si en el torneo hacen falta **4 o 5** resultados del color del rival para golpear.
-- **Entre combates:** comercio (ofertas de objetos que el otro acepta o rechaza), curación, pergaminos de robo y magia contra otros jugadores. Cuando todos pulsan **Listo**, aparecen los monstruos.
+- **Entre combates:** cuatro botones: **Listo para el combate**, **Comerciar**, **Maleficio** y **Robar** (cada uno abre su ventana). Robar: con Pergamino de Robo es seguro; sin él se tira un dado: 1-2 robas, 3-5 pierdes tu Maná en el próximo combate, 6 no pasa nada (un intento por ronda).
 - **Combate:** cada esfera da un **color** (rojo, azul, verde, amarillo; blanco = comodín, negro = nada) y una **forma** (círculo, cuadrado, rombo, triángulo; estrella = comodín, cruz = nada). Cada ronda aparecen **dos monstruos a la vez**, cada uno pide solo colores o solo formas. Lanzas hasta 3 veces conservando las esferas que quieras y, cuando completas lo que pide uno, pulsas **Derrotar**. Cada 5 de Maná da una esfera blanca con estrella ya fijada. Si no completas ninguno, pierdes contra el menos dañino.
 - **Reconexión:** si se cierra el navegador o se cae la conexión, al volver a abrir el enlace vuelves a tu partida.
 - **Torneo:** se juega en directo y todos pueden ver los duelos.

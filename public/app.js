@@ -350,7 +350,7 @@ function renderLobbyRivals(p) {
   const host = S.host === S.me;
   const link = `${location.origin}${location.pathname}?sala=${S.code}`;
   // Figuras de adorno para cada asiento (solo ilustración, no es su héroe).
-  const deco = ['humano-guerrero', 'elfo-mago', 'enano-guerrero', 'faunar-explorador'];
+  const deco = ['humano-guerrero', 'elfo-mago', 'enano-guerrero', 'faunar-guerrero'];
   const seats = [];
   for (let i = 0; i < 4; i++) {
     const x = S.players[i];
@@ -379,8 +379,7 @@ function renderLobbyRivals(p) {
     <div class="room-head">
       <div class="room-label">Sala</div>
       <div class="room-big-code">${esc(S.code)}</div>
-      <p class="center muted">Invita a tus amigos con el enlace o el código, o completa la mesa con bots.</p>
-      <div class="row center-row"><span class="share">${esc(link)}</span><button class="btn small" data-a="copy" data-text="${esc(link)}">Copiar enlace</button></div>
+      <div class="row center-row"><button class="btn" data-a="copy" data-text="${esc(link)}">Invitar</button></div>
     </div>
     <div class="seat-grid">${seats.join('')}</div>
     ${host ? `
@@ -401,42 +400,34 @@ function renderLobbyHeroes(p) {
       <div class="muted small">${x.raza ? raceName(x) : 'eligiendo…'}${x.clase ? ` · ${className(x)}` : ''}</div>
     </div>`).join('');
   return `
-  <div class="lobby-heroes">
-    <div class="card">
-      <div class="hero-pick">
-        <div class="pick-portrait">
-          ${p.raza ? portrait(p.raza, showClass, 'xl', p.color) : '<div class="portrait xl missing">Elige una raza</div>'}
-          <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
-        </div>
-        <div>
-          <h4>Raza</h4>
-          <div class="choice-grid">
-            ${Object.entries(DATA.razas).map(([k, r]) => `<button class="btn choice ${p.raza === k ? 'selected' : ''}" data-a="raza" data-k="${k}">${r.nombre}<span class="mods">${mods(r)}</span></button>`).join('')}
-          </div>
-          <h4>Clase</h4>
-          <div class="choice-grid">
-            ${Object.entries(DATA.clases).map(([k, c]) => `<button class="btn choice ${p.clase === k ? 'selected' : ''}" data-a="clase" data-k="${k}">${c.nombre}<span class="mods">${mods(c)}</span></button>`).join('')}
-          </div>
-          ${preview ? `
-            <div class="statline">
-              <span class="stat">Vida <b>${preview.vida}</b></span>
-              <span class="stat">Fuerza <b>${preview.fuerza}</b></span>
-              <span class="stat">Maná <b>${preview.mana}</b></span>
-              <span class="stat">${spheresRow(dicePreview(preview.fuerza), p.color)}</span>
-            </div>` : ''}
-          <div class="ready-row">
-            ${p.ready
-              ? '<button class="seal green" data-a="lobbyReady" data-v="0">Listo ✔</button>'
-              : `<button class="seal" data-a="lobbyReady" data-v="1" ${p.raza && p.clase ? '' : 'disabled'}>¡Listo!</button>`}
-          </div>
-          <p class="center muted small">${p.ready ? 'La partida empezará cuando todos estén listos.' : ''}</p>
-        </div>
+  <div class="lobby-heroes v2 card">
+    <div class="pick-center">
+      ${p.raza ? portrait(p.raza, showClass, 'pick', p.color) : '<div class="portrait pick missing">Elige una raza</div>'}
+      <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
+      ${preview ? `
+        <div class="statline">
+          <span class="stat">Vida <b>${preview.vida}</b></span>
+          <span class="stat">Fuerza <b>${preview.fuerza}</b></span>
+          <span class="stat">Maná <b>${preview.mana}</b></span>
+          <span class="stat">${spheresRow(dicePreview(preview.fuerza), p.color, false, Math.floor(preview.mana / 5))}</span>
+        </div>` : ''}
+    </div>
+    <div class="pick-choices">
+      <div class="choice-grid row7">
+        ${Object.entries(DATA.razas).map(([k, r]) => `<button class="btn choice ${p.raza === k ? 'selected' : ''}" data-a="raza" data-k="${k}">${r.nombre}<span class="mods">${mods(r)}</span></button>`).join('')}
+      </div>
+      <div class="choice-grid row7">
+        ${Object.entries(DATA.clases).map(([k, c]) => `<button class="btn choice ${p.clase === k ? 'selected' : ''}" data-a="clase" data-k="${k}">${c.nombre}<span class="mods">${mods(c)}</span></button>`).join('')}
       </div>
     </div>
-    <aside class="card others-pick">
-      <h3 class="center">Contrincantes</h3>
-      ${others || '<p class="muted">Aún no hay nadie más.</p>'}
-    </aside>
+    <div class="pick-bottom">
+      <div class="others-row">${others}</div>
+      <div class="ready-side">
+        ${p.ready
+          ? '<button class="seal green" data-a="lobbyReady" data-v="0">Listo ✔</button>'
+          : `<button class="seal" data-a="lobbyReady" data-v="1" ${p.raza && p.clase ? '' : 'disabled'}>¡Listo!</button>`}
+      </div>
+    </div>
   </div>`;
 }
 
@@ -483,9 +474,9 @@ function renderSheet() {
   <div class="me-hero">
     ${heroPortrait(p, 'xl')}
     <div class="me-name">${esc(p.name)}${S.phase === 'prep' && p.ready ? ' <span class="check">✔</span>' : ''}</div>
-    <div class="me-sub">${raceName(p)} · ${className(p)}</div>
     <div class="spheres-row mine" title="${nextDiceHint(h.fuerza)}">${spheresRow(h.dados, p.color, true, h.fijables)}</div>
     <div class="life"><i style="width:${pct}%"></i><span>${h.vida} / ${h.base.vida}</span></div>
+    <div class="me-sub">${raceName(p)} · ${className(p)}</div>
   </div>
   <div class="glyphs two">
     <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
@@ -606,6 +597,14 @@ function renderOutcome() {
         <p class="center"><b>${esc(who)}</b> te ha lanzado un maleficio.</p>
         <p class="center">En tu próximo combate tendrás que repetir ${n} esfera(s) acertada(s).</p>
         <div class="row center-row"><button class="btn primary" data-a="closeCurse">Entendido</button></div>
+      </div>`;
+  }
+  if (ui.stealResult) {
+    return `
+      <div class="card outcome">
+        <div class="outcome-title">${ui.stealResult.ok ? '¡Robado!' : 'Robo'}</div>
+        <p class="center">${esc(ui.stealResult.text)}</p>
+        <div class="row center-row"><button class="btn primary" data-a="closeSteal">Continuar</button></div>
       </div>`;
   }
   if (ui.outcomeAt && Date.now() < ui.outcomeAt) return '';
@@ -747,10 +746,12 @@ function playEventSounds() {
   else if (has(/Comienza el Torneo/)) Sounds.play('victoria');
   else if (texts.some((t) => /^🏅/.test(t) && t.includes(name))) Sounds.play('conquista');
   else if (mine(/^💀/)) Sounds.play('destruccion');
-  else if (mine(/^🗡/)) { Sounds.play('dados'); Sounds.play('celebracion', 600); }
+  else if (mine(/^🗡/)) Sounds.play('celebracion', 300);
   else if (mine(/^🩸/)) { Sounds.play('dados'); Sounds.play('derrota', 600); }
   const lost = texts.find((t) => /^🩸/.test(t) && t.startsWith(`🩸 ${name} no consigue`));
   if (lost) { ui.defeat = { text: lost, monster: meP.monster || ui.lastMonster, fell: mine(/^💀/) }; holdOutcome(); }
+  const stole = texts.find((t) => /^(🦝|🪤|🎲) /.test(t) && t.includes(`${name} saca`));
+  if (stole) ui.stealResult = { ok: stole.startsWith('🦝'), text: stole.replace(/^\S+ /, '') };
   const cursed = texts.find((t) => t.includes(`lanza un maleficio a ${name}:`));
   if (cursed) { ui.curseAlert = cursed; Sounds.play('fe'); }
   else if (texts.some((t) => /^💥/.test(t) && t.includes(name))) Sounds.play('batalla');
@@ -784,7 +785,7 @@ function showReveal() {
   const it = revealQueue.shift();
   box.innerHTML = `<div class="reveal-card card"><div class="reveal-title">Has conseguido</div><div class="big-item">${itemIcon(it)}</div><h2>${esc(it.nombre)}</h2><p>${itemDesc(it)}</p></div>`;
   box.classList.remove('hidden');
-  Sounds.play('construir');
+  Sounds.play('fe');
   clearTimeout(revealTimer);
   revealTimer = setTimeout(closeReveal, 3200);
 }
@@ -811,42 +812,56 @@ function renderMain() {
 function renderPrep() {
   const p = me();
   const torneo = S.round > S.rounds;
+  const incoming = S.trades.filter((t) => t.to === S.me).length;
   return `
-  <div class="card">
-    <h2>${torneo ? 'Preparación para el Torneo' : `Entre combates · Ronda ${S.round} de ${S.rounds}`}</h2>
-    <p class="muted">${torneo
-      ? 'Última oportunidad para comerciar, curarte o lanzar maleficios. Después empieza el Torneo.'
-      : 'Prepara tu equipo antes de conocer los monstruos de la próxima ronda. Puedes comerciar, curarte, robar con pergaminos o lanzar maleficios.'}</p>
-    <div class="row">
+  <div class="card prep-card">
+    <h2>${torneo ? 'Preparación para el Torneo' : `Ronda ${S.round} de ${S.rounds}`}</h2>
+    <div class="prep-actions">
       ${p.ready
-        ? '<button class="btn" data-a="ready" data-v="0">Cancelar «Listo»</button>'
-        : `<button class="btn primary" data-a="ready" data-v="1">${torneo ? '¡Listo para el Torneo!' : '¡Listo para la ronda!'}</button>`}
+        ? '<button class="seal green" data-a="ready" data-v="0">Listo ✔</button>'
+        : `<button class="seal" data-a="ready" data-v="1">${torneo ? 'Listo para<br>el Torneo' : 'Listo para<br>el combate'}</button>`}
+      <div class="prep-buttons">
+        <button class="btn ${incoming ? 'alert' : ''}" data-a="prepWin" data-w="trade">Comerciar${incoming ? ` <span class="badge">${incoming}</span>` : ''}</button>
+        <button class="btn" data-a="prepWin" data-w="curse" ${S.round <= 1 ? 'disabled title="Desde la ronda 2"' : ''}>Maleficio</button>
+        <button class="btn" data-a="prepWin" data-w="steal">Robar</button>
+      </div>
     </div>
-  </div>
-  ${ui.theft ? renderTheft() : ''}
-  ${renderMagic()}
-  ${renderTrade()}`;
+  </div>`;
+}
+
+// Ventana flotante de cada acción entre combates.
+function renderPrepWin() {
+  if (S.phase !== 'prep' || !ui.prepWin) return '';
+  const body = ui.prepWin === 'trade' ? renderTrade() : ui.prepWin === 'curse' ? renderMagic() : renderTheft();
+  return `<div class="card prep-win"><button class="modal-close" data-a="closePrep" aria-label="Cerrar" title="Cerrar">×</button>${body}</div>`;
 }
 
 function renderTheft() {
-  const target = ui.theft.targetId && byId(ui.theft.targetId);
+  const p = me();
+  const t = ui.theft || (ui.theft = { targetId: null });
+  const target = t.targetId && byId(t.targetId);
+  const scroll = [...p.hero.inv.pergaminos].find((it) => it.efecto === 'robo');
+  const picked = target && t.itemId && allItems(target.hero).find((it) => it.id === t.itemId);
   return `
-  <div class="card">
-    <h3>📜 Pergamino de Robo</h3>
-    <div class="row" style="margin-bottom:8px">
-      ${others().map((o) => `<button class="btn small ${ui.theft.targetId === o.id ? 'selected' : ''}" data-a="theftTarget" data-id="${o.id}">${chip(o.color)} ${esc(o.name)}</button>`).join('')}
-      <button class="btn small" data-a="theftCancel">Cancelar</button>
+    <h3>Robar</h3>
+    <p class="muted small center">Con un Pergamino de Robo te lo llevas seguro. Sin él, tiras un dado:
+    1-2 lo robas · 3-5 te pillan y pierdes tu Maná en el próximo combate · 6 no pasa nada.</p>
+    <div class="row">${others().map((o) => `<button class="btn small ${t.targetId === o.id ? 'selected' : ''}" data-a="theftTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
+    ${target ? (allItems(target.hero).length ? `<div class="steal-items">${allItems(target.hero).map((it) => `
+      <button class="steal-item ${t.itemId === it.id ? 'selected' : ''}" data-a="theftItem" data-id="${it.id}">
+        <span class="ring">${itemIcon(it)}</span><span>${esc(it.nombre)}</span></button>`).join('')}</div>`
+      : '<p class="muted center">No tiene objetos.</p>') : '<p class="muted center">Elige a quién robar.</p>'}
+    <div class="row">
+      ${scroll ? `<button class="btn primary" data-a="steal" data-mode="scroll" ${picked ? '' : 'disabled'}>Usar ${esc(scroll.nombre)}</button>` : ''}
+      <button class="btn ${scroll ? '' : 'primary'}" data-a="steal" data-mode="roll" ${picked && !p.stoleThisRound ? '' : 'disabled'}>Tirar el dado</button>
     </div>
-    ${target ? (allItems(target.hero).length ? allItems(target.hero).map((it) => `
-      <div class="slot"><span class="n">${itemIcon(it)} ${esc(it.nombre)} <span class="muted small">${itemDesc(it)}</span></span>
-      <button class="btn tiny primary" data-a="steal" data-id="${it.id}">Robar</button></div>`).join('') : '<p class="muted">No tiene objetos.</p>') : '<p class="muted">Elige a quién robar.</p>'}
-  </div>`;
+    ${p.stoleThisRound ? '<p class="muted small center">Ya has intentado robar con el dado esta ronda.</p>' : ''}`;
 }
 
 function renderMagic() {
   const p = me();
   const h = p.hero;
-  if (S.round <= 1) return '';
+  if (S.round <= 1) return '<h3>Maleficio</h3><p class="muted center">Podrás lanzar maleficios desde la ronda 2.</p>';
   const avail = h.manaDisponible;
   const amounts = [];
   for (let a = 5; a <= avail; a += 5) amounts.push(a);
@@ -854,15 +869,12 @@ function renderMagic() {
   const targets = others().filter((o) => !o.cursedThisRound);
   if (ui.curse.target && !targets.some((o) => o.id === ui.curse.target)) ui.curse.target = null;
   return `
-  <div class="card">
-    <h3>Maleficios</h3>
-    <p class="muted small center">Cada 5 de Maná obliga a un rival a repetir una esfera acertada en su próximo combate. Ese Maná no lo tendrás en tu próximo combate. Cada héroe solo puede recibir un maleficio por ronda.</p>
+    <h3>Maleficio</h3>
     ${amounts.length && targets.length ? `
       <div class="row">${targets.map((o) => `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
       <div class="row">${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} Maná</button>`).join('')}</div>
       <div class="row"><button class="btn primary" data-a="curse" ${ui.curse.target ? '' : 'disabled'}>Lanzar maleficio</button></div>`
-    : `<p class="muted small center">${amounts.length ? 'Todos los rivales ya han recibido un maleficio esta ronda.' : 'Necesitas al menos 5 de Maná disponible.'}</p>`}
-  </div>`;
+    : `<p class="muted small center">${amounts.length ? 'Todos los rivales ya han recibido un maleficio esta ronda.' : 'Necesitas al menos 5 de Maná disponible.'}</p>`}`;
 }
 
 function renderTrade() {
@@ -877,8 +889,7 @@ function renderTrade() {
     return `<div class="list-select">${items.map((it) => `<label><input type="checkbox" data-a="tradePick" data-kind="${kind}" data-id="${it.id}" ${set.has(it.id) ? 'checked' : ''}> ${itemIcon(it)} ${esc(it.nombre)}</label>`).join('')}</div>`;
   };
   return `
-  <div class="card">
-    <h3>Comercio</h3>
+    <h3>Comerciar</h3>
     ${p.tradedThisRound ? '<p class="muted small center">Ya has comerciado esta ronda.</p>' : ''}
     ${incoming.map((t) => { const from = byId(t.from); return `
       <div class="match" style="margin-bottom:8px">
@@ -897,8 +908,7 @@ function renderTrade() {
         <div><h4>Das</h4>${pickList(p, ui.trade.give, 'give')}</div>
         <div><h4>Pides a ${esc(target.name)}</h4>${pickList(target, ui.trade.want, 'want')}</div>
       </div>
-      <button class="btn small primary" style="margin-top:8px" data-a="tradeSend" ${ui.trade.give.size || ui.trade.want.size ? '' : 'disabled'}>Enviar oferta</button>` : ''}
-  </div>`;
+      <button class="btn small primary" style="margin-top:8px" data-a="tradeSend" ${ui.trade.give.size || ui.trade.want.size ? '' : 'disabled'}>Enviar oferta</button>` : ''}`;
 }
 
 function renderRound() {
@@ -973,7 +983,7 @@ function renderCombat(p, controllable) {
     controls = `
       ${cb.rolls > 0 && left > 0 ? `<div class="muted small center">${monster ? 'Las esferas que te sirven ya están marcadas. Puedes ir a por cualquiera de los dos monstruos.' : 'Las esferas que te sirven ya están marcadas. Toca para cambiar cuáles conservas.'}</div>` : ''}
       <div class="row">
-        ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Lanzar esferas</button>' : ''}
+        ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
         ${cb.rolls > 0 && left > 0 ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
@@ -1109,24 +1119,34 @@ function renderRewardsView(p) {
 }
 
 function renderModal() {
-  const p = S && me();
   const modal = $('modal');
-  if (ui.rules) { modal.classList.remove('hidden'); modal.innerHTML = renderRules(); return; }
+  const before = modal.innerHTML;
+  const hidden = modal.classList.contains('hidden');
+  const html = modalHtml();
+  if (html) {
+    if (html !== ui.lastModal || hidden) modal.innerHTML = html;
+    modal.classList.remove('hidden');
+  } else { modal.classList.add('hidden'); if (before) modal.innerHTML = ''; }
+  ui.lastModal = html;
+}
+
+function modalHtml() {
+  const p = S && me();
+  if (ui.rules) return renderRules();
   if (ui.rewardsView != null) {
     const v = renderRewardsView(p);
-    if (v) { modal.classList.remove('hidden'); modal.innerHTML = v; return; }
+    if (v) return v;
   }
   const pend = p && p.hero && p.hero.pending && p.hero.pending[0];
   if (!pend || !pend.item) {
     if (S && !ui.seenMatches) ui.seenMatches = new Set((S.tournament ? S.tournament.matches : []).filter((x) => x.winner).map((x) => x.id));
     const o = S && renderOutcome();
-    if (o) { modal.classList.remove('hidden'); modal.innerHTML = o; return; }
-    const d = renderItemDetail();
-    if (d) { modal.classList.remove('hidden'); modal.innerHTML = d; } else { modal.classList.add('hidden'); modal.innerHTML = ''; }
-    return;
+    if (o) return o;
+    const pw = S && renderPrepWin();
+    if (pw) return pw;
+    return renderItemDetail() || '';
   }
-  modal.classList.remove('hidden');
-  modal.innerHTML = `
+  return `
     <div class="card">
       <div class="big-item center">${itemIcon(pend.item)}</div>
       <h2>${esc(pend.item.nombre)}</h2>
@@ -1165,18 +1185,26 @@ document.addEventListener('click', (e) => {
       break;
     case 'use':
       ui.detail = null;
-      if (d.efecto === 'robo') { ui.theft = { itemId: d.id, targetId: null }; render(); }
+      if (d.efecto === 'robo') { ui.theft = { targetId: null }; ui.prepWin = 'steal'; render(); }
       else { act('useItem', { itemId: d.id }); renderModal(); }
       break;
-    case 'theftTarget': ui.theft.targetId = d.id; render(); break;
-    case 'theftCancel': ui.theft = null; render(); break;
-    case 'steal':
-      act('useItem', { itemId: ui.theft.itemId, targetId: ui.theft.targetId, targetItemId: d.id });
-      ui.theft = null;
+    case 'theftTarget': ui.theft = { targetId: d.id }; render(); break;
+    case 'theftItem': ui.theft.itemId = d.id; render(); break;
+    case 'steal': {
+      const t = ui.theft;
+      if (d.mode === 'scroll') {
+        const sc = me().hero.inv.pergaminos.find((it) => it.efecto === 'robo');
+        if (sc) act('useItem', { itemId: sc.id, targetId: t.targetId, targetItemId: t.itemId });
+      } else { Sounds.play('dados'); act('stealRoll', { targetId: t.targetId, targetItemId: t.itemId }); }
+      ui.theft = null; ui.prepWin = null; render();
       break;
+    }
+    case 'prepWin': ui.prepWin = d.w; render(); break;
+    case 'closePrep': ui.prepWin = null; ui.theft = null; render(); break;
+    case 'closeSteal': ui.stealResult = null; renderModal(); break;
     case 'curseTarget': ui.curse.target = d.id; render(); break;
     case 'curseAmount': ui.curse.amount = Number(d.n); render(); break;
-    case 'curse': act('curse', { targetId: ui.curse.target, amount: ui.curse.amount }); break;
+    case 'curse': act('curse', { targetId: ui.curse.target, amount: ui.curse.amount }); ui.prepWin = null; render(); break;
     case 'tradeTo': ui.trade = { to: d.id, give: new Set(), want: new Set() }; render(); break;
     case 'tradePick': {
       const set = d.kind === 'give' ? ui.trade.give : ui.trade.want;
@@ -1185,6 +1213,7 @@ document.addEventListener('click', (e) => {
       break;
     }
     case 'tradeSend':
+      ui.prepWin = null;
       act('proposeTrade', { toId: ui.trade.to, give: [...ui.trade.give], want: [...ui.trade.want] });
       ui.trade = { to: null, give: new Set(), want: new Set() };
       break;

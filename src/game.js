@@ -205,6 +205,7 @@ class Game {
       // Un maleficio recibido y un comercio por jugador en cada ronda.
       p.cursedThisRound = false;
       p.tradedThisRound = false;
+      p.stoleThisRound = false;
       p.ready = false;
       p.stage = null;
       p.offers = null;
@@ -693,6 +694,7 @@ class Game {
         ready: p.ready,
         cursedThisRound: !!p.cursedThisRound,
         tradedThisRound: !!p.tradedThisRound,
+        stoleThisRound: !!p.stoleThisRound,
         stage: p.stage,
         offers: p.offers,
         monster: p.monster,
@@ -875,6 +877,29 @@ const ACTIONS = {
     t.hero.curses += n;
     t.cursedThisRound = true;
     this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${t.name}: repetirá ${n} dado(s) exitoso(s).`);
+  },
+  // Robo sin pergamino: tirada de 1d6. 1-2 roba el objeto, 3-5 pierde su Maná
+  // en el próximo combate, 6 no pasa nada. Un intento por ronda.
+  stealRoll(p, { targetId, targetItemId }) {
+    requirePrep(this);
+    if (p.stoleThisRound) fail('Ya has intentado robar esta ronda');
+    const t = this.player(targetId);
+    if (t === p) fail('No puedes robarte a ti mismo');
+    const it = I.findItem(t.hero.inv, targetItemId);
+    if (!it) fail('Ese objeto ya no existe');
+    p.stoleThisRound = true;
+    const d = 1 + Math.floor(this.rng() * 6);
+    if (d <= 2) {
+      I.removeItem(t.hero.inv, it.id);
+      this.trades = this.trades.filter((x) => x.status !== 'pendiente' || ![x.from, x.to].includes(t.id));
+      this.say(`🦝 ${p.name} saca un ${d} y roba ${it.nombre} a ${t.name}.`);
+      this.receiveItem(p, it, 'robo');
+    } else if (d <= 5) {
+      p.hero.manaDebt = p.hero.base.mana;
+      this.say(`🪤 ${p.name} saca un ${d} intentando robar a ${t.name}: le pillan y pierde su Maná en el próximo combate.`);
+    } else {
+      this.say(`🎲 ${p.name} saca un 6 intentando robar a ${t.name}: no pasa nada.`);
+    }
   },
   discard(p, { itemId }) {
     if (this.phase !== 'prep' && this.phase !== 'combat') fail('Ahora no puedes descartar objetos');

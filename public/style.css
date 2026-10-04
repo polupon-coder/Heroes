@@ -1059,3 +1059,4 @@ body::-webkit-scrollbar { display: none; }
   .combat .controls { gap: 6px; margin-top: 8px; }
 }
 @media (min-width: 1101px) and (min-height: 600px) { .combat .dice-zone { margin-top: 1.4vh; } }
+.home-credit { margin-top: -3.5vh; position: relative; }

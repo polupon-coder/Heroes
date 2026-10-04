@@ -14,21 +14,14 @@
   <header class="topbar">
     <div class="brand">Héroes</div>
     <div id="status" class="status"></div>
-    <div id="roomInfo" class="room-info"></div>
+    <button id="rulesBtn" class="rules-btn">Reglas</button>
+    <button id="soundBtn" class="sound-btn" title="Silenciar sonidos" aria-label="Silenciar sonidos"></button>
+    <span id="roomInfo" class="room-code"></span>
   </header>
 
   <main id="home" class="screen hidden">
     <section class="card home-card">
       <img class="home-logo" src="img/logo.webp" alt="HÉROES">
-      <div class="home-art">
-        <img src="img/heroes/humano-guerrero.webp" alt="">
-        <img src="img/heroes/elfo-guerrero.webp" alt="">
-        <img src="img/heroes/gnomo-mago.webp" alt="">
-        <img src="img/heroes/enano-guerrero.webp" alt="">
-        <img src="img/heroes/durgan-barbaro.webp" alt="">
-        <img src="img/heroes/faunar-explorador.webp" alt="">
-        <img src="img/heroes/silvano-druida.webp" alt="">
-      </div>
       <p class="sub">Aventura y torneo para 4 héroes. Juega con tus amigos por internet.</p>
       <label>Tu nombre
         <input id="nameInput" maxlength="20" placeholder="Nombre del jugador">
@@ -70,6 +63,7 @@
   <div id="toast" class="toast hidden"></div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="sounds.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

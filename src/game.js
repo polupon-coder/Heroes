@@ -823,11 +823,23 @@ const ACTIONS = {
     if (this.phase !== 'combat' || p.stage !== 'elegir') fail('No es momento de elegir monstruo');
     const m = p.offers[Number(index)];
     if (!m) fail('Monstruo no válido');
+    if (m.combo.length > this.diceCount(p)) {
+      fail(`Necesitas ${m.combo.length} esferas y solo tienes ${this.diceCount(p)}`);
+    }
     p.monster = m;
     p.offers = null;
     p.stage = 'combate';
     this.newCombat(p, { kind: 'monstruo', combo: m.combo, label: `${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level})` });
     this.say(`${p.name} se enfrenta a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`);
+  },
+  // Si ningún monstruo de la ronda es asequible, el héroe pasa sin combatir.
+  skipRound(p) {
+    if (this.phase !== 'combat' || p.stage !== 'elegir') fail('No es momento de pasar');
+    if (p.offers.some((m) => m.combo.length <= this.diceCount(p))) fail('Puedes enfrentarte a alguno de los monstruos');
+    p.offers = null;
+    p.stage = 'hecho';
+    this.say(`${p.name} no tiene esferas suficientes para ningún monstruo y pasa la ronda.`);
+    this.checkRoundDone();
   },
   roll(p, { hold }) {
     this.roll(p, hold);

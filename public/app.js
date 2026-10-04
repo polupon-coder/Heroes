@@ -16,6 +16,8 @@ const ui = {
   trade: { to: null, give: new Set(), want: new Set() },
   theft: null,
   detail: null,
+  rules: false,
+  rulesTab: 'heroe',
   curse: { target: null, amount: 5 },
 };
 
@@ -176,6 +178,7 @@ function showHome() {
   $('home').classList.remove('hidden');
   $('app').classList.add('hidden');
   $('roomInfo').innerHTML = '';
+  Sounds.setMusic(true);
   $('status').textContent = '';
   const params = new URLSearchParams(location.search);
   if (params.get('sala')) $('codeInput').value = params.get('sala').toUpperCase();
@@ -218,9 +221,13 @@ $('chatForm').onsubmit = (e) => {
 
 function render() {
   if (!S) return;
+  const mp = me();
+  if (mp && mp.monster) ui.lastMonster = mp.monster;
   $('home').classList.add('hidden');
   $('app').classList.remove('hidden');
-  $('roomInfo').innerHTML = `Sala <code>${esc(S.code)}</code>`;
+  $('roomInfo').innerHTML = `<span class="room-name">Sala ${esc(S.code)}</span><button class="exit-btn" data-a="exit" title="Salir de la sala" aria-label="Salir de la sala">×</button>`;
+  Sounds.setMusic(S.phase === 'lobby');
+  playEventSounds();
   $('status').textContent = statusText();
 
   if (S.phase === 'lobby') {
@@ -355,10 +362,15 @@ function dicePreview(f) {
 function nextDiceHint(f) {
   const steps = [6, 11, 16, 21];
   const n = steps.find((s) => s > f);
-  return n ? `${n - f} más para el siguiente dado` : 'máximo de dados';
+  return n ? `${n - f} de Fuerza más para otra esfera` : 'máximo de esferas';
 }
 
 // ---------- Hoja del héroe
+
+// Las esferas disponibles se muestran como esferas, no como un número de dados.
+function spheresRow(n, color, big = false) {
+  return Array.from({ length: n }, () => `<span class="sphere ${big ? 'big' : ''} ${color}"></span>`).join('');
+}
 
 function itemTile(it, label) {
   if (!it) return `<div class="tile empty"><span>${label}</span></div>`;
@@ -383,13 +395,16 @@ function renderSheet() {
     <div class="me-sub">${raceName(p)} · ${className(p)}</div>
     <div class="life"><i style="width:${pct}%"></i><span>❤ ${h.vida} / ${h.base.vida}</span></div>
   </div>
+  <div class="spheres-have" title="${nextDiceHint(h.fuerza)}">
+    <div class="spheres-row">${spheresRow(h.dados, p.color, true)}</div>
+    <span>${h.dados} esferas disponibles</span>
+  </div>
   <div class="glyphs">
     <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
-    <div title="Dados que lanzas"><b>${h.dados}</b><span>Dados</span></div>
     <div title="Maná${h.manaDisponible !== h.mana ? ' (parte gastada en magia)' : ''}"><b>${h.manaDisponible}</b><span>Maná</span></div>
     <div title="Dados que puedes fijar con el Maná"><b>${h.fijables}</b><span>Fijables</span></div>
   </div>
-  ${h.curses ? `<p class="warn">☠ Maldito: repetirás ${h.curses} dado(s) exitoso(s) en tu próximo combate.</p>` : ''}
+  ${h.curses ? `<p class="warn">☠ Maldito: repetirás ${h.curses} esfera(s) acertada(s) en tu próximo combate.</p>` : ''}
   <div class="tiles">
     ${itemTile(inv.yelmo, 'Yelmo')}${itemTile(inv.armadura, 'Armadura')}${itemTile(inv.botas, 'Botas')}${handTiles.join('')}
   </div>
@@ -401,6 +416,7 @@ function renderSheet() {
 
 // Detalle de un objeto (al tocarlo en tu hoja).
 function renderItemDetail() {
+  if (!S) return '';
   const p = me();
   const it = ui.detail && p && p.hero && allItems(p.hero).find((x) => x.id === ui.detail);
   if (!it) { ui.detail = null; return ''; }
@@ -469,12 +485,143 @@ function renderArena() {
         ${heroPortrait(p, 'arena')}
         <div class="nm">${chip(p.color)} ${esc(p.name)}${p.bot ? ' <small>(bot)</small>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
         <div class="life thin"><i style="width:${pct}%"></i></div>
+        <div class="spheres-row tiny">${spheresRow(h.dados, p.color)}</div>
       </div>
       <div class="vs-slot ${o.res || ''}">
         ${o.art ? `<span class="vs">${o.turn ? '⚔' : 'vs'}</span>${o.art}<div class="foe-name">${esc(o.name)}</div>${dice}` : `<div class="state">${o.txt || ''}</div>`}
       </div>
     </div>`;
   }).join('');
+}
+
+// ---------- Ventana flotante de victoria o derrota
+
+function renderOutcome() {
+  const p = me();
+  if (!p || !p.hero) return '';
+  // Victoria contra un monstruo: aquí se elige la recompensa.
+  if (S.phase === 'combat' && p.stage === 'recompensa' && p.rewards) {
+    return `
+      <div class="card outcome win">
+        <div class="outcome-title">¡Victoria!</div>
+        ${monsterArt(p.monster, 'outcome-art')}
+        <p class="center">Has derrotado a ${esc(p.monster.nombre)} ${esc((p.monster.tamano || '').toLowerCase())}. Elige tu recompensa:</p>
+        <div class="reward-pick">${p.rewards.map((it, i) => `
+          <button class="reward-choice" data-a="reward" data-i="${i}">
+            <span class="big-item">${itemIcon(it)}</span>
+            <b>${esc(it.nombre)}</b><small>${itemDesc(it)}</small>
+          </button>`).join('')}</div>
+      </div>`;
+  }
+  // Derrota contra un monstruo (se guarda hasta pulsar Continuar).
+  if (ui.defeat) {
+    const m = ui.defeat.monster;
+    return `
+      <div class="card outcome lose">
+        <div class="outcome-title">Derrota</div>
+        ${m ? monsterArt(m, 'outcome-art') : ''}
+        <p class="center">${esc(ui.defeat.text.replace(/^🩸 /, ''))}</p>
+        ${ui.defeat.fell ? '<p class="center warn">Has caído a 0 Vida: pierdes tus consumibles y tu mejor objeto, y recuperas la Vida inicial.</p>' : ''}
+        <div class="row center-row"><button class="btn primary" data-a="closeDefeat">Continuar</button></div>
+      </div>`;
+  }
+  // Fin de un duelo del torneo en el que participas.
+  if (S.tournament) {
+    const m = [...S.tournament.matches].reverse().find((x) => x.winner && (x.a === p.id || x.b === p.id));
+    if (m && ui.seenOutcome !== `t${m.id}` && ui.seenMatches && !ui.seenMatches.has(m.id)) {
+      const won = m.winner === p.id;
+      const rival = byId(m.a === p.id ? m.b : m.a);
+      return `
+        <div class="card outcome ${won ? 'win' : 'lose'}">
+          <div class="outcome-title">${won ? '¡Victoria!' : 'Derrota'}</div>
+          ${portrait(rival.raza, rival.clase, 'outcome-art', rival.color)}
+          <p class="center">${won ? `Has vencido a ${esc(rival.name)} en la ${esc(m.label)}.` : `${esc(rival.name)} te ha vencido en la ${esc(m.label)}.`}</p>
+          <div class="row center-row"><button class="btn primary" data-a="seenOutcome" data-k="t${m.id}" data-m="${m.id}">Continuar</button></div>
+        </div>`;
+    }
+  }
+  return '';
+}
+
+// ---------- Reglas (como en Imperio)
+
+const RULES = {
+  heroe: ['El héroe', `
+    <p>Cada jugador controla un héroe formado por una <b>Raza</b> y una <b>Clase</b>, y tiene un color propio.</p>
+    <p><b>Vida</b>: resistencia; no se recupera sola, solo con objetos. <b>Fuerza</b>: decide cuántas esferas lanzas
+    (1–5: 1 · 6–10: 2 · 11–15: 3 · 16–20: 4 · 21+: 5). Todos empiezan con Fuerza 10 como mínimo.
+    <b>Maná</b>: una vez por combate fijas el color de tantas esferas como permita (5–9: 1 · 10–14: 2 · 15–19: 3…).</p>
+    <p>Equipo: yelmo, armadura, botas y dos manos (un arma a dos manos ocupa ambas). Hasta 3 pociones y 3 pergaminos.</p>`],
+  aventura: ['Aventura', `
+    <p>La Fase 1 dura <b>12 rondas</b>. En cada una aparecen 2 monstruos y eliges uno.
+    Solo puedes enfrentarte a monstruos que no pidan más esferas de las que tienes; si ninguno es posible, pasas la ronda.</p>
+    <p>Los monstruos salen en tres tamaños: pequeño, mediano (★★) y grande (★★★). Cuanto más grandes, más difíciles,
+    más daño hacen y mejores recompensas dan.</p>
+    <p>Si ganas, eliges 1 de 2 recompensas. Si pierdes, pierdes Vida. Si caes a 0, pierdes tus consumibles y tu mejor objeto
+    y recuperas la Vida inicial.</p>
+    <p>Entre combates puedes comerciar, curarte, robar con pergaminos y lanzar magia: cada 5 de Maná obliga a un rival a
+    repetir una esfera acertada en su próximo combate.</p>`],
+  combate: ['Combate', `
+    <p>Necesitas reunir los colores que pide el monstruo. Lanzas tus esferas, conservas las que quieras y relanzas el resto:
+    <b>3 tiradas</b> como máximo.</p>
+    <p>La esfera <b>blanca</b> es comodín (vale cualquier color). La <b>negra</b> no sirve.</p>
+    <p>Una vez por combate puedes usar el Maná para fijar el color de algunas esferas. Las pociones de Maná lo aumentan durante el combate.</p>`],
+  torneo: ['Torneo', `
+    <p>Tras la ronda 12 empieza el torneo. El héroe con más Fuerza + Maná elige rival para su semifinal; los otros dos se enfrentan entre sí.
+    Los ganadores juegan la final. Nadie recupera Vida.</p>
+    <p>Para golpear hay que sacar esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Ataca primero el más débil y se alterna
+    hasta que uno llega a 0 Vida. Quien gana la final, gana la partida.</p>`],
+};
+
+function renderRules() {
+  const tabs = Object.entries(RULES).map(([k, [t]]) => `<button class="btn small ${ui.rulesTab === k ? 'selected' : ''}" data-a="rulesTab" data-t="${k}">${t}</button>`).join('');
+  return `
+    <div class="card rules">
+      <button class="modal-close" data-a="closeRules" aria-label="Cerrar" title="Cerrar">×</button>
+      <h2 class="center">Reglas de Héroes</h2>
+      <div class="row center-row rules-tabs">${tabs}</div>
+      <div class="rules-body">${RULES[ui.rulesTab][1]}</div>
+    </div>`;
+}
+$('rulesBtn').onclick = () => { ui.rules = true; renderModal(); };
+function paintSound() {
+  const m = Sounds.isMuted();
+  $('soundBtn').innerHTML = speakerIcon(m);
+  $('soundBtn').title = m ? 'Activar sonidos' : 'Silenciar sonidos';
+}
+$('soundBtn').onclick = () => { Sounds.toggle(); paintSound(); };
+paintSound();
+
+// ---------- Sonidos según lo que pasa en la partida
+
+let lastLogN = null;
+let lastMyTurn = false;
+function playEventSounds() {
+  const meP = me();
+  const lastN = S.log.length ? S.log[S.log.length - 1].n : 0;
+  const myTurn = isMyTurnCombat() && S.phase === 'torneo';
+  if (lastLogN === null) { lastLogN = lastN; lastMyTurn = myTurn; return; }
+  const texts = S.log.filter((l) => l.n > lastLogN).map((l) => l.text);
+  lastLogN = lastN;
+  if (!meP) return;
+  const name = meP.name;
+  const has = (re) => texts.some((t) => re.test(t));
+  const mine = (re) => texts.some((t) => re.test(t) && t.includes(name));
+  if (has(/GANA LA PARTIDA/)) Sounds.play('victoria');
+  else if (has(/Comienza el Torneo/)) Sounds.play('victoria');
+  else if (texts.some((t) => /^🏅/.test(t) && t.includes(name))) Sounds.play('conquista');
+  else if (mine(/^💀/)) Sounds.play('destruccion');
+  else if (mine(/^🗡/)) { Sounds.play('dados'); Sounds.play('celebracion', 600); }
+  else if (mine(/^🩸/)) { Sounds.play('dados'); Sounds.play('derrota', 600); }
+  const lost = texts.find((t) => /^🩸/.test(t) && t.includes(`${name} es derrotado`));
+  if (lost) ui.defeat = { text: lost, monster: ui.lastMonster, fell: mine(/^💀/) };
+  else if (texts.some((t) => /^💥/.test(t) && t.includes(name))) Sounds.play('batalla');
+  else if (texts.some((t) => /^🔮/.test(t) && t.includes(name))) Sounds.play('fe');
+  else if (texts.some((t) => t.startsWith(`${name} se enfrenta a`))) Sounds.play('batalla');
+  else if (has(/^— Ronda/)) Sounds.play('turno');
+  else if (texts.some((t) => /intercambio/.test(t) && t.includes(name))) Sounds.play('ficha');
+  if (myTurn && !lastMyTurn) Sounds.play('turno', 300);
+  lastMyTurn = myTurn;
 }
 
 // ---------- Objetos nuevos: se muestran en grande
@@ -499,6 +646,7 @@ function showReveal() {
   const it = revealQueue.shift();
   box.innerHTML = `<div class="reveal-card"><div class="reveal-glow"></div><div class="big-item">${itemIcon(it)}</div><div class="reveal-title">¡Has conseguido!</div><h2>${esc(it.nombre)}</h2><p>${itemDesc(it)}</p></div>`;
   box.classList.remove('hidden');
+  Sounds.play('construir');
   clearTimeout(revealTimer);
   revealTimer = setTimeout(closeReveal, 3200);
 }
@@ -570,13 +718,13 @@ function renderMagic() {
   return `
   <div class="card">
     <h3>🔮 Magia contra otro héroe</h3>
-    <p class="muted small">Cada 5 de Maná obliga al objetivo a repetir 1 dado exitoso en su próximo combate. Ese Maná quedará gastado para tu próximo combate.</p>
+    <p class="muted small">Cada 5 de Maná obliga al objetivo a repetir 1 esfera acertada en su próximo combate. Ese Maná quedará gastado para tu próximo combate.</p>
     ${amounts.length ? `
       <div class="row" style="margin-bottom:8px">
         ${others().map((o) => `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${chip(o.color)} ${esc(o.name)}</button>`).join('')}
       </div>
       <div class="row">
-        ${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} Maná (${a / 5} dado${a > 5 ? 's' : ''})</button>`).join('')}
+        ${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} Maná (${a / 5} esfera${a > 5 ? 's' : ''})</button>`).join('')}
         <button class="btn small primary" data-a="curse" ${ui.curse.target ? '' : 'disabled'}>Lanzar maldición</button>
       </div>` : '<p class="muted small">Necesitas al menos 5 de Maná disponible.</p>'}
   </div>`;
@@ -624,8 +772,9 @@ function renderRound() {
     body = `
     <div class="card">
       <h2>Ronda ${S.round}: elige tu monstruo</h2>
-      <p class="muted small">Tienes ${p.hero.dados} dado(s) y puedes fijar ${p.hero.fijables} con el Maná.</p>
+      <p class="muted small">Tienes ${p.hero.dados} esferas ${spheresRow(p.hero.dados, p.color)} y puedes fijar ${p.hero.fijables} con el Maná.</p>
       <div class="offers">${p.offers.map((m, i) => monsterCard(m, i, p)).join('')}</div>
+      ${p.offers.every((m) => m.combo.length > p.hero.dados) ? `<p class="center">Ningún monstruo está a tu alcance esta ronda.</p><div class="row center-row"><button class="btn primary" data-a="skip">Pasar la ronda</button></div>` : ''}
     </div>`;
   } else if (p.stage === 'combate') {
     body = `<div class="card">${renderCombat(p, true)}</div>`;
@@ -633,10 +782,6 @@ function renderRound() {
     body = `
     <div class="card">
       ${renderCombat(p, false)}
-      <h2 style="margin-top:14px">🎁 Elige tu recompensa</h2>
-      <div class="offers">${p.rewards.map((it, i) => `
-        <div class="monster"><div class="name" style="font-size:1.1em">${itemIcon(it)} ${esc(it.nombre)}</div><div class="muted">${itemDesc(it)}</div>
-        <button class="btn primary" data-a="reward" data-i="${i}">Elegir</button></div>`).join('')}</div>
     </div>`;
   } else {
     body = `
@@ -657,10 +802,10 @@ function monsterCard(m, i, p) {
     <div class="name">${esc(m.nombre)}</div>
     ${m.variante > 1 ? `<div class="size-tag">${'★'.repeat(m.variante)} Más difícil, mejores recompensas</div>` : ''}
     ${comboHtml(m.combo, false)}
-    ${tooHard ? `<div class="warn">⚠ Necesitas ${m.combo.length} dados y solo tienes ${p.hero.dados}: no puedes ganar.</div>` : ''}
+    ${tooHard ? `<div class="warn">Necesitas ${m.combo.length} esferas y solo tienes ${p.hero.dados}.</div>` : ''}
     <h4 style="margin:6px 0 0">Recompensas posibles (elegirás 1)</h4>
     ${m.rewards.map((it) => `<div class="reward"><span class="item-ico">${itemIcon(it)}</span><span>${esc(it.nombre)}<div class="muted small">${itemDesc(it)}</div></span></div>`).join('')}
-    <button class="btn primary" data-a="monster" data-i="${i}">Luchar</button>
+    <button class="btn primary" data-a="monster" data-i="${i}" ${tooHard ? 'disabled' : ''}>${tooHard ? 'Demasiado poderoso' : 'Luchar'}</button>
   </div>`;
 }
 
@@ -707,7 +852,7 @@ function renderCombat(p, controllable) {
   if (controllable && cb.status === 'activo') {
     if (ui.manaMode) {
       controls = `
-        <div class="muted small">Toca un dado y elige su resultado. Puedes fijar hasta ${fijables} dado(s). (${ui.manaPick.size}/${fijables})</div>
+        <div class="muted small">Toca una esfera y elige su color. Puedes fijar hasta ${fijables}. (${ui.manaPick.size}/${fijables})</div>
         ${ui.manaSel !== null ? `<div class="palette">${FACES.map((f) => die(f, { attrs: `data-a="pick" data-f="${f}"` })).join('')}</div>` : ''}
         <div class="row">
           <button class="btn primary" data-a="manaOk" ${ui.manaPick.size ? '' : 'disabled'}>Confirmar Maná</button>
@@ -717,10 +862,10 @@ function renderCombat(p, controllable) {
       const left = 3 - cb.rolls;
       const rerollN = cb.dice.filter((d, i) => !d.fixed && !ui.held.has(i)).length;
       controls = `
-        ${cb.rolls > 0 && left > 0 ? '<div class="muted small">Toca los dados que quieres conservar y relanza el resto.</div>' : ''}
+        ${cb.rolls > 0 && left > 0 ? '<div class="muted small">Toca las esferas que quieres conservar y relanza el resto.</div>' : ''}
         <div class="row">
-          ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">🎲 Tirar dados</button>' : ''}
-          ${cb.rolls > 0 && left > 0 ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>🎲 Relanzar ${rerollN} dado(s)</button>` : ''}
+          ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Lanzar esferas</button>' : ''}
+          ${cb.rolls > 0 && left > 0 ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
           ${cb.rolls > 0 && !cb.manaUsed && fijables > 0 ? `<button class="btn" data-a="manaMode">✨ Usar Maná (fijar ${fijables})</button>` : ''}
           ${cb.rolls > 0 && cb.kind === 'duelo' ? `<button class="btn ${cb.rolls >= 3 ? 'danger' : 'small'}" data-a="endAttack">Terminar ataque (${duelDamage(cb, faces)} de daño)</button>` : ''}
           ${cb.rolls > 0 && cb.kind !== 'duelo' ? `<button class="btn ${cb.rolls >= 3 ? 'danger' : 'small'}" data-a="concede">${cb.rolls >= 3 ? 'Aceptar derrota' : 'Rendirse'}</button>` : ''}
@@ -728,7 +873,7 @@ function renderCombat(p, controllable) {
     }
   }
 
-  const holder = mine ? 'Tus dados' : `Dados de ${esc(p.name)}`;
+  const holder = mine ? 'Tus esferas' : `Esferas de ${esc(p.name)}`;
   let foe = '';
   let foeName = '';
   if (cb.kind === 'monstruo' && p.monster) { foe = monsterArt(p.monster, 'duel-art'); foeName = `${p.monster.nombre} · ${p.monster.tamano || ''}`; }
@@ -822,10 +967,14 @@ function renderTournamentHistory() {
 // ---------- Modal de objeto pendiente
 
 function renderModal() {
-  const p = me();
+  const p = S && me();
   const modal = $('modal');
+  if (ui.rules) { modal.classList.remove('hidden'); modal.innerHTML = renderRules(); return; }
   const pend = p && p.hero && p.hero.pending && p.hero.pending[0];
   if (!pend || !pend.item) {
+    if (S && !ui.seenMatches) ui.seenMatches = new Set((S.tournament ? S.tournament.matches : []).filter((x) => x.winner).map((x) => x.id));
+    const o = S && renderOutcome();
+    if (o) { modal.classList.remove('hidden'); modal.innerHTML = o; return; }
     const d = renderItemDetail();
     if (d) { modal.classList.remove('hidden'); modal.innerHTML = d; } else { modal.classList.add('hidden'); modal.innerHTML = ''; }
     return;
@@ -890,6 +1039,7 @@ document.addEventListener('click', (e) => {
       ui.trade = { to: null, give: new Set(), want: new Set() };
       break;
     case 'tradeResp': act('respondTrade', { tradeId: d.id, accept: d.ok === '1' }); break;
+    case 'skip': act('skipRound'); break;
     case 'monster': act('chooseMonster', { index: Number(d.i) }); break;
     case 'reward': act('chooseReward', { index: Number(d.i) }); break;
     case 'die': {
@@ -908,10 +1058,11 @@ document.addEventListener('click', (e) => {
     case 'pick':
       if (ui.manaSel !== null) { ui.manaPick.set(ui.manaSel, d.f); ui.manaSel = null; render(); }
       break;
-    case 'roll': act('roll', { hold: [...ui.held] }); break;
+    case 'roll': Sounds.play('dados'); act('roll', { hold: [...ui.held] }); break;
     case 'manaMode': ui.manaMode = true; ui.manaPick = new Map(); ui.manaSel = null; render(); break;
     case 'manaCancel': ui.manaMode = false; ui.manaPick = new Map(); ui.manaSel = null; render(); break;
     case 'manaOk':
+      Sounds.play('fe');
       act('mana', { assign: [...ui.manaPick].map(([index, face]) => ({ index, face })) });
       break;
     case 'endAttack': act('concede'); break;
@@ -920,6 +1071,19 @@ document.addEventListener('click', (e) => {
       break;
     case 'rival': act('chooseRival', { rivalId: d.id }); break;
     case 'pending': act('resolvePending', { choice: d.c }); break;
+    case 'exit':
+      if (!confirm('¿Salir de la sala? Podrás volver con el mismo enlace.')) break;
+      saveSession(null);
+      location.href = location.pathname;
+      break;
+    case 'closeDefeat': ui.defeat = null; renderModal(); break;
+    case 'seenOutcome':
+      ui.seenOutcome = d.k;
+      if (d.m !== undefined) ui.seenMatches.add(Number(d.m));
+      renderModal();
+      break;
+    case 'rulesTab': ui.rulesTab = d.t; renderModal(); break;
+    case 'closeRules': ui.rules = false; renderModal(); break;
     case 'leave':
       saveSession(null);
       S = null;

@@ -56,6 +56,8 @@ Railway o Fly.io también sirven: es una app Node normal que escucha en la varia
 | `src/bot.js` | Jugador automático sencillo. |
 | `src/server.js` | Servidor web y salas en tiempo real (Socket.IO). |
 | `public/` | Interfaz web (HTML/CSS/JS sin dependencias). |
+| `public/sounds.js`, `public/sonidos/` | Sonidos y música (los mismos de Imperio); se silencian con el botón del altavoz. |
+| `public/img/heroes/color/` | Retratos con la ropa teñida del color de cada jugador, generados con `tools/recolor.py`. |
 | `public/img/heroes/` | Retratos de los héroes, uno por Raza + Clase: `raza-clase.webp` (por ejemplo `elfo-mago.webp`). Si falta uno, la web muestra «Retrato pendiente». |
 | `test/` | Tests: `npm test` (incluye cientos de partidas completas simuladas con bots). |
 
@@ -86,6 +88,8 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 | 12 | Dragón | 🔴🔵🟢🟡🟡 |
 
 Mantícora, Quimera y Gólem se sustituyen por el Diablillo de los Bosques, el Minotauro y el Mago Oscuro, y los 12 monstruos se ordenan de menos a más poderosos según sus ilustraciones.
+
+**Esferas suficientes.** Solo puedes enfrentarte a un monstruo si tienes tantas esferas como colores pide. Si ninguno de los dos está a tu alcance, pasas la ronda sin combatir.
 
 **Tamaños.** Cada monstruo aparece en uno de 3 tamaños (las 3 figuras de su lámina):
 

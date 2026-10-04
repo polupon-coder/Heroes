@@ -52,9 +52,14 @@ function botStep(game, p) {
       // menos el riesgo de perder Vida (mucho más si podría tumbarle).
       const dice = game.diceCount(p);
       const fix = C.fixedDiceForMana(game.availableMana(p));
+      if (!p.offers.some((m) => m.combo.length <= dice)) {
+        game.act(p.id, 'skipRound', {});
+        return true;
+      }
       let best = 0;
       let bestScore = -Infinity;
       p.offers.forEach((m, i) => {
+        if (m.combo.length > dice) return;
         const pWin = winChance(dice, fix, m.combo, game.rng);
         const reward = C.equipmentBonus(Math.min(12, m.level + C.VARIANTS[m.variante].recompensa));
         const ko = h.vida <= m.dano ? 6 : 1;

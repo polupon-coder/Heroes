@@ -202,3 +202,13 @@ test('caer a 0 Vida conserva el equipo salvo el mejor objeto', () => {
   assert.strictEqual(p.hero.inv.botas.id, 'b');
   assert.strictEqual(p.hero.inv.pociones.length, 0);
 });
+
+test('no se puede elegir un monstruo con más esferas de las que tienes', () => {
+  const { g, p } = soloGame(() => F.blanco);
+  p.offers[0].combo = ['rojo', 'rojo', 'rojo', 'rojo', 'rojo'];
+  p.offers[1].combo = ['rojo', 'rojo', 'rojo', 'rojo'];
+  assert.throws(() => g.act(p.id, 'chooseMonster', { index: 0 }), /esferas/);
+  g.act(p.id, 'skipRound');
+  assert.strictEqual(g.phase, 'prep');
+  assert.strictEqual(g.round, 2);
+});

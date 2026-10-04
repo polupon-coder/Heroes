@@ -58,7 +58,7 @@ Railway o Fly.io también sirven: es una app Node normal que escucha en la varia
 | `public/` | Interfaz web (HTML/CSS/JS sin dependencias). |
 | `public/sounds.js`, `public/sonidos/` | Sonidos y música (los mismos de Imperio); se silencian con el botón del altavoz. |
 | `tools/transparent.py` | Quita el papel de fondo de las ilustraciones para que las figuras se vean enteras sobre el pergamino. |
-| `public/img/heroes/color/` | Retratos con la ropa teñida del color de cada jugador, generados con `tools/recolor_ropa.py` (zonas de ropa elegidas para cada héroe). |
+
 | `public/img/heroes/` | Retratos de los héroes, uno por Raza + Clase: `raza-clase.webp` (por ejemplo `elfo-mago.webp`). Si falta uno, la web muestra «Retrato pendiente». |
 | `test/` | Tests: `npm test` (incluye cientos de partidas completas simuladas con bots). |
 

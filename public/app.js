@@ -61,12 +61,11 @@ function raceName(p) { return p.raza && DATA ? DATA.razas[p.raza].nombre : '¿Ra
 function className(p) { return p.clase && DATA ? DATA.clases[p.clase].nombre : '¿Clase?'; }
 
 // Retrato del héroe (Raza + Clase). Si aún no hay ilustración, un marco vacío.
-// La ropa del héroe se tiñe con el color del jugador (variantes en img/heroes/color).
-function portrait(raza, clase, size = 'md', color = null, extra = '') {
+function portrait(raza, clase, size = 'md', _color = null, extra = '') {
   const key = raza && clase ? `${raza}-${clase}` : null;
   const has = key && DATA && (DATA.retratos || []).includes(key);
   const alt = raza && clase && DATA ? `${DATA.razas[raza].nombre} ${DATA.clases[clase].nombre}` : 'Héroe';
-  const src = color ? `img/heroes/color/${key}-${color}.webp` : `img/heroes/${key}.webp`;
+  const src = `img/heroes/${key}.webp`;
   if (has) return `<img class="portrait ${size}" src="${src}" alt="${esc(alt)}" ${extra}>`;
   return `<div class="portrait ${size} missing" ${extra}>${raza && clase ? 'Retrato pendiente' : '?'}</div>`;
 }
@@ -359,30 +358,40 @@ function renderLobby() {
 function renderLobbyRivals(p) {
   const host = S.host === S.me;
   const link = `${location.origin}${location.pathname}?sala=${S.code}`;
+  // Figuras de adorno para cada asiento (solo ilustración, no es su héroe).
+  const deco = ['humano-guerrero', 'elfo-mago', 'enano-guerrero', 'faunar-explorador'];
   const seats = [];
   for (let i = 0; i < 4; i++) {
     const x = S.players[i];
+    const img = `<img class="seat-art" src="img/heroes/${deco[i]}.webp" alt="">`;
     if (x) {
+      const role = x.id === S.me ? 'Tú' : x.id === S.host ? 'Anfitrión' : x.bot ? 'Compañero automático' : x.connected ? 'Amigo' : 'Desconectado';
       seats.push(`
-        <div class="seat">
-          ${chip(x.color)}
-          <div class="seat-name"><b>${esc(x.name)}</b><small>${x.id === S.me ? 'tú' : x.bot ? 'bot' : x.connected ? 'amigo' : 'desconectado'}</small></div>
-          ${host && x.id !== S.me ? `<button class="btn tiny danger" data-a="kick" data-id="${x.id}">Quitar</button>` : ''}
+        <div class="seat-card taken">
+          ${img}
+          <div class="seat-name">${esc(x.name)}</div>
+          <div class="seat-role">${role}</div>
+          ${host && x.id !== S.me ? `<button class="link-btn" data-a="kick" data-id="${x.id}">Quitar</button>` : '<span class="seat-gap"></span>'}
         </div>`);
     } else {
       seats.push(`
-        <div class="seat empty">
-          <div class="seat-name"><i>Esperando a un amigo…</i></div>
-          ${host ? '<button class="btn small" data-a="addBot">Poner un bot</button>' : ''}
+        <div class="seat-card empty">
+          ${img}
+          <div class="seat-name"><i>Asiento libre</i></div>
+          <div class="seat-role">Esperando a un amigo…</div>
+          ${host ? '<button class="btn small" data-a="addBot">Poner un bot</button>' : '<span class="seat-gap"></span>'}
         </div>`);
     }
   }
   return `
-  <div class="lobby-step card">
-    <h2 class="center">Contrincantes</h2>
-    <p class="center muted">Invita a tus amigos con este enlace o el código <b class="code">${esc(S.code)}</b>, o completa la mesa con bots.</p>
-    <div class="row center-row"><span class="share">${esc(link)}</span><button class="btn small" data-a="copy" data-text="${esc(link)}">Copiar enlace</button></div>
-    <div class="seats">${seats.join('')}</div>
+  <div class="lobby-step room card">
+    <div class="room-head">
+      <div class="room-label">Sala</div>
+      <div class="room-big-code">${esc(S.code)}</div>
+      <p class="center muted">Invita a tus amigos con el enlace o el código, o completa la mesa con bots.</p>
+      <div class="row center-row"><span class="share">${esc(link)}</span><button class="btn small" data-a="copy" data-text="${esc(link)}">Copiar enlace</button></div>
+    </div>
+    <div class="seat-grid">${seats.join('')}</div>
     ${host ? `
       <div class="row center-row"><button class="seal" data-a="lobbyStage" data-s="heroes">Elegir<br>héroes</button></div>`
     : '<p class="center muted">El anfitrión está preparando la mesa…</p>'}
@@ -407,7 +416,6 @@ function renderLobbyHeroes(p) {
         <div class="pick-portrait">
           ${p.raza ? portrait(p.raza, showClass, 'xl', p.color) : '<div class="portrait xl missing">Elige una raza</div>'}
           <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
-          <div class="row center-row">${['rojo', 'azul', 'verde', 'amarillo'].map((c) => `<button class="shield-pick ${p.color === c ? 'selected' : ''}" data-a="color" data-c="${c}" title="${COLOR_LABEL[c]}">${chip(c)}</button>`).join('')}</div>
         </div>
         <div>
           <h4>Raza</h4>
@@ -461,7 +469,7 @@ function nextDiceHint(f) {
 // Las primeras `whites` esferas son blancas: el Maná las fija como comodín.
 function spheresRow(n, color, big = false, whites = 0) {
   const w = Math.min(n, whites);
-  return Array.from({ length: n }, (_, i) => `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'blanco' : color}"></span>`).join('');
+  return Array.from({ length: n }, (_, i) => `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'blanco' : 'gris'}"></span>`).join('');
 }
 
 function itemTile(it, label) {
@@ -1023,10 +1031,7 @@ function foesHtml(p, cb, all, controllable) {
       ${comboHtml(m.combo, false, m.tipo)}
       ${state}
       ${can ? `<button class="btn primary" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}
-      <div class="rewards-mini">
-        <div class="req-label">Recompensas a elegir</div>
-        <div class="rw">${m.rewards.map((it) => `<span class="item-ico" title="${esc(it.nombre)} · ${esc(itemDesc(it))}">${itemIcon(it)}</span>`).join('')}</div>
-      </div>
+      <button class="link-btn see-rewards" data-a="seeRewards" data-i="${i}">Ver recompensas</button>
     </div>`;
   }).join('<div class="foes-or">o</div>')}</div>`;
 }
@@ -1096,10 +1101,30 @@ function renderTournamentHistory() {
 
 // ---------- Modal de objeto pendiente
 
+function renderRewardsView(p) {
+  const m = p && p.offers && p.offers[ui.rewardsView];
+  if (!m || S.phase !== 'combat') { ui.rewardsView = null; return ''; }
+  return `
+    <div class="card outcome rewards-view">
+      <button class="modal-close" data-a="closeRewards" aria-label="Cerrar" title="Cerrar">×</button>
+      <div class="outcome-title">Recompensas</div>
+      <p class="center muted">${esc(m.nombre)} ${esc((m.tamano || '').toLowerCase())}: si lo derrotas, eliges una.</p>
+      <div class="reward-pick">${m.rewards.map((it) => `
+        <div class="reward-choice static">
+          <span class="big-item">${itemIcon(it)}</span>
+          <b>${esc(it.nombre)}</b><small>${itemDesc(it)}</small>
+        </div>`).join('')}</div>
+    </div>`;
+}
+
 function renderModal() {
   const p = S && me();
   const modal = $('modal');
   if (ui.rules) { modal.classList.remove('hidden'); modal.innerHTML = renderRules(); return; }
+  if (ui.rewardsView != null) {
+    const v = renderRewardsView(p);
+    if (v) { modal.classList.remove('hidden'); modal.innerHTML = v; return; }
+  }
   const pend = p && p.hero && p.hero.pending && p.hero.pending[0];
   if (!pend || !pend.item) {
     if (S && !ui.seenMatches) ui.seenMatches = new Set((S.tournament ? S.tournament.matches : []).filter((x) => x.winner).map((x) => x.id));
@@ -1214,6 +1239,8 @@ document.addEventListener('click', (e) => {
       break;
     case 'closeDefeat': ui.defeat = null; renderModal(); break;
     case 'closeCurse': ui.curseAlert = null; renderModal(); break;
+    case 'seeRewards': ui.rewardsView = Number(d.i); renderModal(); break;
+    case 'closeRewards': ui.rewardsView = null; renderModal(); break;
     case 'seenOutcome':
       ui.seenOutcome = d.k;
       if (d.m !== undefined) ui.seenMatches.add(Number(d.m));

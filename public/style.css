@@ -425,3 +425,112 @@ input:focus { outline: none; border-bottom-color: var(--rubric); }
   .outcome-art { height: 160px; }
   .rules-btn { font-size: .8rem; padding: 2px 8px; }
 }
+
+/* =========================================================================
+   Portada, sala en dos pasos y mesa a tres columnas
+   ========================================================================= */
+
+/* Portada: el pergamino ocupa toda la pantalla y el título se funde con él */
+body.at-home .topbar .brand, body.at-home .topbar .status, body.at-home #rulesBtn, body.at-home .journal-btn { display: none; }
+body.at-home .topbar { position: fixed; top: 0; right: 0; z-index: 30; background: none; padding: 12px; }
+.home { max-width: none; height: 100vh; min-height: 520px; padding: 12px; margin: 0; box-sizing: border-box; }
+.home-sheet {
+  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh;
+  border-style: solid; border-width: 60px; border-color: transparent;
+  border-image: url(img/ui/pergamino.webp) 90 fill / 60px stretch;
+  filter: drop-shadow(0 10px 24px rgba(58, 34, 15, .35));
+}
+.home-title { width: min(980px, 88vw); filter: drop-shadow(0 1px 0 rgba(255, 245, 220, .5)); }
+.home-credit { font-family: var(--title); color: var(--ink-soft); letter-spacing: .12em; font-style: italic; margin: 0; }
+.home-modal { max-width: 460px; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 10px 18px 6px !important; }
+.ink-input { background: transparent !important; border: none !important; border-bottom: 2px solid #6e4b22 !important; border-radius: 0 !important; font-family: var(--title); }
+.name-input { width: 280px; text-align: center; font-size: 1.35rem; }
+.home-actions { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.home-actions .code-input { width: 140px; text-align: center; font-size: 1.3rem; letter-spacing: .3em; }
+.home-or { font-family: var(--title); font-style: italic; color: var(--ink-soft); }
+.link-btn { background: none; border: none; font: italic 1.02rem var(--text); color: var(--ink-soft); text-decoration: underline; cursor: pointer; }
+
+/* Sello de lacre (botón principal, como en Imperio) */
+.seal {
+  display: inline-grid; place-items: center; width: 112px; height: 112px; padding: 14px; border: none; cursor: pointer;
+  color: #f7e6c4; font: 1.02rem/1.1 var(--title); text-align: center; text-shadow: 0 1px 1px #0008;
+  background: radial-gradient(circle at 38% 32%, #c0392b, #8a1f17 55%, #5a120d);
+  clip-path: polygon(50% 0%, 61% 4%, 72% 2%, 79% 10%, 90% 12%, 92% 23%, 100% 30%, 97% 41%, 100% 52%, 95% 62%, 98% 74%, 89% 80%, 86% 91%, 75% 92%, 66% 100%, 55% 96%, 45% 100%, 35% 95%, 24% 98%, 18% 89%, 8% 86%, 7% 75%, 0% 67%, 4% 56%, 0% 45%, 5% 35%, 2% 24%, 11% 18%, 13% 7%, 24% 7%, 33% 1%, 42% 4%);
+  box-shadow: inset 0 0 18px #0006; transition: transform .1s, filter .1s;
+}
+.seal:hover:not(:disabled) { transform: scale(1.05); filter: brightness(1.08); }
+.seal:disabled { opacity: .45; cursor: not-allowed; }
+.seal.green { background: radial-gradient(circle at 38% 32%, #4f8a3f, #2e5c24 55%, #1b3a15); }
+.home-play { width: 150px; height: 150px; font-size: 1.6rem; }
+
+.check { color: #3f8a34; font-weight: 700; }
+
+/* Sala, paso 1: contrincantes */
+.lobby { display: block; }
+.lobby-step { max-width: 720px; margin: 0 auto; }
+.lobby-step .code { letter-spacing: .25em; color: var(--rubric-dark); }
+.seats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin: 18px 0; }
+.seat { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 10px; border-bottom: 1px dashed var(--line); }
+.seat .chip { width: 30px; height: 30px; }
+.seat-name { flex: 1; display: flex; flex-direction: column; }
+.seat-name small { color: var(--muted); font-style: italic; }
+.seat.empty { color: var(--muted); }
+
+/* Sala, paso 2: héroes */
+.lobby-heroes { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+.hero-pick { grid-template-columns: 280px 1fr; }
+.pick-portrait .row { margin-top: 6px; }
+.shield-pick { background: none; border: none; cursor: pointer; padding: 4px; opacity: .55; transition: transform .12s, opacity .12s; }
+.shield-pick .chip { width: 40px; height: 40px; }
+.shield-pick.selected, .shield-pick:hover { opacity: 1; transform: scale(1.1); }
+.choice { -webkit-mask: none; mask: none; border-radius: 14px; padding: 5px 10px; background: rgba(255, 248, 230, .5); border: 1px solid var(--line); display: block; }
+.choice.selected { background: rgba(201, 163, 90, .35); border-color: var(--gold); }
+.mini-hero { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.others-pick .link-btn { margin-top: 12px; }
+
+/* Mesa: mi héroe · monstruo · contrincantes */
+.table3 { display: grid; grid-template-columns: 290px minmax(0, 1fr) 320px; gap: 18px; align-items: start; }
+.col-me { position: sticky; top: 10px; }
+.col-title { font-family: var(--title); color: var(--ink-soft); text-align: center; margin: 4px 0 10px; }
+.col-rivals .rival { padding: 8px 4px 10px; border-bottom: 1px dashed var(--line); }
+.col-rivals .rival.out { filter: grayscale(.9); opacity: .55; }
+.rival-hero { display: flex; gap: 8px; align-items: flex-start; }
+.portrait.rival { width: 78px; height: 104px; flex: none; }
+.rival-info { flex: 1; min-width: 0; }
+.rival-info .nm { font-family: var(--title); font-size: .92em; }
+.rival-info .nm small { font-family: var(--text); color: var(--muted); }
+.rival-info .life.thin { width: 100%; }
+.rival-foe { display: flex; align-items: center; gap: 8px; margin: 4px 0 0 86px; min-height: 30px; }
+.rival-foe img.foe { height: 74px; width: auto; max-width: 90px;
+  -webkit-mask-image: radial-gradient(ellipse closest-side, #000 58%, transparent 100%); mask-image: radial-gradient(ellipse closest-side, #000 58%, transparent 100%); }
+.rival-foe .portrait.foe { width: 56px; height: 74px; }
+.rival-foe .foe-name { font-size: .85em; color: var(--ink-soft); text-align: left; }
+.rival-foe .state { color: var(--muted); font-style: italic; font-size: .9em; margin: 0; }
+.rival-foe.win img { filter: drop-shadow(0 0 6px rgba(79, 122, 58, .6)); }
+.rival-foe.lose img { filter: sepia(.4) brightness(.85); }
+
+.foe-big { margin: 0 auto; text-align: center; }
+.foe-big .duel-art { height: 340px; }
+.foe-big .portrait.duel-art { width: 255px; height: 340px; }
+.foe-big figcaption { font-family: var(--title); font-size: 1.15em; color: var(--rubric-dark); margin-top: -6px; }
+
+@media (max-width: 1100px) {
+  .table3 { grid-template-columns: 250px minmax(0, 1fr); }
+  .col-rivals { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 18px; }
+  .col-rivals .col-title { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .table3, .lobby-heroes, .hero-pick { grid-template-columns: 1fr; }
+  .col-me { position: static; }
+  .seats { grid-template-columns: 1fr; }
+  .home-sheet { border-width: 34px; border-image-width: 34px; }
+  .home-play { width: 120px; height: 120px; font-size: 1.3rem; }
+  .foe-big .duel-art { height: 240px; }
+  .foe-big .portrait.duel-art { width: 180px; height: 240px; }
+}
+
+/* Columnas laterales sobre pergamino; la página, papel liso sin franjas */
+body { background-image: radial-gradient(ellipse at center, transparent 55%, rgba(150, 110, 60, .3) 140%); }
+.col-me, .col-rivals { padding: 4px 6px 8px !important; }
+.col-me .portrait.xl { -webkit-mask-image: radial-gradient(ellipse closest-side, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse closest-side, #000 62%, transparent 100%); }
+.col-rivals .rival:last-child { border-bottom: none; }

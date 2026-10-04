@@ -52,6 +52,7 @@ function soloGame(rng, raza = 'humano', clase = 'guerrero') {
   const g = new Game('T', { rng });
   const p = g.addPlayer('Ana');
   g.act(p.id, 'setHero', { raza, clase });
+  for (const pl of g.players) pl.ready = true;
   g.act(p.id, 'start');
   g.act(p.id, 'ready');
   return { g, p };
@@ -106,6 +107,7 @@ test('duelo del torneo: 4 del color del rival, 3 de daño por golpe', () => {
   const a = g.addPlayer('A');
   const b = g.addPlayer('B');
   for (const p of [a, b]) g.act(p.id, 'setHero', { raza: 'durgan', clase: 'barbaro' });
+  for (const pl of g.players) pl.ready = true;
   g.act(a.id, 'start');
   g.settings.pvpHits = 4;
   for (const p of [a, b]) p.hero.inv.armadura = { id: p.id + 'arm', tipo: 'equipo', slot: 'armadura', bonus: 20, nombre: 'Coraza' };
@@ -131,6 +133,7 @@ test('magia: 5 de Maná = 1 maldición y Maná gastado hasta el próximo combate
   const b = g.addPlayer('B');
   g.act(a.id, 'setHero', { raza: 'elfo', clase: 'mago' });
   g.act(b.id, 'setHero', { raza: 'enano', clase: 'guerrero' });
+  for (const pl of g.players) pl.ready = true;
   g.act(a.id, 'start');
   g.round = 2;
   g.act(a.id, 'curse', { targetId: b.id, amount: 10 });
@@ -144,6 +147,7 @@ test('comercio entre combates', () => {
   const a = g.addPlayer('A');
   const b = g.addPlayer('B');
   for (const p of [a, b]) g.act(p.id, 'setHero', { raza: 'elfo', clase: 'mago' });
+  for (const pl of g.players) pl.ready = true;
   g.act(a.id, 'start');
   a.hero.inv.yelmo = { id: 'y', tipo: 'equipo', slot: 'yelmo', bonus: 2, nombre: 'Yelmo +2' };
   b.hero.inv.pociones.push({ id: 'p', tipo: 'pocion', efecto: 'curacion', valor: 3, nombre: 'Poción' });
@@ -164,6 +168,7 @@ test('golpe graduado del torneo', () => {
   const b = g.addPlayer('B');
   g.act(a.id, 'setHero', { raza: 'humano', clase: 'guerrero' }); // Fuerza 12: 3 dados
   g.act(b.id, 'setHero', { raza: 'humano', clase: 'guerrero' });
+  for (const pl of g.players) pl.ready = true;
   g.act(a.id, 'start');
   g.round = 13;
   g.act(a.id, 'ready');
@@ -211,4 +216,20 @@ test('no se puede elegir un monstruo con más esferas de las que tienes', () => 
   g.act(p.id, 'skipRound');
   assert.strictEqual(g.phase, 'prep');
   assert.strictEqual(g.round, 2);
+});
+
+test('siempre hay al menos un monstruo asequible', () => {
+  const g = new Game('T');
+  const a = g.addPlayer('A');
+  g.act(a.id, 'setHero', { raza: 'gnomo', clase: 'mago' }); // 2 esferas
+  g.act(a.id, 'lobbyReady');
+  for (const pl of g.players) pl.ready = true;
+  g.act(a.id, 'start');
+  for (let r = 1; r <= 12; r++) {
+    g.round = r;
+    for (let k = 0; k < 30; k++) {
+      const offers = g.makeOffers(a);
+      assert.ok(offers.some((m) => m.combo.length <= g.diceCount(a)), `ronda ${r}`);
+    }
+  }
 });

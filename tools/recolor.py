@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np, sys
-TARGET={'rojo':(170,40,35),'azul':(45,80,170),'verde':(50,125,55),'amarillo':(205,160,40)}
+# Tono (0-360) y saturación de cada color de jugador: algo apagados, como pigmentos antiguos.
+TARGET={'rojo':(4,0.55),'azul':(218,0.45),'verde':(118,0.38),'amarillo':(36,0.66)}
 def recolor(path,color,T=38,W=22):
     a=np.asarray(Image.open(path).convert('RGB')).astype(float)
     r,g,b=a[...,0],a[...,1],a[...,2]
@@ -16,10 +17,22 @@ def recolor(path,color,T=38,W=22):
     # suavizar máscara
     m=Image.fromarray((w*255).astype('uint8')).filter(__import__('PIL.ImageFilter',fromlist=['x']).GaussianBlur(1.5))
     w=np.asarray(m)/255.0
-    t=np.array(TARGET[color])/255.0
-    tl=0.3*t[0]+0.59*t[1]+0.11*t[2]
-    tint=np.clip(lum[...,None]/255.0/tl*t*255*0.95,0,255)
-    out=a*(1-w[...,None]*0.85)+tint*(w[...,None]*0.85)
+    # Cambiar tono y saturación conservando la luminosidad original (sin mezclar colores).
+    th, ts = TARGET[color]
+    import colorsys
+    v = np.asarray(Image.open(path).convert('HSV')).astype(float)[..., 2] / 255
+    # Amarillo: algo más de luz para que no tire a verde oliva en las sombras
+    if color == 'amarillo':
+        v = np.clip(v * 1.3 + 0.14, 0, 1)
+    h6 = (th / 60.0) % 6
+    c = v * ts
+    x = c * (1 - abs(h6 % 2 - 1))
+    m0 = v - c
+    i = int(h6)
+    rgb = [(c, x, 0), (x, c, 0), (0, c, x), (0, x, c), (x, 0, c), (c, 0, x)][i]
+    tint = np.stack([(rgb[k] if not np.isscalar(rgb[k]) else np.full_like(v, rgb[k])) + m0 for k in range(3)], axis=-1) * 255
+    k = 1.0
+    out=a*(1-w[...,None]*k)+tint*(w[...,None]*k)
     return Image.fromarray(out.clip(0,255).astype('uint8'))
 if __name__=='__main__':
     fs=['humano-guerrero','elfo-mago','durgan-barbaro','silvano-druida','gnomo-clerigo','enano-ladron','faunar-explorador','humano-mago']

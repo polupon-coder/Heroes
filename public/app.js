@@ -177,18 +177,54 @@ fetch('/api/datos').then((r) => r.json()).then((d) => { DATA = d; if (S) render(
 function showHome() {
   $('home').classList.remove('hidden');
   $('app').classList.add('hidden');
+  document.body.classList.add('at-home');
   $('roomInfo').innerHTML = '';
   Sounds.setMusic(true);
   $('status').textContent = '';
-  const params = new URLSearchParams(location.search);
-  if (params.get('sala')) $('codeInput').value = params.get('sala').toUpperCase();
   try { $('nameInput').value = localStorage.getItem('heroes.name') || ''; } catch { /* nada */ }
 }
+
+function invitedCode() {
+  const c = new URLSearchParams(location.search).get('sala');
+  return c ? c.toUpperCase() : null;
+}
+
+// Ventana de «Jugar»: crear una partida o entrar en una existente (como en Imperio).
+let homeJoining = false;
+function renderHomeActions() {
+  const inv = invitedCode();
+  let html;
+  if (inv) {
+    html = `<button class="seal" data-h="join">Entrar en<br>la sala ${esc(inv)}</button>`;
+  } else if (homeJoining) {
+    html = `<input id="codeInput" class="ink-input code-input" maxlength="4" placeholder="Código" aria-label="Código de la sala">
+      <button class="seal" data-h="join">Entrar</button>
+      <button class="link-btn" data-h="back">volver</button>`;
+  } else {
+    html = `<button class="seal" data-h="create">Crear<br>partida</button>
+      <span class="home-or">o</span>
+      <button class="seal" data-h="joining">Unirse</button>`;
+  }
+  $('homeActions').innerHTML = html;
+  if (homeJoining && $('codeInput')) $('codeInput').focus();
+}
+
+$('playBtn').onclick = () => {
+  homeJoining = false;
+  $('homeError').textContent = '';
+  renderHomeActions();
+  $('homeModal').classList.remove('hidden');
+  $('nameInput').focus();
+};
+$('homeClose').onclick = () => $('homeModal').classList.add('hidden');
+$('homeModal').onclick = (e) => { if (e.target === $('homeModal')) $('homeModal').classList.add('hidden'); };
 
 function enter(res) {
   if (!res.ok) { $('homeError').textContent = res.error; return; }
   saveSession({ code: res.code, token: res.token });
   history.replaceState(null, '', `?sala=${res.code}`);
+  $('homeModal').classList.add('hidden');
+  document.body.classList.remove('at-home');
 }
 
 function getName() {
@@ -197,18 +233,21 @@ function getName() {
   return n;
 }
 
-$('createBtn').onclick = () => {
+$('homeActions').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-h]');
+  if (!b) return;
+  const h = b.dataset.h;
+  if (h === 'joining') { homeJoining = true; renderHomeActions(); return; }
+  if (h === 'back') { homeJoining = false; renderHomeActions(); return; }
   const name = getName();
-  if (!name) { $('homeError').textContent = 'Escribe tu nombre'; return; }
-  socket.emit('create', { name }, enter);
-};
-$('joinBtn').onclick = () => {
-  const name = getName();
-  const code = $('codeInput').value.trim().toUpperCase();
-  if (!name) { $('homeError').textContent = 'Escribe tu nombre'; return; }
-  if (!code) { $('homeError').textContent = 'Escribe el código de la sala'; return; }
-  socket.emit('join', { code, name }, enter);
-};
+  if (!name) { $('homeError').textContent = 'Escribe tu nombre'; $('nameInput').focus(); return; }
+  if (h === 'create') socket.emit('create', { name }, enter);
+  if (h === 'join') {
+    const code = invitedCode() || ($('codeInput') ? $('codeInput').value.trim().toUpperCase() : '');
+    if (!code) { $('homeError').textContent = 'Escribe el código de la sala'; return; }
+    socket.emit('join', { code, name }, enter);
+  }
+});
 
 $('chatForm').onsubmit = (e) => {
   e.preventDefault();
@@ -224,6 +263,8 @@ function render() {
   const mp = me();
   if (mp && mp.monster) ui.lastMonster = mp.monster;
   $('home').classList.add('hidden');
+  $('homeModal').classList.add('hidden');
+  document.body.classList.remove('at-home');
   $('app').classList.remove('hidden');
   $('roomInfo').innerHTML = `<span class="room-name">Sala ${esc(S.code)}</span><button class="exit-btn" data-a="exit" title="Salir de la sala" aria-label="Salir de la sala">×</button>`;
   Sounds.setMusic(S.phase === 'lobby');
@@ -278,76 +319,97 @@ function mods(x) {
 function renderLobby() {
   const p = me();
   if (!p || !DATA) return '<div class="card">Cargando…</div>';
+  return S.lobbyStage === 'heroes' ? renderLobbyHeroes(p) : renderLobbyRivals(p);
+}
+
+// Paso 1: elegir contrincantes (amigos que entran con el enlace o bots).
+function renderLobbyRivals(p) {
   const host = S.host === S.me;
   const link = `${location.origin}${location.pathname}?sala=${S.code}`;
-  const rows = S.players.map((x) => `
-    <div class="player-row">
-      ${heroPortrait(x, 'sm')}
-      ${chip(x.color)}
-      <div style="flex:1"><b>${esc(x.name)}</b>${x.id === S.host ? ' 👑' : ''} ${x.bot ? '<span class="badge">bot</span>' : ''}
-        ${!x.connected && !x.bot ? '<span class="badge off">desconectado</span>' : ''}
-        <div class="muted small">${x.raza && x.clase ? `${raceName(x)} ${className(x)}` : 'Eligiendo héroe…'}</div>
-      </div>
-      ${host && x.id !== S.me ? `<button class="btn tiny danger" data-a="kick" data-id="${x.id}">Expulsar</button>` : ''}
-    </div>`).join('');
-
-  const preview = heroPreview(p.raza, p.clase);
-  const ready = S.players.every((x) => x.raza && x.clase);
+  const seats = [];
+  for (let i = 0; i < 4; i++) {
+    const x = S.players[i];
+    if (x) {
+      seats.push(`
+        <div class="seat">
+          ${chip(x.color)}
+          <div class="seat-name"><b>${esc(x.name)}</b><small>${x.id === S.me ? 'tú' : x.bot ? 'bot' : x.connected ? 'amigo' : 'desconectado'}</small></div>
+          ${host && x.id !== S.me ? `<button class="btn tiny danger" data-a="kick" data-id="${x.id}">Quitar</button>` : ''}
+        </div>`);
+    } else {
+      seats.push(`
+        <div class="seat empty">
+          <div class="seat-name"><i>Esperando a un amigo…</i></div>
+          ${host ? '<button class="btn small" data-a="addBot">Poner un bot</button>' : ''}
+        </div>`);
+    }
+  }
   return `
-  <div class="lobby">
-    <div>
-      <div class="card">
-        <h2>Sala ${esc(S.code)}</h2>
-        <p class="muted small">Comparte este enlace o el código con tus amigos:</p>
-        <div class="row"><div class="share" style="flex:1">${esc(link)}</div><button class="btn small" data-a="copy" data-text="${esc(link)}">Copiar</button></div>
+  <div class="lobby-step card">
+    <h2 class="center">Contrincantes</h2>
+    <p class="center muted">Invita a tus amigos con este enlace o el código <b class="code">${esc(S.code)}</b>, o completa la mesa con bots.</p>
+    <div class="row center-row"><span class="share">${esc(link)}</span><button class="btn small" data-a="copy" data-text="${esc(link)}">Copiar enlace</button></div>
+    <div class="seats">${seats.join('')}</div>
+    ${host ? `
+      <div class="row center-row small">Esferas del color rival para el golpe completo en el Torneo:
+        ${[4, 5].map((n) => `<button class="btn tiny ${S.settings.pvpHits === n ? 'selected' : ''}" data-a="pvpHits" data-n="${n}">${n}</button>`).join('')}
       </div>
-      <div class="card">
-        <h3>Jugadores (${S.players.length}/4)</h3>
-        ${rows}
-        ${S.players.length < 4 ? '<p class="muted small">El reglamento es para 4 jugadores. Puedes completar con bots.</p>' : ''}
-        ${host ? `
-          <div class="row" style="margin-top:10px">
-            <button class="btn small" data-a="addBot" ${S.players.length >= 4 ? 'disabled' : ''}>+ Añadir bot</button>
-          </div>
-          <h4 style="margin-top:14px">Opciones</h4>
-          <div class="row small">Resultados para el golpe completo (3 de daño) en el Torneo:
-            ${[4, 5].map((n) => `<button class="btn tiny ${S.settings.pvpHits === n ? 'selected' : ''}" data-a="pvpHits" data-n="${n}">${n}</button>`).join('')}
-          </div>
-          <div class="row" style="margin-top:14px">
-            <button class="btn primary" data-a="start" ${ready ? '' : 'disabled'}>Empezar partida</button>
-            ${ready ? '' : '<span class="muted small">Todos deben elegir Raza y Clase</span>'}
-          </div>` : `<p class="muted">Esperando a que el anfitrión empiece. Resultados para golpear en el Torneo: <b>${S.settings.pvpHits}</b>.</p>`}
+      <div class="row center-row"><button class="seal" data-a="lobbyStage" data-s="heroes">Elegir<br>héroes</button></div>`
+    : '<p class="center muted">El anfitrión está preparando la mesa…</p>'}
+  </div>`;
+}
+
+// Paso 2: cada uno configura su héroe viendo lo que eligen los demás.
+function renderLobbyHeroes(p) {
+  const host = S.host === S.me;
+  const preview = heroPreview(p.raza, p.clase);
+  const allReady = S.players.every((x) => x.ready);
+  const showClass = p.clase || 'guerrero';
+  const others = S.players.filter((x) => x.id !== S.me).map((x) => `
+    <div class="mini-hero">
+      ${x.raza ? portrait(x.raza, x.clase || 'guerrero', 'sm', x.color) : '<div class="portrait sm missing">?</div>'}
+      <div><b>${esc(x.name)}</b> ${x.ready ? '<span class="check">✔</span>' : ''}
+        <div class="muted small">${x.raza ? raceName(x) : 'eligiendo…'}${x.clase ? ` · ${className(x)}` : ''}</div>
       </div>
-    </div>
+    </div>`).join('');
+  return `
+  <div class="lobby-heroes">
     <div class="card">
-      <h2>Tu héroe</h2>
-      <h4>Color</h4>
-      <div class="row" style="margin-bottom:12px">
-        ${['rojo', 'azul', 'verde', 'amarillo'].map((c) => `<button class="btn small ${p.color === c ? 'selected' : ''}" data-a="color" data-c="${c}">${chip(c)} ${COLOR_LABEL[c]}</button>`).join('')}
-      </div>
       <div class="hero-pick">
-        ${portrait(p.raza, p.clase, 'xl', p.color)}
+        <div class="pick-portrait">
+          ${p.raza ? portrait(p.raza, showClass, 'xl', p.color) : '<div class="portrait xl missing">Elige una raza</div>'}
+          <div class="row center-row">${['rojo', 'azul', 'verde', 'amarillo'].map((c) => `<button class="shield-pick ${p.color === c ? 'selected' : ''}" data-a="color" data-c="${c}" title="${COLOR_LABEL[c]}">${chip(c)}</button>`).join('')}</div>
+        </div>
         <div>
-      <h4>Raza</h4>
-      <div class="choice-grid">
-        ${Object.entries(DATA.razas).map(([k, r]) => `<button class="btn choice ${p.raza === k ? 'selected' : ''}" data-a="raza" data-k="${k}">${portrait(k, p.clase || 'guerrero', 'xs')}<span>${r.nombre}<span class="mods">${mods(r)}</span></span></button>`).join('')}
-      </div>
-      <h4>Clase</h4>
-      <div class="choice-grid">
-        ${Object.entries(DATA.clases).map(([k, c]) => `<button class="btn choice ${p.clase === k ? 'selected' : ''}" data-a="clase" data-k="${k}">${p.raza ? portrait(p.raza, k, 'xs') : ''}<span>${c.nombre}<span class="mods">${mods(c)}</span></span></button>`).join('')}
-      </div>
+          <h4>Raza</h4>
+          <div class="choice-grid">
+            ${Object.entries(DATA.razas).map(([k, r]) => `<button class="btn choice ${p.raza === k ? 'selected' : ''}" data-a="raza" data-k="${k}">${r.nombre}<span class="mods">${mods(r)}</span></button>`).join('')}
+          </div>
+          <h4>Clase</h4>
+          <div class="choice-grid">
+            ${Object.entries(DATA.clases).map(([k, c]) => `<button class="btn choice ${p.clase === k ? 'selected' : ''}" data-a="clase" data-k="${k}">${c.nombre}<span class="mods">${mods(c)}</span></button>`).join('')}
+          </div>
+          ${preview ? `
+            <div class="statline">
+              <span class="stat">Vida <b>${preview.vida}</b></span>
+              <span class="stat">Fuerza <b>${preview.fuerza}</b></span>
+              <span class="stat">Maná <b>${preview.mana}</b></span>
+              <span class="stat">${spheresRow(dicePreview(preview.fuerza), p.color)}</span>
+            </div>` : ''}
+          <div class="row" style="margin-top:12px">
+            ${p.ready
+              ? '<button class="seal green" data-a="lobbyReady" data-v="0">Listo ✔</button>'
+              : `<button class="seal" data-a="lobbyReady" data-v="1" ${p.raza && p.clase ? '' : 'disabled'}>¡Listo!</button>`}
+            ${host ? `<button class="seal" data-a="start" ${allReady ? '' : 'disabled'}>Empezar</button>` : ''}
+          </div>
         </div>
       </div>
-      ${preview ? `
-        <h4>Resultado: ${raceName(p)} ${className(p)}</h4>
-        <div class="statline">
-          <span class="stat">❤ Vida <b>${preview.vida}</b></span>
-          <span class="stat">✨ Maná <b>${preview.mana}</b></span>
-          <span class="stat">💪 Fuerza <b>${preview.fuerza}</b></span>
-          <span class="stat">🎲 Dados <b>${dicePreview(preview.fuerza)}</b></span>
-          <span class="stat">Fijables <b>${preview.mana >= 5 ? Math.min(5, Math.floor(preview.mana / 5)) : 0}</b></span>
-        </div>` : '<p class="muted">Elige Raza y Clase.</p>'}
     </div>
+    <aside class="card others-pick">
+      <h3>Los demás</h3>
+      ${others || '<p class="muted">Aún no hay nadie más.</p>'}
+      ${host ? '<button class="link-btn" data-a="lobbyStage" data-s="rivales">← volver a contrincantes</button>' : ''}
+    </aside>
   </div>`;
 }
 
@@ -391,13 +453,12 @@ function renderSheet() {
   return `
   <div class="me-hero tint-${p.color}">
     ${heroPortrait(p, 'xl')}
-    <div class="me-name">${esc(p.name)}</div>
+    <div class="me-name">${esc(p.name)}${S.phase === 'prep' && p.ready ? ' <span class="check">✔</span>' : ''}</div>
     <div class="me-sub">${raceName(p)} · ${className(p)}</div>
     <div class="life"><i style="width:${pct}%"></i><span>❤ ${h.vida} / ${h.base.vida}</span></div>
   </div>
   <div class="spheres-have" title="${nextDiceHint(h.fuerza)}">
     <div class="spheres-row">${spheresRow(h.dados, p.color, true)}</div>
-    <span>${h.dados} esferas disponibles</span>
   </div>
   <div class="glyphs">
     <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
@@ -467,28 +528,32 @@ function opponentOf(p) {
     return { txt: lost ? 'eliminado' : 'espera', out: lost };
   }
   if (S.phase === 'prep') return { txt: p.ready ? '✔ listo' : 'preparándose…' };
-  if (S.phase === 'fin') return { txt: S.winner === p.id ? '👑 campeón' : '' };
+  if (S.phase === 'fin') return { txt: S.winner === p.id ? 'campeón' : '' };
   return { txt: '' };
 }
 
 function renderArena() {
-  const order = [me(), ...others()].filter(Boolean);
-  return order.map((p) => {
+  return `<h3 class="col-title">Contrincantes</h3>` + others().map((p) => {
     const h = p.hero;
     const pct = Math.max(0, Math.min(100, (h.vida / h.base.vida) * 100));
     const o = opponentOf(p);
+    const ready = S.phase === 'prep' && p.ready;
     const dice = p.combat && p.combat.status === 'activo' && p.combat.dice.length
       ? `<div class="mini-dice">${p.combat.dice.map((d) => die(d.face, { sm: true, cls: d.fixed ? 'fixed' : '' })).join('')}</div>` : '';
     return `
-    <div class="duo ${p.id === S.me ? 'mine' : ''} ${o.out ? 'out' : ''} tint-${p.color}">
-      <div class="who">
-        ${heroPortrait(p, 'arena')}
-        <div class="nm">${chip(p.color)} ${esc(p.name)}${p.bot ? ' <small>(bot)</small>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
-        <div class="life thin"><i style="width:${pct}%"></i></div>
-        <div class="spheres-row tiny">${spheresRow(h.dados, p.color)}</div>
+    <div class="rival ${o.out ? 'out' : ''}">
+      <div class="rival-hero">
+        ${heroPortrait(p, 'rival')}
+        <div class="rival-info">
+          <div class="nm">${chip(p.color)} ${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${p.bot ? ' <small>bot</small>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
+          <div class="muted small">${raceName(p)} · ${className(p)}</div>
+          <div class="life thin"><i style="width:${pct}%"></i></div>
+          <div class="muted small">❤ ${h.vida}/${h.base.vida} · Fuerza ${h.fuerza} · Maná ${h.manaDisponible}</div>
+          <div class="spheres-row">${spheresRow(h.dados, p.color)}</div>
+        </div>
       </div>
-      <div class="vs-slot ${o.res || ''}">
-        ${o.art ? `<span class="vs">${o.turn ? '⚔' : 'vs'}</span>${o.art}<div class="foe-name">${esc(o.name)}</div>${dice}` : `<div class="state">${o.txt || ''}</div>`}
+      <div class="rival-foe ${o.res || ''}">
+        ${o.art ? `${o.art}<div class="foe-name">${o.turn ? '⚔ ' : ''}${esc(o.name)}</div>${dice}` : `<div class="state">${o.txt || ''}</div>`}
       </div>
     </div>`;
   }).join('');
@@ -673,7 +738,6 @@ function renderMain() {
 function renderPrep() {
   const p = me();
   const torneo = S.round > S.rounds;
-  const waiting = S.players.filter((x) => !x.ready).map((x) => esc(x.name));
   return `
   <div class="card">
     <h2>${torneo ? 'Preparación para el Torneo' : `Entre combates · Ronda ${S.round} de ${S.rounds}`}</h2>
@@ -684,7 +748,6 @@ function renderPrep() {
       ${p.ready
         ? '<button class="btn" data-a="ready" data-v="0">Cancelar «Listo»</button>'
         : `<button class="btn primary" data-a="ready" data-v="1">${torneo ? '¡Listo para el Torneo!' : '¡Listo para la ronda!'}</button>`}
-      <span class="muted small">${waiting.length ? `Faltan: ${waiting.join(', ')}` : ''}</span>
     </div>
   </div>
   ${ui.theft ? renderTheft() : ''}
@@ -884,11 +947,7 @@ function renderCombat(p, controllable) {
   }
   return `
   <div class="combat">
-    ${foe ? `<div class="faceoff">
-      <figure>${heroPortrait(p, 'duel-art')}<figcaption>${esc(p.name)}</figcaption></figure>
-      <div class="faceoff-vs">vs</div>
-      <figure>${foe}<figcaption>${esc(foeName)}</figcaption></figure>
-    </div>` : ''}
+    ${foe ? `<figure class="foe-big">${foe}<figcaption>${esc(foeName)}</figcaption></figure>` : ''}
     <div class="row"><h2 style="margin:0">${esc(cb.label)}</h2><span class="spacer"></span>
       <span class="pill">Tirada ${cb.rolls}/3</span>
       <span class="pill">${cb.manaUsed ? 'Maná usado' : `Maná ${mine ? p.hero.manaCombate : ''} sin usar`}</span>
@@ -951,7 +1010,6 @@ function renderEnd() {
   const w = byId(S.winner);
   return `
   <div class="card winner-banner">
-    <div class="crown">👑</div>
     ${heroPortrait(w, 'lg')}
     <h1>${esc(w.name)}</h1>
     <p>${raceName(w)} ${className(w)} gana la partida con ${w.hero.vida} de Vida.</p>
@@ -1006,6 +1064,8 @@ document.addEventListener('click', (e) => {
     case 'addBot': act('addBot'); break;
     case 'pvpHits': act('setSettings', { pvpHits: Number(d.n) }); break;
     case 'start': act('start'); break;
+    case 'lobbyStage': act('lobbyStage', { stage: d.s }); break;
+    case 'lobbyReady': act('lobbyReady', { value: d.v === '1' }); break;
     case 'color': act('setColor', { color: d.c }); break;
     case 'raza': act('setHero', { raza: d.k }); break;
     case 'clase': act('setHero', { clase: d.k }); break;

@@ -28,6 +28,8 @@ class Game {
     this.rng = opts.rng || Math.random;
     this.settings = { pvpHits: C.DEFAULT_PVP_HITS };
     this.phase = 'lobby';
+    // Sala en dos pasos: primero se eligen los contrincantes y luego cada uno configura su héroe.
+    this.lobbyStage = 'rivales';
     this.round = 0;
     this.players = [];
     this.trades = [];
@@ -82,6 +84,7 @@ class Game {
       const clases = Object.keys(C.CLASSES);
       p.raza = razas[Math.floor(this.rng() * razas.length)];
       p.clase = clases[Math.floor(this.rng() * clases.length)];
+      p.ready = true;
     }
     this.players.push(p);
     this.say(`${p.name} se une a la partida.`);
@@ -187,6 +190,7 @@ class Game {
     if (this.players.length < 1) fail('No hay jugadores');
     for (const p of this.players) {
       if (!p.raza || !p.clase) fail(`${p.name} todavía no ha elegido Raza y Clase`);
+      if (!p.ready) fail(`${p.name} todavía no está listo`);
     }
     for (const p of this.players) this.createHero(p);
     this.round = 1;
@@ -220,11 +224,35 @@ class Game {
     for (const p of this.players) {
       p.ready = false;
       p.stage = 'elegir';
-      p.offers = this.makeOffers();
+      p.offers = this.makeOffers(p);
     }
   }
 
-  makeOffers() {
+  makeOffers(p) {
+    const offers = this.rollOffers();
+    // Siempre debe haber al menos un monstruo al alcance de las esferas del héroe.
+    const dice = p ? this.diceCount(p) : 5;
+    if (!offers.some((m) => m.combo.length <= dice)) {
+      offers[0] = this.affordableOffer(dice);
+      offers.sort((a, b) => a.level - b.level);
+    }
+    return offers;
+  }
+
+  // El monstruo más fuerte (nivel y tamaño) que el héroe puede afrontar, sin pasar del máximo de la ronda.
+  affordableOffer(dice) {
+    const maxLevel = Math.max(...C.levelsForRound(this.round));
+    for (let level = maxLevel; level >= 1; level--) {
+      for (const variante of [3, 2, 1]) {
+        if (C.variantCombo(C.MONSTERS[level].combo, variante).length <= dice) {
+          if (variante === 1 || level >= maxLevel - 2) return this.makeOffer(level, variante);
+        }
+      }
+    }
+    return this.makeOffer(1, 1);
+  }
+
+  rollOffers() {
     const levels = [...C.levelsForRound(this.round)];
     const chosen = [];
     for (let k = 0; k < 2; k++) {
@@ -237,29 +265,33 @@ class Game {
     }
     chosen.sort((a, b) => a - b);
     return chosen.map((level) => {
-      const m = C.MONSTERS[level];
       let r = this.rng();
       let variante = 1;
       for (const [k, v] of Object.entries(C.VARIANTS)) {
         if (r < v.peso) { variante = Number(k); break; }
         r -= v.peso;
       }
-      const v = C.VARIANTS[variante];
-      const rewardLevel = Math.min(12, level + v.recompensa);
-      return {
-        level,
-        nombre: m.nombre,
-        imagen: m.imagen,
-        variante,
-        tamano: v.nombre,
-        combo: C.variantCombo(m.combo, variante),
-        dano: C.monsterDamage(level) + v.dano,
-        rewards: [
-          I.makeReward(this.rng, rewardLevel, () => this.nextId()),
-          I.makeReward(this.rng, rewardLevel, () => this.nextId()),
-        ],
-      };
+      return this.makeOffer(level, variante);
     });
+  }
+
+  makeOffer(level, variante) {
+    const m = C.MONSTERS[level];
+    const v = C.VARIANTS[variante];
+    const rewardLevel = Math.min(12, level + v.recompensa);
+    return {
+      level,
+      nombre: m.nombre,
+      imagen: m.imagen,
+      variante,
+      tamano: v.nombre,
+      combo: C.variantCombo(m.combo, variante),
+      dano: C.monsterDamage(level) + v.dano,
+      rewards: [
+        I.makeReward(this.rng, rewardLevel, () => this.nextId()),
+        I.makeReward(this.rng, rewardLevel, () => this.nextId()),
+      ],
+    };
   }
 
   checkRoundDone() {
@@ -568,7 +600,7 @@ class Game {
     this.phase = 'fin';
     this.winner = id;
     this.tournament.champion = id;
-    this.say(`👑 ¡${this.player(id).name} GANA LA PARTIDA!`);
+    this.say(`🏆 ¡${this.player(id).name} GANA LA PARTIDA!`);
   }
 
   // ---------------------------------------------------------------- Vista
@@ -613,6 +645,7 @@ class Game {
       me: forId,
       host: this.hostId,
       phase: this.phase,
+      lobbyStage: this.lobbyStage,
       round: this.round,
       rounds: C.ROUNDS,
       settings: this.settings,
@@ -679,8 +712,20 @@ function useConsumable(game, p, data) {
 
 const ACTIONS = {
   // Lobby
+  lobbyStage(p, { stage }) {
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (p.id !== this.hostId) fail('Solo el anfitrión decide cuándo seguir');
+    if (!['rivales', 'heroes'].includes(stage)) fail('Paso no válido');
+    this.lobbyStage = stage;
+  },
+  lobbyReady(p, { value = true }) {
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (value && (!p.raza || !p.clase)) fail('Elige Raza y Clase primero');
+    p.ready = !!value;
+  },
   setHero(p, { raza, clase }) {
     if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (!p.bot) p.ready = false;
     if (raza !== undefined) {
       if (!C.RACES[raza]) fail('Raza no válida');
       p.raza = raza;

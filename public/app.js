@@ -762,7 +762,7 @@ function playEventSounds() {
   else if (texts.some((t) => /^💥/.test(t) && t.includes(name))) Sounds.play('batalla');
   else if (texts.some((t) => /^🔮/.test(t) && t.includes(name))) Sounds.play('fe');
   else if (texts.some((t) => t.startsWith(`${name} se enfrenta a`))) Sounds.play('batalla');
-  else if (has(/^— Ronda/)) Sounds.play('turno');
+  else if (has(/^— Ronda/)) Sounds.play('rugido');
   else if (texts.some((t) => /intercambio/.test(t) && t.includes(name))) Sounds.play('ficha');
   if (myTurn && !lastMyTurn) Sounds.play('turno', 300);
   lastMyTurn = myTurn;

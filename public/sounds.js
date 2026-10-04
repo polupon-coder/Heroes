@@ -18,11 +18,12 @@ const Sounds = (() => {
     conquista: 'conquista.mp3',
     arquero: 'arquero.mp3',
     infanteria: 'infanteria.mp3',
+    rugido: 'rugido.mp3',
   };
   // Volúmenes igualados (los mismos que en Imperio).
   const VOLUME = {
     fe: 0.36, destruccion: 0.29, derrota: 0.32, construir: 0.63, batalla: 0.76, celebracion: 0.43,
-    dados: 0.75, victoria: 0.8, infanteria: 0.6, arquero: 0.35, conquista: 1,
+    dados: 0.75, victoria: 0.8, infanteria: 0.6, arquero: 0.35, conquista: 1, rugido: 0.6,
   };
   const cache = new Map();
   let muted = false;

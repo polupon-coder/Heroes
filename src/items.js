@@ -19,8 +19,25 @@ function pick(rng, list) {
   return list[Math.floor(rng() * list.length)];
 }
 
-function makeEquipment(rng, level, nextId) {
-  const slot = pick(rng, ['arma', 'arma', 'dosManos', 'escudo', 'yelmo', 'armadura', 'tunica', 'botas']);
+// Tiende a ofrecer equipo de los huecos que el héroe aún tiene vacíos.
+function pickSlot(rng, inv) {
+  const slots = ['arma', 'arma', 'dosManos', 'escudo', 'yelmo', 'armadura', 'tunica', 'botas'];
+  if (!inv) return pick(rng, slots);
+  const handsFree = inv.manos.length === 0 ? 2 : inv.manos[0].slot === 'dosManos' ? 0 : 2 - inv.manos.length;
+  const weights = slots.map((s) => {
+    if (['arma', 'dosManos', 'escudo'].includes(s)) return handsFree >= (s === 'dosManos' ? 2 : 1) ? 3 : 1;
+    return inv[s] ? 1 : 3;
+  });
+  let r = rng() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < slots.length; i++) {
+    r -= weights[i];
+    if (r < 0) return slots[i];
+  }
+  return slots[slots.length - 1];
+}
+
+function makeEquipment(rng, level, nextId, inv) {
+  const slot = pickSlot(rng, inv);
   let bonus = C.equipmentBonus(level);
   // Grado I, II o III según la calidad (para su ilustración).
   const grado = bonus <= 2 ? 1 : bonus <= 3 ? 2 : 3;
@@ -75,10 +92,10 @@ function makeConsumable(rng, level, tipo, nextId) {
   return { id: nextId(), tipo, efecto, grado, valor: efecto === 'robo' ? 0 : valor, nombre };
 }
 
-function makeReward(rng, level, nextId) {
+function makeReward(rng, level, nextId, inv) {
   const r = rng();
   const w = C.REWARD_WEIGHTS;
-  if (r < w.equipo) return makeEquipment(rng, level, nextId);
+  if (r < w.equipo) return makeEquipment(rng, level, nextId, inv);
   if (r < w.equipo + w.pocion) return makeConsumable(rng, level, 'pocion', nextId);
   return makeConsumable(rng, level, 'pergamino', nextId);
 }
@@ -158,11 +175,15 @@ function tryPlace(inv, item) {
 
 // Opciones para resolver un conflicto de espacio.
 function conflictOptions(inv, item, conflicts) {
-  const opts = [{ id: 'descartar', label: `Descartar ${item.nombre}` }];
+  // «Poco lógico»: tirar algo mejor de lo que te quedas (para marcarlo más suave).
+  const val = (it) => (it.tipo === 'equipo' ? it.bonus : it.valor || 0);
+  const minOld = Math.min(...conflicts.map(val));
+  const opts = [{ id: 'descartar', label: `Descartar ${item.nombre}`, torpe: val(item) > minOld }];
   if (item.slot === 'dosManos') {
-    opts.push({ id: 'todas', label: `Descartar ${conflicts.map((c) => c.nombre).join(' y ')}` });
+    const sum = conflicts.reduce((s, c) => s + val(c), 0);
+    opts.push({ id: 'todas', label: `Descartar ${conflicts.map((c) => c.nombre).join(' y ')}`, torpe: sum >= val(item) });
   } else {
-    for (const c of conflicts) opts.push({ id: c.id, label: `Descartar ${c.nombre}` });
+    for (const c of conflicts) opts.push({ id: c.id, label: `Descartar ${c.nombre}`, torpe: val(c) > val(item) || val(c) > minOld });
   }
   return opts;
 }

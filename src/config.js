@@ -10,25 +10,30 @@ const BASE_STATS = { vida: 10, mana: 5, fuerza: 10 };
 // Ningún héroe empieza con menos Fuerza que esto (después de Raza y Clase).
 const MIN_FUERZA_INICIAL = 10;
 
+// Razas y clases equilibradas: cada raza reparte 3 puntos y cada clase 5, sin
+// valores negativos (la Fuerza y el Maná tienen mínimos, así que un negativo
+// sería un punto perdido). Todos empiezan con al menos 5 de Maná.
 const RACES = {
-  humano: { nombre: 'Humano', vida: 1, mana: 1, fuerza: 0 },
-  elfo: { nombre: 'Elfo', vida: 0, mana: 2, fuerza: 0 },
-  enano: { nombre: 'Enano', vida: 2, mana: 0, fuerza: 1 },
-  gnomo: { nombre: 'Gnomo', vida: -1, mana: 2, fuerza: -1 },
-  silvano: { nombre: 'Silvano', vida: 1, mana: 1, fuerza: 0 },
-  durgan: { nombre: 'Durgan', vida: 3, mana: -1, fuerza: 2 },
-  faunar: { nombre: 'Faunar', vida: 1, mana: 0, fuerza: 1 },
+  humano: { nombre: 'Humano', vida: 1, mana: 2, fuerza: 0 },
+  elfo: { nombre: 'Elfo', vida: 0, mana: 3, fuerza: 0 },
+  enano: { nombre: 'Enano', vida: 1, mana: 1, fuerza: 1 },
+  gnomo: { nombre: 'Gnomo', vida: 1, mana: 2, fuerza: 0 },
+  silvano: { nombre: 'Silvano', vida: 2, mana: 1, fuerza: 0 },
+  durgan: { nombre: 'Durgan', vida: 2, mana: 0, fuerza: 1 },
+  faunar: { nombre: 'Faunar', vida: 1, mana: 0, fuerza: 2 },
 };
 
 const CLASSES = {
-  guerrero: { nombre: 'Guerrero', vida: 3, mana: 0, fuerza: 2 },
-  mago: { nombre: 'Mago', vida: -1, mana: 4, fuerza: -1 },
-  ladron: { nombre: 'Ladrón', vida: 0, mana: 1, fuerza: 0 },
-  druida: { nombre: 'Druida', vida: 1, mana: 3, fuerza: 0 },
-  explorador: { nombre: 'Explorador', vida: 1, mana: 1, fuerza: 1 },
-  clerigo: { nombre: 'Clérigo', vida: 2, mana: 3, fuerza: 0 },
-  barbaro: { nombre: 'Bárbaro', vida: 4, mana: -1, fuerza: 3 },
+  guerrero: { nombre: 'Guerrero', vida: 2, mana: 0, fuerza: 3 },
+  mago: { nombre: 'Mago', vida: 1, mana: 4, fuerza: 0 },
+  ladron: { nombre: 'Ladrón', vida: 1, mana: 2, fuerza: 2 },
+  druida: { nombre: 'Druida', vida: 2, mana: 3, fuerza: 0 },
+  explorador: { nombre: 'Explorador', vida: 2, mana: 1, fuerza: 2 },
+  clerigo: { nombre: 'Clérigo', vida: 3, mana: 2, fuerza: 0 },
+  barbaro: { nombre: 'Bárbaro', vida: 3, mana: 1, fuerza: 1 },
 };
+
+const MIN_MANA_INICIAL = 5;
 
 // Regla 10: Fuerza -> dados (mínimo 1 dado, máximo 5).
 function diceForFuerza(fuerza) {
@@ -77,9 +82,9 @@ const MONSTERS = {
 // grande, más colores exige, más daño hace y mejores son sus recompensas
 // (se generan como si el monstruo fuera `recompensa` niveles más alto).
 const VARIANTS = {
-  1: { nombre: 'Pequeño', peso: 0.5, endurecer: false, extraColores: 0, dano: 0, recompensa: 0 },
-  2: { nombre: 'Mediano', peso: 0.35, endurecer: true, extraColores: 0, dano: 1, recompensa: 2 },
-  3: { nombre: 'Grande', peso: 0.15, endurecer: true, extraColores: 1, dano: 2, recompensa: 4 },
+  1: { nombre: 'Pequeño', peso: 0.3, endurecer: false, extraColores: 0, dano: 0, recompensa: 0 },
+  2: { nombre: 'Mediano', peso: 0.4, endurecer: true, extraColores: 0, dano: 1, recompensa: 2 },
+  3: { nombre: 'Grande', peso: 0.3, endurecer: true, extraColores: 1, dano: 2, recompensa: 4 },
 };
 const MAX_COMBO = 5;
 
@@ -102,10 +107,10 @@ function variantCombo(combo, variante) {
 
 // Regla 23.
 function monsterDamage(level) {
-  if (level <= 3) return 1;
-  if (level <= 6) return 2;
-  if (level <= 9) return 3;
-  return 4;
+  if (level <= 3) return 2;
+  if (level <= 6) return 3;
+  if (level <= 9) return 4;
+  return 5;
 }
 
 // Regla 27.
@@ -158,6 +163,7 @@ module.exports = {
   FACES,
   BASE_STATS,
   MIN_FUERZA_INICIAL,
+  MIN_MANA_INICIAL,
   RACES,
   CLASSES,
   diceForFuerza,

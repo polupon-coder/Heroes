@@ -17,7 +17,7 @@ function baseStats(raza, clase) {
   const c = C.CLASSES[clase];
   return {
     vida: C.BASE_STATS.vida + r.vida + c.vida,
-    mana: C.BASE_STATS.mana + r.mana + c.mana,
+    mana: Math.max(C.MIN_MANA_INICIAL, C.BASE_STATS.mana + r.mana + c.mana),
     fuerza: Math.max(C.MIN_FUERZA_INICIAL, C.BASE_STATS.fuerza + r.fuerza + c.fuerza),
   };
 }
@@ -202,6 +202,9 @@ class Game {
     this.phase = 'prep';
     this.trades = [];
     for (const p of this.players) {
+      // Un maleficio recibido y un comercio por jugador en cada ronda.
+      p.cursedThisRound = false;
+      p.tradedThisRound = false;
       p.ready = false;
       p.stage = null;
       p.offers = null;
@@ -229,6 +232,7 @@ class Game {
   }
 
   makeOffers(p) {
+    this._invHint = p && p.hero ? p.hero.inv : null;
     const offers = this.rollOffers();
     // Nunca se ofrecen monstruos a los que el héroe no pueda enfrentarse:
     // primero se prueba un tamaño menor y, si no basta, un nivel más bajo.
@@ -287,8 +291,8 @@ class Game {
       combo: C.variantCombo(m.combo, variante),
       dano: C.monsterDamage(level) + v.dano,
       rewards: [
-        I.makeReward(this.rng, rewardLevel, () => this.nextId()),
-        I.makeReward(this.rng, rewardLevel, () => this.nextId()),
+        I.makeReward(this.rng, rewardLevel, () => this.nextId(), this._invHint),
+        I.makeReward(this.rng, rewardLevel, () => this.nextId(), this._invHint),
       ],
     };
   }
@@ -323,6 +327,9 @@ class Game {
     };
     p.hero.curses = 0;
     p.combat = combat;
+    // El Maná se convierte en esferas blancas (comodín) ya fijadas desde el principio.
+    combat.dice = Array.from({ length: combat.diceCount }, () => ({ face: null, held: false, fixed: false }));
+    this.applyWhites(p);
     if (combat.cursesLeft > 0) {
       combat.events.push(`Arrastra ${combat.cursesLeft} maldición(es): deberá repetir dados exitosos.`);
     }
@@ -333,13 +340,30 @@ class Game {
     return C.fixedDiceForMana(this.combatMana(p));
   }
 
+  // Asegura tantas esferas blancas fijadas como permita el Maná del combate.
+  applyWhites(p) {
+    const cb = p.combat;
+    const want = Math.min(cb.diceCount, this.fixableDice(p));
+    let have = cb.dice.filter((d) => d.fixed).length;
+    if (have >= want) return;
+    // Primero las que aún no se han tirado o no sirven; después cualquiera.
+    const used = cb.rolls ? D.matchDice(cb.dice.map((d) => d.face), cb.combo).used : new Set();
+    const order = cb.dice.map((d, i) => i).filter((i) => !cb.dice[i].fixed)
+      .sort((a, b) => (used.has(a) ? 1 : 0) - (used.has(b) ? 1 : 0));
+    for (const i of order) {
+      if (have >= want) break;
+      cb.dice[i] = { face: 'blanco', held: true, fixed: true };
+      have += 1;
+    }
+    cb.manaUsed = true;
+  }
+
   roll(p, hold) {
     const cb = this.activeCombat(p);
     if (cb.rolls >= C.MAX_ROLLS) fail('Ya has hecho las 3 tiradas');
     let newIdx;
     if (cb.rolls === 0) {
-      cb.dice = Array.from({ length: cb.diceCount }, () => ({ face: null, held: false, fixed: false }));
-      newIdx = cb.dice.map((_, i) => i);
+      newIdx = cb.dice.map((d, i) => (d.fixed ? -1 : i)).filter((i) => i >= 0);
     } else {
       const holdSet = new Set((hold || []).map(Number));
       cb.dice.forEach((d, i) => {
@@ -405,15 +429,15 @@ class Game {
 
   canStillAct(p) {
     const cb = p.combat;
-    if (cb.manaUsed && cb.dice.every((d) => d.fixed)) return false;
-    if (cb.rolls < C.MAX_ROLLS) return true;
-    if (cb.manaUsed) return false;
-    if (this.fixableDice(p) > 0) return true;
-    // ¿Podría alcanzar el umbral bebiendo una poción de maná?
+    if (cb.rolls < C.MAX_ROLLS && cb.dice.some((d) => !d.fixed)) return true;
+    // Sin tiradas: solo una poción de Maná que añada blancas suficientes puede salvarle.
+    if (cb.kind !== 'monstruo') return false;
+    const missing = D.matchDice(cb.dice.map((d) => d.face), cb.combo).missing;
     const potential = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos]
       .filter((it) => it.efecto === 'mana')
       .reduce((s, it) => s + it.valor, 0);
-    return C.fixedDiceForMana(this.combatMana(p) + potential) > 0;
+    const extra = C.fixedDiceForMana(this.combatMana(p) + potential) - this.fixableDice(p);
+    return potential > 0 && extra >= missing;
   }
 
   afterCombatStep(p) {
@@ -676,11 +700,12 @@ function useConsumable(game, p, data) {
   const myDuel = game.phase === 'torneo' && inCombat;
   if (it.efecto === 'mana') {
     if (!inCombat) fail('El Maná temporal se usa durante un combate');
-    if (p.combat.manaUsed) fail('Ya has usado el Maná en este combate');
     p.combat.manaBonus += it.valor;
-    p.combat.events.push(`🧪 ${it.nombre}: Maná ${game.combatMana(p)} en este combate`);
+    p.combat.events.push(`${it.nombre}: Maná ${game.combatMana(p)} en este combate`);
     I.removeItem(p.hero.inv, it.id);
     game.say(`${p.name} usa ${it.nombre}.`);
+    game.applyWhites(p);
+    game.afterCombatStep(p);
     return;
   }
   if (it.efecto === 'curacion') {
@@ -786,6 +811,7 @@ const ACTIONS = {
     if (this.round <= 1) fail('Todavía no ha habido combates');
     const t = this.player(targetId);
     if (t === p) fail('No puedes maldecirte a ti mismo');
+    if (t.cursedThisRound) fail(`${t.name} ya ha recibido un maleficio esta ronda`);
     const amt = Number(amount);
     if (!Number.isInteger(amt) || amt < C.MANA_PER_CURSE || amt % C.MANA_PER_CURSE !== 0) {
       fail(`El Maná se usa en bloques de ${C.MANA_PER_CURSE}`);
@@ -794,7 +820,8 @@ const ACTIONS = {
     const n = amt / C.MANA_PER_CURSE;
     p.hero.manaDebt += amt;
     t.hero.curses += n;
-    this.say(`🔮 ${p.name} gasta ${amt} de Maná y maldice a ${t.name}: repetirá ${n} dado(s) exitoso(s).`);
+    t.cursedThisRound = true;
+    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${t.name}: repetirá ${n} dado(s) exitoso(s).`);
   },
   discard(p, { itemId }) {
     if (this.phase !== 'prep' && this.phase !== 'combat') fail('Ahora no puedes descartar objetos');
@@ -802,15 +829,28 @@ const ACTIONS = {
     if (!it) fail('No tienes ese objeto');
     this.say(`${p.name} descarta ${it.nombre}.`);
   },
+  undoReward(p) {
+    const pend = p.hero.pending[0];
+    if (!pend || !pend.fromReward || p.stage !== 'recompensa') fail('No hay nada que deshacer');
+    p.hero.pending.shift();
+  },
   resolvePending(p, { choice }) {
     const pend = p.hero.pending[0];
     if (!pend) fail('No hay nada pendiente');
+    const finishReward = () => {
+      if (pend.fromReward && p.stage === 'recompensa') {
+        p.rewards = null;
+        p.stage = 'hecho';
+        this.checkRoundDone();
+      }
+    };
     if (!pend.options.some((o) => o.id === choice)) fail('Opción no válida');
     // Las opciones pudieron quedar obsoletas (comercio, robo...): recalcular.
     const conflicts = I.tryPlace(p.hero.inv, pend.item);
     p.hero.pending.shift();
     if (!conflicts) {
       this.say(`${p.name} guarda ${pend.item.nombre}.`);
+      finishReward();
       return;
     }
     const opts = I.conflictOptions(p.hero.inv, pend.item, conflicts);
@@ -820,6 +860,7 @@ const ACTIONS = {
     }
     const { discarded } = I.resolveConflict(p.hero.inv, pend.item, choice);
     this.say(`${p.name} se queda con ${choice === 'descartar' ? 'su equipo' : pend.item.nombre} y descarta ${discarded.map((d) => d.nombre).join(', ')}.`);
+    finishReward();
   },
   useItem(p, data) {
     useConsumable(this, p, data);
@@ -829,6 +870,9 @@ const ACTIONS = {
     const to = this.player(toId);
     if (to === p) fail('No puedes comerciar contigo mismo');
     if (!give.length && !want.length) fail('La oferta está vacía');
+    if (p.tradedThisRound) fail('Ya has comerciado esta ronda');
+    if (to.tradedThisRound) fail(`${to.name} ya ha comerciado esta ronda`);
+    if (this.trades.some((t) => t.from === p.id)) fail('Ya tienes una oferta pendiente');
     for (const id of give) if (!I.findItem(p.hero.inv, id)) fail('No tienes ese objeto');
     for (const id of want) if (!I.findItem(to.hero.inv, id)) fail(`${to.name} no tiene ese objeto`);
     const t = { id: this.nextId(), from: p.id, to: to.id, give: [...give], want: [...want], status: 'pendiente' };
@@ -853,6 +897,10 @@ const ACTIONS = {
       for (const it of giveItems) I.removeItem(from.hero.inv, it.id);
       for (const it of wantItems) I.removeItem(p.hero.inv, it.id);
       t.status = 'aceptada';
+      p.tradedThisRound = true;
+      from.tradedThisRound = true;
+      // Las demás ofertas de estos dos jugadores dejan de valer
+      for (const o of this.trades) if (o !== t && [o.from, o.to].some((id) => id === p.id || id === from.id)) o.status = 'cancelada';
       this.say(`🤝 ${p.name} acepta el intercambio con ${from.name}.`);
       for (const it of giveItems) this.receiveItem(p, it, 'comercio');
       for (const it of wantItems) this.receiveItem(from, it, 'comercio');
@@ -896,15 +944,22 @@ const ACTIONS = {
   concede(p) {
     const cb = this.activeCombat(p);
     if (cb.rolls < 1) fail('Primero haz la primera tirada');
+    if (cb.kind === 'monstruo' && cb.rolls < C.MAX_ROLLS) fail('Aún te quedan tiradas');
     this.endCombat(p, false);
   },
   chooseReward(p, { index }) {
     if (p.stage !== 'recompensa') fail('No hay recompensa que elegir');
+    if (p.hero.pending.length) fail('Primero decide qué hacer con el objeto pendiente');
     const it = p.rewards[Number(index)];
     if (!it) fail('Recompensa no válida');
+    this.receiveItem(p, it, 'recompensa');
+    // Si no cabe, la elección queda abierta: se puede deshacer y escoger la otra.
+    if (p.hero.pending.length) {
+      p.hero.pending[p.hero.pending.length - 1].fromReward = true;
+      return;
+    }
     p.rewards = null;
     p.stage = 'hecho';
-    this.receiveItem(p, it, 'recompensa');
     this.checkRoundDone();
   },
 

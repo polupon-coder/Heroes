@@ -39,7 +39,20 @@ function botStep(game, p) {
         return true;
       }
     }
+    // A partir de la ronda 5, a veces lanza un maleficio al rival más fuerte.
+    if (!p.ready && !p._triedCurse && game.round >= 5 && game.round <= C.ROUNDS && game.availableMana(p) >= C.MANA_PER_CURSE) {
+      p._triedCurse = true;
+      if (game.rng() < 0.45) {
+        const targets = game.players.filter((x) => x !== p && !x.cursedThisRound)
+          .sort((x, y) => game.tourneyScore(y) - game.tourneyScore(x));
+        if (targets.length) {
+          game.act(p.id, 'curse', { targetId: targets[0].id, amount: C.MANA_PER_CURSE });
+          return true;
+        }
+      }
+    }
     if (!p.ready) {
+      p._triedCurse = false;
       game.act(p.id, 'ready', { value: true });
       return true;
     }
@@ -117,36 +130,20 @@ function fight(game, p) {
     return true;
   }
   const faces = cb.dice.map((d) => d.face);
-  const { used } = D.matchDice(faces, cb.combo);
-  const missing = D.missingColors(faces, cb.combo);
-  const free = cb.dice.map((d, i) => i).filter((i) => !used.has(i) && !cb.dice[i].fixed);
-
-  if (!cb.manaUsed) {
-    let k = game.fixableDice(p);
-    if (missing.length > k) {
-      const pot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');
-      if (pot && C.fixedDiceForMana(game.combatMana(p) + pot.valor) >= missing.length && cb.rolls === C.MAX_ROLLS) {
-        game.act(p.id, 'useItem', { itemId: pot.id });
-        return true;
-      }
-    }
-    k = game.fixableDice(p);
-    if (k > 0 && missing.length <= k && missing.length <= free.length) {
-      const assign = missing.map((face, j) => ({ index: free[j], face }));
-      game.act(p.id, 'mana', { assign });
+  const { used, missing } = D.matchDice(faces, cb.combo);
+  // Poción de Maná si con ella se completan las esferas que faltan
+  if (missing > 0) {
+    const pot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');
+    if (pot && C.fixedDiceForMana(game.combatMana(p) + pot.valor) - game.fixableDice(p) >= missing) {
+      game.act(p.id, 'useItem', { itemId: pot.id });
       return true;
     }
   }
-  if (cb.rolls < C.MAX_ROLLS) {
+  if (cb.rolls < C.MAX_ROLLS && cb.dice.some((d) => !d.fixed)) {
     const hold = cb.dice.map((d, i) => i).filter((i) => used.has(i) || cb.dice[i].fixed);
-    if (hold.length === cb.dice.length) hold.pop();
+    const free = cb.dice.map((d, i) => i).filter((i) => !cb.dice[i].fixed && !hold.includes(i));
+    if (!free.length) hold.splice(hold.indexOf(cb.dice.findIndex((d) => !d.fixed)), 1);
     game.act(p.id, 'roll', { hold });
-    return true;
-  }
-  // En el torneo el daño es graduado: fija con el Maná los dados que pueda.
-  if (cb.kind === 'duelo' && !cb.manaUsed && game.fixableDice(p) > 0 && free.length && missing.length) {
-    const n = Math.min(game.fixableDice(p), free.length, missing.length);
-    game.act(p.id, 'mana', { assign: free.slice(0, n).map((index) => ({ index, face: cb.combo[0] })) });
     return true;
   }
   game.act(p.id, 'concede', {});

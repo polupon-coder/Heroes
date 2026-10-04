@@ -1029,3 +1029,11 @@ body::-webkit-scrollbar { display: none; }
 .die.fixed { box-shadow: 0 0 0 3px rgba(79, 122, 58, .85), 0 0 12px rgba(79, 122, 58, .6); }
 .foe-card, .foe-card.ready, .foe-card.chosen { border-color: transparent !important; }
 .foe-card .dice { gap: 14px; }
+
+/* ===== Cartas de monstruo: nivel, daño en rojo y recompensas como botón suave ===== */
+.foe-level { color: var(--muted); font-style: italic; }
+.foe-dmg { color: #a3261b; font-family: var(--title); font-weight: 700; font-size: 1.25rem; line-height: 1; margin-bottom: 4px; }
+.btn.see-rewards { background: rgba(255, 248, 230, .45); border: 1px solid var(--line); color: var(--ink-soft); font: 600 .85rem var(--text); padding: 4px 14px; min-height: 0; text-decoration: none; filter: none; }
+.btn.see-rewards:hover { background: rgba(255, 248, 230, .8); }
+/* Mis esferas algo más abajo */
+.combat .dice-zone { margin-top: 3.2vh; }

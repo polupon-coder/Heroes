@@ -3,8 +3,6 @@
 const C = require('./config');
 
 const SHIELD_NAMES = ['Rodela', 'Escudo', 'Pavés'];
-const ARMOR_NAMES = ['Cota de malla', 'Armadura de cuero', 'Coraza'];
-const BOOTS_NAMES = ['Botas', 'Grebas', 'Botas de viaje'];
 
 const SLOT_LABEL = {
   arma: 'Arma',
@@ -32,7 +30,8 @@ function makeEquipment(rng, level, nextId) {
   const forma =
     slot === 'arma' ? pick(rng, ['espada', 'maza'])
       : slot === 'dosManos' ? pick(rng, ['arco', 'hacha', 'baculo', 'cayado'])
-        : undefined;
+        : slot === 'armadura' ? pick(rng, ['tunica', 'cota'])
+          : undefined;
   const names = {
     arma: {
       espada: [['Espada de hierro', 'Espada corta'], ['Espada de acero', 'Espada larga'], ['Espada rúnica', 'Espada élfica']],
@@ -46,8 +45,11 @@ function makeEquipment(rng, level, nextId) {
     }[forma]?.[grado - 1],
     escudo: SHIELD_NAMES,
     yelmo: [['Yelmo nasal', 'Casco de cuero y hierro'], ['Yelmo de acero', 'Yelmo de caballero'], ['Yelmo alado', 'Yelmo real']][grado - 1],
-    armadura: ARMOR_NAMES,
-    botas: BOOTS_NAMES,
+    armadura: {
+      tunica: [['Túnica de lana', 'Hábito con capucha'], ['Túnica del bosque', 'Manto de hojas'], ['Túnica del gran druida', 'Manto de la arboleda']],
+      cota: [['Armadura de cuero', 'Gambesón'], ['Cota de malla', 'Brigantina'], ['Coraza', 'Armadura de placas']],
+    }[forma]?.[grado - 1],
+    botas: [['Botas de viaje', 'Botas de cuero'], ['Botas de explorador', 'Botas con hebillas'], ['Botas élficas', 'Botas del bosque']][grado - 1],
   }[slot];
   return {
     id: nextId(),

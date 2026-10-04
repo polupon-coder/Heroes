@@ -47,7 +47,7 @@ function makeEquipment(rng, level, nextId) {
     yelmo: [['Yelmo nasal', 'Casco de cuero y hierro'], ['Yelmo de acero', 'Yelmo de caballero'], ['Yelmo alado', 'Yelmo real']][grado - 1],
     armadura: {
       tunica: [['Túnica de lana', 'Hábito con capucha'], ['Túnica del bosque', 'Manto de hojas'], ['Túnica del gran druida', 'Manto de la arboleda']],
-      cota: [['Armadura de cuero', 'Gambesón'], ['Cota de malla', 'Brigantina'], ['Coraza', 'Armadura de placas']],
+      cota: [['Jubón de cuero', 'Armadura de explorador'], ['Cota de malla del bosque', 'Brigantina'], ['Coraza de hojas de oro', 'Armadura del guardián']],
     }[forma]?.[grado - 1],
     botas: [['Botas de viaje', 'Botas de cuero'], ['Botas de explorador', 'Botas con hebillas'], ['Botas élficas', 'Botas del bosque']][grado - 1],
   }[slot];

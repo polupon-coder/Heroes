@@ -28,13 +28,15 @@ function makeEquipment(rng, level, nextId) {
   // Grado I, II o III según la calidad (para su ilustración).
   const grado = bonus <= 2 ? 1 : bonus <= 3 ? 2 : 3;
   if (slot === 'dosManos') bonus += C.TWO_HANDED_EXTRA;
-  // Las armas a dos manos pueden ser arcos o hachas.
-  const forma = slot === 'dosManos' ? pick(rng, ['arco', 'hacha']) : undefined;
+  // Las armas a dos manos pueden ser arcos, hachas o báculos.
+  const forma = slot === 'dosManos' ? pick(rng, ['arco', 'hacha', 'baculo']) : undefined;
   const names = {
     arma: [['Espada de hierro', 'Espada corta'], ['Espada de acero', 'Espada larga'], ['Espada rúnica', 'Espada élfica']][grado - 1],
-    dosManos: forma === 'arco'
-      ? [['Arco de caza', 'Arco corto'], ['Arco largo', 'Arco de tejo'], ['Arco élfico', 'Arco del bosque']][grado - 1]
-      : [['Hacha de guerra', 'Hacha de leñador'], ['Gran hacha', 'Hacha doble'], ['Hacha rúnica', 'Hacha de los reyes']][grado - 1],
+    dosManos: {
+      arco: [['Arco de caza', 'Arco corto'], ['Arco largo', 'Arco de tejo'], ['Arco élfico', 'Arco del bosque']],
+      hacha: [['Hacha de guerra', 'Hacha de leñador'], ['Gran hacha', 'Hacha doble'], ['Hacha rúnica', 'Hacha de los reyes']],
+      baculo: [['Báculo de aprendiz', 'Vara de cristal'], ['Báculo arcano', 'Báculo de zafiro'], ['Báculo astral', 'Báculo del archimago']],
+    }[forma]?.[grado - 1],
     escudo: SHIELD_NAMES,
     yelmo: HELMET_NAMES,
     armadura: ARMOR_NAMES,

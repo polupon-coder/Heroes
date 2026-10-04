@@ -54,16 +54,6 @@ function soloGame(rng, raza = 'humano', clase = 'guerrero') {
 }
 
 
-test('tamaños de monstruo: más colores, más daño y mejores recompensas', () => {
-  assert.deepStrictEqual(C.variantCombo(['rojo', 'azul'], 1), ['rojo', 'azul']);
-  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 2), ['rojo', 'rojo', 'rojo']);
-  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 3), ['rojo', 'rojo', 'rojo', 'rojo']);
-  assert.strictEqual(C.variantCombo(['rojo', 'azul', 'verde', 'amarillo', 'amarillo'], 3).length, 5);
-  const { p } = soloGame(() => F.blanco); // 0.9 -> tamaño grande
-  const m = p.offers[0];
-  assert.strictEqual(m.variante, 3);
-  assert.strictEqual(m.dano, C.monsterDamage(m.level) + 2);
-});
 
 
 
@@ -110,13 +100,14 @@ test('golpe graduado del torneo', () => {
 
 test('tamaños de monstruo: más colores, más daño y mejores recompensas', () => {
   assert.deepStrictEqual(C.variantCombo(['rojo', 'azul'], 1), ['rojo', 'azul']);
-  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 2), ['rojo', 'rojo', 'rojo']);
-  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 3), ['rojo', 'rojo', 'rojo', 'rojo']);
+  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 2), ['rojo', 'rojo', 'rojo', 'rojo']);
+  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 3), ['rojo', 'rojo', 'rojo', 'rojo', 'rojo']);
   assert.strictEqual(C.variantCombo(['rojo', 'azul', 'verde', 'amarillo', 'amarillo'], 3).length, 5);
-  const { p } = soloGame(() => F.blanco); // 0.9 -> tamaño grande
-  const m = p.offers[0];
+  const { g } = soloGame(() => F.blanco);
+  const m = g.makeOffer(2, 3, 'color');
   assert.strictEqual(m.variante, 3);
   assert.strictEqual(m.dano, C.monsterDamage(m.level) + 2);
+  assert.ok(m.rewards.length > 0);
 });
 
 

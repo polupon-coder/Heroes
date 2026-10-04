@@ -80,23 +80,56 @@ function monsterArt(m, cls = 'monster-art') {
   return `<img class="${cls}" src="img/monstruos/${key}.webp" alt="${esc(m.nombre)}" loading="lazy">`;
 }
 
-function die(face, { cls = '', attrs = '', sm = false } = {}) {
-  const f = face || 'empty';
-  return `<div class="die ${sm ? 'sm' : ''} ${f} ${cls}" ${attrs} title="${FACE_LABEL[face] || ''}"></div>`;
+// Formas de las esferas (se dibujan encima del color).
+const SHAPE_PATH = {
+  circulo: '<circle cx="12" cy="12" r="7.5"/>',
+  cuadrado: '<rect x="5" y="5" width="14" height="14"/>',
+  rombo: '<path d="M12 2.8 21.2 12 12 21.2 2.8 12Z"/>',
+  triangulo: '<path d="M12 3.2 21 19.6H3Z"/>',
+  estrella: '<path d="M12 2.2l2.9 6.4 7 .7-5.3 4.7 1.6 6.9L12 17.3l-6.2 3.6 1.6-6.9L2.1 9.3l7-.7Z"/>',
+  cruz: '<path d="M6 6 18 18M18 6 6 18" fill="none" stroke-width="3.6"/>',
+};
+const SHAPE_LABEL = { circulo: 'Círculo', cuadrado: 'Cuadrado', rombo: 'Rombo', triangulo: 'Triángulo', estrella: 'Estrella (comodín)', cruz: 'Cruz' };
+const WILD = { color: 'blanco', forma: 'estrella' };
+
+function shapeSvg(shape) {
+  if (!SHAPE_PATH[shape]) return '';
+  return `<svg class="shape ${shape}" viewBox="0 0 24 24" aria-hidden="true">${SHAPE_PATH[shape]}</svg>`;
 }
 
-function comboHtml(combo, sm = true) {
-  return `<div class="dice">${combo.map((c) => die(c, { sm, cls: 'target' })).join('')}</div>`;
+// Una esfera: color de fondo y, si la hay, forma encima. Sin color = solo la forma.
+function die(face, { cls = '', attrs = '', sm = false, shape = null } = {}) {
+  const f = face || (shape ? 'plain' : 'empty');
+  const title = [FACE_LABEL[face], SHAPE_LABEL[shape]].filter(Boolean).join(' · ');
+  return `<div class="die ${sm ? 'sm' : ''} ${f} ${shape ? 'has-shape' : ''} ${cls}" ${attrs} title="${title}">${shapeSvg(shape)}</div>`;
 }
 
-function matchDice(faces, combo) {
+function comboHtml(combo, sm = true, tipo = 'color') {
+  return `<div class="dice ${combo.length >= 5 ? 'five' : ''}">${combo.map((c) => (tipo === 'forma' ? die(null, { sm, cls: 'target', shape: c }) : die(c, { sm, cls: 'target' }))).join('')}</div>`;
+}
+
+function matchDice(faces, combo, wild = 'blanco') {
   const needs = {};
   combo.forEach((c) => (needs[c] = (needs[c] || 0) + 1));
   const used = new Set();
-  faces.forEach((f, i) => { if (f && f !== 'blanco' && needs[f] > 0) { needs[f]--; used.add(i); } });
+  faces.forEach((f, i) => { if (f && f !== wild && needs[f] > 0) { needs[f]--; used.add(i); } });
   let missing = Object.values(needs).reduce((a, b) => a + b, 0);
-  faces.forEach((f, i) => { if (missing > 0 && f === 'blanco') { used.add(i); missing--; } });
+  faces.forEach((f, i) => { if (missing > 0 && f === wild) { used.add(i); missing--; } });
   return { used, missing };
+}
+
+// Cómo van las esferas frente a cada monstruo del combate.
+function targetMatch(cb, t, faces) {
+  const vals = t.tipo === 'forma' ? cb.dice.map((d) => d.shape) : (faces || cb.dice.map((d) => d.face));
+  const r = matchDice(vals, t.combo, WILD[t.tipo] || 'blanco');
+  return { ...r, ok: r.missing === 0 };
+}
+function bestTarget(cb, faces) {
+  const targets = cb.targets || [{ tipo: 'color', combo: cb.combo }];
+  const st = targets.map((t) => targetMatch(cb, t, faces));
+  let best = 0;
+  st.forEach((x, i) => { if (x.missing < st[best].missing) best = i; });
+  return { ...st[best], index: best, all: st };
 }
 
 function itemIcon(it) {
@@ -363,10 +396,9 @@ function renderLobbyHeroes(p) {
   const showClass = p.clase || 'guerrero';
   const others = S.players.filter((x) => x.id !== S.me).map((x) => `
     <div class="mini-hero">
-      ${x.raza ? portrait(x.raza, x.clase || 'guerrero', 'sm', x.color) : '<div class="portrait sm missing">?</div>'}
-      <div><b>${esc(x.name)}</b> ${x.ready ? '<span class="check">✔</span>' : ''}
-        <div class="muted small">${x.raza ? raceName(x) : 'eligiendo…'}${x.clase ? ` · ${className(x)}` : ''}</div>
-      </div>
+      ${x.raza ? portrait(x.raza, x.clase || 'guerrero', 'other', x.color) : '<div class="portrait other missing">?</div>'}
+      <div class="mini-name"><b>${esc(x.name)}</b> ${x.ready ? '<span class="check">✔</span>' : ''}</div>
+      <div class="muted small">${x.raza ? raceName(x) : 'eligiendo…'}${x.clase ? ` · ${className(x)}` : ''}</div>
     </div>`).join('');
   return `
   <div class="lobby-heroes">
@@ -374,6 +406,7 @@ function renderLobbyHeroes(p) {
       <div class="hero-pick">
         <div class="pick-portrait">
           ${p.raza ? portrait(p.raza, showClass, 'xl', p.color) : '<div class="portrait xl missing">Elige una raza</div>'}
+          <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
           <div class="row center-row">${['rojo', 'azul', 'verde', 'amarillo'].map((c) => `<button class="shield-pick ${p.color === c ? 'selected' : ''}" data-a="color" data-c="${c}" title="${COLOR_LABEL[c]}">${chip(c)}</button>`).join('')}</div>
         </div>
         <div>
@@ -402,9 +435,8 @@ function renderLobbyHeroes(p) {
       </div>
     </div>
     <aside class="card others-pick">
-      <h3>Los demás</h3>
+      <h3 class="center">Contrincantes</h3>
       ${others || '<p class="muted">Aún no hay nadie más.</p>'}
-      ${host ? '<button class="link-btn" data-a="lobbyStage" data-s="rivales">← volver a contrincantes</button>' : ''}
     </aside>
   </div>`;
 }
@@ -506,7 +538,9 @@ function useBtn(it) {
 
 function opponentOf(p) {
   if (S.phase === 'combat') {
-    if (p.stage === 'elegir') return { txt: 'elige monstruo…' };
+    if (!p.monster && p.stage === 'combate' && p.offers && p.offers.length) {
+      return { art: p.offers.map((m) => monsterArt(m, 'foe two')).join(''), name: p.offers.map((m) => m.nombre).join(' o ') };
+    }
     if (p.monster) {
       const res = p.combat && p.combat.status === 'victoria' ? 'win' : p.combat && p.combat.status === 'derrota' ? 'lose' : '';
       return { art: monsterArt(p.monster, 'foe'), name: p.monster.nombre, res };
@@ -535,16 +569,18 @@ function renderArena() {
     const ready = S.phase === 'prep' && p.ready;
     return `
     <div class="rival ${o.out ? 'out' : ''}">
-      <div class="rival-hero">
-        ${heroPortrait(p, 'rival')}
-        <div class="rival-info">
-          <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
-          <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables)}</div>
-          <div class="life thin"><i style="width:${pct}%"></i></div>
+      <div class="rival-pair">
+        <div class="rival-side">${heroPortrait(p, 'rival')}</div>
+        <div class="rival-vs">${o.art ? 'versus' : ''}</div>
+        <div class="rival-side rival-foe ${o.res || ''}">
+          ${o.art ? `<div class="foe-imgs">${o.art}</div><div class="foe-name">${esc(o.name)}</div>` : `<div class="state">${o.txt === '✔ listo' ? '' : o.txt || ''}</div>`}
         </div>
       </div>
-      <div class="rival-foe ${o.res || ''}">
-        ${o.art ? `${o.art}<div class="foe-name">${esc(o.name)}</div>` : `<div class="state">${o.txt === '✔ listo' ? '' : o.txt || ''}</div>`}
+      <div class="rival-info">
+        <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
+        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida}/${h.base.vida}</div>
+        <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables)}</div>
+        <div class="life thin"><i style="width:${pct}%"></i></div>
       </div>
     </div>`;
   }).join('');
@@ -552,9 +588,31 @@ function renderArena() {
 
 // ---------- Ventana flotante de victoria o derrota
 
+// Tras el último lanzamiento se deja ver un momento las esferas antes de la ventana.
+function holdOutcome() {
+  ui.outcomeAt = Date.now() + 1800;
+  setTimeout(() => { if (S) renderModal(); }, 1850);
+}
+
 function renderOutcome() {
   const p = me();
   if (!p || !p.hero) return '';
+  // Aviso: alguien te ha lanzado un maleficio.
+  if (ui.curseAlert) {
+    const who = ui.curseAlert.split(' gasta ')[0];
+    const n = (ui.curseAlert.match(/repetirá (\d+)/) || [])[1] || '1';
+    return `
+      <div class="card outcome curse-alert">
+        <div class="outcome-title">Maleficio</div>
+        <p class="center"><b>${esc(who)}</b> te ha lanzado un maleficio.</p>
+        <p class="center">En tu próximo combate tendrás que repetir ${n} esfera(s) acertada(s).</p>
+        <div class="row center-row"><button class="btn primary" data-a="closeCurse">Entendido</button></div>
+      </div>`;
+  }
+  if (ui.outcomeAt && Date.now() < ui.outcomeAt) return '';
+  // Al ganar, primero se ven las esferas y luego la ventana de recompensa.
+  const winKey = p.stage === 'recompensa' ? `${S.round}` : '';
+  if (winKey && ui.winKey !== winKey) { ui.winKey = winKey; holdOutcome(); return ''; }
   // Victoria contra un monstruo: aquí se elige la recompensa.
   if (S.phase === 'combat' && p.stage === 'recompensa' && p.rewards) {
     return `
@@ -628,8 +686,8 @@ const RULES = {
     <b>Maná</b>: cada 5 puntos convierten una de tus esferas en blanca (comodín) desde el inicio de cada combate. Todos los héroes empiezan con al menos 5.</p>
     <p>Equipo: yelmo, armadura, botas y dos manos (un arma a dos manos ocupa ambas). Hasta 3 pociones y 3 pergaminos.</p>`],
   aventura: ['Aventura', `
-    <p>La Fase 1 dura <b>12 rondas</b>. En cada una aparecen 2 monstruos y eliges uno.
-    Siempre se te ofrecen monstruos a tu alcance.</p>
+    <p>La Fase 1 dura <b>12 rondas</b>. En cada una aparecen <b>2 monstruos a la vez</b>; no eliges antes de lanzar:
+    al terminar tus tiradas presentas tus esferas contra el que puedas o quieras derrotar. Siempre hay monstruos a tu alcance.</p>
     <p>Los monstruos salen en tres tamaños: pequeño, mediano (★★) y grande (★★★). Cuanto más grandes, más difíciles,
     más daño hacen y mejores recompensas dan.</p>
     <p>Si ganas, eliges 1 de 2 recompensas. Si pierdes, pierdes Vida. Si caes a 0, pierdes tus consumibles y tu mejor objeto
@@ -637,10 +695,14 @@ const RULES = {
     <p>Entre combates puedes comerciar, curarte, robar con pergaminos y lanzar maleficios (uno recibido como máximo por ronda, y un comercio por ronda): cada 5 de Maná obliga a un rival a
     repetir una esfera acertada en su próximo combate.</p>`],
   combate: ['Combate', `
-    <p>Necesitas reunir los colores que pide el monstruo. Lanzas tus esferas, conservas las que quieras y relanzas el resto:
-    <b>3 tiradas</b> como máximo.</p>
-    <p>La esfera <b>blanca</b> es comodín (vale cualquier color). La <b>negra</b> no sirve.</p>
-    <p>Tus esferas blancas (por el Maná) ya vienen fijadas. Las pociones de Maná añaden más durante el combate. Si al terminar las tiradas no lo has conseguido, pierdes.</p>`],
+    <p>Cada esfera da a la vez un <b>color</b> y una <b>forma</b>. Colores: rojo, azul, verde, amarillo, <b>blanco</b> (comodín de color)
+    y <b>negro</b> (no cuenta). Formas: círculo, cuadrado, rombo, triángulo, <b>estrella</b> (comodín de forma) y <b>cruz</b> (no cuenta).</p>
+    <p>Cada monstruo pide <b>solo colores</b> o <b>solo formas</b>. Los dos monstruos de la ronda suelen pedir cosas distintas,
+    así que puedes orientar tus tiradas hacia uno u otro.</p>
+    <p>Lanzas tus esferas, conservas las que quieras y relanzas el resto: <b>3 tiradas</b> como máximo. Cuando tu combinación completa
+    lo que pide un monstruo, pulsa <b>Derrotar</b> en él.</p>
+    <p>Tus esferas de Maná salen blancas con estrella (comodín para los dos) y ya fijadas. Las pociones de Maná añaden más.
+    Si al terminar las tiradas no completas ninguno, pierdes contra el menos dañino.</p>`],
   torneo: ['Torneo', `
     <p>Tras la ronda 12 empieza el torneo. El héroe con más Fuerza + Maná elige rival para su semifinal; los otros dos se enfrentan entre sí.
     Los ganadores juegan la final. Nadie recupera Vida.</p>
@@ -688,8 +750,10 @@ function playEventSounds() {
   else if (mine(/^💀/)) Sounds.play('destruccion');
   else if (mine(/^🗡/)) { Sounds.play('dados'); Sounds.play('celebracion', 600); }
   else if (mine(/^🩸/)) { Sounds.play('dados'); Sounds.play('derrota', 600); }
-  const lost = texts.find((t) => /^🩸/.test(t) && t.includes(`${name} es derrotado`));
-  if (lost) ui.defeat = { text: lost, monster: ui.lastMonster, fell: mine(/^💀/) };
+  const lost = texts.find((t) => /^🩸/.test(t) && t.startsWith(`🩸 ${name} no consigue`));
+  if (lost) { ui.defeat = { text: lost, monster: meP.monster || ui.lastMonster, fell: mine(/^💀/) }; holdOutcome(); }
+  const cursed = texts.find((t) => t.includes(`lanza un maleficio a ${name}:`));
+  if (cursed) { ui.curseAlert = cursed; Sounds.play('fe'); }
   else if (texts.some((t) => /^💥/.test(t) && t.includes(name))) Sounds.play('batalla');
   else if (texts.some((t) => /^🔮/.test(t) && t.includes(name))) Sounds.play('fe');
   else if (texts.some((t) => t.startsWith(`${name} se enfrenta a`))) Sounds.play('batalla');
@@ -841,14 +905,7 @@ function renderTrade() {
 function renderRound() {
   const p = me();
   let body = '';
-  if (p.stage === 'elegir') {
-    body = `
-    <div class="card">
-      <h2>Ronda ${S.round}: elige tu monstruo</h2>
-
-      <div class="offers">${p.offers.map((m, i) => monsterCard(m, i, p)).join('')}</div>
-    </div>`;
-  } else if (p.stage === 'combate') {
+  if (p.stage === 'combate') {
     body = `<div class="card">${renderCombat(p, true)}</div>`;
   } else if (p.stage === 'recompensa') {
     body = `
@@ -865,21 +922,6 @@ function renderRound() {
   return body;
 }
 
-function monsterCard(m, i, p) {
-  const tooHard = m.combo.length > p.hero.dados;
-  return `
-  <div class="monster">
-    ${monsterArt(m)}
-    <div class="lvl">Nivel ${m.level} · ${esc(m.tamano || '')} · si pierdes: −${m.dano} Vida</div>
-    <div class="name">${esc(m.nombre)}</div>
-    ${comboHtml(m.combo, false)}
-    ${tooHard ? `<div class="warn">Necesitas ${m.combo.length} esferas y solo tienes ${p.hero.dados}.</div>` : ''}
-    <h4 style="margin:6px 0 0">Recompensas a elegir</h4>
-    ${m.rewards.map((it) => `<div class="reward"><span class="item-ico">${itemIcon(it)}</span><span>${esc(it.nombre)}<div class="muted small">${itemDesc(it)}</div></span></div>`).join('')}
-    <button class="btn primary" data-a="monster" data-i="${i}" ${tooHard ? 'disabled' : ''}>${tooHard ? 'Demasiado poderoso' : 'Luchar'}</button>
-  </div>`;
-}
-
 function syncCombatUi() {
   const p = me();
   const cb = p && p.combat;
@@ -892,7 +934,7 @@ function syncCombatUi() {
     ui.manaSel = null;
     // Las esferas que ya sirven salen marcadas para conservarlas.
     if (cb) {
-      const { used } = matchDice(cb.dice.map((d) => d.face), cb.combo);
+      const { used } = bestTarget(cb);
       cb.dice.forEach((d, i) => { if (d.fixed || (cb.rolls > 0 && used.has(i))) ui.held.add(i); });
     }
   }
@@ -902,7 +944,8 @@ function renderCombat(p, controllable) {
   const cb = p.combat;
   const mine = p.id === S.me;
   const faces = cb.dice.map((d, i) => (mine && ui.manaPick.has(i) ? ui.manaPick.get(i) : d.face));
-  const { used } = matchDice(faces, cb.combo);
+  const monster = cb.kind === 'monstruo' && cb.targets && p.offers;
+  const { used, all } = bestTarget(cb, faces);
   const fijables = mine ? p.hero.fijables : null;
   const diceHtml = cb.dice.length
     ? cb.dice.map((d, i) => {
@@ -912,7 +955,7 @@ function renderCombat(p, controllable) {
         controllable && !ui.manaMode && ui.held.has(i) && !d.fixed ? 'held' : '',
         controllable && ui.manaMode && (ui.manaSel === i || ui.manaPick.has(i)) ? 'picking' : '',
       ].join(' ');
-      return die(faces[i], { cls, attrs: controllable ? `data-a="die" data-i="${i}"` : '' });
+      return die(faces[i], { cls, shape: d.shape, attrs: controllable ? `data-a="die" data-i="${i}"` : '' });
     }).join('')
     : Array.from({ length: cb.diceCount }, () => die(null)).join('');
 
@@ -929,20 +972,20 @@ function renderCombat(p, controllable) {
     const rerollN = cb.dice.filter((d, i) => !d.fixed && !ui.held.has(i)).length;
     const manaPot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');
     controls = `
-      ${cb.rolls > 0 && left > 0 ? '<div class="muted small center">Las esferas que te sirven ya están marcadas. Toca para cambiar cuáles conservas.</div>' : ''}
+      ${cb.rolls > 0 && left > 0 ? `<div class="muted small center">${monster ? 'Las esferas que te sirven ya están marcadas. Puedes ir a por cualquiera de los dos monstruos.' : 'Las esferas que te sirven ya están marcadas. Toca para cambiar cuáles conservas.'}</div>` : ''}
       <div class="row">
         ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Lanzar esferas</button>' : ''}
         ${cb.rolls > 0 && left > 0 ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">Terminar ataque (${duelDamage(cb, faces)} de daño)</button></div>` : ''}
-      ${cb.rolls >= 3 && cb.kind !== 'duelo' ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}`;
+      ${cb.rolls >= 3 && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}`;
   }
 
   const holder = mine ? 'Tus esferas' : `Esferas de ${esc(p.name)}`;
   let foe = '';
   let foeName = '';
-  if (cb.kind === 'monstruo' && p.monster) { foe = monsterArt(p.monster, 'duel-art'); foeName = `${p.monster.nombre} · ${p.monster.tamano || ''}`; }
+  if (cb.kind === 'monstruo') { /* se muestran los dos monstruos */ }
   else if (S.tournament) {
     const m = S.tournament.matches.find((x) => !x.winner && (x.a === p.id || x.b === p.id));
     const def = m && byId(m.a === p.id ? m.b : m.a);
@@ -950,15 +993,42 @@ function renderCombat(p, controllable) {
   }
   return `
   <div class="combat">
-    ${foe && cb.kind === 'monstruo' ? `<figure class="foe-big">${foe}<figcaption>${esc(foeName)}</figcaption></figure>` : ''}
-    <h2 class="center" style="margin:0">${esc(cb.label)}</h2>
+    ${monster ? foesHtml(p, cb, all, controllable) : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
     <div class="row"><span class="pill">Tirada ${cb.rolls}/3</span>${cb.cursesLeft ? `<span class="pill">Maleficio: ${cb.cursesLeft}</span>` : ''}</div>
-    <div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>
+    ${monster ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
     <div><div class="muted small center" style="margin-bottom:8px">${holder}</div><div class="dice">${diceHtml}</div></div>
     ${result}
     ${controls}
     <div class="events">${cb.events.slice().reverse().map((e) => `<div>${esc(e)}</div>`).join('')}</div>
   </div>`;
+}
+
+// Los dos monstruos de la ronda, cada uno con lo que pide y su botón para derrotarlo.
+function foesHtml(p, cb, all, controllable) {
+  const done = cb.status !== 'activo';
+  return `<div class="foes">${p.offers.map((m, i) => {
+    const st = all[i] || { missing: m.combo.length, ok: false };
+    const chosen = done && cb.chosen === i;
+    const faded = done && cb.status === 'victoria' && cb.chosen !== i;
+    const can = controllable && !done && cb.rolls > 0 && st.ok;
+    const state = done
+      ? (chosen ? '<div class="need ok">Derrotado</div>' : '')
+      : cb.rolls === 0 ? '' : st.ok ? '<div class="need ok">¡Lo tienes!</div>' : `<div class="need">Te faltan ${st.missing}</div>`;
+    return `
+    <div class="foe-card ${st.ok && !done ? 'ready' : ''} ${chosen ? 'chosen' : ''} ${faded ? 'faded' : ''}">
+      <div class="foe-art">${monsterArt(m, 'duel-art')}</div>
+      <div class="foe-title">${esc(m.nombre)} <span class="muted small">${esc(m.tamano || '')}</span></div>
+      <div class="muted small">Nivel ${m.level} · si pierdes: −${m.dano} Vida</div>
+      <div class="req-label">Pide ${m.tipo === 'forma' ? 'formas' : 'colores'}</div>
+      ${comboHtml(m.combo, false, m.tipo)}
+      ${state}
+      ${can ? `<button class="btn primary" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}
+      <div class="rewards-mini">
+        <div class="req-label">Recompensas a elegir</div>
+        <div class="rw">${m.rewards.map((it) => `<span class="item-ico" title="${esc(it.nombre)} · ${esc(itemDesc(it))}">${itemIcon(it)}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  }).join('<div class="foes-or">o</div>')}</div>`;
 }
 
 // Golpe graduado: con N exigidos, N → 3 daño, N−1 → 2, N−2 → 1.
@@ -1104,7 +1174,7 @@ document.addEventListener('click', (e) => {
       break;
     case 'tradeResp': act('respondTrade', { tradeId: d.id, accept: d.ok === '1' }); break;
     case 'skip': act('skipRound'); break;
-    case 'monster': act('chooseMonster', { index: Number(d.i) }); break;
+    case 'present': act('present', { index: Number(d.i) }); break;
     case 'reward': act('chooseReward', { index: Number(d.i) }); break;
     case 'die': {
       const i = Number(d.i);
@@ -1143,6 +1213,7 @@ document.addEventListener('click', (e) => {
       location.href = location.pathname;
       break;
     case 'closeDefeat': ui.defeat = null; renderModal(); break;
+    case 'closeCurse': ui.curseAlert = null; renderModal(); break;
     case 'seenOutcome':
       ui.seenOutcome = d.k;
       if (d.m !== undefined) ui.seenMatches.add(Number(d.m));

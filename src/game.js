@@ -838,8 +838,8 @@ const ACTIONS = {
   },
   addBot(p) {
     if (p.id !== this.hostId) fail('Solo el anfitrión puede añadir bots');
-    const names = ['Bot Aldric', 'Bot Brina', 'Bot Corvus', 'Bot Dalia'];
-    const name = names.find((n) => !this.players.some((x) => x.name === n)) || 'Bot';
+    const names = ['Aldric', 'Brina', 'Corvus', 'Dalia', 'Edmund', 'Fiora'];
+    const name = names.find((n) => !this.players.some((x) => x.name === n)) || 'Errante';
     this.addPlayer(name, { bot: true });
   },
   kick(p, { playerId }) {

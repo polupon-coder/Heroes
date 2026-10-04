@@ -1028,3 +1028,4 @@ body::-webkit-scrollbar { display: none; }
 .die.piece.fixed img, .die.piece.success img { filter: drop-shadow(0 0 3px rgba(79, 122, 58, 1)) drop-shadow(0 0 7px rgba(79, 122, 58, .85)); }
 .die.fixed { box-shadow: 0 0 0 3px rgba(79, 122, 58, .85), 0 0 12px rgba(79, 122, 58, .6); }
 .foe-card, .foe-card.ready, .foe-card.chosen { border-color: transparent !important; }
+.foe-card .dice { gap: 14px; }

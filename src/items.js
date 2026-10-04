@@ -28,14 +28,15 @@ function makeEquipment(rng, level, nextId) {
   // Grado I, II o III según la calidad (para su ilustración).
   const grado = bonus <= 2 ? 1 : bonus <= 3 ? 2 : 3;
   if (slot === 'dosManos') bonus += C.TWO_HANDED_EXTRA;
-  // Las armas a dos manos pueden ser arcos, hachas o báculos.
-  const forma = slot === 'dosManos' ? pick(rng, ['arco', 'hacha', 'baculo']) : undefined;
+  // Las armas a dos manos pueden ser arcos, hachas, báculos o cayados.
+  const forma = slot === 'dosManos' ? pick(rng, ['arco', 'hacha', 'baculo', 'cayado']) : undefined;
   const names = {
     arma: [['Espada de hierro', 'Espada corta'], ['Espada de acero', 'Espada larga'], ['Espada rúnica', 'Espada élfica']][grado - 1],
     dosManos: {
       arco: [['Arco de caza', 'Arco corto'], ['Arco largo', 'Arco de tejo'], ['Arco élfico', 'Arco del bosque']],
       hacha: [['Hacha de guerra', 'Hacha de leñador'], ['Gran hacha', 'Hacha doble'], ['Hacha rúnica', 'Hacha de los reyes']],
       baculo: [['Báculo de aprendiz', 'Vara de cristal'], ['Báculo arcano', 'Báculo de zafiro'], ['Báculo astral', 'Báculo del archimago']],
+      cayado: [['Cayado de rama', 'Vara de espino'], ['Cayado de hiedra', 'Cayado del bosque'], ['Cayado del roble ancestral', 'Cayado de la arboleda']],
     }[forma]?.[grado - 1],
     escudo: SHIELD_NAMES,
     yelmo: HELMET_NAMES,

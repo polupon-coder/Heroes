@@ -176,7 +176,7 @@ class Game {
     p.hero.pending = [];
     p.hero.vida = p.hero.base.vida;
     p.hero.caidas += 1;
-    this.trades = this.trades.filter((t) => t.from !== p.id && t.to !== p.id);
+    this.dropTradesOf(p.id);
     this.say(
       `💀 ${p.name} cae a 0 Vida: pierde todos sus objetos y recupera su Vida inicial.`
     );
@@ -204,6 +204,7 @@ class Game {
       // Un maleficio recibido y un comercio por jugador en cada ronda.
       p.cursedThisRound = false;
       p.tradedThisRound = false;
+      p.offeredThisRound = false;
       p.stoleThisRound = false;
       p.ready = false;
       p.stage = null;
@@ -412,13 +413,16 @@ class Game {
     cb.events.push(`Tirada ${cb.rolls}`);
 
     // Maleficio: cada uno obliga a repetir una esfera acertada.
+    cb.cursed = [];
     while (cb.cursesLeft > 0) {
       const succ = new Set();
       for (const t of cb.targets) {
         for (const i of D.successfulNewDice(D.valuesOf(cb.dice, t.tipo), newIdx, t.combo, D.WILD[t.tipo])) succ.add(i);
       }
       if (succ.size === 0) break;
-      rollDie([...succ][0]);
+      const ci = [...succ][0];
+      cb.cursed.push({ index: ci, face: cb.dice[ci].face, shape: cb.dice[ci].shape });
+      rollDie(ci);
       cb.cursesLeft -= 1;
       cb.events.push('Maleficio: una esfera acertada se repite');
     }
@@ -683,6 +687,17 @@ class Game {
 
   // ---------------------------------------------------------------- Vista
 
+  // Quita ofertas cerradas y respuestas de quien ya ha comerciado.
+  cleanTrades() {
+    this.trades = this.trades.filter((t) => t.status === 'abierta' && !this.player(t.from).tradedThisRound);
+    for (const t of this.trades) t.counters = t.counters.filter((c) => !this.player(c.by).tradedThisRound);
+  }
+
+  dropTradesOf(id) {
+    this.trades = this.trades.filter((t) => t.from !== id);
+    for (const t of this.trades) t.counters = t.counters.filter((c) => c.by !== id);
+  }
+
   view(forId) {
     const pub = (p) => {
       const h = p.hero;
@@ -698,6 +713,7 @@ class Game {
         cursedThisRound: !!p.cursedThisRound,
         tradedThisRound: !!p.tradedThisRound,
         stoleThisRound: !!p.stoleThisRound,
+        offeredThisRound: !!p.offeredThisRound,
         stage: p.stage,
         offers: p.offers,
         monster: p.monster,
@@ -731,7 +747,7 @@ class Game {
       rounds: C.ROUNDS,
       settings: this.settings,
       players: this.players.map(pub),
-      trades: this.trades.filter((t) => t.from === forId || t.to === forId),
+      trades: this.trades,
       tournament: this.tournament,
       winner: this.winner,
       log: this.log.slice(-80),
@@ -784,7 +800,7 @@ function useConsumable(game, p, data) {
     if (!stolen) fail('Ese objeto ya no existe');
     I.removeItem(p.hero.inv, it.id);
     I.removeItem(target.hero.inv, stolen.id);
-    game.trades = game.trades.filter((t) => t.status !== 'pendiente' || ![t.from, t.to].includes(target.id));
+    game.dropTradesOf(target.id);
     game.say(`🦝 ${p.name} usa ${it.nombre} y roba ${stolen.nombre} a ${target.name}.`);
     game.receiveItem(p, stolen, 'robo');
     return;
@@ -894,7 +910,7 @@ const ACTIONS = {
     const d = 1 + Math.floor(this.rng() * 6);
     if (d <= 2) {
       I.removeItem(t.hero.inv, it.id);
-      this.trades = this.trades.filter((x) => x.status !== 'pendiente' || ![x.from, x.to].includes(t.id));
+      this.dropTradesOf(t.id);
       this.say(`🦝 ${p.name} saca un ${d} y roba ${it.nombre} a ${t.name}.`);
       this.receiveItem(p, it, 'robo');
     } else if (d <= 5) {
@@ -946,51 +962,70 @@ const ACTIONS = {
   useItem(p, data) {
     useConsumable(this, p, data);
   },
-  proposeTrade(p, { toId, give = [], want = [] }) {
+  // Comercio: publicas lo que ofreces; los demás responden con lo que te darían
+  // a cambio y tú aceptas una respuesta o las rechazas. Una oferta por ronda.
+  offerTrade(p, { give = [] }) {
     requirePrep(this);
-    const to = this.player(toId);
-    if (to === p) fail('No puedes comerciar contigo mismo');
-    if (!give.length && !want.length) fail('La oferta está vacía');
+    if (!give.length) fail('Elige qué ofreces');
     if (p.tradedThisRound) fail('Ya has comerciado esta ronda');
-    if (to.tradedThisRound) fail(`${to.name} ya ha comerciado esta ronda`);
-    if (this.trades.some((t) => t.from === p.id)) fail('Ya tienes una oferta pendiente');
+    if (p.offeredThisRound) fail('Ya has hecho tu oferta de esta ronda');
     for (const id of give) if (!I.findItem(p.hero.inv, id)) fail('No tienes ese objeto');
-    for (const id of want) if (!I.findItem(to.hero.inv, id)) fail(`${to.name} no tiene ese objeto`);
-    const t = { id: this.nextId(), from: p.id, to: to.id, give: [...give], want: [...want], status: 'pendiente' };
+    const t = { id: this.nextId(), from: p.id, give: [...give], counters: [], status: 'abierta' };
     this.trades.push(t);
-    this.say(`🤝 ${p.name} propone un intercambio a ${to.name}.`);
+    p.offeredThisRound = true;
+    const names = give.map((id) => I.findItem(p.hero.inv, id).nombre).join(', ');
+    this.say(`🤝 ${p.name} ofrece ${names}. ¿Qué le das a cambio?`);
   },
-  respondTrade(p, { tradeId, accept }) {
+  counterTrade(p, { tradeId, give = [] }) {
     requirePrep(this);
-    const t = this.trades.find((x) => x.id === tradeId && x.status === 'pendiente');
+    const t = this.trades.find((x) => x.id === tradeId && x.status === 'abierta');
     if (!t) fail('Esa oferta ya no existe');
-    if (accept) {
-      if (t.to !== p.id) fail('Esa oferta no es para ti');
-      requireNoPending(p);
-      const from = this.player(t.from);
-      requireNoPending(from);
-      const giveItems = t.give.map((id) => I.findItem(from.hero.inv, id));
-      const wantItems = t.want.map((id) => I.findItem(p.hero.inv, id));
-      if (giveItems.some((x) => !x) || wantItems.some((x) => !x)) {
-        t.status = 'cancelada';
-        fail('Algún objeto de la oferta ya no está disponible');
-      }
-      for (const it of giveItems) I.removeItem(from.hero.inv, it.id);
-      for (const it of wantItems) I.removeItem(p.hero.inv, it.id);
-      t.status = 'aceptada';
-      p.tradedThisRound = true;
-      from.tradedThisRound = true;
-      // Las demás ofertas de estos dos jugadores dejan de valer
-      for (const o of this.trades) if (o !== t && [o.from, o.to].some((id) => id === p.id || id === from.id)) o.status = 'cancelada';
-      this.say(`🤝 ${p.name} acepta el intercambio con ${from.name}.`);
-      for (const it of giveItems) this.receiveItem(p, it, 'comercio');
-      for (const it of wantItems) this.receiveItem(from, it, 'comercio');
-    } else {
-      if (t.to !== p.id && t.from !== p.id) fail('Esa oferta no es tuya');
-      t.status = t.to === p.id ? 'rechazada' : 'cancelada';
-      this.say(`${p.name} ${t.to === p.id ? 'rechaza' : 'retira'} una oferta de intercambio.`);
+    if (t.from === p.id) fail('Es tu propia oferta');
+    if (p.tradedThisRound) fail('Ya has comerciado esta ronda');
+    if (t.counters.some((c) => c.by === p.id)) fail('Ya has respondido a esta oferta');
+    if (!give.length) fail('Elige qué ofreces a cambio');
+    for (const id of give) if (!I.findItem(p.hero.inv, id)) fail('No tienes ese objeto');
+    t.counters.push({ id: this.nextId(), by: p.id, give: [...give], status: 'pendiente' });
+    this.say(`🤝 ${p.name} responde a la oferta de ${this.player(t.from).name}.`);
+  },
+  answerTrade(p, { tradeId, counterId, accept }) {
+    requirePrep(this);
+    const t = this.trades.find((x) => x.id === tradeId && x.status === 'abierta');
+    if (!t) fail('Esa oferta ya no existe');
+    if (t.from !== p.id) fail('Esa oferta no es tuya');
+    const c = t.counters.find((x) => x.id === counterId && x.status === 'pendiente');
+    if (!c) fail('Esa respuesta ya no existe');
+    const other = this.player(c.by);
+    if (!accept) {
+      c.status = 'rechazada';
+      this.say(`${p.name} rechaza lo que le ofrece ${other.name}.`);
+      return;
     }
-    this.trades = this.trades.filter((x) => x.status === 'pendiente');
+    if (other.tradedThisRound) fail(`${other.name} ya ha comerciado esta ronda`);
+    requireNoPending(p);
+    requireNoPending(other);
+    const mine = t.give.map((id) => I.findItem(p.hero.inv, id));
+    const theirs = c.give.map((id) => I.findItem(other.hero.inv, id));
+    if (mine.some((x) => !x) || theirs.some((x) => !x)) {
+      c.status = 'rechazada';
+      fail('Algún objeto ya no está disponible');
+    }
+    for (const it of mine) I.removeItem(p.hero.inv, it.id);
+    for (const it of theirs) I.removeItem(other.hero.inv, it.id);
+    t.status = 'cerrada';
+    p.tradedThisRound = true;
+    other.tradedThisRound = true;
+    this.say(`🤝 ${p.name} y ${other.name} cierran un intercambio.`);
+    for (const it of theirs) this.receiveItem(p, it, 'comercio');
+    for (const it of mine) this.receiveItem(other, it, 'comercio');
+    this.cleanTrades();
+  },
+  withdrawTrade(p, { tradeId }) {
+    const t = this.trades.find((x) => x.id === tradeId && x.status === 'abierta');
+    if (!t || t.from !== p.id) fail('Esa oferta no es tuya');
+    t.status = 'cerrada';
+    this.say(`${p.name} retira su oferta.`);
+    this.cleanTrades();
   },
 
   // Combate contra monstruos

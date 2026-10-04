@@ -1,5 +1,7 @@
 'use strict';
 
+const I = require('./items');
+
 const C = require('./config');
 const D = require('./dice');
 
@@ -27,10 +29,19 @@ function botStep(game, p) {
   }
 
   if (game.phase === 'prep') {
-    const offer = game.trades.find((t) => t.to === p.id);
+    // Comercio: responde a ofertas ajenas dando su objeto menos valioso si sale ganando.
+    p.botSeen = p.botSeen || new Set();
+    const offer = !p.tradedThisRound && game.trades.find((t) => t.status === 'abierta' && t.from !== p.id && !p.botSeen.has(t.id));
     if (offer) {
-      game.act(p.id, 'respondTrade', { tradeId: offer.id, accept: false });
-      return true;
+      p.botSeen.add(offer.id);
+      const owner = game.player(offer.from);
+      const val = (it) => (it ? it.bonus || it.valor || 1 : 0);
+      const gain = offer.give.reduce((s, id) => s + val(I.findItem(owner.hero.inv, id)), 0);
+      const mine = [...I.equippedItems(h.inv), ...h.inv.pociones, ...h.inv.pergaminos].sort((a, b) => val(a) - val(b))[0];
+      if (mine && val(mine) < gain) {
+        game.act(p.id, 'counterTrade', { tradeId: offer.id, give: [mine.id] });
+        return true;
+      }
     }
     if (h.vida <= h.base.vida / 2) {
       const heal = [...h.inv.pociones, ...h.inv.pergaminos].find((it) => it.efecto === 'curacion');

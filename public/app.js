@@ -14,6 +14,9 @@ const ui = {
   manaPick: new Map(),
   manaSel: null,
   trade: { to: null, give: new Set(), want: new Set() },
+  counter: { trade: null, give: new Set() },
+  seenTrades: new Set(),
+  seenCounters: new Set(),
   theft: null,
   detail: null,
   rules: false,
@@ -145,7 +148,7 @@ function itemDesc(it) {
 
 function allItems(h) {
   const inv = h.inv;
-  return [inv.yelmo, inv.armadura, inv.botas, ...inv.manos, ...inv.pociones, ...inv.pergaminos].filter(Boolean);
+  return [inv.yelmo, inv.armadura, inv.tunica, inv.botas, ...inv.manos, ...inv.pociones, ...inv.pergaminos].filter(Boolean);
 }
 
 function isMyTurnCombat() {
@@ -833,7 +836,7 @@ function renderMain() {
 function renderPrep() {
   const p = me();
   const torneo = S.round > S.rounds;
-  const incoming = S.trades.filter((t) => t.to === S.me).length;
+  const incoming = pendingCounters().length + unansweredTrades().length;
   return `
   <div class="card prep-card">
     <h2>${torneo ? 'Preparación para el Torneo' : `Ronda ${S.round} de ${S.rounds}`}</h2>
@@ -898,38 +901,100 @@ function renderMagic() {
     : `<p class="muted small center">${amounts.length ? 'Todos los rivales ya han recibido un maleficio esta ronda.' : 'Necesitas al menos 5 de Maná disponible.'}</p>`}`;
 }
 
+// ---------- Comercio: oferta pública, respuestas y aceptar o rechazar
+
+function tradeTile(it, { selected = false, attrs = '' } = {}) {
+  return `<button class="trade-tile ${selected ? 'selected' : ''}" ${attrs}>
+    <span class="ring">${itemIcon(it)}</span><b>${esc(it.nombre)}</b><small>${esc(rewardEffect(it))}</small></button>`;
+}
+function tradeItems(owner, ids) {
+  return ids.map((id) => allItems(owner.hero).find((x) => x.id === id)).filter(Boolean);
+}
+function myOpenTrade() { return (S.trades || []).find((t) => t.from === S.me && t.status === 'abierta'); }
+// Ofertas de otros a las que aún no he respondido.
+function unansweredTrades() {
+  const p = me();
+  if (!p || p.tradedThisRound) return [];
+  return (S.trades || []).filter((t) => t.status === 'abierta' && t.from !== S.me && !t.counters.some((c) => c.by === S.me));
+}
+function pendingCounters() {
+  const t = myOpenTrade();
+  return t ? t.counters.filter((c) => c.status === 'pendiente') : [];
+}
+
 function renderTrade() {
   const p = me();
-  const incoming = S.trades.filter((t) => t.to === S.me);
-  const outgoing = S.trades.filter((t) => t.from === S.me);
-  const names = (owner, ids) => ids.map((id) => { const it = allItems(owner.hero).find((x) => x.id === id); return it ? `${itemIcon(it)} ${esc(it.nombre)}` : '(ya no existe)'; }).join(', ') || 'nada';
-  const target = ui.trade.to && byId(ui.trade.to);
-  const pickList = (owner, set, kind) => {
-    const items = allItems(owner.hero);
-    if (!items.length) return '<div class="muted small">Sin objetos</div>';
-    return `<div class="list-select">${items.map((it) => `<label><input type="checkbox" data-a="tradePick" data-kind="${kind}" data-id="${it.id}" ${set.has(it.id) ? 'checked' : ''}> ${itemIcon(it)} ${esc(it.nombre)}</label>`).join('')}</div>`;
-  };
+  const mine = myOpenTrade();
+  const items = allItems(p.hero);
+  let body = '';
+  if (p.tradedThisRound) body = '<p class="muted center">Ya has comerciado esta ronda.</p>';
+  else if (mine) {
+    const counters = mine.counters.filter((c) => c.status === 'pendiente');
+    body = `
+      <div class="trade-block">
+        <h4>Tu oferta</h4>
+        <div class="trade-grid">${tradeItems(p, mine.give).map((it) => tradeTile(it)).join('')}</div>
+      </div>
+      <div class="trade-block">
+        <h4>Lo que te ofrecen a cambio</h4>
+        ${counters.length ? counters.map((c) => { const o = byId(c.by); return `
+          <div class="trade-counter">
+            <div class="who">${esc(o.name)}</div>
+            <div class="trade-grid">${tradeItems(o, c.give).map((it) => tradeTile(it)).join('')}</div>
+            <div class="row"><button class="btn primary" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="1">Aceptar</button><button class="btn" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="0">Rechazar</button></div>
+          </div>`; }).join('') : '<p class="muted center">Todavía nadie ha respondido.</p>'}
+      </div>
+      <div class="row"><button class="btn small" data-a="withdraw" data-t="${mine.id}">Retirar oferta</button></div>`;
+  } else if (p.offeredThisRound) body = '<p class="muted center">Ya has hecho tu oferta de esta ronda.</p>';
+  else body = `
+      <div class="trade-block">
+        <h4>¿Qué ofreces?</h4>
+        ${items.length ? `<div class="trade-grid">${items.map((it) => tradeTile(it, { selected: ui.trade.give.has(it.id), attrs: `data-a="tgive" data-id="${it.id}"` })).join('')}</div>` : '<p class="muted center">No tienes objetos para ofrecer.</p>'}
+        <p class="muted small center">Los demás verán tu oferta y te dirán qué te dan a cambio. Solo puedes hacer una oferta por ronda.</p>
+      </div>
+      <div class="row"><button class="btn primary" data-a="offer" ${ui.trade.give.size ? '' : 'disabled'}>Ofrecer</button></div>`;
+  const others = unansweredTrades();
   return `
     <h3>Comerciar</h3>
-    ${p.tradedThisRound ? '<p class="muted small center">Ya has comerciado esta ronda.</p>' : ''}
-    ${incoming.map((t) => { const from = byId(t.from); return `
-      <div class="match" style="margin-bottom:8px">
-        <b>${esc(from.name)}</b> te ofrece <b>${names(from, t.give)}</b> a cambio de <b>${names(p, t.want)}</b>
-        <div class="row" style="margin-top:6px"><button class="btn small primary" data-a="tradeResp" data-id="${t.id}" data-ok="1">Aceptar</button><button class="btn small" data-a="tradeResp" data-id="${t.id}" data-ok="0">Rechazar</button></div>
-      </div>`; }).join('')}
-    ${outgoing.map((t) => { const to = byId(t.to); return `
-      <div class="match" style="margin-bottom:8px">Ofreces a <b>${esc(to.name)}</b>: ${names(p, t.give)} por ${names(to, t.want)}
-        <button class="btn tiny" data-a="tradeResp" data-id="${t.id}" data-ok="0">Retirar</button></div>`; }).join('')}
-    ${p.tradedThisRound || outgoing.length ? '' : `<div class="row" style="margin-bottom:8px">
-      <span class="small muted">Proponer a:</span>
-      ${others().filter((o) => !o.tradedThisRound).map((o) => `<button class="btn small ${ui.trade.to === o.id ? 'selected' : ''}" data-a="tradeTo" data-id="${o.id}">${esc(o.name)}</button>`).join('')}
-    </div>`}
-    ${target && !p.tradedThisRound && !outgoing.length ? `
-      <div class="offers">
-        <div><h4>Das</h4>${pickList(p, ui.trade.give, 'give')}</div>
-        <div><h4>Pides a ${esc(target.name)}</h4>${pickList(target, ui.trade.want, 'want')}</div>
-      </div>
-      <button class="btn small primary" style="margin-top:8px" data-a="tradeSend" ${ui.trade.give.size || ui.trade.want.size ? '' : 'disabled'}>Enviar oferta</button>` : ''}`;
+    ${body}
+    ${others.length ? `<div class="trade-block"><h4>Ofertas de los demás</h4>${others.map((t) => { const o = byId(t.from); return `
+      <div class="trade-counter"><div class="who">${esc(o.name)} ofrece</div>
+        <div class="trade-grid">${tradeItems(o, t.give).map((it) => tradeTile(it)).join('')}</div>
+        <div class="row"><button class="btn" data-a="respondTo" data-t="${t.id}">Ofrecer algo a cambio</button></div></div>`; }).join('')}</div>` : ''}`;
+}
+
+// Ventanas emergentes del comercio: alguien responde a tu oferta o alguien ofrece algo.
+function renderTradePopup() {
+  if (!S || S.phase !== 'prep') return '';
+  const p = me();
+  const mine = myOpenTrade();
+  const c = pendingCounters().find((x) => !(ui.seenCounters || new Set()).has(x.id));
+  if (mine && c) {
+    const o = byId(c.by);
+    return `
+      <div class="card prep-win trade-pop">
+        <h3>${esc(o.name)} te ofrece</h3>
+        <div class="trade-grid">${tradeItems(o, c.give).map((it) => tradeTile(it)).join('')}</div>
+        <p class="center muted">a cambio de</p>
+        <div class="trade-grid">${tradeItems(p, mine.give).map((it) => tradeTile(it)).join('')}</div>
+        <div class="row"><button class="btn primary" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="1">Aceptar</button><button class="btn" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="0">Rechazar</button></div>
+      </div>`;
+  }
+  const t = unansweredTrades().find((x) => !(ui.seenTrades || new Set()).has(x.id) || ui.counter.trade === x.id);
+  if (t) {
+    const o = byId(t.from);
+    const items = allItems(p.hero);
+    if (ui.counter.trade !== t.id) ui.counter = { trade: t.id, give: new Set() };
+    return `
+      <div class="card prep-win trade-pop">
+        <h3>${esc(o.name)} ofrece</h3>
+        <div class="trade-grid">${tradeItems(o, t.give).map((it) => tradeTile(it)).join('')}</div>
+        <h4>¿Qué le das a cambio?</h4>
+        ${items.length ? `<div class="trade-grid">${items.map((it) => tradeTile(it, { selected: ui.counter.give.has(it.id), attrs: `data-a="tcounter" data-id="${it.id}"` })).join('')}</div>` : '<p class="muted center">No tienes objetos para ofrecer.</p>'}
+        <div class="row"><button class="btn primary" data-a="counterSend" ${ui.counter.give.size ? '' : 'disabled'}>Ofrecer a cambio</button><button class="btn" data-a="counterSkip">No me interesa</button></div>
+      </div>`;
+  }
+  return '';
 }
 
 function renderRound() {
@@ -981,6 +1046,7 @@ function renderCombat(p, controllable) {
     ? cb.dice.map((d, i) => {
       const cls = [
         used.has(i) ? 'success' : '',
+        (cb.cursed || []).some((c) => c.index === i) ? 'cursed' : '',
         d.fixed ? 'fixed' : '',
         controllable && !ui.manaMode && cb.rolls > 0 && cb.rolls < 3 && !ui.held.has(i) && !d.fixed ? 'reroll' : '',
         controllable && ui.manaMode && (ui.manaSel === i || ui.manaPick.has(i)) ? 'picking' : '',
@@ -1007,7 +1073,7 @@ function renderCombat(p, controllable) {
         ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
       <div class="rolls-count" title="Tiradas">${cb.rolls}/3${cb.cursesLeft ? ` · Maleficio: ${cb.cursesLeft}` : ''}</div>
-      ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
+      ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">Terminar ataque (${duelDamage(cb, faces)} de daño)</button></div>` : ''}
       ${cb.rolls >= 3 && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
@@ -1026,11 +1092,22 @@ function renderCombat(p, controllable) {
     ${monster ? foesHtml(p, cb, all, controllable) : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
     ${controllable ? '' : `<div class="rolls-count">${cb.rolls}/3</div>`}
     ${monster ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
+    ${cb.cursesLeft && cb.rolls === 0 ? `<div class="curse-note">Te afecta un maleficio: en tu primera tirada se repetirá${cb.cursesLeft > 1 ? `n ${cb.cursesLeft} esferas acertadas` : ' 1 esfera acertada'}.</div>` : ''}
     <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
+    ${(cb.cursed || []).length ? `<div class="curse-note">Maleficio: ${cb.cursed.map((c) => `${die(c.face, { sm: true, shape: c.shape })}`).join('')} acertada${cb.cursed.length > 1 ? 's' : ''} se ha${cb.cursed.length > 1 ? 'n' : ''} vuelto a lanzar (marcada${cb.cursed.length > 1 ? 's' : ''} en morado).</div>` : ''}
     ${result}
     ${controls}
     <div class="events">${cb.events.slice().reverse().map((e) => `<div>${esc(e)}</div>`).join('')}</div>
   </div>`;
+}
+
+// Efecto de una recompensa en pocas palabras (sin nombre).
+function rewardEffect(it) {
+  if (it.tipo === 'equipo') return `Fuerza +${it.bonus}`;
+  if (it.efecto === 'mana') return `Maná +${it.valor}`;
+  if (it.efecto === 'curacion') return `Curación +${it.valor}`;
+  if (it.efecto === 'robo') return 'Robo';
+  return it.nombre;
 }
 
 // Los dos monstruos de la ronda, cada uno con lo que pide y su botón para derrotarlo.
@@ -1053,7 +1130,7 @@ function foesHtml(p, cb, all, controllable) {
       ${comboHtml(m.combo, false, m.tipo)}
       ${state}
       ${can ? `<button class="btn primary" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}
-      <button class="btn small see-rewards" data-a="seeRewards" data-i="${i}">Ver recompensas</button>
+      <div class="rewards-sum">${m.rewards.map((it) => `<span>${esc(rewardEffect(it))}</span>`).join('')}</div>
     </div>`;
   }).join('<div class="foes-or">o</div>')}</div>`;
 }
@@ -1163,6 +1240,8 @@ function modalHtml() {
     if (S && !ui.seenMatches) ui.seenMatches = new Set((S.tournament ? S.tournament.matches : []).filter((x) => x.winner).map((x) => x.id));
     const o = S && renderOutcome();
     if (o) return o;
+    const tp = S && renderTradePopup();
+    if (tp) return tp;
     const pw = S && renderPrepWin();
     if (pw) return pw;
     return renderItemDetail() || '';
@@ -1226,19 +1305,17 @@ document.addEventListener('click', (e) => {
     case 'curseTarget': ui.curse.target = d.id; render(); break;
     case 'curseAmount': ui.curse.amount = Number(d.n); render(); break;
     case 'curse': act('curse', { targetId: ui.curse.target, amount: ui.curse.amount }); ui.prepWin = null; render(); break;
-    case 'tradeTo': ui.trade = { to: d.id, give: new Set(), want: new Set() }; render(); break;
-    case 'tradePick': {
-      const set = d.kind === 'give' ? ui.trade.give : ui.trade.want;
-      el.checked ? set.add(d.id) : set.delete(d.id);
-      render();
+    case 'tgive': ui.trade.give.has(d.id) ? ui.trade.give.delete(d.id) : ui.trade.give.add(d.id); render(); break;
+    case 'offer': act('offerTrade', { give: [...ui.trade.give] }); ui.trade.give = new Set(); render(); break;
+    case 'tcounter': ui.counter.give.has(d.id) ? ui.counter.give.delete(d.id) : ui.counter.give.add(d.id); render(); break;
+    case 'counterSend':
+      act('counterTrade', { tradeId: ui.counter.trade, give: [...ui.counter.give] });
+      ui.seenTrades.add(ui.counter.trade); ui.counter = { trade: null, give: new Set() }; render();
       break;
-    }
-    case 'tradeSend':
-      ui.prepWin = null;
-      act('proposeTrade', { toId: ui.trade.to, give: [...ui.trade.give], want: [...ui.trade.want] });
-      ui.trade = { to: null, give: new Set(), want: new Set() };
-      break;
-    case 'tradeResp': act('respondTrade', { tradeId: d.id, accept: d.ok === '1' }); break;
+    case 'counterSkip': ui.seenTrades.add(ui.counter.trade); ui.counter = { trade: null, give: new Set() }; render(); break;
+    case 'respondTo': ui.seenTrades.delete(d.t); ui.counter = { trade: d.t, give: new Set() }; ui.prepWin = null; render(); break;
+    case 'answer': ui.seenCounters.add(d.c); act('answerTrade', { tradeId: d.t, counterId: d.c, accept: d.ok === '1' }); break;
+    case 'withdraw': act('withdrawTrade', { tradeId: d.t }); break;
     case 'skip': act('skipRound'); break;
     case 'present': act('present', { index: Number(d.i) }); break;
     case 'reward': act('chooseReward', { index: Number(d.i) }); break;

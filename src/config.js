@@ -20,10 +20,10 @@ const MIN_FUERZA_INICIAL = 10;
 // sería un punto perdido). Todos empiezan con al menos 5 de Maná.
 const RACES = {
   humano: { nombre: 'Humano', vida: 2, mana: 2, fuerza: 0 },
-  elfo: { nombre: 'Elfo', vida: 1, mana: 3, fuerza: 0 },
+  elfo: { nombre: 'Elfo', vida: 0, mana: 4, fuerza: 0 },
   enano: { nombre: 'Enano', vida: 2, mana: 1, fuerza: 1 },
   gnomo: { nombre: 'Gnomo', vida: 2, mana: 2, fuerza: 0 },
-  silvano: { nombre: 'Silvano', vida: 2, mana: 0, fuerza: 0 },
+  silvano: { nombre: 'Silvano', vida: 2, mana: 1, fuerza: 0 },
   durgan: { nombre: 'Durgan', vida: 2, mana: 0, fuerza: 1 },
   faunar: { nombre: 'Faunar', vida: 2, mana: 0, fuerza: 2 },
 };
@@ -40,8 +40,8 @@ const AFINIDAD = {
   faunar: { natural: ['druida', 'ladron'], rara: ['clerigo'] },
 };
 const AFINIDAD_EFECTO = {
-  natural: { vida: 1, mana: 1, fuerza: 0 },
-  rara: { vida: -2, mana: -1, fuerza: -1, vidaMin: 12, vidaMax: 12 },
+  natural: { vida: 0, mana: 0, fuerza: 1 },
+  rara: { vida: -1, mana: 0, fuerza: 0 },
 };
 function afinidad(raza, clase) {
   const a = AFINIDAD[raza];
@@ -52,9 +52,9 @@ function afinidad(raza, clase) {
 }
 
 const CLASSES = {
-  guerrero: { nombre: 'Guerrero', vida: 2, mana: 0, fuerza: 3 },
-  mago: { nombre: 'Mago', vida: 1, mana: 5, fuerza: 0 },
-  ladron: { nombre: 'Ladrón', vida: 2, mana: 2, fuerza: 2 },
+  guerrero: { nombre: 'Guerrero', vida: 2, mana: 1, fuerza: 3 },
+  mago: { nombre: 'Mago', vida: 0, mana: 6, fuerza: 0 },
+  ladron: { nombre: 'Ladrón', vida: 2, mana: 1, fuerza: 2 },
   druida: { nombre: 'Druida', vida: 2, mana: 2, fuerza: 1 },
   explorador: { nombre: 'Explorador', vida: 2, mana: 1, fuerza: 2 },
   clerigo: { nombre: 'Clérigo', vida: 2, mana: 2, fuerza: 0 },

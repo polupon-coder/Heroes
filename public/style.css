@@ -1060,3 +1060,32 @@ body::-webkit-scrollbar { display: none; }
 }
 @media (min-width: 1101px) and (min-height: 600px) { .combat .dice-zone { margin-top: 1.4vh; } }
 .home-credit { margin-top: -3.5vh; position: relative; }
+/* Recompensas resumidas bajo cada monstruo */
+.rewards-sum { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.rewards-sum span { font-size: .85rem; color: var(--ink-soft); padding: 2px 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 248, 230, .45); }
+/* Maleficio: esfera repetida bien marcada */
+.die.cursed { outline: 3px solid #6b3fa0; outline-offset: 3px; border-radius: 10px; }
+.die.cursed::before { content: "☠"; position: absolute; left: -8px; top: -8px; width: 20px; height: 20px; border-radius: 50%;
+  background: #6b3fa0; color: #fff; font-size: 12px; line-height: 20px; text-align: center; z-index: 2; }
+.curse-note { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; color: #6b3fa0; font-weight: 600; text-align: center; font-size: .92rem; }
+.curse-note .die.sm { width: 22px; height: 22px; display: inline-flex; }
+
+/* ===== Comercio: ventana grande y con aire ===== */
+.modal .card.prep-win { max-width: 900px; width: 92vw; max-height: none; overflow: visible; padding: 26px 36px 30px; }
+.modal .card.prep-win h3 { font-size: 1.5rem; margin: 0 0 14px; text-align: center; }
+.prep-win h4 { text-align: center; margin: 18px 0 10px; font-family: var(--title); font-weight: 600; color: var(--ink-soft); letter-spacing: .04em; }
+.trade-block { margin-bottom: 18px; }
+.trade-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin: 6px 0 10px; }
+.trade-tile { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 112px; padding: 8px 6px; background: rgba(255, 248, 230, .35);
+  border: 1px solid var(--line); border-radius: 16px; font: .8rem var(--text); color: var(--ink); cursor: pointer; }
+button.trade-tile:not([data-a]) { cursor: default; }
+.trade-tile .ring { width: 64px; height: 64px; display: grid; place-items: center; }
+.trade-tile .item-img { width: 64px; height: 64px; }
+.trade-tile b { font-size: .8rem; line-height: 1.15; text-align: center; }
+.trade-tile small { color: var(--muted); }
+.trade-tile.selected { border-color: var(--gold); background: rgba(201, 163, 90, .3); box-shadow: 0 0 0 2px rgba(168, 122, 42, .35); }
+.trade-counter { border-top: 1px dashed var(--line); padding: 12px 0 6px; }
+.trade-counter .who { text-align: center; font-family: var(--title); color: var(--rubric-dark); margin-bottom: 4px; }
+.prep-win .row { gap: 14px; margin-top: 10px; }
+.trade-pop .trade-grid { margin-bottom: 4px; }
+.curse-note { margin: 2px 0 0; }

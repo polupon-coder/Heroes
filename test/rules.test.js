@@ -67,10 +67,15 @@ test('comercio entre combates', () => {
   g.act(a.id, 'start');
   a.hero.inv.yelmo = { id: 'y', tipo: 'equipo', slot: 'yelmo', bonus: 2, nombre: 'Yelmo +2' };
   b.hero.inv.pociones.push({ id: 'p', tipo: 'pocion', efecto: 'curacion', valor: 3, nombre: 'Poción' });
-  g.act(a.id, 'proposeTrade', { toId: b.id, give: ['y'], want: ['p'] });
-  g.act(b.id, 'respondTrade', { tradeId: g.trades[0].id, accept: true });
+  // A publica lo que ofrece, B responde con lo que da a cambio y A acepta.
+  g.act(a.id, 'offerTrade', { give: ['y'] });
+  assert.throws(() => g.act(a.id, 'offerTrade', { give: ['y'] }), /oferta/);
+  g.act(b.id, 'counterTrade', { tradeId: g.trades[0].id, give: ['p'] });
+  const t = g.trades[0];
+  g.act(a.id, 'answerTrade', { tradeId: t.id, counterId: t.counters[0].id, accept: true });
   assert.strictEqual(b.hero.inv.yelmo.id, 'y');
   assert.strictEqual(a.hero.inv.pociones[0].id, 'p');
+  assert.strictEqual(g.trades.length, 0);
 });
 
 test('golpe graduado del torneo', () => {
@@ -138,10 +143,10 @@ function fightOut(g, p) {
 }
 
 test('estadísticas iniciales: Maná mínimo 5 y Fuerza mínima 10', () => {
-  // Humano Guerrero es combinación natural: +1 Vida y +1 Maná.
-  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 15, mana: 8, fuerza: 13 });
-  // Durgan Mago es una combinación rara: Vida fija en 12 y algo menos de Maná y Fuerza.
-  assert.strictEqual(baseStats('durgan', 'mago').vida, 12);
+  // Humano Guerrero es combinación natural: +1 Fuerza.
+  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 14, mana: 8, fuerza: 14 });
+  // Durgan Mago es una combinación rara: −1 Vida.
+  assert.strictEqual(baseStats('durgan', 'mago').vida, 11);
   assert.strictEqual(C.afinidad('durgan', 'clerigo'), 'rara');
   for (const r of Object.keys(C.RACES)) for (const c of Object.keys(C.CLASSES)) {
     const b = baseStats(r, c);
@@ -167,9 +172,11 @@ test('maleficios: uno recibido por ronda; comercio: uno por ronda', () => {
   assert.throws(() => g.act(b.id, 'curse', { targetId: c.id, amount: 5 }), /maleficio/);
   a.hero.inv.yelmo = { id: 'y', tipo: 'equipo', slot: 'yelmo', bonus: 2, nombre: 'Yelmo +2' };
   b.hero.inv.botas = { id: 'z', tipo: 'equipo', slot: 'botas', bonus: 2, nombre: 'Botas +2' };
-  g.act(a.id, 'proposeTrade', { toId: b.id, give: ['y'], want: [] });
-  g.act(b.id, 'respondTrade', { tradeId: g.trades[0].id, accept: true });
-  assert.throws(() => g.act(b.id, 'proposeTrade', { toId: c.id, give: ['z'], want: [] }), /comerciado/);
+  b.hero.inv.pociones.push({ id: 'q', tipo: 'pocion', efecto: 'curacion', valor: 2, nombre: 'Poción' });
+  g.act(a.id, 'offerTrade', { give: ['y'] });
+  g.act(b.id, 'counterTrade', { tradeId: g.trades[0].id, give: ['q'] });
+  g.act(a.id, 'answerTrade', { tradeId: g.trades[0].id, counterId: g.trades[0].counters[0].id, accept: true });
+  assert.throws(() => g.act(b.id, 'offerTrade', { give: ['z'] }), /comerciado/);
 });
 
 test('duelo del torneo: golpe completo con 5 esferas del color rival', () => {
@@ -196,16 +203,16 @@ test('duelo del torneo: golpe completo con 5 esferas del color rival', () => {
 });
 
 test('dos monstruos a la vez: colores o formas, y se presenta contra uno', () => {
-  const { g, p } = soloGame(() => F.amarillo, 'elfo', 'mago'); // Maná 12: 2 comodines
+  const { g, p } = soloGame(() => F.amarillo, 'elfo', 'mago'); // cada 5 de Maná, un comodín
   assert.strictEqual(p.stage, 'combate');
   assert.strictEqual(p.combat.targets.length, 2);
   for (const m of p.offers) assert.ok(['color', 'forma'].includes(m.tipo));
   const whites = p.combat.dice.filter((d) => d.fixed && d.face === 'multicolor' && d.shape === 'espiral').length;
-  assert.strictEqual(whites, Math.min(2, p.combat.diceCount));
+  assert.strictEqual(whites, Math.min(Math.floor(p.hero.base.mana / 5), p.combat.diceCount));
   // Fuerza: un monstruo de formas fácil que se completa con comodines
   p.offers[0] = { ...p.offers[0], tipo: 'forma', combo: ['rombo', 'rombo'] };
   p.combat.targets[0] = { tipo: 'forma', combo: ['rombo', 'rombo'] };
-  p.combat.targets[1] = { tipo: 'color', combo: ['rojo', 'rojo', 'rojo'] };
+  p.combat.targets[1] = { tipo: 'color', combo: ['rojo', 'rojo', 'rojo', 'rojo'] };
   g.act(p.id, 'roll', {});
   assert.throws(() => g.act(p.id, 'present', { index: 1 }), /no completan/);
   g.act(p.id, 'present', { index: 0 });
@@ -221,6 +228,9 @@ test('maleficio: repite una esfera acertada', () => {
   g.rng = seq([F.rojo, 0.01, F.amarillo, 0.65, F.amarillo, 0.65, F.amarillo, 0.65, F.amarillo, 0.65]);
   g.act(p.id, 'roll', {});
   assert.strictEqual(p.combat.cursesLeft, 0);
+  // Queda anotado qué esfera repitió el maleficio y qué había salido.
+  assert.strictEqual(p.combat.cursed.length, 1);
+  assert.strictEqual(p.combat.cursed[0].face, 'rojo');
 });
 
 test('caer a 0 Vida: pierde todos sus objetos', () => {

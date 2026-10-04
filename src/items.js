@@ -2,7 +2,6 @@
 
 const C = require('./config');
 
-const SHIELD_NAMES = ['Rodela', 'Escudo', 'Pavés'];
 
 const SLOT_LABEL = {
   arma: 'Arma',
@@ -43,7 +42,7 @@ function makeEquipment(rng, level, nextId) {
       baculo: [['Báculo de aprendiz', 'Vara de cristal'], ['Báculo arcano', 'Báculo de zafiro'], ['Báculo astral', 'Báculo del archimago']],
       cayado: [['Cayado de rama', 'Vara de espino'], ['Cayado de hiedra', 'Cayado del bosque'], ['Cayado del roble ancestral', 'Cayado de la arboleda']],
     }[forma]?.[grado - 1],
-    escudo: SHIELD_NAMES,
+    escudo: [['Escudo de tablas', 'Escudo de roble'], ['Escudo del bosque', 'Escudo de hierro'], ['Escudo del guardián', 'Escudo de hojas de oro']][grado - 1],
     yelmo: [['Yelmo nasal', 'Casco de cuero y hierro'], ['Yelmo de acero', 'Yelmo de caballero'], ['Yelmo alado', 'Yelmo real']][grado - 1],
     armadura: {
       tunica: [['Túnica de lana', 'Hábito con capucha'], ['Túnica del bosque', 'Manto de hojas'], ['Túnica del gran druida', 'Manto de la arboleda']],

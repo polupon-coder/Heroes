@@ -40,7 +40,7 @@ const Sounds = (() => {
     if (delay) setTimeout(go, delay); else go();
   }
 
-  // Música de la portada y de la sala, en bucle y muy suave.
+  // Música de la portada, la sala y el Torneo, en bucle y muy suave.
   const music = new Audio('sonidos/musica-portada.mp3');
   music.loop = true;
   music.volume = 0.15;

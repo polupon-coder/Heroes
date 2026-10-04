@@ -290,7 +290,7 @@ function render() {
   document.body.classList.remove('at-home');
   $('app').classList.remove('hidden');
   $('roomInfo').innerHTML = `<span class="room-name">Sala ${esc(S.code)}</span><button class="exit-btn" data-a="exit" title="Salir de la sala" aria-label="Salir de la sala">×</button>`;
-  Sounds.setMusic(S.phase === 'lobby');
+  Sounds.setMusic(S.phase === 'lobby' || S.phase === 'torneo' || S.phase === 'fin');
   playEventSounds();
   $('status').textContent = statusText();
 

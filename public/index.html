@@ -12,7 +12,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">⚔ HÉROES</div>
+    <div class="brand">Héroes</div>
     <div id="status" class="status"></div>
     <div id="roomInfo" class="room-info"></div>
   </header>
@@ -45,26 +45,27 @@
 
   <main id="app" class="screen hidden">
     <div id="lobby" class="hidden"></div>
-    <div id="table" class="table hidden">
-      <aside id="sheet" class="col"></aside>
-      <section id="main" class="col main"></section>
-      <aside class="col side">
-        <div id="others"></div>
-        <div class="card">
-          <h3>Crónica</h3>
-          <div id="log" class="log"></div>
-        </div>
-      </aside>
-    </div>
-    <div class="card chat">
-      <div id="chatLog" class="chat-log"></div>
-      <form id="chatForm" class="row">
-        <input id="chatInput" maxlength="200" placeholder="Escribe al grupo…" autocomplete="off">
-        <button class="btn small">Enviar</button>
-      </form>
+    <div id="table" class="hidden">
+      <section id="arena" class="arena"></section>
+      <div class="board">
+        <section id="main" class="stage"></section>
+        <aside id="sheet" class="me"></aside>
+      </div>
     </div>
   </main>
 
+  <button id="journalBtn" class="journal-btn hidden" title="Crónica y chat">📜</button>
+  <aside id="journal" class="journal hidden">
+    <div class="journal-head"><h3>Crónica</h3><button class="btn tiny" id="journalClose">✕</button></div>
+    <div id="log" class="log"></div>
+    <div id="chatLog" class="chat-log"></div>
+    <form id="chatForm" class="row">
+      <input id="chatInput" maxlength="200" placeholder="Escribe al grupo…" autocomplete="off">
+      <button class="btn small">Enviar</button>
+    </form>
+  </aside>
+
+  <div id="reveal" class="reveal hidden"></div>
   <div id="modal" class="modal hidden"></div>
   <div id="toast" class="toast hidden"></div>
 

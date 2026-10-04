@@ -15,6 +15,7 @@ const ui = {
   manaSel: null,
   trade: { to: null, give: new Set(), want: new Set() },
   theft: null,
+  detail: null,
   curse: { target: null, amount: 5 },
 };
 
@@ -58,14 +59,16 @@ function raceName(p) { return p.raza && DATA ? DATA.razas[p.raza].nombre : '¿Ra
 function className(p) { return p.clase && DATA ? DATA.clases[p.clase].nombre : '¿Clase?'; }
 
 // Retrato del héroe (Raza + Clase). Si aún no hay ilustración, un marco vacío.
-function portrait(raza, clase, size = 'md', extra = '') {
+// La ropa del héroe se tiñe con el color del jugador (variantes en img/heroes/color).
+function portrait(raza, clase, size = 'md', color = null, extra = '') {
   const key = raza && clase ? `${raza}-${clase}` : null;
   const has = key && DATA && (DATA.retratos || []).includes(key);
   const alt = raza && clase && DATA ? `${DATA.razas[raza].nombre} ${DATA.clases[clase].nombre}` : 'Héroe';
-  if (has) return `<img class="portrait ${size}" src="img/heroes/${key}.webp" alt="${esc(alt)}" loading="lazy" ${extra}>`;
+  const src = color ? `img/heroes/color/${key}-${color}.webp` : `img/heroes/${key}.webp`;
+  if (has) return `<img class="portrait ${size}" src="${src}" alt="${esc(alt)}" ${extra}>`;
   return `<div class="portrait ${size} missing" ${extra}>${raza && clase ? 'Retrato pendiente' : '?'}</div>`;
 }
-function heroPortrait(p, size = 'md') { return portrait(p.raza, p.clase, size); }
+function heroPortrait(p, size = 'md') { return portrait(p.raza, p.clase, size, p.color); }
 
 // Ilustración del monstruo (si existe).
 function monsterArt(m, cls = 'monster-art') {
@@ -228,13 +231,15 @@ function render() {
     $('lobby').classList.add('hidden');
     $('table').classList.remove('hidden');
     syncCombatUi();
+    $('arena').innerHTML = renderArena();
     $('sheet').innerHTML = renderSheet();
     $('main').innerHTML = renderMain();
-    $('others').innerHTML = renderOthers();
-    const log = $('log');
-    log.innerHTML = S.log.map((l) => `<div>${esc(l.text)}</div>`).join('');
-    log.scrollTop = log.scrollHeight;
   }
+  $('journalBtn').classList.remove('hidden');
+  const log = $('log');
+  log.innerHTML = S.log.map((l) => `<div>${esc(l.text)}</div>`).join('');
+  log.scrollTop = log.scrollHeight;
+  detectNewItems();
   renderModal();
 }
 
@@ -314,7 +319,7 @@ function renderLobby() {
         ${['rojo', 'azul', 'verde', 'amarillo'].map((c) => `<button class="btn small ${p.color === c ? 'selected' : ''}" data-a="color" data-c="${c}">${chip(c)} ${COLOR_LABEL[c]}</button>`).join('')}
       </div>
       <div class="hero-pick">
-        ${portrait(p.raza, p.clase, 'xl')}
+        ${portrait(p.raza, p.clase, 'xl', p.color)}
         <div>
       <h4>Raza</h4>
       <div class="choice-grid">
@@ -355,6 +360,11 @@ function nextDiceHint(f) {
 
 // ---------- Hoja del héroe
 
+function itemTile(it, label) {
+  if (!it) return `<div class="tile empty"><span>${label}</span></div>`;
+  return `<button class="tile" data-a="item" data-id="${it.id}" title="${esc(it.nombre)}">${itemIcon(it)}<span>${esc(it.nombre)}</span></button>`;
+}
+
 function renderSheet() {
   const p = me();
   if (!p || !p.hero) return '';
@@ -362,45 +372,50 @@ function renderSheet() {
   const pct = Math.max(0, Math.min(100, (h.vida / h.base.vida) * 100));
   const inv = h.inv;
   const hands = inv.manos;
-  const slot = (k, it) => `<div class="slot"><span class="k">${k}</span>${it ? `<span class="n">${itemIcon(it)} ${esc(it.nombre)}</span>${discardBtn(it)}` : '<span class="n empty">vacío</span>'}</div>`;
-  const handRows = hands.length === 0
-    ? [slot('Mano', null), slot('Mano', null)]
-    : hands[0].slot === 'dosManos'
-      ? [slot('Dos manos', hands[0])]
-      : [slot('Mano', hands[0]), slot('Mano', hands[1] || null)];
-
-  const cons = (list, max, label) => `
-    <h4 style="margin-top:12px">${label} (${list.length}/${max})</h4>
-    ${list.length ? list.map((it) => `<div class="slot"><span class="n">${itemIcon(it)} ${esc(it.nombre)}<div class="muted small">${itemDesc(it)}</div></span>${useBtn(it)}${discardBtn(it)}</div>`).join('') : '<div class="muted small">Ninguno</div>'}`;
-
+  const handTiles = hands.length === 0
+    ? [itemTile(null, 'Mano'), itemTile(null, 'Mano')]
+    : hands[0].slot === 'dosManos' ? [itemTile(hands[0])] : [itemTile(hands[0]), itemTile(hands[1], 'Mano')];
+  const cons = [...inv.pociones, ...inv.pergaminos];
   return `
-  <div class="card">
-    <div class="sheet-portrait">${heroPortrait(p, 'xl')}<div class="tag">${raceName(p)} · ${className(p)}</div></div>
-    <div class="hero-title">${chip(p.color)}<h2 style="margin:0">${esc(p.name)}</h2></div>
-    <div class="muted">Color ${COLOR_LABEL[p.color]}</div>
-    <div class="row small" style="margin-top:8px"><span>❤ Vida ${h.vida} / ${h.base.vida}</span></div>
-    <div class="bar"><i style="width:${pct}%"></i></div>
-    <div class="stats">
-      <div class="box"><div class="v">${h.fuerza}</div><div class="l">Fuerza (base ${h.base.fuerza})</div></div>
-      <div class="box"><div class="v">🎲 ${h.dados}</div><div class="l">Dados · ${nextDiceHint(h.fuerza)}</div></div>
-      <div class="box"><div class="v">${h.manaDisponible}${h.manaDisponible !== h.mana ? `<span class="small muted"> / ${h.mana}</span>` : ''}</div><div class="l">Maná${h.manaDisponible !== h.mana ? ' (gastado en magia)' : ''}</div></div>
-      <div class="box"><div class="v">✨ ${h.fijables}</div><div class="l">Dados fijables</div></div>
-    </div>
-    ${h.curses ? `<div class="warn">☠ Maldito: repetirás ${h.curses} dado(s) exitoso(s) en tu próximo combate.</div>` : ''}
-    <div class="muted small">Victorias: ${h.victorias} · Caídas: ${h.caidas} · Torneo (F+M): ${h.puntuacion}</div>
-    <h4 style="margin-top:12px">Equipo</h4>
-    ${slot('Yelmo', inv.yelmo)}
-    ${slot('Armadura', inv.armadura)}
-    ${slot('Botas', inv.botas)}
-    ${handRows.join('')}
-    ${cons(inv.pociones, 3, 'Pociones')}
-    ${cons(inv.pergaminos, 3, 'Pergaminos')}
-  </div>`;
+  <div class="me-hero tint-${p.color}">
+    ${heroPortrait(p, 'xl')}
+    <div class="me-name">${esc(p.name)}</div>
+    <div class="me-sub">${raceName(p)} · ${className(p)}</div>
+    <div class="life"><i style="width:${pct}%"></i><span>❤ ${h.vida} / ${h.base.vida}</span></div>
+  </div>
+  <div class="glyphs">
+    <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
+    <div title="Dados que lanzas"><b>${h.dados}</b><span>Dados</span></div>
+    <div title="Maná${h.manaDisponible !== h.mana ? ' (parte gastada en magia)' : ''}"><b>${h.manaDisponible}</b><span>Maná</span></div>
+    <div title="Dados que puedes fijar con el Maná"><b>${h.fijables}</b><span>Fijables</span></div>
+  </div>
+  ${h.curses ? `<p class="warn">☠ Maldito: repetirás ${h.curses} dado(s) exitoso(s) en tu próximo combate.</p>` : ''}
+  <div class="tiles">
+    ${itemTile(inv.yelmo, 'Yelmo')}${itemTile(inv.armadura, 'Armadura')}${itemTile(inv.botas, 'Botas')}${handTiles.join('')}
+  </div>
+  <div class="tiles small-tiles">
+    ${cons.length ? cons.map((it) => itemTile(it)).join('') : '<p class="muted small">Sin pociones ni pergaminos</p>'}
+  </div>
+  <p class="muted small center">${h.victorias} victorias · ${h.caidas} caídas</p>`;
+}
+
+// Detalle de un objeto (al tocarlo en tu hoja).
+function renderItemDetail() {
+  const p = me();
+  const it = ui.detail && p && p.hero && allItems(p.hero).find((x) => x.id === ui.detail);
+  if (!it) { ui.detail = null; return ''; }
+  return `
+    <div class="card detail">
+      <div class="big-item">${itemIcon(it)}</div>
+      <h2>${esc(it.nombre)}</h2>
+      <p class="muted">${itemDesc(it)}</p>
+      <div class="row center-row">${useBtn(it)}${discardBtn(it)}<button class="btn" data-a="closeDetail">Cerrar</button></div>
+    </div>`;
 }
 
 function discardBtn(it) {
   if (S.phase !== 'prep' && S.phase !== 'combat') return '';
-  return `<button class="btn tiny" title="Descartar" data-a="discard" data-id="${it.id}">✕</button>`;
+  return `<button class="btn" data-a="discard" data-id="${it.id}">Descartar</button>`;
 }
 
 function useBtn(it) {
@@ -412,39 +427,88 @@ function useBtn(it) {
   if (it.efecto === 'curacion') ok = h.vida < h.base.vida && (S.phase === 'prep' || S.phase === 'combat' || (S.phase === 'torneo' && myCombat));
   if (it.efecto === 'robo') ok = S.phase === 'prep';
   if (!ok) return '';
-  return `<button class="btn tiny" data-a="use" data-id="${it.id}" data-efecto="${it.efecto}">Usar</button>`;
+  return `<button class="btn primary" data-a="use" data-id="${it.id}" data-efecto="${it.efecto}">Usar</button>`;
 }
 
-// ---------- Otros jugadores
+// ---------- Mesa: cada héroe y contra quién se enfrenta
 
-function renderOthers() {
-  return others().map((p) => {
+function opponentOf(p) {
+  if (S.phase === 'combat') {
+    if (p.stage === 'elegir') return { txt: 'elige monstruo…' };
+    if (p.monster) {
+      const res = p.combat && p.combat.status === 'victoria' ? 'win' : p.combat && p.combat.status === 'derrota' ? 'lose' : '';
+      return { art: monsterArt(p.monster, 'foe'), name: p.monster.nombre, res };
+    }
+  }
+  if (S.phase === 'torneo' && S.tournament) {
+    const m = S.tournament.matches.find((x) => !x.winner && (x.a === p.id || x.b === p.id));
+    if (m) {
+      const r = byId(m.a === p.id ? m.b : m.a);
+      return { art: portrait(r.raza, r.clase, 'foe', r.color), name: r.name, turn: m.attacker === p.id };
+    }
+    if (S.tournament.bye === p.id) return { txt: 'espera en la final' };
+    const lost = S.tournament.matches.some((x) => x.winner && x.winner !== p.id && (x.a === p.id || x.b === p.id));
+    return { txt: lost ? 'eliminado' : 'espera', out: lost };
+  }
+  if (S.phase === 'prep') return { txt: p.ready ? '✔ listo' : 'preparándose…' };
+  if (S.phase === 'fin') return { txt: S.winner === p.id ? '👑 campeón' : '' };
+  return { txt: '' };
+}
+
+function renderArena() {
+  const order = [me(), ...others()].filter(Boolean);
+  return order.map((p) => {
     const h = p.hero;
     const pct = Math.max(0, Math.min(100, (h.vida / h.base.vida) * 100));
-    let st = '';
-    if (S.phase === 'prep') st = p.ready ? '<span class="badge ok">listo</span>' : '<span class="badge">preparándose</span>';
-    if (S.phase === 'combat') st = { elegir: 'eligiendo monstruo', combate: 'combatiendo', recompensa: 'eligiendo recompensa', hecho: 'ha terminado' }[p.stage] || '';
-    if (S.phase === 'combat') st = `<span class="badge ${p.stage === 'hecho' ? 'ok' : ''}">${st}</span>`;
-    const mini = p.combat && S.phase === 'combat' && p.stage === 'combate'
-      ? `<div class="mini-combat"><span class="small muted">${esc(p.combat.label)}:</span>${p.combat.dice.map((d) => die(d.face, { sm: true, cls: d.fixed ? 'fixed' : '' })).join('')}<span class="small muted">tirada ${p.combat.rolls}/3</span></div>`
-      : '';
-    const equip = allItems(h).map((it) => `<span class="thumb" title="${esc(it.nombre)} — ${esc(itemDesc(it))}">${itemIcon(it)}</span>`).join('');
+    const o = opponentOf(p);
+    const dice = p.combat && p.combat.status === 'activo' && p.combat.dice.length
+      ? `<div class="mini-dice">${p.combat.dice.map((d) => die(d.face, { sm: true, cls: d.fixed ? 'fixed' : '' })).join('')}</div>` : '';
     return `
-    <div class="card other">
-      <div class="top">${chip(p.color)}<span class="name">${esc(p.name)}</span>${p.bot ? '<span class="badge">bot</span>' : ''}${!p.connected && !p.bot ? '<span class="badge off">desconectado</span>' : ''}${st}</div>
-      <div class="body">
-        ${heroPortrait(p, 'md')}
-        <div class="info">
-          <div class="meta">${raceName(p)} ${className(p)}</div>
-          <div class="meta">❤ ${h.vida}/${h.base.vida} · 💪 ${h.fuerza} (🎲${h.dados}) · ✨ ${h.manaDisponible}${h.curses ? ` · ☠${h.curses}` : ''}</div>
-          <div class="bar"><i style="width:${pct}%"></i></div>
-          <div class="thumbs">${equip || '<span class="meta">Sin objetos</span>'}</div>
-        </div>
+    <div class="duo ${p.id === S.me ? 'mine' : ''} ${o.out ? 'out' : ''} tint-${p.color}">
+      <div class="who">
+        ${heroPortrait(p, 'arena')}
+        <div class="nm">${chip(p.color)} ${esc(p.name)}${p.bot ? ' <small>(bot)</small>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
+        <div class="life thin"><i style="width:${pct}%"></i></div>
       </div>
-      ${mini}
+      <div class="vs-slot ${o.res || ''}">
+        ${o.art ? `<span class="vs">${o.turn ? '⚔' : 'vs'}</span>${o.art}<div class="foe-name">${esc(o.name)}</div>${dice}` : `<div class="state">${o.txt || ''}</div>`}
+      </div>
     </div>`;
   }).join('');
 }
+
+// ---------- Objetos nuevos: se muestran en grande
+
+let knownItems = null;
+const revealQueue = [];
+function detectNewItems() {
+  const p = me();
+  if (!p || !p.hero) return;
+  const items = [...allItems(p.hero), ...(p.hero.pending || []).map((x) => x.item).filter(Boolean)];
+  const ids = new Set(items.map((it) => it.id));
+  if (knownItems) {
+    for (const it of items) if (!knownItems.has(it.id)) revealQueue.push(it);
+  }
+  knownItems = ids;
+  showReveal();
+}
+let revealTimer = null;
+function showReveal() {
+  const box = $('reveal');
+  if (!box.classList.contains('hidden') || !revealQueue.length) return;
+  const it = revealQueue.shift();
+  box.innerHTML = `<div class="reveal-card"><div class="reveal-glow"></div><div class="big-item">${itemIcon(it)}</div><div class="reveal-title">¡Has conseguido!</div><h2>${esc(it.nombre)}</h2><p>${itemDesc(it)}</p></div>`;
+  box.classList.remove('hidden');
+  clearTimeout(revealTimer);
+  revealTimer = setTimeout(closeReveal, 3200);
+}
+function closeReveal() {
+  $('reveal').classList.add('hidden');
+  setTimeout(showReveal, 250);
+}
+$('reveal').onclick = closeReveal;
+$('journalBtn').onclick = () => $('journal').classList.toggle('hidden');
+$('journalClose').onclick = () => $('journal').classList.add('hidden');
 
 // ---------- Panel central
 
@@ -666,15 +730,20 @@ function renderCombat(p, controllable) {
 
   const holder = mine ? 'Tus dados' : `Dados de ${esc(p.name)}`;
   let foe = '';
-  if (cb.kind === 'monstruo') foe = monsterArt(p.monster, 'foe-art');
+  let foeName = '';
+  if (cb.kind === 'monstruo' && p.monster) { foe = monsterArt(p.monster, 'duel-art'); foeName = `${p.monster.nombre} · ${p.monster.tamano || ''}`; }
   else if (S.tournament) {
     const m = S.tournament.matches.find((x) => !x.winner && (x.a === p.id || x.b === p.id));
     const def = m && byId(m.a === p.id ? m.b : m.a);
-    if (def) foe = portrait(def.raza, def.clase, 'foe-art');
+    if (def) { foe = portrait(def.raza, def.clase, 'duel-art', def.color); foeName = def.name; }
   }
   return `
-  <div class="combat ${foe ? 'with-foe' : ''}">
-    ${foe ? `<div class="foe">${foe}</div>` : ''}
+  <div class="combat">
+    ${foe ? `<div class="faceoff">
+      <figure>${heroPortrait(p, 'duel-art')}<figcaption>${esc(p.name)}</figcaption></figure>
+      <div class="faceoff-vs">vs</div>
+      <figure>${foe}<figcaption>${esc(foeName)}</figcaption></figure>
+    </div>` : ''}
     <div class="row"><h2 style="margin:0">${esc(cb.label)}</h2><span class="spacer"></span>
       <span class="pill">Tirada ${cb.rolls}/3</span>
       <span class="pill">${cb.manaUsed ? 'Maná usado' : `Maná ${mine ? p.hero.manaCombate : ''} sin usar`}</span>
@@ -756,7 +825,11 @@ function renderModal() {
   const p = me();
   const modal = $('modal');
   const pend = p && p.hero && p.hero.pending && p.hero.pending[0];
-  if (!pend || !pend.item) { modal.classList.add('hidden'); modal.innerHTML = ''; return; }
+  if (!pend || !pend.item) {
+    const d = renderItemDetail();
+    if (d) { modal.classList.remove('hidden'); modal.innerHTML = d; } else { modal.classList.add('hidden'); modal.innerHTML = ''; }
+    return;
+  }
   modal.classList.remove('hidden');
   modal.innerHTML = `
     <div class="card">
@@ -778,6 +851,8 @@ document.addEventListener('click', (e) => {
     case 'copy':
       navigator.clipboard?.writeText(d.text).then(() => toast('Enlace copiado'), () => {});
       break;
+    case 'item': ui.detail = d.id; renderModal(); break;
+    case 'closeDetail': ui.detail = null; renderModal(); break;
     case 'kick': act('kick', { playerId: d.id }); break;
     case 'addBot': act('addBot'); break;
     case 'pvpHits': act('setSettings', { pvpHits: Number(d.n) }); break;
@@ -787,11 +862,12 @@ document.addEventListener('click', (e) => {
     case 'clase': act('setHero', { clase: d.k }); break;
     case 'ready': act('ready', { value: d.v === '1' }); break;
     case 'discard':
-      if (confirm('¿Descartar este objeto?')) act('discard', { itemId: d.id });
+      if (confirm('¿Descartar este objeto?')) { act('discard', { itemId: d.id }); ui.detail = null; }
       break;
     case 'use':
+      ui.detail = null;
       if (d.efecto === 'robo') { ui.theft = { itemId: d.id, targetId: null }; render(); }
-      else act('useItem', { itemId: d.id });
+      else { act('useItem', { itemId: d.id }); renderModal(); }
       break;
     case 'theftTarget': ui.theft.targetId = d.id; render(); break;
     case 'theftCancel': ui.theft = null; render(); break;

@@ -62,7 +62,7 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 
 | Cambio | Antes | Ahora |
 | --- | --- | --- |
-| Fuerza base | 2 | **10**, y ninguna combinación de Raza + Clase baja de 10 (los héroes empiezan con 2–3 dados) |
+| Fuerza base | 2 | Goblin |
 | Golpes en el torneo | 4 resultados = 3 de daño, si no 0 | **Golpe graduado**: 3 resultados del color del rival → 1 de daño, 4 → 2, 5 → 3 (en la sala se puede elegir 4 como golpe completo: 2 → 1, 3 → 2, 4 → 3). El atacante puede terminar su ataque cuando quiera. |
 | Caer a 0 Vida en la Fase 1 (regla 9) | pierde todo el equipo y los consumibles | pierde **todos los consumibles y su objeto de equipo de más Fuerza**, conserva el resto y recupera la Vida inicial |
 | Quién ataca primero en el torneo | — | el de menos Fuerza + Maná |
@@ -74,11 +74,11 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 | 3 | Necrófago | 🔵🟢🟢 |
 | 4 | Orco | 🔴🔴🔴 |
 | 5 | Súcubo | 🔵🔵🟡 |
-| 6 | Minotauro | 🟢🟢🟢🟡 |
+| 6 | Espectro | 🟢🟢🟢🟡 |
 | 7 | Mago Oscuro | 🔴🔴🟢🟢 |
-| 8 | Ogro | 🔵🔵🔵🟡 |
-| 9 | Trol | 🟢🟢🟡🟡 |
-| 10 | Espectro | 🔴🔵🟢🟡 |
+| 8 | Minotauro | 🔵🔵🔵🟡 |
+| 9 | Ogro | 🟢🟢🟡🟡 |
+| 10 | Trol | 🔴🔵🟢🟡 |
 | 11 | Basilisco | 🔴🔴🔵🟢🟡 |
 | 12 | Dragón | 🔴🔵🟢🟡🟡 |
 

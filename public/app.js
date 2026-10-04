@@ -331,7 +331,22 @@ function heroPreview(raza, clase) {
   if (!DATA || !raza || !clase) return null;
   const r = DATA.razas[raza];
   const c = DATA.clases[clase];
-  return { vida: DATA.base.vida + r.vida + c.vida, mana: DATA.base.mana + r.mana + c.mana, fuerza: Math.max(DATA.minFuerza || 0, DATA.base.fuerza + r.fuerza + c.fuerza) };
+  const af = afinidadDe(raza, clase);
+  const e = (af && DATA.afinidadEfecto && DATA.afinidadEfecto[af]) || { vida: 0, mana: 0, fuerza: 0 };
+  let vida = DATA.base.vida + r.vida + c.vida + e.vida;
+  if (e.vidaMax) vida = Math.max(e.vidaMin, Math.min(e.vidaMax, vida));
+  return {
+    vida,
+    mana: Math.max(5, DATA.base.mana + r.mana + c.mana + e.mana),
+    fuerza: Math.max(DATA.minFuerza || 0, DATA.base.fuerza + r.fuerza + c.fuerza + e.fuerza),
+    af,
+  };
+}
+
+function afinidadDe(raza, clase) {
+  const a = DATA && DATA.afinidad && DATA.afinidad[raza];
+  if (!a) return null;
+  return a.natural.includes(clase) ? 'natural' : a.rara.includes(clase) ? 'rara' : null;
 }
 
 function mods(x) {
@@ -406,6 +421,7 @@ function renderLobbyHeroes(p) {
       <div class="pick-center">
         ${p.raza ? portrait(p.raza, showClass, 'pick', p.color) : '<div class="portrait pick missing">Elige una raza</div>'}
         <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
+        ${preview && preview.af ? `<div class="afinidad ${preview.af}">${preview.af === 'natural' ? 'Combinación natural' : 'Combinación rara'}</div>` : ''}
       </div>
       <div class="pick-right">
       <div class="pick-stats">
@@ -638,7 +654,7 @@ function renderOutcome() {
         <div class="outcome-title">Derrota</div>
         ${m ? monsterArt(m, 'outcome-art') : ''}
         <p class="center">${esc(ui.defeat.text.replace(/^🩸 /, ''))}</p>
-        ${ui.defeat.fell ? '<p class="center warn">Has caído a 0 Vida: pierdes tus consumibles y tu mejor objeto, y recuperas la Vida inicial.</p>' : ''}
+        ${ui.defeat.fell ? '<p class="center warn">Has caído a 0 Vida: pierdes todos tus objetos y recuperas la Vida inicial.</p>' : ''}
         <div class="row center-row"><button class="btn primary" data-a="closeDefeat">Continuar</button></div>
       </div>`;
   }
@@ -693,7 +709,7 @@ const RULES = {
     al terminar tus tiradas presentas tus esferas contra el que puedas o quieras derrotar. Siempre hay monstruos a tu alcance.</p>
     <p>Los monstruos salen en tres tamaños: pequeño, mediano (★★) y grande (★★★). Cuanto más grandes, más difíciles,
     más daño hacen y mejores recompensas dan.</p>
-    <p>Si ganas, eliges 1 de 2 recompensas. Si pierdes, pierdes Vida. Si caes a 0, pierdes tus consumibles y tu mejor objeto
+    <p>Si ganas, eliges 1 de 2 recompensas. Si pierdes, pierdes Vida. Si caes a 0, pierdes todos tus objetos
     y recuperas la Vida inicial.</p>
     <p>Entre combates puedes comerciar, curarte, robar con pergaminos y lanzar maleficios (uno recibido como máximo por ronda, y un comercio por ronda): cada 5 de Maná obliga a un rival a
     repetir una esfera acertada en su próximo combate.</p>`],
@@ -708,7 +724,7 @@ const RULES = {
     Si al terminar las tiradas no completas ninguno, pierdes contra el menos dañino.</p>`],
   torneo: ['Torneo', `
     <p>Tras la ronda 12 empieza el torneo. El héroe con más Fuerza + Maná elige rival para su semifinal; los otros dos se enfrentan entre sí.
-    Los ganadores juegan la final. Nadie recupera Vida.</p>
+    Los ganadores juegan la final. Todos empiezan el Torneo con la Vida completa.</p>
     <p>Para golpear hay que sacar esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Ataca primero el más débil y se alterna
     hasta que uno llega a 0 Vida. Quien gana la final, gana la partida.</p>`],
 };
@@ -966,7 +982,7 @@ function renderCombat(p, controllable) {
       const cls = [
         used.has(i) ? 'success' : '',
         d.fixed ? 'fixed' : '',
-        controllable && !ui.manaMode && ui.held.has(i) && !d.fixed ? 'held' : '',
+        controllable && !ui.manaMode && cb.rolls > 0 && cb.rolls < 3 && !ui.held.has(i) && !d.fixed ? 'reroll' : '',
         controllable && ui.manaMode && (ui.manaSel === i || ui.manaPick.has(i)) ? 'picking' : '',
       ].join(' ');
       return die(faces[i], { cls, shape: d.shape, attrs: controllable ? `data-a="die" data-i="${i}"` : '' });
@@ -986,11 +1002,12 @@ function renderCombat(p, controllable) {
     const rerollN = cb.dice.filter((d, i) => !d.fixed && !ui.held.has(i)).length;
     const manaPot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');
     controls = `<div class="controls">
-      ${cb.rolls > 0 && left > 0 ? `<div class="muted small center">${monster ? 'Las esferas que te sirven ya están marcadas. Puedes ir a por cualquiera de los dos monstruos.' : 'Las esferas que te sirven ya están marcadas. Toca para cambiar cuáles conservas.'}</div>` : ''}
       <div class="row">
         ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
         ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
+      <div class="rolls-count" title="Tiradas">${cb.rolls}/3${cb.cursesLeft ? ` · Maleficio: ${cb.cursesLeft}` : ''}</div>
+      ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">Terminar ataque (${duelDamage(cb, faces)} de daño)</button></div>` : ''}
       ${cb.rolls >= 3 && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
@@ -1007,7 +1024,7 @@ function renderCombat(p, controllable) {
   return `
   <div class="combat">
     ${monster ? foesHtml(p, cb, all, controllable) : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
-    <div class="row"><span class="pill">Tirada ${cb.rolls}/3</span>${cb.cursesLeft ? `<span class="pill">Maleficio: ${cb.cursesLeft}</span>` : ''}</div>
+    ${controllable ? '' : `<div class="rolls-count">${cb.rolls}/3</div>`}
     ${monster ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
     <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
     ${result}

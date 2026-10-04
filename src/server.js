@@ -33,6 +33,8 @@ app.get('/api/datos', (req, res) => {
   res.json({
     razas: C.RACES,
     clases: C.CLASSES,
+    afinidad: C.AFINIDAD,
+    afinidadEfecto: C.AFINIDAD_EFECTO,
     base: C.BASE_STATS,
     minFuerza: C.MIN_FUERZA_INICIAL,
     monstruos: C.MONSTERS,

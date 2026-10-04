@@ -15,10 +15,14 @@ const COLOR_LABEL = { rojo: 'Rojo', azul: 'Azul', verde: 'Verde', amarillo: 'Ama
 function baseStats(raza, clase) {
   const r = C.RACES[raza];
   const c = C.CLASSES[clase];
+  const af = C.afinidad(raza, clase);
+  const e = af ? C.AFINIDAD_EFECTO[af] : { vida: 0, mana: 0, fuerza: 0 };
+  let vida = C.BASE_STATS.vida + r.vida + c.vida + e.vida;
+  if (e.vidaMax) vida = Math.max(e.vidaMin, Math.min(e.vidaMax, vida));
   return {
-    vida: C.BASE_STATS.vida + r.vida + c.vida,
-    mana: Math.max(C.MIN_MANA_INICIAL, C.BASE_STATS.mana + r.mana + c.mana),
-    fuerza: Math.max(C.MIN_FUERZA_INICIAL, C.BASE_STATS.fuerza + r.fuerza + c.fuerza),
+    vida,
+    mana: Math.max(C.MIN_MANA_INICIAL, C.BASE_STATS.mana + r.mana + c.mana + e.mana),
+    fuerza: Math.max(C.MIN_FUERZA_INICIAL, C.BASE_STATS.fuerza + r.fuerza + c.fuerza + e.fuerza),
   };
 }
 
@@ -167,19 +171,14 @@ class Game {
   }
 
   knockout(p) {
-    // Regla 9 (suavizada): pierde todas las Pociones y Pergaminos y su objeto
-    // de equipo de más Fuerza, y recupera la Vida inicial.
-    const inv = p.hero.inv;
-    const best = I.equippedItems(inv).sort((a, b) => b.bonus - a.bonus)[0];
-    if (best) I.removeItem(inv, best.id);
-    inv.pociones = [];
-    inv.pergaminos = [];
+    // Regla 9: al caer a 0 Vida pierde todos sus objetos y recupera la Vida inicial.
+    p.hero.inv = I.emptyInventory();
     p.hero.pending = [];
     p.hero.vida = p.hero.base.vida;
     p.hero.caidas += 1;
     this.trades = this.trades.filter((t) => t.from !== p.id && t.to !== p.id);
     this.say(
-      `💀 ${p.name} cae a 0 Vida: pierde sus consumibles${best ? ` y ${best.nombre}` : ''} y recupera su Vida inicial.`
+      `💀 ${p.name} cae a 0 Vida: pierde todos sus objetos y recupera su Vida inicial.`
     );
   }
 
@@ -528,7 +527,11 @@ class Game {
   // ---------------------------------------------------------------- Torneo
 
   startTournament() {
-    for (const p of this.players) p.hero.pending = [];
+    // Todos llegan al Torneo con la Vida completa.
+    for (const p of this.players) {
+      p.hero.pending = [];
+      p.hero.vida = p.hero.base.vida;
+    }
     const ranking = [...this.players]
       .map((p) => ({ p, s: this.tourneyScore(p), v: p.hero.vida, r: this.rng() }))
       .sort((a, b) => b.s - a.s || b.v - a.v || a.r - b.r)

@@ -70,7 +70,8 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 | --- | --- | --- |
 | Fuerza base | 2 | Goblin |
 | Golpes en el torneo | 4 resultados = 3 de daño, si no 0 | **Golpe graduado**: 3 resultados del color del rival → 1 de daño, 4 → 2, 5 → 3 . El atacante puede terminar su ataque cuando quiera. |
-| Caer a 0 Vida en la Fase 1 (regla 9) | pierde todo el equipo y los consumibles | pierde **todos los consumibles y su objeto de equipo de más Fuerza**, conserva el resto y recupera la Vida inicial |
+| Caer a 0 Vida en la Fase 1 (regla 9) | pierde todo el equipo y los consumibles | igual: pierde **todos sus objetos** y recupera la Vida inicial |
+| Vida al empezar el Torneo | no se recupera | **todos empiezan el Torneo con la Vida completa** |
 | Quién ataca primero en el torneo | — | el de menos Fuerza + Maná |
 
 | Nivel | Monstruo | Combinación |

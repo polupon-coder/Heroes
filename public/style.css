@@ -1037,3 +1037,25 @@ body::-webkit-scrollbar { display: none; }
 .btn.see-rewards:hover { background: rgba(255, 248, 230, .8); }
 /* Mis esferas algo más abajo */
 .combat .dice-zone { margin-top: 3.2vh; }
+
+/* ===== Combate: monstruos a la altura de mi héroe, 1/3 bajo Atacar, marcar = relanzar ===== */
+.rolls-count { text-align: center; font-family: var(--title); color: var(--muted); font-size: 1rem; letter-spacing: .08em; }
+.die.held::before { content: none; }
+.die.reroll { opacity: .62; }
+.die.reroll::after { content: "↻"; position: absolute; right: -6px; top: -6px; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--rubric); color: #fff; font-size: 13px; line-height: 20px; text-align: center; font-weight: 700; }
+.die.piece.reroll::after { content: "↻" !important; }
+.btn.see-rewards { margin-top: 10px; }
+.afinidad { font-style: italic; font-size: .95rem; }
+.afinidad.natural { color: #4f7a3a; }
+.afinidad.rara { color: #a3261b; }
+@media (min-width: 1101px) and (min-height: 600px) {
+  .col-stage > .card.combat-card, .col-stage > .card { padding-top: calc(2vh + 4px); }
+  .foe-art { height: 27vh; }
+  .foe-art .duel-art { max-height: 27vh; }
+  .foe-card { gap: 2px; }
+  .foe-title { margin-top: 4px; }
+  .combat .dice-zone { margin-top: 2vh; }
+  .combat .controls { gap: 6px; margin-top: 8px; }
+}
+@media (min-width: 1101px) and (min-height: 600px) { .combat .dice-zone { margin-top: 1.4vh; } }

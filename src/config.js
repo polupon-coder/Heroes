@@ -19,23 +19,46 @@ const MIN_FUERZA_INICIAL = 10;
 // valores negativos (la Fuerza y el Maná tienen mínimos, así que un negativo
 // sería un punto perdido). Todos empiezan con al menos 5 de Maná.
 const RACES = {
-  humano: { nombre: 'Humano', vida: 1, mana: 2, fuerza: 0 },
-  elfo: { nombre: 'Elfo', vida: 0, mana: 3, fuerza: 0 },
-  enano: { nombre: 'Enano', vida: 1, mana: 1, fuerza: 1 },
-  gnomo: { nombre: 'Gnomo', vida: 1, mana: 2, fuerza: 0 },
-  silvano: { nombre: 'Silvano', vida: 2, mana: 1, fuerza: 0 },
+  humano: { nombre: 'Humano', vida: 2, mana: 2, fuerza: 0 },
+  elfo: { nombre: 'Elfo', vida: 1, mana: 3, fuerza: 0 },
+  enano: { nombre: 'Enano', vida: 2, mana: 1, fuerza: 1 },
+  gnomo: { nombre: 'Gnomo', vida: 2, mana: 2, fuerza: 0 },
+  silvano: { nombre: 'Silvano', vida: 2, mana: 0, fuerza: 0 },
   durgan: { nombre: 'Durgan', vida: 2, mana: 0, fuerza: 1 },
-  faunar: { nombre: 'Faunar', vida: 1, mana: 0, fuerza: 2 },
+  faunar: { nombre: 'Faunar', vida: 2, mana: 0, fuerza: 2 },
 };
+
+// Afinidad entre raza y clase: las combinaciones naturales reciben un pequeño
+// extra y las raras una penalización (ver baseStats en game.js).
+const AFINIDAD = {
+  humano: { natural: ['guerrero', 'explorador'], rara: [] },
+  elfo: { natural: ['mago', 'explorador'], rara: ['barbaro'] },
+  enano: { natural: ['guerrero', 'clerigo'], rara: ['mago', 'druida'] },
+  gnomo: { natural: ['mago', 'ladron'], rara: ['barbaro', 'guerrero'] },
+  silvano: { natural: ['druida', 'explorador'], rara: ['barbaro', 'guerrero'] },
+  durgan: { natural: ['barbaro', 'guerrero'], rara: ['clerigo', 'mago'] },
+  faunar: { natural: ['druida', 'ladron'], rara: ['clerigo'] },
+};
+const AFINIDAD_EFECTO = {
+  natural: { vida: 1, mana: 1, fuerza: 0 },
+  rara: { vida: -2, mana: -1, fuerza: -1, vidaMin: 12, vidaMax: 12 },
+};
+function afinidad(raza, clase) {
+  const a = AFINIDAD[raza];
+  if (!a) return null;
+  if (a.natural.includes(clase)) return 'natural';
+  if (a.rara.includes(clase)) return 'rara';
+  return null;
+}
 
 const CLASSES = {
   guerrero: { nombre: 'Guerrero', vida: 2, mana: 0, fuerza: 3 },
-  mago: { nombre: 'Mago', vida: 1, mana: 4, fuerza: 0 },
-  ladron: { nombre: 'Ladrón', vida: 1, mana: 2, fuerza: 2 },
-  druida: { nombre: 'Druida', vida: 2, mana: 3, fuerza: 0 },
+  mago: { nombre: 'Mago', vida: 1, mana: 5, fuerza: 0 },
+  ladron: { nombre: 'Ladrón', vida: 2, mana: 2, fuerza: 2 },
+  druida: { nombre: 'Druida', vida: 2, mana: 2, fuerza: 1 },
   explorador: { nombre: 'Explorador', vida: 2, mana: 1, fuerza: 2 },
-  clerigo: { nombre: 'Clérigo', vida: 3, mana: 2, fuerza: 0 },
-  barbaro: { nombre: 'Bárbaro', vida: 3, mana: 1, fuerza: 1 },
+  clerigo: { nombre: 'Clérigo', vida: 2, mana: 2, fuerza: 0 },
+  barbaro: { nombre: 'Bárbaro', vida: 2, mana: 1, fuerza: 2 },
 };
 
 const MIN_MANA_INICIAL = 5;
@@ -174,6 +197,9 @@ module.exports = {
   MIN_MANA_INICIAL,
   RACES,
   CLASSES,
+  AFINIDAD,
+  AFINIDAD_EFECTO,
+  afinidad,
   diceForFuerza,
   fixedDiceForMana,
   ROUNDS,

@@ -138,7 +138,11 @@ function fightOut(g, p) {
 }
 
 test('estadísticas iniciales: Maná mínimo 5 y Fuerza mínima 10', () => {
-  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 13, mana: 7, fuerza: 13 });
+  // Humano Guerrero es combinación natural: +1 Vida y +1 Maná.
+  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 15, mana: 8, fuerza: 13 });
+  // Durgan Mago es una combinación rara: Vida fija en 12 y algo menos de Maná y Fuerza.
+  assert.strictEqual(baseStats('durgan', 'mago').vida, 12);
+  assert.strictEqual(C.afinidad('durgan', 'clerigo'), 'rara');
   for (const r of Object.keys(C.RACES)) for (const c of Object.keys(C.CLASSES)) {
     const b = baseStats(r, c);
     assert.ok(b.mana >= 5 && b.fuerza >= 10, `${r} ${c}`);
@@ -219,7 +223,7 @@ test('maleficio: repite una esfera acertada', () => {
   assert.strictEqual(p.combat.cursesLeft, 0);
 });
 
-test('caer a 0 Vida: pierde consumibles y su mejor objeto', () => {
+test('caer a 0 Vida: pierde todos sus objetos', () => {
   const { g, p } = soloGame(() => F.amarillo, 'durgan', 'guerrero');
   p.hero.vida = 1;
   const inv = p.hero.inv;
@@ -231,7 +235,7 @@ test('caer a 0 Vida: pierde consumibles y su mejor objeto', () => {
   assert.strictEqual(g.phase, 'prep');
   assert.strictEqual(p.hero.vida, p.hero.base.vida);
   assert.strictEqual(p.hero.inv.yelmo, null);
-  assert.strictEqual(p.hero.inv.botas.id, 'b');
+  assert.strictEqual(p.hero.inv.botas, null);
   assert.strictEqual(p.hero.inv.pociones.length, 0);
   assert.strictEqual(p.hero.caidas, 1);
 });

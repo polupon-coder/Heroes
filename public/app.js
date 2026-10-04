@@ -401,16 +401,19 @@ function renderLobbyHeroes(p) {
     </div>`).join('');
   return `
   <div class="lobby-heroes v2 card">
-    <div class="pick-center">
-      ${p.raza ? portrait(p.raza, showClass, 'pick', p.color) : '<div class="portrait pick missing">Elige una raza</div>'}
-      <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
-      ${preview ? `
-        <div class="statline">
-          <span class="stat">Vida <b>${preview.vida}</b></span>
-          <span class="stat">Fuerza <b>${preview.fuerza}</b></span>
-          <span class="stat">Maná <b>${preview.mana}</b></span>
-          <span class="stat">${spheresRow(dicePreview(preview.fuerza), p.color, false, Math.floor(preview.mana / 5))}</span>
-        </div>` : ''}
+    <div class="pick-top">
+      <div class="pick-side"></div>
+      <div class="pick-center">
+        ${p.raza ? portrait(p.raza, showClass, 'pick', p.color) : '<div class="portrait pick missing">Elige una raza</div>'}
+        <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
+      </div>
+      <div class="pick-side pick-stats">
+        ${preview ? `
+          <div class="pstat"><span>Vida</span><b>${preview.vida}</b></div>
+          <div class="pstat"><span>Fuerza</span><b>${preview.fuerza}</b></div>
+          <div class="pstat"><span>Maná</span><b>${preview.mana}</b></div>
+          <div class="pstat"><span>Esferas</span><div class="spheres-row">${spheresRow(dicePreview(preview.fuerza), p.color, true, Math.floor(preview.mana / 5))}</div></div>` : ''}
+      </div>
     </div>
     <div class="pick-choices">
       <div class="choice-grid row7">

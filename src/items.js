@@ -28,10 +28,17 @@ function makeEquipment(rng, level, nextId) {
   // Grado I, II o III según la calidad (para su ilustración).
   const grado = bonus <= 2 ? 1 : bonus <= 3 ? 2 : 3;
   if (slot === 'dosManos') bonus += C.TWO_HANDED_EXTRA;
-  // Las armas a dos manos pueden ser arcos, hachas, báculos o cayados.
-  const forma = slot === 'dosManos' ? pick(rng, ['arco', 'hacha', 'baculo', 'cayado']) : undefined;
+  // Las armas de una mano pueden ser espadas o mazas; las de dos manos,
+  // arcos, hachas, báculos o cayados.
+  const forma =
+    slot === 'arma' ? pick(rng, ['espada', 'maza'])
+      : slot === 'dosManos' ? pick(rng, ['arco', 'hacha', 'baculo', 'cayado'])
+        : undefined;
   const names = {
-    arma: [['Espada de hierro', 'Espada corta'], ['Espada de acero', 'Espada larga'], ['Espada rúnica', 'Espada élfica']][grado - 1],
+    arma: {
+      espada: [['Espada de hierro', 'Espada corta'], ['Espada de acero', 'Espada larga'], ['Espada rúnica', 'Espada élfica']],
+      maza: [['Maza de hierro', 'Maza de peregrino'], ['Maza bendita', 'Maza del templo'], ['Maza solar', 'Maza del sumo sacerdote']],
+    }[forma]?.[grado - 1],
     dosManos: {
       arco: [['Arco de caza', 'Arco corto'], ['Arco largo', 'Arco de tejo'], ['Arco élfico', 'Arco del bosque']],
       hacha: [['Hacha de guerra', 'Hacha de leñador'], ['Gran hacha', 'Hacha doble'], ['Hacha rúnica', 'Hacha de los reyes']],

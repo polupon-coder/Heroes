@@ -41,7 +41,7 @@ Railway o Fly.io también sirven: es una app Node normal que escucha en la varia
 
 - **Sala:** el anfitrión crea la partida; los demás entran con el enlace o el código. El anfitrión puede añadir **bots** para completar los 4 jugadores y elegir si en el torneo hacen falta **4 o 5** resultados del color del rival para golpear.
 - **Entre combates:** comercio (ofertas de objetos que el otro acepta o rechaza), curación, pergaminos de robo y magia contra otros jugadores. Cuando todos pulsan **Listo**, aparecen los monstruos.
-- **Combate:** tira los dados, toca los que quieras conservar y relanza el resto (3 tiradas como máximo). El botón **Usar Maná** permite, una vez por combate, fijar el resultado de tantos dados como permita tu Maná. Los dados con borde verde son los que ya cuentan para la combinación.
+- **Combate:** cada esfera da un **color** (rojo, azul, verde, amarillo; blanco = comodín, negro = nada) y una **forma** (círculo, cuadrado, rombo, triángulo; estrella = comodín, cruz = nada). Cada ronda aparecen **dos monstruos a la vez**, cada uno pide solo colores o solo formas. Lanzas hasta 3 veces conservando las esferas que quieras y, cuando completas lo que pide uno, pulsas **Derrotar**. Cada 5 de Maná da una esfera blanca con estrella ya fijada. Si no completas ninguno, pierdes contra el menos dañino.
 - **Reconexión:** si se cierra el navegador o se cae la conexión, al volver a abrir el enlace vuelves a tu partida.
 - **Torneo:** se juega en directo y todos pueden ver los duelos.
 
@@ -58,7 +58,7 @@ Railway o Fly.io también sirven: es una app Node normal que escucha en la varia
 | `public/` | Interfaz web (HTML/CSS/JS sin dependencias). |
 | `public/sounds.js`, `public/sonidos/` | Sonidos y música (los mismos de Imperio); se silencian con el botón del altavoz. |
 | `tools/transparent.py` | Quita el papel de fondo de las ilustraciones para que las figuras se vean enteras sobre el pergamino. |
-| `public/img/heroes/color/` | Retratos con la ropa teñida del color de cada jugador, generados con `tools/recolor.py`. |
+| `public/img/heroes/color/` | Retratos con la ropa teñida del color de cada jugador, generados con `tools/recolor_ropa.py` (zonas de ropa elegidas para cada héroe). |
 | `public/img/heroes/` | Retratos de los héroes, uno por Raza + Clase: `raza-clase.webp` (por ejemplo `elfo-mago.webp`). Si falta uno, la web muestra «Retrato pendiente». |
 | `test/` | Tests: `npm test` (incluye cientos de partidas completas simuladas con bots). |
 
@@ -88,7 +88,7 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 | 11 | Basilisco | 🔴🔴🔵🟢🟡 |
 | 12 | Dragón | 🔴🔵🟢🟡🟡 |
 
-Mantícora, Quimera y Gólem se sustituyen por el Diablillo de los Bosques, el Minotauro y el Mago Oscuro, y los 12 monstruos se ordenan de menos a más poderosos según sus ilustraciones.
+Mantícora, Quimera y Gólem se sustituyen por el Diablillo, el Minotauro y el Mago Oscuro, y los 12 monstruos se ordenan de menos a más poderosos según sus ilustraciones.
 
 **Esferas suficientes.** Nunca se ofrecen monstruos que pidan más esferas de las que tienes: si sale uno así, se cambia por un tamaño menor o un nivel inferior que sí esté a tu alcance.
 

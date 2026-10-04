@@ -10,8 +10,8 @@ function rollShape(rng) {
   return SHAPES[Math.floor(rng() * SHAPES.length)];
 }
 
-// Comodín de cada tipo de desafío: blanco para colores, estrella para formas.
-const WILD = { color: 'blanco', forma: 'estrella' };
+// Comodín de cada tipo de desafío: multicolor para colores, espiral para formas.
+const WILD = { color: 'multicolor', forma: 'espiral' };
 
 function countNeeds(combo) {
   const needs = {};
@@ -21,7 +21,7 @@ function countNeeds(combo) {
 
 // Asigna dados a la combinación: primero los exactos y después los comodines.
 // Devuelve los índices usados y cuántos faltan.
-function matchDice(faces, combo, wild = 'blanco') {
+function matchDice(faces, combo, wild = 'multicolor') {
   const needs = countNeeds(combo);
   const used = new Set();
   faces.forEach((f, i) => {
@@ -40,12 +40,12 @@ function matchDice(faces, combo, wild = 'blanco') {
   return { used, missing };
 }
 
-function isSatisfied(faces, combo, wild = 'blanco') {
+function isSatisfied(faces, combo, wild = 'multicolor') {
   return matchDice(faces, combo, wild).missing === 0;
 }
 
 // Dados recién tirados que aportan a la combinación (para los maleficios).
-function successfulNewDice(faces, newIndices, combo, wild = 'blanco') {
+function successfulNewDice(faces, newIndices, combo, wild = 'multicolor') {
   const newSet = new Set(newIndices);
   const needs = countNeeds(combo);
   let oldWild = 0;
@@ -74,7 +74,7 @@ function successfulNewDice(faces, newIndices, combo, wild = 'blanco') {
 }
 
 // Lo que aún falta para completar la combinación.
-function missingColors(faces, combo, wild = 'blanco') {
+function missingColors(faces, combo, wild = 'multicolor') {
   const needs = countNeeds(combo);
   let w = 0;
   for (const f of faces) {

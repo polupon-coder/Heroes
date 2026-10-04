@@ -217,9 +217,7 @@ input:focus { outline: none; border-bottom-color: var(--rubric); }
 .die.azul { background-image: url(img/dados/azul.webp); }
 .die.verde { background-image: url(img/dados/verde.webp); }
 .die.amarillo { background-image: url(img/dados/amarillo.webp); }
-.die.negro { background-image: url(img/dados/negro.webp); }
-.die.blanco { background-image: url(img/dados/blanco.webp); color: var(--gold); }
-.die.blanco::after { content: "✶"; }
+.die.multicolor { background-image: url(img/dados/multicolor.webp); }
 .die.empty { border: 2px dashed var(--line); filter: none; }
 .die.held { transform: translateY(-9px) scale(1.05); }
 .die.held::before { content: ""; position: absolute; bottom: -12px; width: 60%; height: 4px; border-radius: 4px; background: var(--gold); }
@@ -506,7 +504,6 @@ body.at-home .topbar { position: fixed; top: 0; right: 0; z-index: 30; backgroun
 .rival-foe .portrait.foe { width: 56px; height: 74px; }
 .rival-foe .foe-name { font-size: .85em; color: var(--ink-soft); text-align: left; }
 .rival-foe .state { color: var(--muted); font-style: italic; font-size: .9em; margin: 0; }
-.rival-foe.win img { filter: drop-shadow(0 0 6px rgba(79, 122, 58, .6)); }
 .rival-foe.lose img { filter: sepia(.4) brightness(.85); }
 
 .foe-big { margin: 0 auto; text-align: center; }
@@ -685,7 +682,7 @@ body.at-home .home { padding: 18px; }
 .me-hero .me-name { margin-top: 2px; }
 .spheres-row { display: flex; justify-content: center; flex-wrap: nowrap; gap: 4px; margin: 6px 0; }
 .spheres-row.mine .sphere.big { width: 34px; height: 34px; margin: 0; }
-.sphere.blanco { background-image: url(img/dados/blanco.webp); }
+.sphere.multicolor { background-image: url(img/dados/multicolor.webp); }
 .life > span { color: var(--ink); text-shadow: 0 0 3px #f6ecd6, 0 0 3px #f6ecd6; font-weight: 700; }
 .glyphs.two { grid-template-columns: 1fr 1fr; }
 .tiles { grid-template-columns: repeat(3, 1fr); gap: 10px 6px; }
@@ -730,17 +727,6 @@ body.at-home .home { padding: 18px; }
 .duel-pair .fighter.big { flex: 0 1 180px; }
 
 /* ===== Combate de color y forma: dos monstruos a la vez ===== */
-.die svg.shape { width: 54%; height: 54%; fill: rgba(255, 249, 232, .94); stroke: #2b1d10; stroke-width: 1.5; stroke-linejoin: round;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); pointer-events: none; }
-.die svg.shape.cruz { stroke: rgba(255, 249, 232, .94); filter: drop-shadow(0 0 1.5px #2b1d10) drop-shadow(0 1px 1px rgba(0, 0, 0, .4)); }
-.die.blanco.has-shape::after { content: none; }
-.die.blanco svg.shape { fill: #c99a3b; stroke: #5a3d12; }
-.die.blanco svg.shape.cruz { stroke: #7a5a2a; filter: none; }
-.die.plain { background: rgba(255, 248, 230, .55); border: 1.5px solid rgba(90, 62, 30, .55); filter: none; }
-.die.plain svg.shape { width: 62%; height: 62%; fill: #3a2716; stroke: #3a2716; filter: none; }
-.die.plain svg.shape.estrella { fill: #c99a3b; stroke: #5a3d12; }
-.die.plain svg.shape.cruz { stroke: #3a2716; }
-.die.sm svg.shape { stroke-width: 2; }
 
 .foes { display: flex; align-items: stretch; justify-content: center; gap: 10px; }
 .foes-or { align-self: center; font-family: var(--title); font-style: italic; color: var(--muted); font-size: 1.2em; }
@@ -1020,3 +1006,18 @@ body::-webkit-scrollbar { display: none; }
 .lobby-heroes.v2 .pick-bottom { padding-top: 4px; }
 .mini-hero .muted.small { font-size: .8rem; }
 .rival-info .life.thin { margin-bottom: 3px; }
+
+/* ===== Elección de personaje: Listo a la derecha y rivales centrados ===== */
+.pick-right { display: flex; align-items: center; gap: 3vw; justify-self: start; }
+.others-row { flex: none; display: flex; justify-content: center; gap: 6vw; width: 100%; }
+.pick-bottom { justify-content: center; }
+
+/* ===== Rivales: vida y datos algo más separados ===== */
+.rival-info { margin-top: 8px !important; }
+.rival-info .spheres-row { margin-bottom: 5px !important; }
+.rival-info .life.thin { margin: 0 auto 5px !important; }
+
+/* ===== Combate: más aire en la parte de abajo ===== */
+.combat .dice-zone { margin-top: 10px; }
+.combat .controls { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 14px; }
+.combat .controls .row { margin: 0; }

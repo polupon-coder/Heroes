@@ -1,4 +1,4 @@
-"""Recorta la lámina de formas (6 colores x 6 formas) en piezas transparentes:
+"""Recorta la lámina de formas (6 colores x 6 formas; se usan las 4x4 de color normal) en piezas transparentes:
 public/img/formas/{forma}-{color}.webp. Uso: recortar_formas.py lamina.webp"""
 import sys
 import numpy as np
@@ -52,10 +52,11 @@ for r, yc in enumerate(cy):
         side = max(by1 - by0, bx1 - bx0)
         canvas = Image.new('RGBA', (side, side), (0, 0, 0, 0))
         canvas.paste(piece, ((side - (bx1 - bx0)) // 2, (side - (by1 - by0)) // 2))
-        canvas.resize((OUT, OUT), Image.LANCZOS).save(f'public/img/formas/{ROWS[r]}-{COLS[c]}.webp', quality=92)
+        if r < 4 and c < 4:
+            canvas.resize((OUT, OUT), Image.LANCZOS).save(f'public/img/formas/{ROWS[r]}-{COLS[c]}.webp', quality=92)
 # Lo que pide un monstruo de formas: la silueta en tinta sepia.
-for sh in ROWS:
-    al = np.asarray(Image.open(f'public/img/formas/{sh}-negro.webp').convert('RGBA'))[..., 3]
+for sh in ROWS[:4]:
+    al = np.asarray(Image.open(f'public/img/formas/{sh}-rojo.webp').convert('RGBA'))[..., 3]
     ink = np.zeros(al.shape + (4,), 'uint8')
     ink[..., :3] = (74, 58, 40)
     ink[..., 3] = (al * 0.92).astype('uint8')

@@ -344,7 +344,7 @@ class Game {
     };
     p.hero.curses = 0;
     p.combat = combat;
-    // El Maná se convierte en esferas blancas (comodín) ya fijadas desde el principio.
+    // El Maná se convierte en esferas multicolor (comodín) ya fijadas desde el principio.
     combat.dice = Array.from({ length: combat.diceCount }, () => ({ face: null, shape: null, held: false, fixed: false }));
     this.applyWhites(p);
     if (combat.cursesLeft > 0) {
@@ -372,7 +372,7 @@ class Game {
     return { ...st[best], index: best };
   }
 
-  // Asegura tantas esferas blancas fijadas como permita el Maná del combate.
+  // Asegura tantas esferas multicolor fijadas como permita el Maná del combate.
   applyWhites(p) {
     const cb = p.combat;
     const want = Math.min(cb.diceCount, this.fixableDice(p));
@@ -384,7 +384,7 @@ class Game {
       .sort((a, b) => (used.has(a) ? 1 : 0) - (used.has(b) ? 1 : 0));
     for (const i of order) {
       if (have >= want) break;
-      cb.dice[i] = { face: 'blanco', shape: 'estrella', held: true, fixed: true };
+      cb.dice[i] = { face: 'multicolor', shape: 'espiral', held: true, fixed: true };
       have += 1;
     }
     cb.manaUsed = true;
@@ -468,7 +468,7 @@ class Game {
     if (cb.rolls < C.MAX_ROLLS && cb.dice.some((d) => !d.fixed)) return true;
     if (cb.kind === 'monstruo' && this.targetStatus(cb).some((x) => x.ok)) return true; // falta presentarla
     if (cb.kind !== 'monstruo') return false;
-    // Sin tiradas: solo una poción de Maná que añada blancas suficientes puede salvarle.
+    // Sin tiradas: solo una poción de Maná que añada comodines suficientes puede salvarle.
     const missing = this.bestTarget(cb).missing;
     const potential = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos]
       .filter((it) => it.efecto === 'mana')
@@ -623,7 +623,7 @@ class Game {
 
   duelResults(p) {
     const color = p.combat.combo[0];
-    return p.combat.dice.filter((d) => d.face === color || d.face === 'blanco').length;
+    return p.combat.dice.filter((d) => d.face === color || d.face === 'multicolor').length;
   }
 
   endDuelAttack(p) {

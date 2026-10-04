@@ -21,9 +21,9 @@ const ui = {
   curse: { target: null, amount: 5 },
 };
 
-const FACE_LABEL = { rojo: 'Rojo', azul: 'Azul', verde: 'Verde', amarillo: 'Amarillo', negro: 'Negro', blanco: 'Blanco (comodín)' };
+const FACE_LABEL = { rojo: 'Rojo', azul: 'Azul', verde: 'Verde', amarillo: 'Amarillo', multicolor: 'Multicolor (comodín)' };
 const COLOR_LABEL = { rojo: 'Rojo', azul: 'Azul', verde: 'Verde', amarillo: 'Amarillo' };
-const FACES = ['rojo', 'azul', 'verde', 'amarillo', 'negro', 'blanco'];
+const FACES = ['rojo', 'azul', 'verde', 'amarillo', 'multicolor'];
 
 // ------------------------------------------------------------ utilidades
 
@@ -79,8 +79,8 @@ function monsterArt(m, cls = 'monster-art') {
   return `<img class="${cls}" src="img/monstruos/${key}.webp" alt="${esc(m.nombre)}" loading="lazy">`;
 }
 
-const SHAPE_LABEL = { circulo: 'Círculo', cuadrado: 'Cuadrado', rombo: 'Rombo', triangulo: 'Triángulo', estrella: 'Estrella (comodín)', cruz: 'Cruz' };
-const WILD = { color: 'blanco', forma: 'estrella' };
+const SHAPE_LABEL = { circulo: 'Círculo', cuadrado: 'Cuadrado', rombo: 'Rombo', triangulo: 'Triángulo', espiral: 'Espiral (comodín)' };
+const WILD = { color: 'multicolor', forma: 'espiral' };
 
 // Una esfera: figura de su forma rellena de su color (img/formas). Sin color = solo
 // el contorno de la forma (lo que pide un monstruo de formas). Sin forma = esfera de color.
@@ -98,7 +98,7 @@ function comboHtml(combo, sm = true, tipo = 'color') {
   return `<div class="dice ${combo.length >= 5 ? 'five' : ''}">${combo.map((c) => (tipo === 'forma' ? die(null, { sm, cls: 'target', shape: c }) : die(c, { sm, cls: 'target' }))).join('')}</div>`;
 }
 
-function matchDice(faces, combo, wild = 'blanco') {
+function matchDice(faces, combo, wild = 'multicolor') {
   const needs = {};
   combo.forEach((c) => (needs[c] = (needs[c] || 0) + 1));
   const used = new Set();
@@ -111,7 +111,7 @@ function matchDice(faces, combo, wild = 'blanco') {
 // Cómo van las esferas frente a cada monstruo del combate.
 function targetMatch(cb, t, faces) {
   const vals = t.tipo === 'forma' ? cb.dice.map((d) => d.shape) : (faces || cb.dice.map((d) => d.face));
-  const r = matchDice(vals, t.combo, WILD[t.tipo] || 'blanco');
+  const r = matchDice(vals, t.combo, WILD[t.tipo] || 'multicolor');
   return { ...r, ok: r.missing === 0 };
 }
 function bestTarget(cb, faces) {
@@ -407,12 +407,19 @@ function renderLobbyHeroes(p) {
         ${p.raza ? portrait(p.raza, showClass, 'pick', p.color) : '<div class="portrait pick missing">Elige una raza</div>'}
         <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
       </div>
-      <div class="pick-side pick-stats">
+      <div class="pick-right">
+      <div class="pick-stats">
         ${preview ? `
           <div class="pstat"><span>Vida</span><b>${preview.vida}</b></div>
           <div class="pstat"><span>Fuerza</span><b>${preview.fuerza}</b></div>
           <div class="pstat"><span>Maná</span><b>${preview.mana}</b></div>
           <div class="pstat"><span>Esferas</span><div class="spheres-row">${spheresRow(dicePreview(preview.fuerza), p.color, true, Math.floor(preview.mana / 5))}</div></div>` : ''}
+      </div>
+      <div class="ready-side">
+        ${p.ready
+          ? '<button class="seal green" data-a="lobbyReady" data-v="0">Listo ✔</button>'
+          : `<button class="seal" data-a="lobbyReady" data-v="1" ${p.raza && p.clase ? '' : 'disabled'}>¡Listo!</button>`}
+      </div>
       </div>
     </div>
     <div class="pick-choices">
@@ -425,11 +432,6 @@ function renderLobbyHeroes(p) {
     </div>
     <div class="pick-bottom">
       <div class="others-row">${others}</div>
-      <div class="ready-side">
-        ${p.ready
-          ? '<button class="seal green" data-a="lobbyReady" data-v="0">Listo ✔</button>'
-          : `<button class="seal" data-a="lobbyReady" data-v="1" ${p.raza && p.clase ? '' : 'disabled'}>¡Listo!</button>`}
-      </div>
     </div>
   </div>`;
 }
@@ -451,10 +453,10 @@ function nextDiceHint(f) {
 // ---------- Hoja del héroe
 
 // Las esferas disponibles se muestran como esferas, no como un número de dados.
-// Las primeras `whites` esferas son blancas: el Maná las fija como comodín.
+// Las primeras `whites` esferas son multicolor: el Maná las fija como comodín.
 function spheresRow(n, color, big = false, whites = 0) {
   const w = Math.min(n, whites);
-  return Array.from({ length: n }, (_, i) => `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'blanco' : 'gris'}"></span>`).join('');
+  return Array.from({ length: n }, (_, i) => `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'multicolor' : 'gris'}"></span>`).join('');
 }
 
 function itemTile(it, label) {
@@ -483,7 +485,7 @@ function renderSheet() {
   </div>
   <div class="glyphs two">
     <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
-    <div title="Cada 5 de Maná es una esfera blanca"><b>${h.manaDisponible}</b><span>Maná</span></div>
+    <div title="Cada 5 de Maná es una esfera multicolor"><b>${h.manaDisponible}</b><span>Maná</span></div>
   </div>
   ${h.curses ? `<p class="warn center">Maleficio: repetirás ${h.curses} esfera(s) acertada(s) en tu próximo combate.</p>` : ''}
   <div class="tiles">
@@ -566,7 +568,7 @@ function renderArena() {
         <div class="rival-side">${heroPortrait(p, 'rival')}</div>
         <div class="rival-vs">${o.art ? 'versus' : ''}</div>
         <div class="rival-side rival-foe ${o.res || ''}">
-          ${o.art ? `<div class="foe-imgs">${o.art}</div><div class="foe-name">${esc(o.name)}</div>` : `<div class="state">${o.txt === '✔ listo' ? '' : o.txt || ''}</div>`}
+          ${o.art ? `<div class="foe-imgs" title="${esc(o.name)}">${o.art}</div>` : `<div class="state">${o.txt === '✔ listo' ? '' : o.txt || ''}</div>`}
         </div>
       </div>
       <div class="rival-info">
@@ -684,7 +686,7 @@ const RULES = {
     <p>Cada jugador controla un héroe formado por una <b>Raza</b> y una <b>Clase</b>, y tiene un color propio.</p>
     <p><b>Vida</b>: resistencia; no se recupera sola, solo con objetos. <b>Fuerza</b>: decide cuántas esferas lanzas
     (1–5: 1 · 6–10: 2 · 11–15: 3 · 16–20: 4 · 21+: 5). Todos empiezan con Fuerza 10 como mínimo.
-    <b>Maná</b>: cada 5 puntos convierten una de tus esferas en blanca (comodín) desde el inicio de cada combate. Todos los héroes empiezan con al menos 5.</p>
+    <b>Maná</b>: cada 5 puntos convierten una de tus esferas en multicolor (comodín) desde el inicio de cada combate. Todos los héroes empiezan con al menos 5.</p>
     <p>Equipo: yelmo, armadura, botas y dos manos (un arma a dos manos ocupa ambas). Hasta 3 pociones y 3 pergaminos.</p>`],
   aventura: ['Aventura', `
     <p>La Fase 1 dura <b>12 rondas</b>. En cada una aparecen <b>2 monstruos a la vez</b>; no eliges antes de lanzar:
@@ -696,13 +698,13 @@ const RULES = {
     <p>Entre combates puedes comerciar, curarte, robar con pergaminos y lanzar maleficios (uno recibido como máximo por ronda, y un comercio por ronda): cada 5 de Maná obliga a un rival a
     repetir una esfera acertada en su próximo combate.</p>`],
   combate: ['Combate', `
-    <p>Cada esfera da a la vez un <b>color</b> y una <b>forma</b>. Colores: rojo, azul, verde, amarillo, <b>blanco</b> (comodín de color)
-    y <b>negro</b> (no cuenta). Formas: círculo, cuadrado, rombo, triángulo, <b>estrella</b> (comodín de forma) y <b>cruz</b> (no cuenta).</p>
+    <p>Cada esfera da a la vez un <b>color</b> y una <b>forma</b>. Colores: rojo, azul, verde, amarillo y <b>multicolor</b> (comodín de color).
+    Formas: círculo, cuadrado, rombo, triángulo y <b>espiral</b> (comodín de forma).</p>
     <p>Cada monstruo pide <b>solo colores</b> o <b>solo formas</b>. Los dos monstruos de la ronda suelen pedir cosas distintas,
     así que puedes orientar tus tiradas hacia uno u otro.</p>
     <p>Lanzas tus esferas, conservas las que quieras y relanzas el resto: <b>3 tiradas</b> como máximo. Cuando tu combinación completa
     lo que pide un monstruo, pulsa <b>Derrotar</b> en él.</p>
-    <p>Tus esferas de Maná salen blancas con estrella (comodín para los dos) y ya fijadas. Las pociones de Maná añaden más.
+    <p>Tus esferas de Maná salen multicolor con espiral (comodín para los dos) y ya fijadas. Las pociones de Maná añaden más.
     Si al terminar las tiradas no completas ninguno, pierdes contra el menos dañino.</p>`],
   torneo: ['Torneo', `
     <p>Tras la ronda 12 empieza el torneo. El héroe con más Fuerza + Maná elige rival para su semifinal; los otros dos se enfrentan entre sí.
@@ -983,18 +985,17 @@ function renderCombat(p, controllable) {
     const left = 3 - cb.rolls;
     const rerollN = cb.dice.filter((d, i) => !d.fixed && !ui.held.has(i)).length;
     const manaPot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');
-    controls = `
+    controls = `<div class="controls">
       ${cb.rolls > 0 && left > 0 ? `<div class="muted small center">${monster ? 'Las esferas que te sirven ya están marcadas. Puedes ir a por cualquiera de los dos monstruos.' : 'Las esferas que te sirven ya están marcadas. Toca para cambiar cuáles conservas.'}</div>` : ''}
       <div class="row">
         ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
-        ${cb.rolls > 0 && left > 0 ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
+        ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">Terminar ataque (${duelDamage(cb, faces)} de daño)</button></div>` : ''}
-      ${cb.rolls >= 3 && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}`;
+      ${cb.rolls >= 3 && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
   }
 
-  const holder = mine ? 'Tus esferas' : `Esferas de ${esc(p.name)}`;
   let foe = '';
   let foeName = '';
   if (cb.kind === 'monstruo') { /* se muestran los dos monstruos */ }
@@ -1008,7 +1009,7 @@ function renderCombat(p, controllable) {
     ${monster ? foesHtml(p, cb, all, controllable) : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
     <div class="row"><span class="pill">Tirada ${cb.rolls}/3</span>${cb.cursesLeft ? `<span class="pill">Maleficio: ${cb.cursesLeft}</span>` : ''}</div>
     ${monster ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
-    <div><div class="muted small center" style="margin-bottom:8px">${holder}</div><div class="dice">${diceHtml}</div></div>
+    <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
     ${result}
     ${controls}
     <div class="events">${cb.events.slice().reverse().map((e) => `<div>${esc(e)}</div>`).join('')}</div>
@@ -1043,7 +1044,7 @@ function foesHtml(p, cb, all, controllable) {
 // Golpe graduado: con N exigidos, N → 3 daño, N−1 → 2, N−2 → 1.
 function duelDamage(cb, faces) {
   const hits = cb.combo.length;
-  const n = Math.min(hits, faces.filter((f) => f === cb.combo[0] || f === 'blanco').length);
+  const n = Math.min(hits, faces.filter((f) => f === cb.combo[0] || f === 'multicolor').length);
   return Math.max(0, 3 - (hits - n));
 }
 
@@ -1052,7 +1053,7 @@ function renderTournament() {
   const rank = `
     <div class="card">
       <h2>Torneo</h2>
-      <p class="muted small">El atacante saca resultados del color del rival (el blanco vale como comodín). Daño: ${S.settings.pvpHits - 2} resultados → 1, ${S.settings.pvpHits - 1} → 2, ${S.settings.pvpHits} → 3. Puedes terminar el ataque cuando quieras.</p>
+      <p class="muted small">El atacante saca resultados del color del rival (el multicolor vale como comodín). Daño: ${S.settings.pvpHits - 2} resultados → 1, ${S.settings.pvpHits - 1} → 2, ${S.settings.pvpHits} → 3. Puedes terminar el ataque cuando quieras.</p>
       <h4>Clasificación (Fuerza + Maná)</h4>
       ${t.ranking.map((id, i) => { const x = byId(id); return `<div class="fighter">${i + 1}. ${heroPortrait(x, 'xs')} ${chip(x.color)} ${esc(x.name)} <span class="hp">${x.hero.puntuacion}</span></div>`; }).join('')}
     </div>`;

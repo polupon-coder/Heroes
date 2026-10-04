@@ -3,9 +3,9 @@
 // Todas las tablas del reglamento v0.2. Cambiar aquí para equilibrar el juego.
 
 const COLORS = ['rojo', 'azul', 'verde', 'amarillo'];
-const FACES = ['rojo', 'azul', 'verde', 'amarillo', 'negro', 'blanco'];
-// Cada dado da también una forma: estrella = comodín, cruz = nada.
-const SHAPES = ['circulo', 'cuadrado', 'rombo', 'triangulo', 'cruz', 'estrella'];
+const FACES = ['rojo', 'azul', 'verde', 'amarillo', 'multicolor'];
+// Cada dado da también una forma: espiral = comodín.
+const SHAPES = ['circulo', 'cuadrado', 'rombo', 'triangulo', 'espiral'];
 const FORMAS = ['circulo', 'cuadrado', 'rombo', 'triangulo'];
 // Cada monstruo puede pedir su combinación en colores o en formas (misma dificultad).
 const COLOR_TO_SHAPE = { rojo: 'circulo', azul: 'cuadrado', verde: 'rombo', amarillo: 'triangulo' };
@@ -87,9 +87,9 @@ const MONSTERS = {
 // grande, más colores exige, más daño hace y mejores son sus recompensas
 // (se generan como si el monstruo fuera `recompensa` niveles más alto).
 const VARIANTS = {
-  1: { nombre: 'Pequeño', peso: 0.15, endurecer: false, extraColores: 0, dano: 0, recompensa: 0 },
-  2: { nombre: 'Mediano', peso: 0.4, endurecer: true, extraColores: 1, dano: 1, recompensa: 2 },
-  3: { nombre: 'Grande', peso: 0.45, endurecer: true, extraColores: 2, dano: 2, recompensa: 4 },
+  1: { nombre: 'Pequeño', peso: 0.05, endurecer: false, extraColores: 0, dano: 0, recompensa: 0 },
+  2: { nombre: 'Mediano', peso: 0.3, endurecer: true, extraColores: 1, dano: 1, recompensa: 2 },
+  3: { nombre: 'Grande', peso: 0.65, endurecer: true, extraColores: 2, dano: 2, recompensa: 4 },
 };
 const MAX_COMBO = 5;
 
@@ -112,10 +112,10 @@ function variantCombo(combo, variante) {
 
 // Regla 23.
 function monsterDamage(level) {
-  if (level <= 3) return 2;
-  if (level <= 6) return 3;
-  if (level <= 9) return 4;
-  return 5;
+  if (level <= 3) return 3;
+  if (level <= 6) return 4;
+  if (level <= 9) return 5;
+  return 6;
 }
 
 // Regla 27.

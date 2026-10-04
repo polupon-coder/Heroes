@@ -12,7 +12,7 @@ function seq(values) {
   return () => values[i++ % values.length];
 }
 // Valor de rng que produce cada cara.
-const F = { rojo: 0.01, azul: 0.2, verde: 0.4, amarillo: 0.55, negro: 0.7, blanco: 0.9 };
+const F = { rojo: 0.01, azul: 0.25, verde: 0.45, amarillo: 0.65, multicolor: 0.9 };
 
 
 test('tablas de Fuerza y Maná', () => {
@@ -20,14 +20,14 @@ test('tablas de Fuerza y Maná', () => {
   assert.deepStrictEqual([3, 4, 5, 9, 12, 25, 99].map(C.fixedDiceForMana), [0, 0, 1, 1, 2, 5, 5]);
 });
 
-test('combinaciones con comodín blanco y negro', () => {
+test('combinaciones con comodín multicolor', () => {
   const combo = ['rojo', 'rojo', 'azul', 'verde'];
-  assert.ok(D.isSatisfied(['rojo', 'blanco', 'azul', 'verde'], combo));
-  assert.ok(!D.isSatisfied(['rojo', 'negro', 'azul', 'verde'], combo));
-  assert.ok(D.isSatisfied(['rojo', 'rojo', 'azul', 'verde', 'negro'], combo));
-  assert.deepStrictEqual(D.missingColors(['rojo', 'negro'], ['rojo', 'rojo']), ['rojo']);
-  // Un blanco ya conservado sigue siendo flexible para la maldición.
-  assert.deepStrictEqual(D.successfulNewDice(['blanco', 'azul'], [1], ['rojo', 'azul']), [1]);
+  assert.ok(D.isSatisfied(['rojo', 'multicolor', 'azul', 'verde'], combo));
+  assert.ok(!D.isSatisfied(['rojo', 'amarillo', 'azul', 'verde'], combo));
+  assert.ok(D.isSatisfied(['rojo', 'rojo', 'azul', 'verde', 'amarillo'], combo));
+  assert.deepStrictEqual(D.missingColors(['rojo', 'amarillo'], ['rojo', 'rojo']), ['rojo']);
+  // Un multicolor ya conservado sigue siendo flexible para la maldición.
+  assert.deepStrictEqual(D.successfulNewDice(['multicolor', 'azul'], [1], ['rojo', 'azul']), [1]);
 });
 
 test('ocupación de manos: arma a dos manos y conflictos', () => {
@@ -79,7 +79,7 @@ test('golpe graduado del torneo', () => {
   assert.strictEqual(C.pvpMinResults(5), 3);
 
   // Un héroe con 3 dados que solo saca 3 resultados hace 1 de daño.
-  const g = new Game('T', { rng: () => F.blanco });
+  const g = new Game('T', { rng: () => F.multicolor });
   const a = g.addPlayer('A');
   const b = g.addPlayer('B');
   g.act(a.id, 'setHero', { raza: 'humano', clase: 'guerrero' }); // Fuerza 12: 3 dados
@@ -103,7 +103,7 @@ test('tamaños de monstruo: más colores, más daño y mejores recompensas', () 
   assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 2), ['rojo', 'rojo', 'rojo', 'rojo']);
   assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 3), ['rojo', 'rojo', 'rojo', 'rojo', 'rojo']);
   assert.strictEqual(C.variantCombo(['rojo', 'azul', 'verde', 'amarillo', 'amarillo'], 3).length, 5);
-  const { g } = soloGame(() => F.blanco);
+  const { g } = soloGame(() => F.multicolor);
   const m = g.makeOffer(2, 3, 'color');
   assert.strictEqual(m.variante, 3);
   assert.strictEqual(m.dano, C.monsterDamage(m.level) + 2);
@@ -169,7 +169,7 @@ test('maleficios: uno recibido por ronda; comercio: uno por ronda', () => {
 });
 
 test('duelo del torneo: golpe completo con 5 esferas del color rival', () => {
-  const g = new Game('T', { rng: () => F.blanco });
+  const g = new Game('T', { rng: () => F.multicolor });
   const a = g.addPlayer('A');
   const b = g.addPlayer('B');
   for (const p of [a, b]) g.act(p.id, 'setHero', { raza: 'durgan', clase: 'barbaro' });
@@ -192,11 +192,11 @@ test('duelo del torneo: golpe completo con 5 esferas del color rival', () => {
 });
 
 test('dos monstruos a la vez: colores o formas, y se presenta contra uno', () => {
-  const { g, p } = soloGame(() => F.negro, 'elfo', 'mago'); // Maná 12: 2 blancas
+  const { g, p } = soloGame(() => F.amarillo, 'elfo', 'mago'); // Maná 12: 2 comodines
   assert.strictEqual(p.stage, 'combate');
   assert.strictEqual(p.combat.targets.length, 2);
   for (const m of p.offers) assert.ok(['color', 'forma'].includes(m.tipo));
-  const whites = p.combat.dice.filter((d) => d.fixed && d.face === 'blanco' && d.shape === 'estrella').length;
+  const whites = p.combat.dice.filter((d) => d.fixed && d.face === 'multicolor' && d.shape === 'espiral').length;
   assert.strictEqual(whites, Math.min(2, p.combat.diceCount));
   // Fuerza: un monstruo de formas fácil que se completa con comodines
   p.offers[0] = { ...p.offers[0], tipo: 'forma', combo: ['rombo', 'rombo'] };
@@ -214,13 +214,13 @@ test('maleficio: repite una esfera acertada', () => {
   p.hero.curses = 1;
   p.combat.cursesLeft = 1;
   p.combat.targets = [{ tipo: 'color', combo: ['rojo', 'rojo', 'rojo', 'rojo', 'rojo'] }];
-  g.rng = seq([F.rojo, 0.01, F.negro, 0.7, F.negro, 0.7, F.negro, 0.7, F.negro, 0.7]);
+  g.rng = seq([F.rojo, 0.01, F.amarillo, 0.65, F.amarillo, 0.65, F.amarillo, 0.65, F.amarillo, 0.65]);
   g.act(p.id, 'roll', {});
   assert.strictEqual(p.combat.cursesLeft, 0);
 });
 
 test('caer a 0 Vida: pierde consumibles y su mejor objeto', () => {
-  const { g, p } = soloGame(() => F.negro, 'durgan', 'guerrero');
+  const { g, p } = soloGame(() => F.amarillo, 'durgan', 'guerrero');
   p.hero.vida = 1;
   const inv = p.hero.inv;
   inv.botas = { id: 'b', tipo: 'equipo', slot: 'botas', bonus: 1, nombre: 'Botas +1' };

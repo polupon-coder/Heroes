@@ -69,18 +69,20 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 
 | Nivel | Monstruo | Combinación |
 | ---: | --- | --- |
-| 1 | Goblin | 🔴🔵 |
-| 2 | Orco | 🔴🔴 |
+| 1 | Diablillo de los Bosques | 🔴🔵 |
+| 2 | Goblin | 🔴🔴 |
 | 3 | Necrófago | 🔵🟢🟢 |
-| 4 | Ogro | 🔴🔴🔴 |
+| 4 | Orco | 🔴🔴🔴 |
 | 5 | Súcubo | 🔵🔵🟡 |
-| 6 | Gólem | 🟢🟢🟢🟡 |
-| 7 | Trol | 🔴🔴🟢🟢 |
-| 8 | Espectro | 🔵🔵🔵🟡 |
-| 9 | Basilisco | 🟢🟢🟡🟡 |
-| 10 | Mantícora | 🔴🔵🟢🟡 |
-| 11 | Quimera | 🔴🔴🔵🟢🟡 |
+| 6 | Minotauro | 🟢🟢🟢🟡 |
+| 7 | Ogro | 🔴🔴🟢🟢 |
+| 8 | Trol | 🔵🔵🔵🟡 |
+| 9 | Espectro | 🟢🟢🟡🟡 |
+| 10 | Gólem | 🔴🔵🟢🟡 |
+| 11 | Basilisco | 🔴🔴🔵🟢🟡 |
 | 12 | Dragón | 🔴🔵🟢🟡🟡 |
+
+Mantícora y Quimera se sustituyen por el Diablillo de los Bosques y el Minotauro, y los 12 monstruos se ordenan de menos a más poderosos según sus ilustraciones.
 
 Resultado medido con bots: se gana casi el 100 % de los combates de nivel 1, en torno al 60–70 % de los de nivel 7 a 12, y el 46 % de los de nivel 6, el más duro; 0,54 caídas por héroe; Fuerza media de 21 al llegar al torneo; duelos de unos 6 ataques; menos del 1 % de duelos en los que nadie puede hacer daño; el primer clasificado gana en torno al 63 % de las partidas.
 

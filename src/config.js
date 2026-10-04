@@ -55,20 +55,21 @@ function levelsForRound(round) {
   return [round, round + 1, round + 2];
 }
 
-// Reglas 24 y 25. Combinaciones reajustadas para héroes con Fuerza inicial 10:
-// a más nivel, más dados exigidos y más repeticiones del mismo color.
+// Reglas 24 y 25. Monstruos ordenados de menos a más poderosos según sus
+// ilustraciones. Las combinaciones van ligadas al nivel (equilibradas para
+// héroes con Fuerza inicial 10).
 const MONSTERS = {
-  1: { nombre: 'Goblin', imagen: 'goblin', combo: ['rojo', 'azul'] },
-  2: { nombre: 'Orco', imagen: 'orco', combo: ['rojo', 'rojo'] },
+  1: { nombre: 'Diablillo de los Bosques', imagen: 'diablillo', combo: ['rojo', 'azul'] },
+  2: { nombre: 'Goblin', imagen: 'goblin', combo: ['rojo', 'rojo'] },
   3: { nombre: 'Necrófago', imagen: 'necrofago', combo: ['azul', 'verde', 'verde'] },
-  4: { nombre: 'Ogro', imagen: 'ogro', combo: ['rojo', 'rojo', 'rojo'] },
+  4: { nombre: 'Orco', imagen: 'orco', combo: ['rojo', 'rojo', 'rojo'] },
   5: { nombre: 'Súcubo', imagen: 'sucubo', combo: ['azul', 'azul', 'amarillo'] },
-  6: { nombre: 'Gólem', imagen: 'golem', combo: ['verde', 'verde', 'verde', 'amarillo'] },
-  7: { nombre: 'Trol', imagen: 'trol', combo: ['rojo', 'rojo', 'verde', 'verde'] },
-  8: { nombre: 'Espectro', imagen: 'espectro', combo: ['azul', 'azul', 'azul', 'amarillo'] },
-  9: { nombre: 'Basilisco', imagen: 'basilisco', combo: ['verde', 'verde', 'amarillo', 'amarillo'] },
-  10: { nombre: 'Mantícora', imagen: 'manticora', combo: ['rojo', 'azul', 'verde', 'amarillo'] },
-  11: { nombre: 'Quimera', imagen: 'quimera', combo: ['rojo', 'rojo', 'azul', 'verde', 'amarillo'] },
+  6: { nombre: 'Minotauro', imagen: 'minotauro', combo: ['verde', 'verde', 'verde', 'amarillo'] },
+  7: { nombre: 'Ogro', imagen: 'ogro', combo: ['rojo', 'rojo', 'verde', 'verde'] },
+  8: { nombre: 'Trol', imagen: 'trol', combo: ['azul', 'azul', 'azul', 'amarillo'] },
+  9: { nombre: 'Espectro', imagen: 'espectro', combo: ['verde', 'verde', 'amarillo', 'amarillo'] },
+  10: { nombre: 'Gólem', imagen: 'golem', combo: ['rojo', 'azul', 'verde', 'amarillo'] },
+  11: { nombre: 'Basilisco', imagen: 'basilisco', combo: ['rojo', 'rojo', 'azul', 'verde', 'amarillo'] },
   12: { nombre: 'Dragón', imagen: 'dragon', combo: ['rojo', 'azul', 'verde', 'amarillo', 'amarillo'] },
 };
 

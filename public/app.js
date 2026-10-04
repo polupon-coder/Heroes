@@ -552,7 +552,7 @@ function opponentOf(p) {
 }
 
 function renderArena() {
-  return `<h3 class="col-title">Contrincantes</h3>` + others().map((p) => {
+  return `<h3 class="col-title">Rivales</h3>` + others().map((p) => {
     const h = p.hero;
     const pct = Math.max(0, Math.min(100, (h.vida / h.base.vida) * 100));
     const o = opponentOf(p);

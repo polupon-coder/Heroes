@@ -625,22 +625,22 @@ const RULES = {
     <p>Cada jugador controla un héroe formado por una <b>Raza</b> y una <b>Clase</b>, y tiene un color propio.</p>
     <p><b>Vida</b>: resistencia; no se recupera sola, solo con objetos. <b>Fuerza</b>: decide cuántas esferas lanzas
     (1–5: 1 · 6–10: 2 · 11–15: 3 · 16–20: 4 · 21+: 5). Todos empiezan con Fuerza 10 como mínimo.
-    <b>Maná</b>: una vez por combate fijas el color de tantas esferas como permita (5–9: 1 · 10–14: 2 · 15–19: 3…).</p>
+    <b>Maná</b>: cada 5 puntos convierten una de tus esferas en blanca (comodín) desde el inicio de cada combate. Todos los héroes empiezan con al menos 5.</p>
     <p>Equipo: yelmo, armadura, botas y dos manos (un arma a dos manos ocupa ambas). Hasta 3 pociones y 3 pergaminos.</p>`],
   aventura: ['Aventura', `
     <p>La Fase 1 dura <b>12 rondas</b>. En cada una aparecen 2 monstruos y eliges uno.
-    Solo puedes enfrentarte a monstruos que no pidan más esferas de las que tienes; si ninguno es posible, pasas la ronda.</p>
+    Siempre se te ofrecen monstruos a tu alcance.</p>
     <p>Los monstruos salen en tres tamaños: pequeño, mediano (★★) y grande (★★★). Cuanto más grandes, más difíciles,
     más daño hacen y mejores recompensas dan.</p>
     <p>Si ganas, eliges 1 de 2 recompensas. Si pierdes, pierdes Vida. Si caes a 0, pierdes tus consumibles y tu mejor objeto
     y recuperas la Vida inicial.</p>
-    <p>Entre combates puedes comerciar, curarte, robar con pergaminos y lanzar magia: cada 5 de Maná obliga a un rival a
+    <p>Entre combates puedes comerciar, curarte, robar con pergaminos y lanzar maleficios (uno recibido como máximo por ronda, y un comercio por ronda): cada 5 de Maná obliga a un rival a
     repetir una esfera acertada en su próximo combate.</p>`],
   combate: ['Combate', `
     <p>Necesitas reunir los colores que pide el monstruo. Lanzas tus esferas, conservas las que quieras y relanzas el resto:
     <b>3 tiradas</b> como máximo.</p>
     <p>La esfera <b>blanca</b> es comodín (vale cualquier color). La <b>negra</b> no sirve.</p>
-    <p>Una vez por combate puedes usar el Maná para fijar el color de algunas esferas. Las pociones de Maná lo aumentan durante el combate.</p>`],
+    <p>Tus esferas blancas (por el Maná) ya vienen fijadas. Las pociones de Maná añaden más durante el combate. Si al terminar las tiradas no lo has conseguido, pierdes.</p>`],
   torneo: ['Torneo', `
     <p>Tras la ronda 12 empieza el torneo. El héroe con más Fuerza + Maná elige rival para su semifinal; los otros dos se enfrentan entre sí.
     Los ganadores juegan la final. Nadie recupera Vida.</p>

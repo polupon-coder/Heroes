@@ -3,7 +3,6 @@
 const C = require('./config');
 
 const SHIELD_NAMES = ['Rodela', 'Escudo', 'Pavés'];
-const HELMET_NAMES = ['Yelmo', 'Casco', 'Capucha reforzada'];
 const ARMOR_NAMES = ['Cota de malla', 'Armadura de cuero', 'Coraza'];
 const BOOTS_NAMES = ['Botas', 'Grebas', 'Botas de viaje'];
 
@@ -46,7 +45,7 @@ function makeEquipment(rng, level, nextId) {
       cayado: [['Cayado de rama', 'Vara de espino'], ['Cayado de hiedra', 'Cayado del bosque'], ['Cayado del roble ancestral', 'Cayado de la arboleda']],
     }[forma]?.[grado - 1],
     escudo: SHIELD_NAMES,
-    yelmo: HELMET_NAMES,
+    yelmo: [['Yelmo nasal', 'Casco de cuero y hierro'], ['Yelmo de acero', 'Yelmo de caballero'], ['Yelmo alado', 'Yelmo real']][grado - 1],
     armadura: ARMOR_NAMES,
     botas: BOOTS_NAMES,
   }[slot];

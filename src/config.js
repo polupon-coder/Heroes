@@ -73,6 +73,33 @@ const MONSTERS = {
   12: { nombre: 'Dragón', imagen: 'dragon', combo: ['rojo', 'azul', 'verde', 'amarillo', 'amarillo'] },
 };
 
+// Cada monstruo aparece en 3 tamaños (las 3 figuras de su lámina). Cuanto más
+// grande, más colores exige, más daño hace y mejores son sus recompensas
+// (se generan como si el monstruo fuera `recompensa` niveles más alto).
+const VARIANTS = {
+  1: { nombre: 'Pequeño', peso: 0.5, endurecer: false, extraColores: 0, dano: 0, recompensa: 0 },
+  2: { nombre: 'Mediano', peso: 0.35, endurecer: true, extraColores: 0, dano: 1, recompensa: 2 },
+  3: { nombre: 'Grande', peso: 0.15, endurecer: true, extraColores: 1, dano: 2, recompensa: 4 },
+};
+const MAX_COMBO = 5;
+
+// Combinación de un tamaño. "Endurecer" convierte el color menos repetido en el
+// más repetido (más difícil sin exigir más dados); "extraColores" añade copias
+// del color más repetido (máximo 5 colores).
+function variantCombo(combo, variante) {
+  const v = VARIANTS[variante];
+  let out = [...combo];
+  const counts = {};
+  for (const c of out) counts[c] = (counts[c] || 0) + 1;
+  const byFreq = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+  const top = byFreq[0];
+  const low = byFreq[byFreq.length - 1];
+  if (v.endurecer && byFreq.length > 1) out[out.indexOf(low)] = top;
+  for (let k = 0; k < v.extraColores && out.length < MAX_COMBO; k++) out.push(top);
+  const order = ['rojo', 'azul', 'verde', 'amarillo'];
+  return out.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
+
 // Regla 23.
 function monsterDamage(level) {
   if (level <= 3) return 1;
@@ -139,6 +166,8 @@ module.exports = {
   MAX_ROLLS,
   levelsForRound,
   MONSTERS,
+  VARIANTS,
+  variantCombo,
   monsterDamage,
   equipmentBonus,
   TWO_HANDED_EXTRA,

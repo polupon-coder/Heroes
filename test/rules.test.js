@@ -59,6 +59,7 @@ function soloGame(rng, raza = 'humano', clase = 'guerrero') {
 
 test('combate: tres tiradas, conservar dados y maldición', () => {
   const { g, p } = soloGame(() => F.blanco);
+  p.offers[0].combo = ['rojo', 'azul'];
   g.act(p.id, 'chooseMonster', { index: 0 });
   assert.strictEqual(p.combat.diceCount, 3);
   g.act(p.id, 'roll', {});
@@ -74,6 +75,17 @@ test('combate: tres tiradas, conservar dados y maldición', () => {
   g2.g.act(q.id, 'roll', {});
   assert.strictEqual(q.combat.dice[0].face, 'negro');
   assert.strictEqual(q.combat.cursesLeft, 0);
+});
+
+test('tamaños de monstruo: más colores, más daño y mejores recompensas', () => {
+  assert.deepStrictEqual(C.variantCombo(['rojo', 'azul'], 1), ['rojo', 'azul']);
+  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 2), ['rojo', 'rojo', 'rojo']);
+  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 3), ['rojo', 'rojo', 'rojo', 'rojo']);
+  assert.strictEqual(C.variantCombo(['rojo', 'azul', 'verde', 'amarillo', 'amarillo'], 3).length, 5);
+  const { p } = soloGame(() => F.blanco); // 0.9 -> tamaño grande
+  const m = p.offers[0];
+  assert.strictEqual(m.variante, 3);
+  assert.strictEqual(m.dano, C.monsterDamage(m.level) + 2);
 });
 
 test('caer a 0 Vida en Fase 1 reinicia el héroe', () => {
@@ -163,6 +175,17 @@ test('golpe graduado del torneo', () => {
   g.act(att.id, 'concede');
   assert.strictEqual(def.hero.vida, def.hero.base.vida - 1);
   assert.strictEqual(m.attacker, def.id);
+});
+
+test('tamaños de monstruo: más colores, más daño y mejores recompensas', () => {
+  assert.deepStrictEqual(C.variantCombo(['rojo', 'azul'], 1), ['rojo', 'azul']);
+  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 2), ['rojo', 'rojo', 'rojo']);
+  assert.deepStrictEqual(C.variantCombo(['rojo', 'rojo', 'azul'], 3), ['rojo', 'rojo', 'rojo', 'rojo']);
+  assert.strictEqual(C.variantCombo(['rojo', 'azul', 'verde', 'amarillo', 'amarillo'], 3).length, 5);
+  const { p } = soloGame(() => F.blanco); // 0.9 -> tamaño grande
+  const m = p.offers[0];
+  assert.strictEqual(m.variante, 3);
+  assert.strictEqual(m.dano, C.monsterDamage(m.level) + 2);
 });
 
 test('caer a 0 Vida conserva el equipo salvo el mejor objeto', () => {

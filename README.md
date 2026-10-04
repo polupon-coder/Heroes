@@ -84,6 +84,16 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 
 Mantícora y Quimera se sustituyen por el Diablillo de los Bosques y el Minotauro, y los 12 monstruos se ordenan de menos a más poderosos según sus ilustraciones.
 
+**Tamaños.** Cada monstruo aparece en uno de 3 tamaños (las 3 figuras de su lámina):
+
+| Tamaño | Probabilidad | Combinación | Daño si pierdes | Recompensas |
+| --- | ---: | --- | --- | --- |
+| Pequeño | 50 % | la de la tabla | el del nivel | del nivel |
+| Mediano | 35 % | el color menos repetido pasa a ser el más repetido | +1 | como 2 niveles más |
+| Grande | 15 % | lo anterior + 1 color más (máx. 5) | +2 | como 4 niveles más |
+
+Ejemplo: Orco (🔴🔴🔴) → mediano 🔴🔴🔴 → grande 🔴🔴🔴🔴. Necrófago (🔵🟢🟢) → mediano 🟢🟢🟢 → grande 🟢🟢🟢🟢.
+
 Resultado medido con bots: se gana casi el 100 % de los combates de nivel 1, en torno al 60–70 % de los de nivel 7 a 12, y el 46 % de los de nivel 6, el más duro; 0,54 caídas por héroe; Fuerza media de 21 al llegar al torneo; duelos de unos 6 ataques; menos del 1 % de duelos en los que nadie puede hacer daño; el primer clasificado gana en torno al 63 % de las partidas.
 
 ## Decisiones tomadas donde el reglamento no lo especifica

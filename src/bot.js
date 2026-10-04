@@ -48,13 +48,20 @@ function botStep(game, p) {
 
   if (game.phase === 'combat') {
     if (p.stage === 'elegir') {
+      // Valora cada monstruo: probabilidad de ganar × calidad de la recompensa,
+      // menos el riesgo de perder Vida (mucho más si podría tumbarle).
       const dice = game.diceCount(p);
-      const doable = p.offers.map((m, i) => ({ m, i })).filter((x) => x.m.combo.length <= dice);
-      // Prudencia: con poca Vida evita el monstruo que podría tumbarle.
-      const safe = doable.filter((x) => h.vida > x.m.dano * 2);
-      const pool = safe.length ? safe : doable;
-      const pick = pool.length ? pool[pool.length - 1].i : 0;
-      game.act(p.id, 'chooseMonster', { index: pick });
+      const fix = C.fixedDiceForMana(game.availableMana(p));
+      let best = 0;
+      let bestScore = -Infinity;
+      p.offers.forEach((m, i) => {
+        const pWin = winChance(dice, fix, m.combo, game.rng);
+        const reward = C.equipmentBonus(Math.min(12, m.level + C.VARIANTS[m.variante].recompensa));
+        const ko = h.vida <= m.dano ? 6 : 1;
+        const score = pWin * reward - (1 - pWin) * m.dano * 0.5 * ko;
+        if (score > bestScore) { bestScore = score; best = i; }
+      });
+      game.act(p.id, 'chooseMonster', { index: best });
       return true;
     }
     if (p.stage === 'combate') return fight(game, p);
@@ -81,6 +88,21 @@ function botStep(game, p) {
     if (m && m.attacker === p.id && p.combat && p.combat.status === 'activo') return fight(game, p);
   }
   return false;
+}
+
+// Estimación rápida por simulación de la probabilidad de ganar un combate.
+function winChance(dice, fix, combo, rng, trials = 120) {
+  if (combo.length > dice) return 0;
+  let wins = 0;
+  for (let t = 0; t < trials; t++) {
+    let faces = Array.from({ length: dice }, () => D.rollFace(rng));
+    for (let r = 1; r < C.MAX_ROLLS && !D.isSatisfied(faces, combo); r++) {
+      const { used } = D.matchDice(faces, combo);
+      faces = faces.map((f, i) => (used.has(i) ? f : D.rollFace(rng)));
+    }
+    if (D.isSatisfied(faces, combo) || D.matchDice(faces, combo).missing <= fix) wins++;
+  }
+  return wins / trials;
 }
 
 function fight(game, p) {

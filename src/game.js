@@ -238,14 +238,26 @@ class Game {
     chosen.sort((a, b) => a - b);
     return chosen.map((level) => {
       const m = C.MONSTERS[level];
+      let r = this.rng();
+      let variante = 1;
+      for (const [k, v] of Object.entries(C.VARIANTS)) {
+        if (r < v.peso) { variante = Number(k); break; }
+        r -= v.peso;
+      }
+      const v = C.VARIANTS[variante];
+      const rewardLevel = Math.min(12, level + v.recompensa);
       return {
         level,
         nombre: m.nombre,
         imagen: m.imagen,
-        variante: 1,
-        combo: [...m.combo],
-        dano: C.monsterDamage(level),
-        rewards: [I.makeReward(this.rng, level, () => this.nextId()), I.makeReward(this.rng, level, () => this.nextId())],
+        variante,
+        tamano: v.nombre,
+        combo: C.variantCombo(m.combo, variante),
+        dano: C.monsterDamage(level) + v.dano,
+        rewards: [
+          I.makeReward(this.rng, rewardLevel, () => this.nextId()),
+          I.makeReward(this.rng, rewardLevel, () => this.nextId()),
+        ],
       };
     });
   }
@@ -396,7 +408,7 @@ class Game {
       p.hero.victorias += 1;
       p.stage = 'recompensa';
       p.rewards = m.rewards;
-      this.say(`🗡 ${p.name} derrota a ${m.nombre} (nivel ${m.level}).`);
+      this.say(`🗡 ${p.name} derrota a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`);
     } else {
       p.hero.vida -= m.dano;
       this.say(`🩸 ${p.name} es derrotado por ${m.nombre} y pierde ${m.dano} de Vida.`);
@@ -814,8 +826,8 @@ const ACTIONS = {
     p.monster = m;
     p.offers = null;
     p.stage = 'combate';
-    this.newCombat(p, { kind: 'monstruo', combo: m.combo, label: `${m.nombre} (nivel ${m.level})` });
-    this.say(`${p.name} se enfrenta a ${m.nombre} (nivel ${m.level}).`);
+    this.newCombat(p, { kind: 'monstruo', combo: m.combo, label: `${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level})` });
+    this.say(`${p.name} se enfrenta a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`);
   },
   roll(p, { hold }) {
     this.roll(p, hold);

@@ -585,8 +585,9 @@ function monsterCard(m, i, p) {
   return `
   <div class="monster">
     ${monsterArt(m)}
-    <div class="lvl">Nivel ${m.level} · si pierdes: −${m.dano} Vida</div>
+    <div class="lvl">Nivel ${m.level} · ${esc(m.tamano || '')} · si pierdes: −${m.dano} Vida</div>
     <div class="name">${esc(m.nombre)}</div>
+    ${m.variante > 1 ? `<div class="size-tag">${'★'.repeat(m.variante)} Más difícil, mejores recompensas</div>` : ''}
     ${comboHtml(m.combo, false)}
     ${tooHard ? `<div class="warn">⚠ Necesitas ${m.combo.length} dados y solo tienes ${p.hero.dados}: no puedes ganar.</div>` : ''}
     <h4 style="margin:6px 0 0">Recompensas posibles (elegirás 1)</h4>

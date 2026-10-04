@@ -492,8 +492,8 @@ body.at-home .topbar { position: fixed; top: 0; right: 0; z-index: 30; backgroun
 .table3 { display: grid; grid-template-columns: 290px minmax(0, 1fr) 320px; gap: 18px; align-items: start; }
 .col-me { position: sticky; top: 10px; }
 .col-title { font-family: var(--title); color: var(--ink-soft); text-align: center; margin: 4px 0 10px; }
-.col-rivals .rival { padding: 8px 4px 10px; border-bottom: 1px dashed var(--line); }
-.col-rivals .rival.out { filter: grayscale(.9); opacity: .55; }
+.col-rivals > .rival { padding: 8px 4px 10px; border-bottom: 1px dashed var(--line); }
+.col-rivals > .rival.out { filter: grayscale(.9); opacity: .55; }
 .rival-hero { display: flex; gap: 8px; align-items: flex-start; }
 .portrait.rival { width: 78px; height: 104px; flex: none; }
 .rival-info { flex: 1; min-width: 0; }
@@ -533,7 +533,7 @@ body.at-home .topbar { position: fixed; top: 0; right: 0; z-index: 30; backgroun
 body { background-image: radial-gradient(ellipse at center, transparent 55%, rgba(150, 110, 60, .3) 140%); }
 .col-me, .col-rivals { padding: 4px 6px 8px !important; }
 .col-me .portrait.xl { -webkit-mask-image: radial-gradient(ellipse closest-side, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse closest-side, #000 62%, transparent 100%); }
-.col-rivals .rival:last-child { border-bottom: none; }
+.col-rivals > .rival:last-child { border-bottom: none; }
 
 /* =========================================================================
    Pergamino horizontal y marcos metálicos del autor
@@ -780,7 +780,7 @@ body.at-home .home { padding: 18px; }
 @media (max-width: 1250px) { .table3 { grid-template-columns: 270px minmax(0, 1fr) 340px; } }
 
 /* Contrincantes: héroe — versus — monstruo, datos debajo */
-.col-rivals .rival { padding: 10px 4px 12px; }
+.col-rivals > .rival { padding: 10px 4px 12px; }
 .rival-pair { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 4px; }
 .rival-side { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-height: 150px; }
 .portrait.rival { width: 120px; height: 160px; }
@@ -873,7 +873,7 @@ body.at-home .home { padding: 18px; }
   .foe-big .portrait.duel-art { height: 34vh; width: auto; }
   /* Contrincantes: tres filas que reparten el alto */
   .col-rivals { display: flex; flex-direction: column; }
-  .col-rivals .rival { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding: 4px; }
+  .col-rivals > .rival { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding: 4px; }
   .rival-side { min-height: 0; }
   .portrait.rival { height: 16vh; width: 12vh; max-width: 120px; }
   .rival-info { margin-top: 2px; }
@@ -899,4 +899,23 @@ body.at-home .home { padding: 18px; }
   .combat .dice .die { width: min(56px, 6.6vh); height: min(56px, 6.6vh); }
   .combat .muted.small.center { font-size: .8rem; }
   .col-stage > .card { padding-top: 10px; padding-bottom: 10px; }
+}
+
+/* ===== Piezas de color y forma ===== */
+.die.piece { background: none !important; border: none; border-radius: 0; filter: none; box-shadow: none !important; }
+.die.piece::after { content: none !important; }
+.die.piece img { width: 100%; height: 100%; display: block; pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(58, 42, 26, .35)); transition: filter .15s; }
+.die.piece.success img { filter: drop-shadow(0 0 3px rgba(79, 122, 58, 1)) drop-shadow(0 0 6px rgba(79, 122, 58, .8)); }
+.die.piece.fixed img { filter: drop-shadow(0 0 3px #7b5fb0) drop-shadow(0 0 7px #b49ce0); }
+.die.piece.held::before { bottom: -10px; }
+.die.piece.tinta img { filter: none; }
+@media (min-width: 1101px) and (min-height: 600px) {
+  .rival-pair { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.2fr); }
+  .portrait.rival { height: 13.5vh; width: 10.2vh; }
+  .rival-foe .foe-imgs { height: 13.5vh; width: 100%; max-width: 190px; }
+  .rival-foe .foe-name { font-size: .78em; line-height: 1.1; }
+  .rival-info .nm { font-size: .98rem; line-height: 1.15; }
+  .rival-info .spheres-row { margin: 2px 0; }
+  .col-rivals > .rival { padding: 2px 4px 6px; }
 }

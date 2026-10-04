@@ -79,28 +79,19 @@ function monsterArt(m, cls = 'monster-art') {
   return `<img class="${cls}" src="img/monstruos/${key}.webp" alt="${esc(m.nombre)}" loading="lazy">`;
 }
 
-// Formas de las esferas (se dibujan encima del color).
-const SHAPE_PATH = {
-  circulo: '<circle cx="12" cy="12" r="7.5"/>',
-  cuadrado: '<rect x="5" y="5" width="14" height="14"/>',
-  rombo: '<path d="M12 2.8 21.2 12 12 21.2 2.8 12Z"/>',
-  triangulo: '<path d="M12 3.2 21 19.6H3Z"/>',
-  estrella: '<path d="M12 2.2l2.9 6.4 7 .7-5.3 4.7 1.6 6.9L12 17.3l-6.2 3.6 1.6-6.9L2.1 9.3l7-.7Z"/>',
-  cruz: '<path d="M6 6 18 18M18 6 6 18" fill="none" stroke-width="3.6"/>',
-};
 const SHAPE_LABEL = { circulo: 'Círculo', cuadrado: 'Cuadrado', rombo: 'Rombo', triangulo: 'Triángulo', estrella: 'Estrella (comodín)', cruz: 'Cruz' };
 const WILD = { color: 'blanco', forma: 'estrella' };
 
-function shapeSvg(shape) {
-  if (!SHAPE_PATH[shape]) return '';
-  return `<svg class="shape ${shape}" viewBox="0 0 24 24" aria-hidden="true">${SHAPE_PATH[shape]}</svg>`;
-}
-
-// Una esfera: color de fondo y, si la hay, forma encima. Sin color = solo la forma.
+// Una esfera: figura de su forma rellena de su color (img/formas). Sin color = solo
+// el contorno de la forma (lo que pide un monstruo de formas). Sin forma = esfera de color.
 function die(face, { cls = '', attrs = '', sm = false, shape = null } = {}) {
-  const f = face || (shape ? 'plain' : 'empty');
   const title = [FACE_LABEL[face], SHAPE_LABEL[shape]].filter(Boolean).join(' · ');
-  return `<div class="die ${sm ? 'sm' : ''} ${f} ${shape ? 'has-shape' : ''} ${cls}" ${attrs} title="${title}">${shapeSvg(shape)}</div>`;
+  if (shape) {
+    const src = `img/formas/${shape}-${face || 'tinta'}.webp`;
+    return `<div class="die piece ${sm ? 'sm' : ''} ${face || 'tinta'} ${cls}" ${attrs} title="${title}"><img src="${src}" alt="${title}" draggable="false"></div>`;
+  }
+  const f = face || 'empty';
+  return `<div class="die ${sm ? 'sm' : ''} ${f} ${cls}" ${attrs} title="${title}"></div>`;
 }
 
 function comboHtml(combo, sm = true, tipo = 'color') {

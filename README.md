@@ -57,6 +57,7 @@ Railway o Fly.io también sirven: es una app Node normal que escucha en la varia
 | `src/server.js` | Servidor web y salas en tiempo real (Socket.IO). |
 | `public/` | Interfaz web (HTML/CSS/JS sin dependencias). |
 | `public/sounds.js`, `public/sonidos/` | Sonidos y música (los mismos de Imperio); se silencian con el botón del altavoz. |
+| `tools/transparent.py` | Quita el papel de fondo de las ilustraciones para que las figuras se vean enteras sobre el pergamino. |
 | `public/img/heroes/color/` | Retratos con la ropa teñida del color de cada jugador, generados con `tools/recolor.py`. |
 | `public/img/heroes/` | Retratos de los héroes, uno por Raza + Clase: `raza-clase.webp` (por ejemplo `elfo-mago.webp`). Si falta uno, la web muestra «Retrato pendiente». |
 | `test/` | Tests: `npm test` (incluye cientos de partidas completas simuladas con bots). |
@@ -68,7 +69,7 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 | Cambio | Antes | Ahora |
 | --- | --- | --- |
 | Fuerza base | 2 | Goblin |
-| Golpes en el torneo | 4 resultados = 3 de daño, si no 0 | **Golpe graduado**: 3 resultados del color del rival → 1 de daño, 4 → 2, 5 → 3 (en la sala se puede elegir 4 como golpe completo: 2 → 1, 3 → 2, 4 → 3). El atacante puede terminar su ataque cuando quiera. |
+| Golpes en el torneo | 4 resultados = 3 de daño, si no 0 | **Golpe graduado**: 3 resultados del color del rival → 1 de daño, 4 → 2, 5 → 3 . El atacante puede terminar su ataque cuando quiera. |
 | Caer a 0 Vida en la Fase 1 (regla 9) | pierde todo el equipo y los consumibles | pierde **todos los consumibles y su objeto de equipo de más Fuerza**, conserva el resto y recupera la Vida inicial |
 | Quién ataca primero en el torneo | — | el de menos Fuerza + Maná |
 
@@ -89,7 +90,7 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 
 Mantícora, Quimera y Gólem se sustituyen por el Diablillo de los Bosques, el Minotauro y el Mago Oscuro, y los 12 monstruos se ordenan de menos a más poderosos según sus ilustraciones.
 
-**Esferas suficientes.** Solo puedes enfrentarte a un monstruo si tienes tantas esferas como colores pide. Si ninguno de los dos está a tu alcance, pasas la ronda sin combatir.
+**Esferas suficientes.** Nunca se ofrecen monstruos que pidan más esferas de las que tienes: si sale uno así, se cambia por un tamaño menor o un nivel inferior que sí esté a tu alcance.
 
 **Tamaños.** Cada monstruo aparece en uno de 3 tamaños (las 3 figuras de su lámina):
 

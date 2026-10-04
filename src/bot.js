@@ -14,7 +14,7 @@ function botStep(game, p) {
     let choice = 'descartar';
     if (pend.item.tipo === 'equipo') {
       const others = pend.options.filter((o) => o.id !== 'descartar');
-      const items = h.inv.manos.concat([h.inv.yelmo, h.inv.armadura, h.inv.botas]).filter(Boolean);
+      const items = h.inv.manos.concat([h.inv.yelmo, h.inv.armadura, h.inv.tunica, h.inv.botas]).filter(Boolean);
       let best = null;
       for (const o of others) {
         const lost = o.id === 'todas' ? h.inv.manos.reduce((s, it) => s + it.bonus, 0) : (items.find((it) => it.id === o.id) || {}).bonus;

@@ -9,6 +9,7 @@ const SLOT_LABEL = {
   escudo: 'Escudo',
   yelmo: 'Yelmo',
   armadura: 'Armadura',
+  tunica: 'Túnica',
   botas: 'Botas',
 };
 
@@ -19,7 +20,7 @@ function pick(rng, list) {
 }
 
 function makeEquipment(rng, level, nextId) {
-  const slot = pick(rng, ['arma', 'arma', 'dosManos', 'escudo', 'yelmo', 'armadura', 'botas']);
+  const slot = pick(rng, ['arma', 'arma', 'dosManos', 'escudo', 'yelmo', 'armadura', 'tunica', 'botas']);
   let bonus = C.equipmentBonus(level);
   // Grado I, II o III según la calidad (para su ilustración).
   const grado = bonus <= 2 ? 1 : bonus <= 3 ? 2 : 3;
@@ -29,7 +30,8 @@ function makeEquipment(rng, level, nextId) {
   const forma =
     slot === 'arma' ? pick(rng, ['espada', 'maza'])
       : slot === 'dosManos' ? pick(rng, ['arco', 'hacha', 'baculo', 'cayado'])
-        : slot === 'armadura' ? pick(rng, ['tunica', 'cota'])
+        : slot === 'armadura' ? 'cota'
+          : slot === 'tunica' ? 'tunica'
           : undefined;
   const names = {
     arma: {
@@ -44,10 +46,8 @@ function makeEquipment(rng, level, nextId) {
     }[forma]?.[grado - 1],
     escudo: [['Escudo de tablas', 'Escudo de roble'], ['Escudo del bosque', 'Escudo de hierro'], ['Escudo del guardián', 'Escudo de hojas de oro']][grado - 1],
     yelmo: [['Yelmo nasal', 'Casco de cuero y hierro'], ['Yelmo de acero', 'Yelmo de caballero'], ['Yelmo alado', 'Yelmo real']][grado - 1],
-    armadura: {
-      tunica: [['Túnica de lana', 'Hábito con capucha'], ['Túnica del bosque', 'Manto de hojas'], ['Túnica del gran druida', 'Manto de la arboleda']],
-      cota: [['Jubón de cuero', 'Armadura de explorador'], ['Cota de malla del bosque', 'Brigantina'], ['Coraza de hojas de oro', 'Armadura del guardián']],
-    }[forma]?.[grado - 1],
+    armadura: [['Jubón de cuero', 'Armadura de explorador'], ['Cota de malla del bosque', 'Brigantina'], ['Coraza de hojas de oro', 'Armadura del guardián']][grado - 1],
+    tunica: [['Túnica de lana', 'Hábito con capucha'], ['Túnica del bosque', 'Manto de hojas'], ['Túnica del gran druida', 'Manto de la arboleda']][grado - 1],
     botas: [['Botas de viaje', 'Botas de cuero'], ['Botas de explorador', 'Botas con hebillas'], ['Botas élficas', 'Botas del bosque']][grado - 1],
   }[slot];
   return {
@@ -86,11 +86,11 @@ function makeReward(rng, level, nextId) {
 // --- Inventario del héroe ---------------------------------------------------
 
 function emptyInventory() {
-  return { yelmo: null, armadura: null, botas: null, manos: [], pociones: [], pergaminos: [] };
+  return { yelmo: null, armadura: null, tunica: null, botas: null, manos: [], pociones: [], pergaminos: [] };
 }
 
 function equippedItems(inv) {
-  return [inv.yelmo, inv.armadura, inv.botas, ...inv.manos].filter(Boolean);
+  return [inv.yelmo, inv.armadura, inv.tunica, inv.botas, ...inv.manos].filter(Boolean);
 }
 
 function allItems(inv) {
@@ -106,7 +106,7 @@ function findItem(inv, id) {
 }
 
 function removeItem(inv, id) {
-  for (const k of ['yelmo', 'armadura', 'botas']) {
+  for (const k of ['yelmo', 'armadura', 'tunica', 'botas']) {
     if (inv[k] && inv[k].id === id) {
       const it = inv[k];
       inv[k] = null;

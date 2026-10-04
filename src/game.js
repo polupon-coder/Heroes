@@ -230,23 +230,22 @@ class Game {
 
   makeOffers(p) {
     const offers = this.rollOffers();
-    // Siempre debe haber al menos un monstruo al alcance de las esferas del héroe.
+    // Nunca se ofrecen monstruos a los que el héroe no pueda enfrentarse:
+    // primero se prueba un tamaño menor y, si no basta, un nivel más bajo.
     const dice = p ? this.diceCount(p) : 5;
-    if (!offers.some((m) => m.combo.length <= dice)) {
-      offers[0] = this.affordableOffer(dice);
-      offers.sort((a, b) => a.level - b.level);
+    const fixed = offers.map((m) => (m.combo.length <= dice ? m : this.affordableOffer(dice, m.level, m.variante)));
+    // Si los dos han quedado iguales, el segundo baja un nivel para dar a elegir.
+    if (fixed[0].level === fixed[1].level && fixed[0].variante === fixed[1].variante && fixed[1].level > 1) {
+      fixed[1] = this.affordableOffer(dice, fixed[1].level - 1, 3);
     }
-    return offers;
+    return fixed.sort((a, b) => a.level - b.level);
   }
 
   // El monstruo más fuerte (nivel y tamaño) que el héroe puede afrontar, sin pasar del máximo de la ronda.
-  affordableOffer(dice) {
-    const maxLevel = Math.max(...C.levelsForRound(this.round));
-    for (let level = maxLevel; level >= 1; level--) {
-      for (const variante of [3, 2, 1]) {
-        if (C.variantCombo(C.MONSTERS[level].combo, variante).length <= dice) {
-          if (variante === 1 || level >= maxLevel - 2) return this.makeOffer(level, variante);
-        }
+  affordableOffer(dice, fromLevel, fromVariant = 3) {
+    for (let level = fromLevel; level >= 1; level--) {
+      for (let variante = level === fromLevel ? fromVariant : 3; variante >= 1; variante--) {
+        if (C.variantCombo(C.MONSTERS[level].combo, variante).length <= dice) return this.makeOffer(level, variante);
       }
     }
     return this.makeOffer(1, 1);
@@ -722,6 +721,8 @@ const ACTIONS = {
     if (this.phase !== 'lobby') fail('La partida ya ha empezado');
     if (value && (!p.raza || !p.clase)) fail('Elige Raza y Clase primero');
     p.ready = !!value;
+    // Cuando todos están listos, la partida empieza sola.
+    if (this.players.every((x) => x.ready && x.raza && x.clase)) this.startGame();
   },
   setHero(p, { raza, clase }) {
     if (this.phase !== 'lobby') fail('La partida ya ha empezado');

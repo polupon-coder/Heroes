@@ -218,18 +218,18 @@ test('no se puede elegir un monstruo con más esferas de las que tienes', () => 
   assert.strictEqual(g.round, 2);
 });
 
-test('siempre hay al menos un monstruo asequible', () => {
+test('nunca se ofrecen monstruos inasequibles y la partida empieza sola', () => {
   const g = new Game('T');
   const a = g.addPlayer('A');
   g.act(a.id, 'setHero', { raza: 'gnomo', clase: 'mago' }); // 2 esferas
   g.act(a.id, 'lobbyReady');
-  for (const pl of g.players) pl.ready = true;
-  g.act(a.id, 'start');
+  assert.strictEqual(g.phase, 'prep');
   for (let r = 1; r <= 12; r++) {
     g.round = r;
     for (let k = 0; k < 30; k++) {
       const offers = g.makeOffers(a);
-      assert.ok(offers.some((m) => m.combo.length <= g.diceCount(a)), `ronda ${r}`);
+      assert.strictEqual(offers.length, 2);
+      assert.ok(offers.every((m) => m.combo.length <= g.diceCount(a)), `ronda ${r}`);
     }
   }
 });

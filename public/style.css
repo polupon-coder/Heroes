@@ -579,3 +579,68 @@ body { background-image: radial-gradient(ellipse at center, transparent 55%, rgb
 /* Recompensas: el marco cuadrado */
 .frame-sq { display: grid; place-items: center; width: 150px; height: 144px; background: url(img/ui/marco-cuadrado.webp) center / 100% 100% no-repeat; }
 .reward-choice .frame-sq .item-img { width: 104px; height: 104px; -webkit-mask-image: none; mask-image: none; border-radius: 4px; }
+
+/* =========================================================================
+   Revisión: pergaminos suaves, personajes nítidos, lacres y todo centrado
+   ========================================================================= */
+
+/* Fondo de página: pergamino suave; ventanas: horizontal o vertical según su forma */
+html, body { background: #e9dcc0 url(img/ui/fondo.webp) center / cover fixed no-repeat; }
+.card, .modal .card, .journal, .home-sheet {
+  border-image: url(img/ui/pergamino-h-suave.webp) 70 fill / 30px stretch;
+  filter: drop-shadow(0 4px 10px rgba(58, 34, 15, .18));
+}
+.col-me, .col-rivals, .others-pick {
+  border-image: url(img/ui/pergamino-v-suave.webp) 70 fill / 30px stretch !important;
+}
+.home-sheet { border-width: 60px; border-image-width: 60px; }
+
+/* Personajes y monstruos: nunca difuminados. El papel de la ilustración se funde
+   con el pergamino (multiplicar) y la figura se ve entera. */
+.portrait, .monster-art, .duel-art, .outcome-art, .rival-foe img.foe, .vs-slot img.foe, .col-me .portrait.xl {
+  -webkit-mask-image: none !important; mask-image: none !important;
+  mix-blend-mode: normal;
+}
+.portrait { object-fit: contain; object-position: center bottom; }
+.portrait.xs, .portrait.sm, .portrait.rival, .portrait.foe { object-fit: contain; }
+.monster-art, .duel-art { object-fit: contain; }
+.foe-big .portrait.duel-art { object-fit: contain; }
+
+/* Marcas de color: esferas (nada de escudos de Imperio) */
+.chip { border-radius: 50%; background-size: cover; }
+.chip.rojo { background-image: url(img/dados/rojo.webp); }
+.chip.azul { background-image: url(img/dados/azul.webp); }
+.chip.verde { background-image: url(img/dados/verde.webp); }
+.chip.amarillo { background-image: url(img/dados/amarillo.webp); }
+.seat .chip { width: 34px; height: 34px; }
+.shield-pick .chip { width: 38px; height: 38px; }
+
+/* Lacre de cera para los botones principales */
+.seal {
+  clip-path: none; background: url(img/ui/lacre.webp) center / contain no-repeat !important;
+  box-shadow: none; width: 124px; height: 118px; padding: 10px 18px;
+  filter: drop-shadow(0 3px 4px rgba(58, 34, 15, .35));
+}
+.seal.green { background-image: url(img/ui/lacre-verde.webp) !important; }
+.home-play { width: 168px; height: 158px; font-size: 1.6rem; }
+
+/* Todo centrado en su eje */
+.row { justify-content: center; }
+.card h2, .card h3, .card > p, .col-title { text-align: center; }
+.ready-row { display: flex; justify-content: flex-end; margin-top: 14px; }
+.combat .targetline, .dice { justify-content: center; }
+.combat > .row { justify-content: center; }
+.statline { justify-content: center; }
+
+/* Equipo, pociones y pergaminos: mismo tamaño, sin marcos */
+.tiles { grid-template-columns: repeat(3, 1fr); justify-items: center; }
+.tile .ring { width: 64px; height: 64px; background: none; }
+.tile .ring .item-img { width: 60px; height: 60px; border-radius: 0; -webkit-mask-image: none; mask-image: none; }
+.tile.empty .ring { border: 1.5px dashed rgba(120, 90, 50, .35); border-radius: 12px; width: 60px; height: 60px; }
+
+/* Recompensa: limpia, sin marco */
+.reward-choice .item-img, .reveal .big-item .item-img, .detail .big-item .item-img { -webkit-mask-image: none; mask-image: none; border-radius: 12px; mix-blend-mode: multiply; }
+.reveal .big-item .item-img { mix-blend-mode: normal; }
+.reward-choice .item-img { width: 120px; height: 120px; }
+
+.item-img { -webkit-mask-image: none !important; mask-image: none !important; border-radius: 0 !important; mix-blend-mode: normal !important; }

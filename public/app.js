@@ -111,7 +111,7 @@ function itemIcon(it) {
 
 function itemDesc(it) {
   if (it.tipo === 'equipo') {
-    const slot = { arma: 'Arma (1 mano)', dosManos: 'Arma a dos manos', escudo: 'Escudo (1 mano)', yelmo: 'Yelmo', armadura: 'Armadura', botas: 'Botas' }[it.slot];
+    const slot = { arma: 'Arma (1 mano)', dosManos: 'Arma a dos manos', escudo: 'Escudo (1 mano)', yelmo: 'Yelmo', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' }[it.slot];
     return `${slot} · +${it.bonus} Fuerza`;
   }
   if (it.efecto === 'mana') return `+${it.valor} Maná durante un combate`;
@@ -351,9 +351,6 @@ function renderLobbyRivals(p) {
     <div class="row center-row"><span class="share">${esc(link)}</span><button class="btn small" data-a="copy" data-text="${esc(link)}">Copiar enlace</button></div>
     <div class="seats">${seats.join('')}</div>
     ${host ? `
-      <div class="row center-row small">Esferas del color rival para el golpe completo en el Torneo:
-        ${[4, 5].map((n) => `<button class="btn tiny ${S.settings.pvpHits === n ? 'selected' : ''}" data-a="pvpHits" data-n="${n}">${n}</button>`).join('')}
-      </div>
       <div class="row center-row"><button class="seal" data-a="lobbyStage" data-s="heroes">Elegir<br>héroes</button></div>`
     : '<p class="center muted">El anfitrión está preparando la mesa…</p>'}
   </div>`;
@@ -363,7 +360,6 @@ function renderLobbyRivals(p) {
 function renderLobbyHeroes(p) {
   const host = S.host === S.me;
   const preview = heroPreview(p.raza, p.clase);
-  const allReady = S.players.every((x) => x.ready);
   const showClass = p.clase || 'guerrero';
   const others = S.players.filter((x) => x.id !== S.me).map((x) => `
     <div class="mini-hero">
@@ -396,12 +392,12 @@ function renderLobbyHeroes(p) {
               <span class="stat">Maná <b>${preview.mana}</b></span>
               <span class="stat">${spheresRow(dicePreview(preview.fuerza), p.color)}</span>
             </div>` : ''}
-          <div class="row" style="margin-top:12px">
+          <div class="ready-row">
             ${p.ready
               ? '<button class="seal green" data-a="lobbyReady" data-v="0">Listo ✔</button>'
               : `<button class="seal" data-a="lobbyReady" data-v="1" ${p.raza && p.clase ? '' : 'disabled'}>¡Listo!</button>`}
-            ${host ? `<button class="seal" data-a="start" ${allReady ? '' : 'disabled'}>Empezar</button>` : ''}
           </div>
+          <p class="center muted small">${p.ready ? 'La partida empezará cuando todos estén listos.' : ''}</p>
         </div>
       </div>
     </div>
@@ -467,11 +463,9 @@ function renderSheet() {
   </div>
   ${h.curses ? `<p class="warn">☠ Maldito: repetirás ${h.curses} esfera(s) acertada(s) en tu próximo combate.</p>` : ''}
   <div class="tiles">
-    ${itemTile(inv.yelmo, 'Yelmo')}${itemTile(inv.armadura, 'Armadura')}${itemTile(inv.botas, 'Botas')}${handTiles.join('')}
+    ${itemTile(inv.yelmo, 'Yelmo')}${itemTile(inv.armadura, 'Armadura')}${itemTile(inv.tunica, 'Túnica')}${itemTile(inv.botas, 'Botas')}${handTiles.join('')}
   </div>
-  <div class="tiles small-tiles">
-    ${cons.length ? cons.map((it) => itemTile(it)).join('') : '<p class="muted small">Sin pociones ni pergaminos</p>'}
-  </div>
+  ${cons.length ? `<div class="tiles">${cons.map((it) => itemTile(it)).join('')}</div>` : ''}
   <p class="muted small center">${h.victorias} victorias · ${h.caidas} caídas</p>`;
 }
 
@@ -573,7 +567,7 @@ function renderOutcome() {
         <p class="center">Has derrotado a ${esc(p.monster.nombre)} ${esc((p.monster.tamano || '').toLowerCase())}. Elige tu recompensa:</p>
         <div class="reward-pick">${p.rewards.map((it, i) => `
           <button class="reward-choice" data-a="reward" data-i="${i}">
-            <span class="big-item frame-sq">${itemIcon(it)}</span>
+            <span class="big-item">${itemIcon(it)}</span>
             <b>${esc(it.nombre)}</b><small>${itemDesc(it)}</small>
           </button>`).join('')}</div>
       </div>`;

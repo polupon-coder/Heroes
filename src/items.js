@@ -54,7 +54,9 @@ function makeConsumable(rng, level, tipo, nextId) {
   if (efecto === 'mana') nombre = `${base} de Maná +${valor}`;
   else if (efecto === 'curacion') nombre = `${base} de Curación +${valor}`;
   else nombre = `${base} de Robo`;
-  return { id: nextId(), tipo, efecto, valor: efecto === 'robo' ? 0 : valor, nombre };
+  // Grado I, II o III según el nivel del que sale (para su ilustración).
+  const grado = level <= 4 ? 1 : level <= 8 ? 2 : 3;
+  return { id: nextId(), tipo, efecto, grado, valor: efecto === 'robo' ? 0 : valor, nombre };
 }
 
 function makeReward(rng, level, nextId) {

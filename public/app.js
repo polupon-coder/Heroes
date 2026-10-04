@@ -95,8 +95,9 @@ function matchDice(faces, combo) {
 }
 
 function itemIcon(it) {
-  if (it.tipo === 'pocion') return '🧪';
-  if (it.tipo === 'pergamino') return '📜';
+  if (it.tipo === 'pocion' || it.tipo === 'pergamino') {
+    return `<img class="item-img" src="img/objetos/${it.tipo}-${it.grado || 1}.webp" alt="">`;
+  }
   return { arma: '🗡', dosManos: '⚔', escudo: '🛡', yelmo: '⛑', armadura: '🥋', botas: '🥾' }[it.slot] || '•';
 }
 

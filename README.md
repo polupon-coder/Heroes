@@ -75,14 +75,14 @@ Probados con 400 partidas simuladas por bots (`src/config.js`):
 | 4 | Orco | 🔴🔴🔴 |
 | 5 | Súcubo | 🔵🔵🟡 |
 | 6 | Minotauro | 🟢🟢🟢🟡 |
-| 7 | Ogro | 🔴🔴🟢🟢 |
-| 8 | Trol | 🔵🔵🔵🟡 |
-| 9 | Espectro | 🟢🟢🟡🟡 |
-| 10 | Gólem | 🔴🔵🟢🟡 |
+| 7 | Mago Oscuro | 🔴🔴🟢🟢 |
+| 8 | Ogro | 🔵🔵🔵🟡 |
+| 9 | Trol | 🟢🟢🟡🟡 |
+| 10 | Espectro | 🔴🔵🟢🟡 |
 | 11 | Basilisco | 🔴🔴🔵🟢🟡 |
 | 12 | Dragón | 🔴🔵🟢🟡🟡 |
 
-Mantícora y Quimera se sustituyen por el Diablillo de los Bosques y el Minotauro, y los 12 monstruos se ordenan de menos a más poderosos según sus ilustraciones.
+Mantícora, Quimera y Gólem se sustituyen por el Diablillo de los Bosques, el Minotauro y el Mago Oscuro, y los 12 monstruos se ordenan de menos a más poderosos según sus ilustraciones.
 
 **Tamaños.** Cada monstruo aparece en uno de 3 tamaños (las 3 figuras de su lámina):
 

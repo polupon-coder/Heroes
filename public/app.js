@@ -111,7 +111,7 @@ function itemIcon(it) {
 
 function itemDesc(it) {
   if (it.tipo === 'equipo') {
-    const slot = { arma: 'Arma (1 mano)', dosManos: 'Arma a dos manos', escudo: 'Escudo (1 mano)', yelmo: 'Yelmo', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' }[it.slot];
+    const slot = { arma: 'Arma · ocupa 1 mano', dosManos: 'Arma · ocupa las 2 manos', escudo: 'Escudo · ocupa 1 mano', yelmo: 'Yelmo', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' }[it.slot];
     return `${slot} · +${it.bonus} Fuerza`;
   }
   if (it.efecto === 'mana') return `+${it.valor} Maná durante un combate`;
@@ -426,8 +426,10 @@ function nextDiceHint(f) {
 // ---------- Hoja del héroe
 
 // Las esferas disponibles se muestran como esferas, no como un número de dados.
-function spheresRow(n, color, big = false) {
-  return Array.from({ length: n }, () => `<span class="sphere ${big ? 'big' : ''} ${color}"></span>`).join('');
+// Las primeras `whites` esferas son blancas: el Maná las fija como comodín.
+function spheresRow(n, color, big = false, whites = 0) {
+  const w = Math.min(n, whites);
+  return Array.from({ length: n }, (_, i) => `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'blanco' : color}"></span>`).join('');
 }
 
 function itemTile(it, label) {
@@ -444,28 +446,27 @@ function renderSheet() {
   const hands = inv.manos;
   const handTiles = hands.length === 0
     ? [itemTile(null, 'Mano'), itemTile(null, 'Mano')]
-    : hands[0].slot === 'dosManos' ? [itemTile(hands[0])] : [itemTile(hands[0]), itemTile(hands[1], 'Mano')];
-  const cons = [...inv.pociones, ...inv.pergaminos];
+    : hands[0].slot === 'dosManos' ? [itemTile(hands[0]), `<div class="tile empty taken"><span class="ring"><i>2 manos</i></span></div>`] : [itemTile(hands[0]), itemTile(hands[1], 'Mano')];
+  const slots3 = (list, label) => [0, 1, 2].map((i) => itemTile(list[i], label)).join('');
   return `
-  <div class="me-hero tint-${p.color}">
+  <div class="me-hero">
     ${heroPortrait(p, 'xl')}
     <div class="me-name">${esc(p.name)}${S.phase === 'prep' && p.ready ? ' <span class="check">✔</span>' : ''}</div>
     <div class="me-sub">${raceName(p)} · ${className(p)}</div>
-    <div class="life"><i style="width:${pct}%"></i><span>❤ ${h.vida} / ${h.base.vida}</span></div>
+    <div class="spheres-row mine" title="${nextDiceHint(h.fuerza)}">${spheresRow(h.dados, p.color, true, h.fijables)}</div>
+    <div class="life"><i style="width:${pct}%"></i><span>${h.vida} / ${h.base.vida}</span></div>
   </div>
-  <div class="spheres-have" title="${nextDiceHint(h.fuerza)}">
-    <div class="spheres-row">${spheresRow(h.dados, p.color, true)}</div>
-  </div>
-  <div class="glyphs">
+  <div class="glyphs two">
     <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
-    <div title="Maná${h.manaDisponible !== h.mana ? ' (parte gastada en magia)' : ''}"><b>${h.manaDisponible}</b><span>Maná</span></div>
-    <div title="Dados que puedes fijar con el Maná"><b>${h.fijables}</b><span>Fijables</span></div>
+    <div title="Cada 5 de Maná es una esfera blanca"><b>${h.manaDisponible}</b><span>Maná</span></div>
   </div>
-  ${h.curses ? `<p class="warn">☠ Maldito: repetirás ${h.curses} esfera(s) acertada(s) en tu próximo combate.</p>` : ''}
+  ${h.curses ? `<p class="warn center">Maleficio: repetirás ${h.curses} esfera(s) acertada(s) en tu próximo combate.</p>` : ''}
   <div class="tiles">
-    ${itemTile(inv.yelmo, 'Yelmo')}${itemTile(inv.armadura, 'Armadura')}${itemTile(inv.tunica, 'Túnica')}${itemTile(inv.botas, 'Botas')}${handTiles.join('')}
+    ${itemTile(inv.yelmo, 'Yelmo')}${itemTile(inv.armadura, 'Armadura')}${itemTile(inv.tunica, 'Túnica')}
+    ${itemTile(inv.botas, 'Botas')}${handTiles.join('')}
+    ${slots3(inv.pociones, 'Poción')}
+    ${slots3(inv.pergaminos, 'Pergamino')}
   </div>
-  ${cons.length ? `<div class="tiles">${cons.map((it) => itemTile(it)).join('')}</div>` : ''}
   <p class="muted small center">${h.victorias} victorias · ${h.caidas} caídas</p>`;
 }
 
@@ -494,7 +495,7 @@ function useBtn(it) {
   const h = p.hero;
   const myCombat = isMyTurnCombat();
   let ok = false;
-  if (it.efecto === 'mana') ok = myCombat && !p.combat.manaUsed;
+  if (it.efecto === 'mana') ok = myCombat;
   if (it.efecto === 'curacion') ok = h.vida < h.base.vida && (S.phase === 'prep' || S.phase === 'combat' || (S.phase === 'torneo' && myCombat));
   if (it.efecto === 'robo') ok = S.phase === 'prep';
   if (!ok) return '';
@@ -532,22 +533,18 @@ function renderArena() {
     const pct = Math.max(0, Math.min(100, (h.vida / h.base.vida) * 100));
     const o = opponentOf(p);
     const ready = S.phase === 'prep' && p.ready;
-    const dice = p.combat && p.combat.status === 'activo' && p.combat.dice.length
-      ? `<div class="mini-dice">${p.combat.dice.map((d) => die(d.face, { sm: true, cls: d.fixed ? 'fixed' : '' })).join('')}</div>` : '';
     return `
     <div class="rival ${o.out ? 'out' : ''}">
       <div class="rival-hero">
         ${heroPortrait(p, 'rival')}
         <div class="rival-info">
-          <div class="nm">${chip(p.color)} ${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${p.bot ? ' <small>bot</small>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
-          <div class="muted small">${raceName(p)} · ${className(p)}</div>
+          <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
+          <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables)}</div>
           <div class="life thin"><i style="width:${pct}%"></i></div>
-          <div class="muted small">❤ ${h.vida}/${h.base.vida} · Fuerza ${h.fuerza} · Maná ${h.manaDisponible}</div>
-          <div class="spheres-row">${spheresRow(h.dados, p.color)}</div>
         </div>
       </div>
       <div class="rival-foe ${o.res || ''}">
-        ${o.art ? `${o.art}<div class="foe-name">${o.turn ? '⚔ ' : ''}${esc(o.name)}</div>${dice}` : `<div class="state">${o.txt || ''}</div>`}
+        ${o.art ? `${o.art}<div class="foe-name">${esc(o.name)}</div>` : `<div class="state">${o.txt === '✔ listo' ? '' : o.txt || ''}</div>`}
       </div>
     </div>`;
   }).join('');
@@ -583,6 +580,25 @@ function renderOutcome() {
         ${ui.defeat.fell ? '<p class="center warn">Has caído a 0 Vida: pierdes tus consumibles y tu mejor objeto, y recuperas la Vida inicial.</p>' : ''}
         <div class="row center-row"><button class="btn primary" data-a="closeDefeat">Continuar</button></div>
       </div>`;
+  }
+  // Duelos del torneo en los que no participas: resumen en una ventana.
+  if (S.tournament && ui.seenMatches) {
+    const other = S.tournament.matches.find((x) => x.winner && x.a !== p.id && x.b !== p.id && !ui.seenMatches.has(x.id));
+    if (other) {
+      const w = byId(other.winner);
+      const l = byId(other.winner === other.a ? other.b : other.a);
+      return `
+        <div class="card outcome">
+          <div class="outcome-title">${esc(other.label)}</div>
+          <div class="duel-pair">
+            <figure>${heroPortrait(w, 'duelist')}<figcaption><b>${esc(w.name)}</b><br>${w.hero.vida} Vida</figcaption></figure>
+            <span class="faceoff-vs">vence a</span>
+            <figure class="lost">${heroPortrait(l, 'duelist')}<figcaption><b>${esc(l.name)}</b></figcaption></figure>
+          </div>
+          <p class="center">El duelo duró ${other.turns} ataques. ${esc(w.name)} ${S.tournament.stage === 'final' || S.phase === 'fin' ? '' : 'pasa a la final'}${other.label === 'Final' ? 'gana el torneo' : ''}.</p>
+          <div class="row"><button class="btn primary" data-a="seenOutcome" data-k="t${other.id}" data-m="${other.id}">Continuar</button></div>
+        </div>`;
+    }
   }
   // Fin de un duelo del torneo en el que participas.
   if (S.tournament) {
@@ -690,7 +706,7 @@ const revealQueue = [];
 function detectNewItems() {
   const p = me();
   if (!p || !p.hero) return;
-  const items = [...allItems(p.hero), ...(p.hero.pending || []).map((x) => x.item).filter(Boolean)];
+  const items = allItems(p.hero);
   const ids = new Set(items.map((it) => it.id));
   if (knownItems) {
     for (const it of items) if (!knownItems.has(it.id)) revealQueue.push(it);
@@ -703,7 +719,7 @@ function showReveal() {
   const box = $('reveal');
   if (!box.classList.contains('hidden') || !revealQueue.length) return;
   const it = revealQueue.shift();
-  box.innerHTML = `<div class="reveal-card"><div class="reveal-glow"></div><div class="big-item">${itemIcon(it)}</div><div class="reveal-title">¡Has conseguido!</div><h2>${esc(it.nombre)}</h2><p>${itemDesc(it)}</p></div>`;
+  box.innerHTML = `<div class="reveal-card card"><div class="reveal-title">Has conseguido</div><div class="big-item">${itemIcon(it)}</div><h2>${esc(it.nombre)}</h2><p>${itemDesc(it)}</p></div>`;
   box.classList.remove('hidden');
   Sounds.play('construir');
   clearTimeout(revealTimer);
@@ -736,8 +752,8 @@ function renderPrep() {
   <div class="card">
     <h2>${torneo ? 'Preparación para el Torneo' : `Entre combates · Ronda ${S.round} de ${S.rounds}`}</h2>
     <p class="muted">${torneo
-      ? 'Última oportunidad para comerciar, curarte o lanzar magia. Después empieza el Torneo.'
-      : 'Prepara tu equipo antes de conocer los monstruos de la próxima ronda. Puedes comerciar, curarte, robar con pergaminos o lanzar magia contra otros.'}</p>
+      ? 'Última oportunidad para comerciar, curarte o lanzar maleficios. Después empieza el Torneo.'
+      : 'Prepara tu equipo antes de conocer los monstruos de la próxima ronda. Puedes comerciar, curarte, robar con pergaminos o lanzar maleficios.'}</p>
     <div class="row">
       ${p.ready
         ? '<button class="btn" data-a="ready" data-v="0">Cancelar «Listo»</button>'
@@ -772,18 +788,17 @@ function renderMagic() {
   const amounts = [];
   for (let a = 5; a <= avail; a += 5) amounts.push(a);
   if (!amounts.includes(ui.curse.amount)) ui.curse.amount = amounts[0] || 5;
+  const targets = others().filter((o) => !o.cursedThisRound);
+  if (ui.curse.target && !targets.some((o) => o.id === ui.curse.target)) ui.curse.target = null;
   return `
   <div class="card">
-    <h3>🔮 Magia contra otro héroe</h3>
-    <p class="muted small">Cada 5 de Maná obliga al objetivo a repetir 1 esfera acertada en su próximo combate. Ese Maná quedará gastado para tu próximo combate.</p>
-    ${amounts.length ? `
-      <div class="row" style="margin-bottom:8px">
-        ${others().map((o) => `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${chip(o.color)} ${esc(o.name)}</button>`).join('')}
-      </div>
-      <div class="row">
-        ${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} Maná (${a / 5} esfera${a > 5 ? 's' : ''})</button>`).join('')}
-        <button class="btn small primary" data-a="curse" ${ui.curse.target ? '' : 'disabled'}>Lanzar maldición</button>
-      </div>` : '<p class="muted small">Necesitas al menos 5 de Maná disponible.</p>'}
+    <h3>Maleficios</h3>
+    <p class="muted small center">Cada 5 de Maná obliga a un rival a repetir una esfera acertada en su próximo combate. Ese Maná no lo tendrás en tu próximo combate. Cada héroe solo puede recibir un maleficio por ronda.</p>
+    ${amounts.length && targets.length ? `
+      <div class="row">${targets.map((o) => `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
+      <div class="row">${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} Maná</button>`).join('')}</div>
+      <div class="row"><button class="btn primary" data-a="curse" ${ui.curse.target ? '' : 'disabled'}>Lanzar maleficio</button></div>`
+    : `<p class="muted small center">${amounts.length ? 'Todos los rivales ya han recibido un maleficio esta ronda.' : 'Necesitas al menos 5 de Maná disponible.'}</p>`}
   </div>`;
 }
 
@@ -800,7 +815,8 @@ function renderTrade() {
   };
   return `
   <div class="card">
-    <h3>🤝 Comercio</h3>
+    <h3>Comercio</h3>
+    ${p.tradedThisRound ? '<p class="muted small center">Ya has comerciado esta ronda.</p>' : ''}
     ${incoming.map((t) => { const from = byId(t.from); return `
       <div class="match" style="margin-bottom:8px">
         <b>${esc(from.name)}</b> te ofrece <b>${names(from, t.give)}</b> a cambio de <b>${names(p, t.want)}</b>
@@ -809,11 +825,11 @@ function renderTrade() {
     ${outgoing.map((t) => { const to = byId(t.to); return `
       <div class="match" style="margin-bottom:8px">Ofreces a <b>${esc(to.name)}</b>: ${names(p, t.give)} por ${names(to, t.want)}
         <button class="btn tiny" data-a="tradeResp" data-id="${t.id}" data-ok="0">Retirar</button></div>`; }).join('')}
-    <div class="row" style="margin-bottom:8px">
+    ${p.tradedThisRound || outgoing.length ? '' : `<div class="row" style="margin-bottom:8px">
       <span class="small muted">Proponer a:</span>
-      ${others().map((o) => `<button class="btn small ${ui.trade.to === o.id ? 'selected' : ''}" data-a="tradeTo" data-id="${o.id}">${chip(o.color)} ${esc(o.name)}</button>`).join('')}
-    </div>
-    ${target ? `
+      ${others().filter((o) => !o.tradedThisRound).map((o) => `<button class="btn small ${ui.trade.to === o.id ? 'selected' : ''}" data-a="tradeTo" data-id="${o.id}">${esc(o.name)}</button>`).join('')}
+    </div>`}
+    ${target && !p.tradedThisRound && !outgoing.length ? `
       <div class="offers">
         <div><h4>Das</h4>${pickList(p, ui.trade.give, 'give')}</div>
         <div><h4>Pides a ${esc(target.name)}</h4>${pickList(target, ui.trade.want, 'want')}</div>
@@ -829,9 +845,8 @@ function renderRound() {
     body = `
     <div class="card">
       <h2>Ronda ${S.round}: elige tu monstruo</h2>
-      <p class="muted small">Tienes ${p.hero.dados} esferas ${spheresRow(p.hero.dados, p.color)} y puedes fijar ${p.hero.fijables} con el Maná.</p>
+
       <div class="offers">${p.offers.map((m, i) => monsterCard(m, i, p)).join('')}</div>
-      ${p.offers.every((m) => m.combo.length > p.hero.dados) ? `<p class="center">Ningún monstruo está a tu alcance esta ronda.</p><div class="row center-row"><button class="btn primary" data-a="skip">Pasar la ronda</button></div>` : ''}
     </div>`;
   } else if (p.stage === 'combate') {
     body = `<div class="card">${renderCombat(p, true)}</div>`;
@@ -857,10 +872,9 @@ function monsterCard(m, i, p) {
     ${monsterArt(m)}
     <div class="lvl">Nivel ${m.level} · ${esc(m.tamano || '')} · si pierdes: −${m.dano} Vida</div>
     <div class="name">${esc(m.nombre)}</div>
-    ${m.variante > 1 ? `<div class="size-tag">${'★'.repeat(m.variante)} Más difícil, mejores recompensas</div>` : ''}
     ${comboHtml(m.combo, false)}
     ${tooHard ? `<div class="warn">Necesitas ${m.combo.length} esferas y solo tienes ${p.hero.dados}.</div>` : ''}
-    <h4 style="margin:6px 0 0">Recompensas posibles (elegirás 1)</h4>
+    <h4 style="margin:6px 0 0">Recompensas a elegir</h4>
     ${m.rewards.map((it) => `<div class="reward"><span class="item-ico">${itemIcon(it)}</span><span>${esc(it.nombre)}<div class="muted small">${itemDesc(it)}</div></span></div>`).join('')}
     <button class="btn primary" data-a="monster" data-i="${i}" ${tooHard ? 'disabled' : ''}>${tooHard ? 'Demasiado poderoso' : 'Luchar'}</button>
   </div>`;
@@ -876,7 +890,11 @@ function syncCombatUi() {
     ui.manaMode = false;
     ui.manaPick = new Map();
     ui.manaSel = null;
-    if (cb) cb.dice.forEach((d, i) => { if (d.fixed) ui.held.add(i); });
+    // Las esferas que ya sirven salen marcadas para conservarlas.
+    if (cb) {
+      const { used } = matchDice(cb.dice.map((d) => d.face), cb.combo);
+      cb.dice.forEach((d, i) => { if (d.fixed || (cb.rolls > 0 && used.has(i))) ui.held.add(i); });
+    }
   }
 }
 
@@ -901,33 +919,24 @@ function renderCombat(p, controllable) {
   let controls = '';
   let result = '';
   if (cb.kind === 'duelo' && cb.damage !== undefined) {
-    result = cb.damage > 0 ? `<div class="result win">💥 ¡Golpe! −${cb.damage} Vida</div>` : '<div class="result lose">Ataque fallido</div>';
+    result = cb.damage > 0 ? `<div class="result win">¡Golpe! −${cb.damage} Vida</div>` : '<div class="result lose">Ataque fallido</div>';
   } else if (cb.status === 'victoria') result = `<div class="result win">¡Victoria!</div>`;
   else if (cb.status === 'derrota') result = `<div class="result lose">Derrota</div>`;
-  else if (cb.status === 'cancelado') result = `<div class="muted">Combate terminado</div>`;
+  else if (cb.status === 'cancelado') result = `<div class="muted center">Combate terminado</div>`;
 
   if (controllable && cb.status === 'activo') {
-    if (ui.manaMode) {
-      controls = `
-        <div class="muted small">Toca una esfera y elige su color. Puedes fijar hasta ${fijables}. (${ui.manaPick.size}/${fijables})</div>
-        ${ui.manaSel !== null ? `<div class="palette">${FACES.map((f) => die(f, { attrs: `data-a="pick" data-f="${f}"` })).join('')}</div>` : ''}
-        <div class="row">
-          <button class="btn primary" data-a="manaOk" ${ui.manaPick.size ? '' : 'disabled'}>Confirmar Maná</button>
-          <button class="btn" data-a="manaCancel">Cancelar</button>
-        </div>`;
-    } else {
-      const left = 3 - cb.rolls;
-      const rerollN = cb.dice.filter((d, i) => !d.fixed && !ui.held.has(i)).length;
-      controls = `
-        ${cb.rolls > 0 && left > 0 ? '<div class="muted small">Toca las esferas que quieres conservar y relanza el resto.</div>' : ''}
-        <div class="row">
-          ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Lanzar esferas</button>' : ''}
-          ${cb.rolls > 0 && left > 0 ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
-          ${cb.rolls > 0 && !cb.manaUsed && fijables > 0 ? `<button class="btn" data-a="manaMode">✨ Usar Maná (fijar ${fijables})</button>` : ''}
-          ${cb.rolls > 0 && cb.kind === 'duelo' ? `<button class="btn ${cb.rolls >= 3 ? 'danger' : 'small'}" data-a="endAttack">Terminar ataque (${duelDamage(cb, faces)} de daño)</button>` : ''}
-          ${cb.rolls > 0 && cb.kind !== 'duelo' ? `<button class="btn ${cb.rolls >= 3 ? 'danger' : 'small'}" data-a="concede">${cb.rolls >= 3 ? 'Aceptar derrota' : 'Rendirse'}</button>` : ''}
-        </div>`;
-    }
+    const left = 3 - cb.rolls;
+    const rerollN = cb.dice.filter((d, i) => !d.fixed && !ui.held.has(i)).length;
+    const manaPot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');
+    controls = `
+      ${cb.rolls > 0 && left > 0 ? '<div class="muted small center">Las esferas que te sirven ya están marcadas. Toca para cambiar cuáles conservas.</div>' : ''}
+      <div class="row">
+        ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Lanzar esferas</button>' : ''}
+        ${cb.rolls > 0 && left > 0 ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
+      </div>
+      ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
+      ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">Terminar ataque (${duelDamage(cb, faces)} de daño)</button></div>` : ''}
+      ${cb.rolls >= 3 && cb.kind !== 'duelo' ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}`;
   }
 
   const holder = mine ? 'Tus esferas' : `Esferas de ${esc(p.name)}`;
@@ -941,14 +950,11 @@ function renderCombat(p, controllable) {
   }
   return `
   <div class="combat">
-    ${foe ? `<figure class="foe-big">${foe}<figcaption>${esc(foeName)}</figcaption></figure>` : ''}
-    <div class="row"><h2 style="margin:0">${esc(cb.label)}</h2><span class="spacer"></span>
-      <span class="pill">Tirada ${cb.rolls}/3</span>
-      <span class="pill">${cb.manaUsed ? 'Maná usado' : `Maná ${mine ? p.hero.manaCombate : ''} sin usar`}</span>
-      ${cb.cursesLeft ? `<span class="pill">☠ ${cb.cursesLeft} maldición(es)</span>` : ''}
-    </div>
+    ${foe && cb.kind === 'monstruo' ? `<figure class="foe-big">${foe}<figcaption>${esc(foeName)}</figcaption></figure>` : ''}
+    <h2 class="center" style="margin:0">${esc(cb.label)}</h2>
+    <div class="row"><span class="pill">Tirada ${cb.rolls}/3</span>${cb.cursesLeft ? `<span class="pill">Maleficio: ${cb.cursesLeft}</span>` : ''}</div>
     <div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>
-    <div><div class="muted small" style="margin-bottom:8px">${holder}</div><div class="dice">${diceHtml}</div></div>
+    <div><div class="muted small center" style="margin-bottom:8px">${holder}</div><div class="dice">${diceHtml}</div></div>
     ${result}
     ${controls}
     <div class="events">${cb.events.slice().reverse().map((e) => `<div>${esc(e)}</div>`).join('')}</div>
@@ -966,7 +972,7 @@ function renderTournament() {
   const t = S.tournament;
   const rank = `
     <div class="card">
-      <h2>🏆 Torneo</h2>
+      <h2>Torneo</h2>
       <p class="muted small">El atacante saca resultados del color del rival (el blanco vale como comodín). Daño: ${S.settings.pvpHits - 2} resultados → 1, ${S.settings.pvpHits - 1} → 2, ${S.settings.pvpHits} → 3. Puedes terminar el ataque cuando quieras.</p>
       <h4>Clasificación (Fuerza + Maná)</h4>
       ${t.ranking.map((id, i) => { const x = byId(id); return `<div class="fighter">${i + 1}. ${heroPortrait(x, 'xs')} ${chip(x.color)} ${esc(x.name)} <span class="hp">${x.hero.puntuacion}</span></div>`; }).join('')}
@@ -974,8 +980,8 @@ function renderTournament() {
   let choose = '';
   if (t.stage === 'eleccion') {
     if (t.ranking[0] === S.me) {
-      choose = `<div class="card"><h3>Elige rival para tu semifinal</h3><div class="row">
-        ${t.ranking.slice(1).map((id) => { const x = byId(id); return `<button class="btn choice" data-a="rival" data-id="${id}">${heroPortrait(x, 'sm')} ${chip(x.color)} ${esc(x.name)} · ❤${x.hero.vida} · F+M ${x.hero.puntuacion}</button>`; }).join('')}
+      choose = `<div class="card"><h3>Elige rival para tu semifinal</h3><div class="row rival-pick">
+        ${t.ranking.slice(1).map((id) => { const x = byId(id); return `<button class="rival-card" data-a="rival" data-id="${id}">${heroPortrait(x, 'duelist')}<b>${esc(x.name)}</b><span>${x.hero.vida} Vida · Fuerza ${x.hero.fuerza} · Maná ${x.hero.mana}</span></button>`; }).join('')}
       </div></div>`;
     } else {
       choose = `<div class="card muted">${esc(byId(t.ranking[0]).name)} está eligiendo rival…</div>`;
@@ -986,12 +992,14 @@ function renderTournament() {
     const b = byId(m.b);
     const live = !m.winner;
     const att = byId(m.attacker);
-    const fighter = (x) => `<div class="fighter ${m.winner === x.id ? 'win' : ''}">${heroPortrait(x, 'sm')} ${chip(x.color)} ${esc(x.name)} ${live && m.attacker === x.id ? '⚔' : ''}<span class="hp">❤ ${x.hero.vida}</span></div>`;
+    const mineMatch = m.a === S.me || m.b === S.me;
+    const fighter = (x) => `<div class="fighter big ${m.winner === x.id ? 'win' : ''} ${live && m.attacker === x.id ? 'attacking' : ''}">${heroPortrait(x, 'duelist')}<b>${esc(x.name)}</b><span class="hp">${x.hero.vida} Vida</span></div>`;
     return `
     <div class="card match ${live ? 'live' : ''}">
       <h3>${esc(m.label)}${m.winner ? ` · gana ${esc(byId(m.winner).name)}` : ''}</h3>
-      <div class="vs">${fighter(a)}${fighter(b)}</div>
-      ${live && att.combat ? `<div style="margin-top:12px">${renderCombat(att, att.id === S.me)}</div>` : ''}
+      <div class="vs duel-pair">${fighter(a)}<span class="faceoff-vs">vs</span>${fighter(b)}</div>
+      ${live && mineMatch && att.combat ? `<div style="margin-top:12px">${renderCombat(att, att.id === S.me)}</div>` : ''}
+      ${live && !mineMatch ? '<p class="muted center small">Duelo en curso…</p>' : ''}
     </div>`;
   }).join('');
   const bye = t.bye ? `<div class="card muted">${esc(byId(t.bye).name)} espera en la final.</div>` : '';
@@ -1034,10 +1042,12 @@ function renderModal() {
   modal.classList.remove('hidden');
   modal.innerHTML = `
     <div class="card">
-      <h2>${itemIcon(pend.item)} ${esc(pend.item.nombre)}</h2>
-      <p class="muted">${itemDesc(pend.item)}</p>
-      <p>No tienes espacio libre para este objeto. ¿Qué haces?</p>
-      <div class="opts">${pend.options.map((o) => `<button class="btn ${o.id === 'descartar' ? '' : 'primary'}" data-a="pending" data-c="${o.id}">${esc(o.label)}</button>`).join('')}</div>
+      <div class="big-item center">${itemIcon(pend.item)}</div>
+      <h2>${esc(pend.item.nombre)}</h2>
+      <p class="muted center">${itemDesc(pend.item)}</p>
+      <p class="center">No tienes espacio libre para este objeto. ¿Qué haces?</p>
+      <div class="opts">${pend.options.map((o) => `<button class="btn ${o.torpe ? 'torpe' : 'primary'}" data-a="pending" data-c="${o.id}">${esc(o.label)}</button>`).join('')}</div>
+      ${pend.fromReward ? '<div class="row"><button class="link-btn" data-a="undoReward">Deshacer y volver a elegir recompensa</button></div>' : ''}
     </div>`;
 }
 
@@ -1120,10 +1130,12 @@ document.addEventListener('click', (e) => {
       act('mana', { assign: [...ui.manaPick].map(([index, face]) => ({ index, face })) });
       break;
     case 'endAttack': act('concede'); break;
+    case 'concedeNow': act('concede'); break;
     case 'concede':
       if (confirm('¿Aceptar la derrota?')) act('concede');
       break;
     case 'rival': act('chooseRival', { rivalId: d.id }); break;
+    case 'undoReward': act('undoReward'); break;
     case 'pending': act('resolvePending', { choice: d.c }); break;
     case 'exit':
       if (!confirm('¿Salir de la sala? Podrás volver con el mismo enlace.')) break;

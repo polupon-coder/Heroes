@@ -644,3 +644,87 @@ html, body { background: #e9dcc0 url(img/ui/fondo.webp) center / cover fixed no-
 .reward-choice .item-img { width: 120px; height: 120px; }
 
 .item-img { -webkit-mask-image: none !important; mask-image: none !important; border-radius: 0 !important; mix-blend-mode: normal !important; }
+
+/* =========================================================================
+   Revisión 3: botones de línea fina, paneles iguales y héroe más claro
+   ========================================================================= */
+
+/* Portada: un solo pergamino (sin el doble borde en los extremos) */
+body.at-home, html:has(body.at-home) { background: #e7d8b8; }
+body.at-home .home { padding: 18px; }
+
+/* Botones: línea fina, sin marcos metálicos */
+.btn, .btn.primary, .btn.small, .btn.tiny, .btn.danger, .btn.selected,
+.btn:hover:not(:disabled), .btn.primary:hover:not(:disabled) {
+  background: rgba(255, 249, 236, .55);
+  border: 1px solid rgba(90, 62, 34, .55);
+  border-radius: 999px;
+  min-height: 0; min-width: 0;
+  padding: 7px 22px;
+  font: 600 .95rem var(--title);
+  letter-spacing: .03em;
+  color: var(--ink);
+  filter: none; box-shadow: none; -webkit-mask: none; mask: none;
+}
+.btn:hover:not(:disabled) { background: rgba(255, 249, 236, .95); border-color: var(--rubric); color: var(--rubric-dark); }
+.btn.primary { color: var(--rubric-dark); border-color: rgba(138, 43, 29, .7); padding: 9px 28px; font-size: 1.02rem; }
+.btn.primary:hover:not(:disabled) { color: var(--rubric); }
+.btn.small { padding: 5px 16px; font-size: .86rem; }
+.btn.tiny { padding: 3px 12px; font-size: .78rem; }
+.btn.selected { background: rgba(201, 163, 90, .35); border-color: var(--gold); color: var(--rubric-dark); }
+.btn.torpe { opacity: .55; border-style: dashed; font-weight: 500; color: var(--muted); }
+.btn:disabled { opacity: .4; }
+
+/* Los tres paneles con la misma altura */
+.table3 { align-items: stretch; }
+.col-me { position: static; }
+.col-stage { display: flex; flex-direction: column; }
+.col-stage > .card { flex: 1; }
+
+/* Mi héroe */
+.me-hero .me-name { margin-top: 2px; }
+.spheres-row { display: flex; justify-content: center; flex-wrap: nowrap; gap: 4px; margin: 6px 0; }
+.spheres-row.mine .sphere.big { width: 34px; height: 34px; margin: 0; }
+.sphere.blanco { background-image: url(img/dados/blanco.webp); }
+.life > span { color: var(--ink); text-shadow: 0 0 3px #f6ecd6, 0 0 3px #f6ecd6; font-weight: 700; }
+.glyphs.two { grid-template-columns: 1fr 1fr; }
+.tiles { grid-template-columns: repeat(3, 1fr); gap: 10px 6px; }
+.tile { width: 100%; }
+.tile .ring, .tile.empty .ring { width: 58px; height: 58px; }
+.tile .ring .item-img { width: 58px; height: 58px; }
+.tile.empty .ring { border: 1px dashed rgba(120, 90, 50, .4); border-radius: 12px; }
+.tile.empty.taken .ring { border-style: dotted; opacity: .6; }
+.tile > span:last-child { font-size: .68rem; line-height: 1.1; min-height: 2.2em; }
+
+/* Contrincantes: retrato grande, nombre y esferas debajo */
+.portrait.rival { width: 104px; height: 138px; }
+.rival-info .spheres-row { justify-content: flex-start; }
+.rival-info .sphere { width: 15px; height: 15px; }
+.rival-info .nm { font-size: 1rem; }
+.rival-foe { margin-left: 112px; }
+
+/* Torneo: duelistas grandes */
+.portrait.duelist { width: 140px; height: 186px; }
+.duel-pair { display: flex; align-items: flex-end; justify-content: center; gap: 12px; }
+.duel-pair .faceoff-vs { align-self: center; font-size: 1.3em; }
+.duel-pair figure { margin: 0; text-align: center; }
+.duel-pair figure.lost { filter: grayscale(.8); opacity: .6; }
+.fighter.big { flex-direction: column; text-align: center; gap: 2px; }
+.fighter.big .hp { margin: 0; color: var(--muted); }
+.fighter.attacking b { color: var(--rubric); }
+.rival-pick { gap: 16px; }
+.rival-card { background: none; border: 1px solid transparent; border-radius: 18px; padding: 6px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; font: inherit; color: var(--ink); }
+.rival-card:hover { border-color: var(--rubric); background: rgba(255, 248, 230, .6); }
+.rival-card span { font-size: .8rem; color: var(--muted); }
+
+/* Lo conseguido: tamaño natural y sobre pergamino */
+.reveal-card.card { max-width: 340px; padding: 6px 18px 10px !important; }
+.reveal .big-item .item-img { width: 150px !important; height: 150px !important; }
+.reveal h2 { color: var(--ink); text-shadow: none; font-size: 1.3em; }
+.reveal p { color: var(--muted); text-shadow: none; }
+.reveal-title { color: var(--rubric-dark); text-shadow: none; }
+.modal .big-item .item-img { width: 130px; height: 130px; }
+.reward-choice .item-img { width: 130px !important; height: 130px !important; }
+
+.vs.duel-pair { flex-direction: row; align-items: flex-end; }
+.duel-pair .fighter.big { flex: 0 1 180px; }

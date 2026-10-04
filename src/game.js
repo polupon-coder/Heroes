@@ -640,6 +640,8 @@ class Game {
         raza: p.raza,
         clase: p.clase,
         ready: p.ready,
+        cursedThisRound: !!p.cursedThisRound,
+        tradedThisRound: !!p.tradedThisRound,
         stage: p.stage,
         offers: p.offers,
         monster: p.monster,

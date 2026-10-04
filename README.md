@@ -19,18 +19,21 @@ Para jugar con amigos que no están en tu red, el servidor tiene que estar publi
 
 ## Publicarlo en internet (gratis)
 
-### Render.com
+### Render.com (recomendado)
 
-1. Crea una cuenta en <https://render.com> y conecta tu GitHub.
-2. **New → Web Service** y elige este repositorio.
-3. Configuración:
-   - Runtime: **Node**
-   - Build command: `npm install`
-   - Start command: `npm start`
-   - Instance type: **Free**
-4. Al terminar, Render te da una dirección como `https://heroes-xxxx.onrender.com`. Pásasela a tus amigos.
+El repositorio incluye `render.yaml`, así que Render lo configura solo:
 
-> En el plan gratuito el servidor se duerme tras unos minutos sin uso y tarda unos 30–60 s en despertar. Las partidas se guardan en memoria, así que si el servidor se reinicia, las partidas en curso se pierden.
+1. Entra en <https://render.com> y pulsa **Get Started**. Regístrate con **GitHub**.
+2. En el panel, pulsa **New +** → **Blueprint**.
+3. Si te lo pide, autoriza a Render a ver tus repositorios (puedes elegir solo `Heroes`).
+4. Elige el repositorio **Heroes** y pulsa **Connect**.
+5. Render lee `render.yaml` y muestra el servicio `heroes` (plan Free). Pulsa **Apply** / **Deploy Blueprint**.
+6. Espera 2–3 minutos. Cuando ponga **Live**, abre el servicio y copia su dirección, del estilo `https://heroes-xxxx.onrender.com`.
+7. Pasa esa dirección a tus amigos: uno crea la partida y los demás entran con el código.
+
+Cada vez que se suban cambios a la rama, Render vuelve a publicar el juego automáticamente.
+
+> En el plan gratuito el servidor se duerme tras unos 15 minutos sin uso y tarda unos 30–60 s en despertar: abre la página un minuto antes de quedar. Las partidas se guardan en memoria, así que si el servidor se reinicia, las partidas en curso se pierden.
 
 Railway o Fly.io también sirven: es una app Node normal que escucha en la variable `PORT`.
 

@@ -1,0 +1,10 @@
+# Configuración para publicar en Render.com (New → Blueprint)
+services:
+  - type: web
+    name: heroes
+    runtime: node
+    plan: free
+    branch: claude/heroes-game-multiplayer-o45c5z
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz

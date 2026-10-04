@@ -428,7 +428,7 @@ function renderOthers() {
     const mini = p.combat && S.phase === 'combat' && p.stage === 'combate'
       ? `<div class="mini-combat"><span class="small muted">${esc(p.combat.label)}:</span>${p.combat.dice.map((d) => die(d.face, { sm: true, cls: d.fixed ? 'fixed' : '' })).join('')}<span class="small muted">tirada ${p.combat.rolls}/3</span></div>`
       : '';
-    const equip = allItems(h).map((it) => `${itemIcon(it)} ${esc(it.nombre)}`).join(' · ');
+    const equip = allItems(h).map((it) => `<span class="thumb" title="${esc(it.nombre)} — ${esc(itemDesc(it))}">${itemIcon(it)}</span>`).join('');
     return `
     <div class="card other">
       <div class="top">${chip(p.color)}<span class="name">${esc(p.name)}</span>${p.bot ? '<span class="badge">bot</span>' : ''}${!p.connected && !p.bot ? '<span class="badge off">desconectado</span>' : ''}${st}</div>
@@ -438,7 +438,7 @@ function renderOthers() {
           <div class="meta">${raceName(p)} ${className(p)}</div>
           <div class="meta">❤ ${h.vida}/${h.base.vida} · 💪 ${h.fuerza} (🎲${h.dados}) · ✨ ${h.manaDisponible}${h.curses ? ` · ☠${h.curses}` : ''}</div>
           <div class="bar"><i style="width:${pct}%"></i></div>
-          <div class="meta">${equip || 'Sin objetos'}</div>
+          <div class="thumbs">${equip || '<span class="meta">Sin objetos</span>'}</div>
         </div>
       </div>
       ${mini}

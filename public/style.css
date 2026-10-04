@@ -291,3 +291,8 @@ input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
   .die { width: 46px; height: 46px; }
   .topbar { flex-wrap: wrap; gap: 6px; }
 }
+
+/* Miniaturas de objetos en las tarjetas de los rivales */
+.thumbs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.thumbs .thumb { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center; font-size: 18px; cursor: help; }
+.thumbs .thumb .item-img { width: 30px; height: 30px; margin: 0; }

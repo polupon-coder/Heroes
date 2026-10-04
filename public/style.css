@@ -534,3 +534,48 @@ body { background-image: radial-gradient(ellipse at center, transparent 55%, rgb
 .col-me, .col-rivals { padding: 4px 6px 8px !important; }
 .col-me .portrait.xl { -webkit-mask-image: radial-gradient(ellipse closest-side, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse closest-side, #000 62%, transparent 100%); }
 .col-rivals .rival:last-child { border-bottom: none; }
+
+/* =========================================================================
+   Pergamino horizontal y marcos metálicos del autor
+   ========================================================================= */
+.card, .modal .card, .journal, .home-sheet {
+  border-image: url(img/ui/pergamino-h.webp) 70 fill / 30px stretch;
+}
+.home-sheet { border-width: 60px; border-image-width: 60px; }
+
+/* Botones: el marco alargado */
+.btn {
+  -webkit-mask: none; mask: none;
+  background: url(img/ui/marco-alargado.webp) center / 100% 100% no-repeat;
+  border: none; border-radius: 0;
+  min-height: 50px; min-width: 116px; padding: 12px 30px 13px;
+  color: var(--ink); font: 600 1rem var(--title); letter-spacing: .03em;
+  filter: drop-shadow(0 2px 2px rgba(58, 34, 15, .35));
+  transition: transform .12s, filter .12s;
+}
+.btn:hover:not(:disabled) { background: url(img/ui/marco-alargado.webp) center / 100% 100% no-repeat; filter: drop-shadow(0 3px 4px rgba(58, 34, 15, .45)) brightness(1.06); color: var(--rubric-dark); }
+.btn.primary { background: url(img/ui/marco-alargado.webp) center / 100% 100% no-repeat; color: var(--rubric-dark); font-weight: 700; min-height: 58px; padding: 14px 36px 15px; }
+.btn.primary:hover:not(:disabled) { background: url(img/ui/marco-alargado.webp) center / 100% 100% no-repeat; color: var(--rubric); }
+.btn.selected { background: url(img/ui/marco-alargado.webp) center / 100% 100% no-repeat; color: var(--rubric); filter: drop-shadow(0 0 6px rgba(201, 150, 44, .9)); }
+.btn.danger { background: url(img/ui/marco-alargado.webp) center / 100% 100% no-repeat; color: var(--rubric); }
+.btn.small { min-height: 40px; min-width: 92px; padding: 8px 22px 9px; font-size: .88rem; }
+.btn.tiny { min-height: 32px; min-width: 60px; padding: 5px 16px 6px; font-size: .78rem; }
+.btn:disabled { opacity: .45; filter: grayscale(.6); }
+/* Las opciones de raza y clase siguen como fichas sencillas */
+.btn.choice { background: rgba(255, 248, 230, .5); border: 1px solid var(--line); border-radius: 14px; min-height: 0; min-width: 0; padding: 5px 10px; font: 600 .95rem var(--text); filter: none; }
+.btn.choice:hover:not(:disabled) { background: rgba(255, 248, 230, .8); filter: none; }
+.btn.choice.selected { background: rgba(201, 163, 90, .35); border-color: var(--gold); filter: none; }
+
+/* Equipo: el marco redondo */
+.tile .ring { position: relative; display: grid; place-items: center; width: 74px; height: 74px;
+  background: url(img/ui/marco-redondo.webp) center / contain no-repeat; }
+.tile .ring .item-img { width: 52px; height: 52px; border: none; margin: 0; -webkit-mask-image: radial-gradient(circle, #000 64%, transparent 72%); mask-image: radial-gradient(circle, #000 64%, transparent 72%); }
+.tile .ring .item-ico { font-size: 28px; }
+.tile.empty { background: none; min-height: 0; }
+.tile.empty .ring i { font-size: .72rem; color: rgba(110, 80, 50, .6); font-style: italic; }
+.small-tiles .tile .ring { width: 60px; height: 60px; }
+.small-tiles .tile .ring .item-img { width: 42px; height: 42px; }
+
+/* Recompensas: el marco cuadrado */
+.frame-sq { display: grid; place-items: center; width: 150px; height: 144px; background: url(img/ui/marco-cuadrado.webp) center / 100% 100% no-repeat; }
+.reward-choice .frame-sq .item-img { width: 104px; height: 104px; -webkit-mask-image: none; mask-image: none; border-radius: 4px; }

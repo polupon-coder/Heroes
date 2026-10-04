@@ -435,8 +435,8 @@ function spheresRow(n, color, big = false) {
 }
 
 function itemTile(it, label) {
-  if (!it) return `<div class="tile empty"><span>${label}</span></div>`;
-  return `<button class="tile" data-a="item" data-id="${it.id}" title="${esc(it.nombre)}">${itemIcon(it)}<span>${esc(it.nombre)}</span></button>`;
+  if (!it) return `<div class="tile empty"><span class="ring"><i>${label}</i></span></div>`;
+  return `<button class="tile" data-a="item" data-id="${it.id}" title="${esc(it.nombre)}"><span class="ring">${itemIcon(it)}</span><span>${esc(it.nombre)}</span></button>`;
 }
 
 function renderSheet() {
@@ -573,7 +573,7 @@ function renderOutcome() {
         <p class="center">Has derrotado a ${esc(p.monster.nombre)} ${esc((p.monster.tamano || '').toLowerCase())}. Elige tu recompensa:</p>
         <div class="reward-pick">${p.rewards.map((it, i) => `
           <button class="reward-choice" data-a="reward" data-i="${i}">
-            <span class="big-item">${itemIcon(it)}</span>
+            <span class="big-item frame-sq">${itemIcon(it)}</span>
             <b>${esc(it.nombre)}</b><small>${itemDesc(it)}</small>
           </button>`).join('')}</div>
       </div>`;

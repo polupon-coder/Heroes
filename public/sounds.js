@@ -41,9 +41,9 @@ const Sounds = (() => {
   }
 
   // Música de la portada, la sala y el Torneo, en bucle y muy suave.
-  const music = new Audio('sonidos/musica-portada.mp3');
+  const music = new Audio('sonidos/musica-aventura.mp3');
   music.loop = true;
-  music.volume = 0.15;
+  music.volume = 0.2;
   music.preload = 'auto';
   let musicWanted = false;
   function updateMusic() {

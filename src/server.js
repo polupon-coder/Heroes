@@ -18,7 +18,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// Siempre se revalida con el servidor (ETag): tras cada despliegue se ven las
+// ilustraciones y estilos nuevos, no los que el navegador tenía guardados.
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+}));
 function listImages(dir) {
   try {
     return fs.readdirSync(path.join(__dirname, '..', 'public', 'img', dir))

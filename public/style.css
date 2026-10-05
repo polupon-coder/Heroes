@@ -1527,3 +1527,9 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .curse-pick .dc-skulls { display: flex; gap: 2px; }
 .curse-pick .dc-skulls img { width: 30px; height: 30px; }
 .curse-pick .dc-opt small { font-size: .75rem; color: #6b3fa0; }
+/* Ventana de maldecir: compacta */
+.modal .card.outcome.curse-pick { min-height: 0 !important; height: auto !important; max-height: none !important; justify-content: center !important; gap: 10px; padding: 26px 18px 22px !important; }
+.modal .card.outcome.curse-pick .outcome-title { font-size: 1.5rem; margin: 0; }
+.modal .card.outcome.curse-pick > p { margin: 0; }
+.modal .card.outcome.curse-pick .dc-opts { margin: 4px 0 0; }
+@media (max-width: 760px) { .modal:has(.curse-pick) { align-items: center; } }

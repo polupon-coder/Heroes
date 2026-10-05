@@ -907,7 +907,7 @@ function renderPrep() {
   const incoming = pendingCounters().length + unansweredTrades().length;
   return `
   <div class="card prep-card">
-    <img class="prep-cover" src="img/ui/espadas.webp" alt="">
+    <img class="prep-cover" src="img/ui/${torneo || prefinal ? 'espadas' : 'monstruo'}.webp" alt="">
     <h2>${prefinal ? 'Preparación para la final' : torneo ? 'Preparación para el Torneo' : `Ronda ${S.round} de ${S.rounds}`}</h2>
     <div class="prep-actions">
       ${p.ready

@@ -1480,3 +1480,6 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .col-me .me-hero .spheres-row { margin: 0 0 8px; }
   .col-me .me-hero .life { margin: 0 0 6px; }
 }
+@media (max-width: 760px) {
+  .foe-card .rewards-sum { flex-direction: column; align-items: center; flex-wrap: nowrap; gap: 6px; }
+}

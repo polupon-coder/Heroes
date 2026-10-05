@@ -51,16 +51,11 @@ function makeEquipment(rng, level, nextId, inv) {
         : slot === 'armadura' ? 'cota'
           : slot === 'tunica' ? 'tunica'
           : undefined;
-  const names = {
-    yelmo: [['Yelmo nasal', 'Casco de cuero y hierro'], ['Yelmo de acero', 'Yelmo de caballero'], ['Yelmo alado', 'Yelmo real']][grado - 1],
-    armadura: [['Jubón de cuero', 'Armadura de explorador'], ['Cota de malla del bosque', 'Brigantina'], ['Coraza de hojas de oro', 'Armadura del guardián']][grado - 1],
-    tunica: [['Túnica de lana', 'Hábito con capucha'], ['Túnica del bosque', 'Manto de hojas'], ['Túnica del gran druida', 'Manto de la arboleda']][grado - 1],
-    botas: [['Botas de viaje', 'Botas de cuero'], ['Botas de explorador', 'Botas con hebillas'], ['Botas élficas', 'Botas del bosque']][grado - 1],
-  }[slot];
   // Las túnicas no dan Fuerza sino Maná (el doble de puntos).
   if (slot === 'tunica') bonus *= 2;
-  // Armas y escudos se llaman sin adornos: Espada, Arco, Hacha…
-  const simple = { espada: 'Espada', maza: 'Maza', arco: 'Arco', hacha: 'Hacha', baculo: 'Báculo', cayado: 'Cayado', escudo: 'Escudo' }[forma];
+  // Nombres sin adornos: Espada, Arco, Yelmo, Armadura…
+  const simple = { espada: 'Espada', maza: 'Maza', arco: 'Arco', hacha: 'Hacha', baculo: 'Báculo', cayado: 'Cayado', escudo: 'Escudo' }[forma]
+    || { yelmo: 'Yelmo', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' }[slot];
   return {
     id: nextId(),
     tipo: 'equipo',
@@ -70,7 +65,7 @@ function makeEquipment(rng, level, nextId, inv) {
     grado,
     stat: slot === 'tunica' ? 'mana' : 'fuerza',
     afin: C.ARMA_AFIN[forma] || undefined,
-    nombre: `${simple || pick(rng, names)} +${bonus}`,
+    nombre: `${simple} +${bonus}`,
   };
 }
 

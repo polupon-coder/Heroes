@@ -53,7 +53,7 @@ function afinidad(raza, clase) {
 
 const CLASSES = {
   guerrero: { nombre: 'Guerrero', vida: 2, mana: 2, fuerza: 3 },
-  mago: { nombre: 'Mago', vida: 2, mana: 2, fuerza: 0 },
+  mago: { nombre: 'Mago', vida: 2, mana: 1, fuerza: 0 },
   ladron: { nombre: 'Ladrón', vida: 2, mana: 1, fuerza: 2 },
   druida: { nombre: 'Druida', vida: 2, mana: 2, fuerza: 2 },
   explorador: { nombre: 'Explorador', vida: 2, mana: 1, fuerza: 2 },

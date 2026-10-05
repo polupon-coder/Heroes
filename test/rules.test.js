@@ -212,8 +212,8 @@ test('dos monstruos a la vez: colores o formas, y se presenta contra uno', () =>
   const whites = p.combat.dice.filter((d) => d.fixed && d.face === 'multicolor' && d.shape === 'espiral').length;
   assert.strictEqual(whites, Math.min(Math.floor(p.hero.base.mana / 5), p.combat.diceCount));
   // Fuerza: un monstruo de formas fácil que se completa con comodines
-  p.offers[0] = { ...p.offers[0], tipo: 'forma', combo: ['rombo', 'rombo'] };
-  p.combat.targets[0] = { tipo: 'forma', combo: ['rombo', 'rombo'] };
+  p.offers[0] = { ...p.offers[0], tipo: 'forma', combo: ['rombo'] };
+  p.combat.targets[0] = { tipo: 'forma', combo: ['rombo'] };
   p.combat.targets[1] = { tipo: 'color', combo: ['rojo', 'rojo', 'rojo', 'rojo'] };
   g.act(p.id, 'roll', {});
   assert.throws(() => g.act(p.id, 'present', { index: 1 }), /no completan/);

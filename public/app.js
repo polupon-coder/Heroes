@@ -787,7 +787,7 @@ const RULES = {
     <section><h4>Maleficio</h4><p>Gasta 5 de Maná: el rival repetirá una esfera acertada en su próximo combate (verás cuál, en morado).
       Cada héroe recibe como mucho uno por ronda.</p></section>`],
   torneo: ['Torneo', `
-    <section><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. El que más Fuerza + Maná tiene elige rival;
+    <section><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. Las semifinales se sortean;
       se juega un duelo detrás de otro. Antes de la final hay una ronda para comerciar, comprar, robar o lanzar maleficios, y durante la final puedes lanzar un maleficio a tu rival en cada intercambio de ataques (mientras él ataca).</p></section>
     <section><h4>Golpear</h4><p>Saca esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Se ataca por turnos hasta que uno cae.</p></section>
     <section><h4>Premios</h4><p>Quien gana una semifinal elige <b>un objeto</b> del vencido y se lleva sus <b>monedas</b> y un premio.

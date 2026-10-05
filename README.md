@@ -129,6 +129,6 @@ Son provisionales y fáciles de cambiar:
 10. **Maldición (regla 29):** afecta a los dados recién tirados que cuentan para la combinación; los dados fijados con Maná no se ven afectados. La magia se puede lanzar a partir de la ronda 2.
 11. **Rendirse:** se puede aceptar la derrota en cualquier momento tras la primera tirada.
 12. **Hay una última fase «entre combates»** después de la ronda 12 para preparar el torneo.
-13. **Torneo:** ataca primero quien tenga **menos** Fuerza + Maná (el más fuerte ya tiene la ventaja de elegir rival). Cada ataque es un combate (Maná una vez por ataque). Los empates en la clasificación se deshacen por Vida y luego al azar.
+13. **Torneo:** ataca primero quien tenga **menos** Fuerza + Maná (las semifinales se sortean). Cada ataque es un combate (Maná una vez por ataque). Los empates en la clasificación se deshacen por Vida y luego al azar.
 14. **Duelos imposibles:** si un héroe no tiene dados suficientes para hacer al menos 1 de daño (3 dados con el golpe completo de 5), pierde su turno. Si **ninguno** de los dos puede hacer daño, gana quien tenga más Vida (y si empatan, más Fuerza + Maná).
 15. **Menos de 4 jugadores** (para pruebas): con 3 jugadores, el primer clasificado pasa directamente a la final; con 2, se juega solo la final.

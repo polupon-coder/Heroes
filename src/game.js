@@ -572,8 +572,17 @@ class Game {
       this.tournament.stage = 'semis';
       this.startAttack(this.addMatch('Semifinal', ranking[1], ranking[2]));
     } else {
-      this.tournament.stage = 'eleccion';
-      this.say(`${this.player(ranking[0]).name} elige rival para su semifinal.`);
+      // Los emparejamientos de las semifinales se sortean.
+      const order = [...ranking];
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(this.rng() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      this.tournament.stage = 'semis';
+      this.say('Se sortean las semifinales.');
+      const m1 = this.addMatch('Semifinal 1', order[0], order[1]);
+      this.addMatch('Semifinal 2', order[2], order[3]);
+      this.startAttack(m1);
     }
   }
 

@@ -1210,7 +1210,7 @@ function foesHtml(p, cb, all, controllable) {
     const can = controllable && !done && cb.rolls > 0 && st.ok;
     const state = done
       ? (chosen ? '<div class="need ok">Derrotado</div>' : '')
-      : cb.rolls === 0 ? '' : st.ok ? '<div class="need ok">¡Lo tienes!</div>' : `<div class="need">Te faltan ${st.missing}</div>`;
+      : cb.rolls === 0 ? '' : st.ok ? '' : `<div class="need">Te faltan ${st.missing}</div>`;
     return `
     <div class="foe-card ${st.ok && !done ? 'ready' : ''} ${chosen ? 'chosen' : ''} ${faded ? 'faded' : ''}">
       <div class="foe-art">${monsterArt(m, 'duel-art')}</div>
@@ -1219,7 +1219,7 @@ function foesHtml(p, cb, all, controllable) {
       <div class="foe-dmg" title="Vida que pierdes si no lo derrotas">−${m.dano}</div>
       ${comboHtml(m.combo, false, m.tipo)}
       ${state}
-      ${can ? `<button class="btn primary" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}
+      ${can ? `<button class="btn primary defeat-btn" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}
       <div class="rewards-sum">${m.rewards.map((it) => `<span>${esc(rewardEffect(it))}</span>`).join('')}</div>
     </div>`;
   }).join('<div class="foes-or">o</div>')}</div>`;

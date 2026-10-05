@@ -760,37 +760,37 @@ function renderOutcome() {
 
 const RULES = {
   heroe: ['El héroe', `
-    <section><h4>Raza y clase</h4>
+    <section><div class="rule-ill"><img class="tall" src="img/heroes/enano-guerrero.webp" alt=""><span class="plus">=</span><span class="lbl">Enano<br>+<br>Guerrero</span></div><h4>Raza y clase</h4>
       <p>Tu héroe es una <b>Raza</b> y una <b>Clase</b>. Algunas parejas son <b class="ok">naturales</b> (+1 Fuerza y +1 Maná)
       y otras <b class="bad">raras</b> (−1 Vida): se indica al elegir.</p></section>
-    <section><h4>Vida</h4><p>Lo que aguantas. No se recupera sola: solo con pociones y pergaminos de curación.</p></section>
-    <section><h4>Fuerza</h4><p>Cuántas esferas lanzas: <b>1–5</b> → 1 · <b>6–10</b> → 2 · <b>11–15</b> → 3 · <b>16–20</b> → 4 · <b>21+</b> → 5.</p></section>
-    <section><h4>Maná</h4><p>Cada <b>5</b> de Maná convierte una esfera en <b>comodín</b> (multicolor con espiral), fijada desde el inicio del combate.</p></section>
-    <section><h4>Equipo</h4><p>Yelmo, armadura, túnica, botas y dos manos (un arma a dos manos ocupa las dos).
+    <section><div class="rule-ill"><div class="life rl"><i style="width:70%"></i><span>10 / 14</span></div></div><h4>Vida</h4><p>Lo que aguantas. No se recupera sola: solo con pociones y pergaminos de curación.</p></section>
+    <section><div class="rule-ill"><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="lbl">15 Fuerza<br>= 3 esferas</span></div><h4>Fuerza</h4><p>Cuántas esferas lanzas: <b>1–5</b> → 1 · <b>6–10</b> → 2 · <b>11–15</b> → 3 · <b>16–20</b> → 4 · <b>21+</b> → 5.</p></section>
+    <section><div class="rule-ill"><img src="img/formas/espiral-multicolor.webp" alt=""><span class="lbl">5 Maná<br>= 1 comodín</span></div><h4>Maná</h4><p>Cada <b>5</b> de Maná convierte una esfera en <b>comodín</b> (multicolor con espiral), fijada desde el inicio del combate.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/yelmo-1.webp" alt=""><img src="img/objetos/espada-2.webp" alt=""><img src="img/objetos/tunica-1.webp" alt=""></div><h4>Equipo</h4><p>Yelmo, armadura, túnica, botas y dos manos (un arma a dos manos ocupa las dos).
       El equipo suma <b>Fuerza</b>; la <b>túnica</b> suma <b>Maná</b>. Hasta 3 pociones y 3 pergaminos.</p></section>`],
   aventura: ['Aventura', `
-    <section><h4>12 rondas</h4><p>En cada ronda aparecen <b>2 monstruos a la vez</b>. Lanzas tus esferas y, al final, derrotas al que puedas.</p></section>
-    <section><h4>Tamaños</h4><p>Pequeño, mediano y grande: cuanto más grande, más esferas pide, más daño hace y mejores recompensas da.</p></section>
-    <section><h4>Si ganas</h4><p>Eliges 1 de 2 recompensas y además ganas <b>monedas</b>: más cuantas menos tiradas hayas necesitado.</p></section>
-    <section><h4>Si pierdes</h4><p>Pierdes la Vida que marca el monstruo. Si caes a 0 pierdes <b>todos tus objetos y monedas</b> y recuperas la Vida inicial.</p></section>`],
+    <section><div class="rule-ill"><img class="tall" src="img/monstruos/goblin-2.webp" alt=""><span class="plus">o</span><img class="tall" src="img/monstruos/orco-1.webp" alt=""></div><h4>12 rondas</h4><p>En cada ronda aparecen <b>2 monstruos a la vez</b>. Lanzas tus esferas y, al final, derrotas al que puedas.</p></section>
+    <section><div class="rule-ill"><img class="s1" src="img/monstruos/goblin-1.webp" alt=""><img class="s2" src="img/monstruos/goblin-2.webp" alt=""><img class="s3" src="img/monstruos/goblin-3.webp" alt=""></div><h4>Tamaños</h4><p>Pequeño, mediano y grande: cuanto más grande, más esferas pide, más daño hace y mejores recompensas da.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/espada-1.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Si ganas</h4><p>Eliges 1 de 2 recompensas y además ganas <b>monedas</b>: más cuantas menos tiradas hayas necesitado.</p></section>
+    <section><div class="rule-ill"><span class="big-dmg">−4</span><span class="lbl">Vida</span></div><h4>Si pierdes</h4><p>Pierdes la Vida que marca el monstruo. Si caes a 0 pierdes <b>todos tus objetos y monedas</b> y recuperas la Vida inicial.</p></section>`],
   combate: ['Combate', `
-    <section><h4>Esferas</h4><p>Cada esfera tiene un <b>color</b> (rojo, azul, verde, amarillo o <b>multicolor</b> = comodín)
+    <section><div class="rule-ill"><img src="img/formas/circulo-rojo.webp" alt=""><img src="img/formas/cuadrado-azul.webp" alt=""><img src="img/formas/rombo-verde.webp" alt=""><img src="img/formas/triangulo-amarillo.webp" alt=""><img src="img/formas/espiral-multicolor.webp" alt=""></div><h4>Esferas</h4><p>Cada esfera tiene un <b>color</b> (rojo, azul, verde, amarillo o <b>multicolor</b> = comodín)
       y una <b>forma</b> (círculo, cuadrado, rombo, triángulo o <b>espiral</b> = comodín).</p></section>
-    <section><h4>Qué piden</h4><p>Cada monstruo pide <b>solo colores</b> o <b>solo formas</b>. Puedes ir a por cualquiera de los dos.</p></section>
-    <section><h4>3 tiradas</h4><p>Pulsa <b>Atacar</b>. Las esferas que te sirven se quedan; las marcadas con la flecha se relanzan
+    <section><div class="rule-ill"><span class="dice"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big azul"></span></span><span class="plus">o</span><img src="img/formas/rombo-tinta.webp" alt=""><img src="img/formas/triangulo-tinta.webp" alt=""></div><h4>Qué piden</h4><p>Cada monstruo pide <b>solo colores</b> o <b>solo formas</b>. Puedes ir a por cualquiera de los dos.</p></section>
+    <section><div class="rule-ill"><img src="img/formas/circulo-rojo.webp" alt=""><span class="reroll-ill"><img src="img/formas/cuadrado-verde.webp" alt=""></span><span class="lbl">1/3</span></div><h4>3 tiradas</h4><p>Pulsa <b>Atacar</b>. Las esferas que te sirven se quedan; las marcadas con la flecha se relanzan
       (toca una esfera para marcarla o desmarcarla). Cuando completes un monstruo, pulsa <b>Derrotar</b>.</p></section>
-    <section><h4>Si no llegas</h4><p>Pierdes contra el monstruo que menos daño hace.</p></section>`],
+    <section><div class="rule-ill"><span class="big-dmg">−3</span></div><h4>Si no llegas</h4><p>Pierdes contra el monstruo que menos daño hace.</p></section>`],
   entre: ['Entre rondas', `
-    <section><h4>Comerciar</h4><p>Ofreces objetos; los demás te dicen qué te dan a cambio y tú aceptas o rechazas. Una oferta por ronda.</p></section>
-    <section><h4>Comprar</h4><p>Cada ronda la tienda tiene objetos nuevos con su precio en <b>monedas</b>. Una compra por ronda.</p></section>
-    <section><h4>Robar</h4><p>Con Pergamino de Robo, seguro. Sin él tiras un dado: <b>1–2</b> robas · <b>3–5</b> pierdes tu Maná en el próximo combate · <b>6</b> nada.</p></section>
-    <section><h4>Maleficio</h4><p>Gasta 5 de Maná: el rival repetirá una esfera acertada en su próximo combate (verás cuál, en morado).
+    <section><div class="rule-ill"><img src="img/objetos/pocion-1.webp" alt=""><span class="plus">⇄</span><img src="img/objetos/botas-1.webp" alt=""></div><h4>Comerciar</h4><p>Ofreces objetos; los demás te dicen qué te dan a cambio y tú aceptas o rechazas. Una oferta por ronda.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/escudo-1.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Comprar</h4><p>Cada ronda la tienda tiene objetos nuevos con su precio en <b>monedas</b>. Una compra por ronda.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/pergamino-2.webp" alt=""><span class="lbl">1-2 ✔<br>3-5 ✘<br>6 –</span></div><h4>Robar</h4><p>Con Pergamino de Robo, seguro. Sin él tiras un dado: <b>1–2</b> robas · <b>3–5</b> pierdes tu Maná en el próximo combate · <b>6</b> nada.</p></section>
+    <section><div class="rule-ill"><img src="img/ui/calavera.webp" alt=""></div><h4>Maleficio</h4><p>Gasta 5 de Maná: el rival repetirá una esfera acertada en su próximo combate (verás cuál, con la calavera).
       Cada héroe recibe como mucho uno por ronda.</p></section>`],
   torneo: ['Torneo', `
-    <section><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. Las semifinales se sortean;
+    <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. Las semifinales se sortean;
       se juega un duelo detrás de otro. Antes de la final hay una ronda para comerciar, comprar, robar o lanzar maleficios, y durante la final puedes lanzar un maleficio a tu rival en cada intercambio de ataques (mientras él ataca).</p></section>
-    <section><h4>Golpear</h4><p>Saca esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Se ataca por turnos hasta que uno cae.</p></section>
-    <section><h4>Premios</h4><p>Quien gana una semifinal elige <b>un objeto</b> del vencido y se lleva sus <b>monedas</b> y un premio.
+    <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ 1 daño</span></div><h4>Golpear</h4><p>Saca esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Se ataca por turnos hasta que uno cae.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/yelmo-3.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Premios</h4><p>Quien gana una semifinal elige <b>un objeto</b> del vencido y se lleva sus <b>monedas</b> y un premio.
       Los finalistas recuperan la Vida antes de la final.</p></section>`],
 };
 

@@ -1404,3 +1404,18 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .foe-card .rewards-sum { margin-top: 6px; }
 .btn.defeat-btn, .btn.primary.defeat-btn { background: rgba(79, 122, 58, .72) !important; }
 .btn.defeat-btn:hover:not(:disabled) { background: rgba(93, 140, 69, .82) !important; }
+/* Reglas ilustradas */
+.rules-body section { display: flex; flex-direction: column; }
+.rule-ill { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 76px; margin-bottom: 8px; }
+.rule-ill img { height: 54px; width: auto; object-fit: contain; }
+.rule-ill img.tall { height: 76px; }
+.rule-ill img.s1 { height: 44px; } .rule-ill img.s2 { height: 60px; } .rule-ill img.s3 { height: 78px; }
+.rule-ill .sphere.big { width: 30px; height: 30px; }
+.rule-ill .dice { display: inline-flex; gap: 4px; }
+.rule-ill .lbl { font-family: var(--title); font-size: .8rem; color: var(--ink-soft); line-height: 1.25; text-align: center; }
+.rule-ill .plus { font-family: var(--title); color: var(--rubric); font-style: italic; }
+.rule-ill .big-dmg { font-family: var(--title); font-weight: 700; font-size: 2rem; color: #a3261b; }
+.rule-ill .life.rl { width: 160px; height: 20px; }
+.rule-ill .reroll-ill { position: relative; opacity: .7; }
+.rule-ill .reroll-ill::after { content: "↻"; position: absolute; right: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: var(--rubric); color: #fff; font-size: 12px; line-height: 18px; text-align: center; }
+@media (max-width: 760px) { .rule-ill { min-height: 60px; } .rule-ill img { height: 44px; } .rule-ill img.tall { height: 64px; } }

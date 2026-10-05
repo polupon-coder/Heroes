@@ -968,7 +968,7 @@ function renderPrep() {
         : `<button class="seal" data-a="ready" data-v="1">¡Listo!</button>`}
       <div class="prep-buttons">
         <button class="btn ${incoming ? 'alert' : ''}" data-a="prepWin" data-w="trade">Comerciar${incoming ? ` <span class="badge">${incoming}</span>` : ''}</button>
-        <button class="btn" data-a="prepWin" data-w="curse" ${S.round <= 1 ? 'disabled title="Desde la ronda 2"' : ''}>Maleficio</button>
+        <button class="btn curse-btn" data-a="prepWin" data-w="curse" ${S.round <= 1 ? 'disabled title="Desde la ronda 2"' : ''}>Maleficio</button>
         <button class="btn" data-a="prepWin" data-w="steal">Robar</button>
         <button class="btn" data-a="prepWin" data-w="shop" ${p.boughtThisRound ? 'title="Ya has comprado esta ronda"' : ''}>Comprar</button>
       </div>
@@ -1349,18 +1349,32 @@ function duelCurseHtml(t, m) {
   const rival = byId(m.a === S.me ? m.b : m.a);
   const target = m.attacker === rival.id ? m.turns : m.turns + 1;
   if (p.duelCurseAt === target) return '<p class="muted small center">Maleficio lanzado.</p>';
+  if (p.hero.manaDisponible < 5) return '';
+  return `<div class="duel-curse"><button class="btn curse-btn" data-a="duelCursePick" data-t="${target}">Maldecir</button></div>`;
+}
+
+// Ventana flotante: cuántas calaveras lanzar (5 de Maná cada una).
+function renderDuelCursePick() {
+  const t = S && S.tournament;
+  const m = t && t.matches.find((x) => x.started && !x.winner && (x.a === S.me || x.b === S.me));
+  const p = me();
+  if (!m || S.phase !== 'torneo') { ui.duelCursePick = null; return ''; }
+  const rival = byId(m.a === S.me ? m.b : m.a);
+  const target = m.attacker === rival.id ? m.turns : m.turns + 1;
   const max = Math.floor(p.hero.manaDisponible / 5);
-  if (max < 1) return '';
+  if (ui.duelCursePick !== target || max < 1 || p.duelCurseAt === target) { ui.duelCursePick = null; return ''; }
   const skull = '<img src="img/ui/calavera.webp" alt="">';
-  if (ui.duelCursePick !== target) {
-    return `<div class="duel-curse"><button class="btn" data-a="duelCursePick" data-t="${target}">${skull}${esc(rival.name)}</button></div>`;
-  }
-  // Elegir cuántas calaveras (5 de Maná cada una).
   const opts = [];
   for (let n = 1; n <= max; n++) {
     opts.push(`<button class="btn dc-opt" data-a="duelCurse" data-n="${n * 5}"><span class="dc-skulls">${skull.repeat(n)}</span><small>${n * 5} Maná</small></button>`);
   }
-  return `<div class="duel-curse pick"><div class="dc-q">¿Cuántas calaveras a ${esc(rival.name)}?</div><div class="dc-opts">${opts.join('')}</div><button class="btn tiny" data-a="duelCursePick" data-t="">Cancelar</button></div>`;
+  return `
+    <div class="card outcome curse-pick">
+      <button class="modal-close" data-a="duelCursePick" data-t="" aria-label="Cerrar" title="Cerrar">×</button>
+      <div class="outcome-title">Maldecir a ${esc(rival.name)}</div>
+      <p class="center muted">Cada calavera le anula una esfera acertada.</p>
+      <div class="dc-opts">${opts.join('')}</div>
+    </div>`;
 }
 
 function renderEnd() {
@@ -1408,6 +1422,10 @@ function renderModal() {
 function modalHtml() {
   const p = S && me();
   if (ui.rules) return renderRules();
+  if (ui.duelCursePick != null) {
+    const v = renderDuelCursePick();
+    if (v) return v;
+  }
   if (ui.rewardsView != null) {
     const v = renderRewardsView(p);
     if (v) return v;
@@ -1479,8 +1497,8 @@ document.addEventListener('click', (e) => {
     case 'prepWin': ui.prepWin = d.w; render(); break;
     case 'buy': act('buy', { itemId: d.id }); ui.prepWin = null; render(); break;
     case 'loot': act('takeLoot', { itemId: d.id }); break;
-    case 'duelCurse': ui.duelCursePick = null; act('duelCurse', { amount: Number(d.n) }); break;
-    case 'duelCursePick': ui.duelCursePick = d.t === '' ? null : Number(d.t); render(); break;
+    case 'duelCurse': ui.duelCursePick = null; renderModal(); act('duelCurse', { amount: Number(d.n) }); break;
+    case 'duelCursePick': ui.duelCursePick = d.t === '' ? null : Number(d.t); renderModal(); break;
     case 'nextDuel': clearTimeout(ui.duelTimer); ui.duelTimer = null; ui.duelQueue.shift(); renderModal(); break;
     case 'closeCoins': ui.coinsMsg = null; renderModal(); break;
     case 'closePrep': ui.prepWin = null; ui.theft = null; render(); break;

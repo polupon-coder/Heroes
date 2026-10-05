@@ -1517,3 +1517,13 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .duel-curse .dc-skulls { display: flex; gap: 1px; }
 .duel-curse .dc-skulls img { width: 22px; height: 22px; }
 .duel-curse .dc-opt small { font-size: .7rem; color: var(--muted); }
+
+/* Maldecir: siempre en lila (línea y texto) */
+.btn.curse-btn, .duel-curse .btn, .curse-pick .dc-opt { color: #6b3fa0 !important; border-color: #8a63b8 !important; }
+.btn.curse-btn:hover:not([disabled]) { background: rgba(107, 63, 160, .08); }
+.curse-pick .outcome-title { color: #6b3fa0; }
+.curse-pick .dc-opts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 8px 0 4px; }
+.curse-pick .dc-opt { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 14px; }
+.curse-pick .dc-skulls { display: flex; gap: 2px; }
+.curse-pick .dc-skulls img { width: 30px; height: 30px; }
+.curse-pick .dc-opt small { font-size: .75rem; color: #6b3fa0; }

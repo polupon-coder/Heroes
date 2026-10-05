@@ -1483,3 +1483,8 @@ button.trade-tile:not([data-a]) { cursor: default; }
 @media (max-width: 760px) {
   .foe-card .rewards-sum { flex-direction: column; align-items: center; flex-wrap: nowrap; gap: 6px; }
 }
+@media (max-width: 760px) {
+  /* Vida/Fuerza arriba, Maná/Esferas abajo, en dos columnas alineadas a la izquierda. */
+  .lobby-heroes.v2 .pick-stats { display: grid; grid-template-columns: auto auto; justify-items: start; align-items: start; column-gap: 28px; row-gap: 10px; width: auto; }
+  .lobby-heroes.v2 .pstat { text-align: left; align-items: flex-start; }
+}

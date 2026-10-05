@@ -1510,3 +1510,10 @@ button.trade-tile:not([data-a]) { cursor: default; }
 }
 .duel-curse { border: none !important; background: none !important; padding: 0 !important; margin: 6px 0 2px; }
 .duel-curse .btn { color: #6b3fa0; border-color: rgba(107, 63, 160, .5); }
+.duel-curse.pick { flex-direction: column; align-items: center; gap: 6px; }
+.duel-curse .dc-q { font-family: var(--title); color: #6b3fa0; font-size: .95rem; }
+.duel-curse .dc-opts { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.duel-curse .dc-opt { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 12px; }
+.duel-curse .dc-skulls { display: flex; gap: 1px; }
+.duel-curse .dc-skulls img { width: 22px; height: 22px; }
+.duel-curse .dc-opt small { font-size: .7rem; color: var(--muted); }

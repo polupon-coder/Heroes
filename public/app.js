@@ -1349,8 +1349,18 @@ function duelCurseHtml(t, m) {
   const rival = byId(m.a === S.me ? m.b : m.a);
   const target = m.attacker === rival.id ? m.turns : m.turns + 1;
   if (p.duelCurseAt === target) return '<p class="muted small center">Maleficio lanzado.</p>';
-  if (p.hero.manaDisponible < 5) return '';
-  return `<div class="duel-curse"><button class="btn" data-a="duelCurse" data-n="5"><img src="img/ui/calavera.webp" alt="">Maleficio a ${esc(rival.name)} · 5 Maná</button></div>`;
+  const max = Math.floor(p.hero.manaDisponible / 5);
+  if (max < 1) return '';
+  const skull = '<img src="img/ui/calavera.webp" alt="">';
+  if (ui.duelCursePick !== target) {
+    return `<div class="duel-curse"><button class="btn" data-a="duelCursePick" data-t="${target}">${skull}${esc(rival.name)}</button></div>`;
+  }
+  // Elegir cuántas calaveras (5 de Maná cada una).
+  const opts = [];
+  for (let n = 1; n <= max; n++) {
+    opts.push(`<button class="btn dc-opt" data-a="duelCurse" data-n="${n * 5}"><span class="dc-skulls">${skull.repeat(n)}</span><small>${n * 5} Maná</small></button>`);
+  }
+  return `<div class="duel-curse pick"><div class="dc-q">¿Cuántas calaveras a ${esc(rival.name)}?</div><div class="dc-opts">${opts.join('')}</div><button class="btn tiny" data-a="duelCursePick" data-t="">Cancelar</button></div>`;
 }
 
 function renderEnd() {
@@ -1469,7 +1479,8 @@ document.addEventListener('click', (e) => {
     case 'prepWin': ui.prepWin = d.w; render(); break;
     case 'buy': act('buy', { itemId: d.id }); ui.prepWin = null; render(); break;
     case 'loot': act('takeLoot', { itemId: d.id }); break;
-    case 'duelCurse': act('duelCurse', { amount: Number(d.n) }); break;
+    case 'duelCurse': ui.duelCursePick = null; act('duelCurse', { amount: Number(d.n) }); break;
+    case 'duelCursePick': ui.duelCursePick = d.t === '' ? null : Number(d.t); render(); break;
     case 'nextDuel': clearTimeout(ui.duelTimer); ui.duelTimer = null; ui.duelQueue.shift(); renderModal(); break;
     case 'closeCoins': ui.coinsMsg = null; renderModal(); break;
     case 'closePrep': ui.prepWin = null; ui.theft = null; render(); break;

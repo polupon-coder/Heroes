@@ -228,7 +228,6 @@ function renderHomeActions() {
       <button class="link-btn" data-h="back">volver</button>`;
   } else {
     html = `<button class="seal" data-h="create">Crear<br>partida</button>
-      <span class="home-or">o</span>
       <button class="seal" data-h="joining">Unirse</button>`;
   }
   $('homeActions').innerHTML = html;
@@ -505,7 +504,7 @@ function renderSheet() {
   <div class="glyphs three">
     <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
     <div title="Cada 5 de Maná es una esfera multicolor"><b>${h.manaDisponible}</b><span>Maná</span></div>
-    <div title="Monedas para la tienda"><b class="coins">${coinIcon()}${h.monedas ?? 0}</b><span>Monedas</span></div>
+    <div title="Monedas para la tienda"><b>${h.monedas ?? 0}</b><span>Monedas</span></div>
   </div>
   ${h.curses ? `<p class="warn center">Maleficio: repetirás ${h.curses} esfera(s) acertada(s) en tu próximo combate.</p>` : ''}
   <div class="tiles">
@@ -595,7 +594,7 @@ function renderArena() {
         <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
         <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables)}</div>
         <div class="life thin"><i style="width:${pct}%"></i></div>
-        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida}/${h.base.vida} · ${coinIcon()}${h.monedas ?? 0}</div>
+        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida}/${h.base.vida} · ${h.monedas ?? 0} monedas</div>
       </div>
     </div>`;
   }).join('');
@@ -892,12 +891,12 @@ function renderShop() {
   const shop = p.shop || [];
   return `
     <h3>Comprar</h3>
-    <p class="center shop-coins">${coinIcon()} Tienes <b>${coins}</b> monedas${p.boughtThisRound ? ' · ya has comprado esta ronda' : ' · una compra por ronda'}</p>
+    <p class="center shop-coins">Tienes <b>${coins}</b> monedas${p.boughtThisRound ? ' · ya has comprado esta ronda' : ' · una compra por ronda'}</p>
     <div class="trade-grid">${shop.map((it) => {
       const can = !p.boughtThisRound && coins >= it.precio;
       return `<div class="shop-item ${can ? '' : 'locked'}">
         ${tradeTile(it)}
-        <button class="btn small ${can ? 'primary' : ''}" data-a="buy" data-id="${it.id}" ${can ? '' : 'disabled'}>${coinIcon()} ${it.precio}</button>
+        <button class="btn small ${can ? 'primary' : ''}" data-a="buy" data-id="${it.id}" ${can ? '' : 'disabled'}>${it.precio} monedas</button>
       </div>`;
     }).join('') || '<p class="muted center">No queda nada a la venta.</p>'}</div>`;
 }
@@ -1143,7 +1142,6 @@ function renderCombat(p, controllable) {
   </div>`;
 }
 
-function coinIcon() { return '<img class="coin-ico" src="img/ui/monedas.webp" alt="monedas">'; }
 
 // Efecto de una recompensa en pocas palabras (sin nombre).
 function rewardEffect(it) {

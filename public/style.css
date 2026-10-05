@@ -1267,3 +1267,12 @@ button.trade-tile:not([data-a]) { cursor: default; }
   body.at-home .home { padding: 10px; }
   .home-title { width: min(520px, 76vw); }
 }
+/* Casillas vacías: ilustración apagada (solo en móvil) */
+.tile.empty .ghost { display: none; }
+@media (max-width: 760px) {
+  .tile.empty .ghost { display: block; width: 80%; height: 80%; object-fit: contain; opacity: .32; filter: grayscale(1) sepia(.3); }
+  .tile.empty .ring i { display: none; }
+  .col-me button.tile > span:last-child { display: none; }
+  .prep-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 340px; }
+  .prep-buttons .btn { min-width: 0; width: 100%; }
+}

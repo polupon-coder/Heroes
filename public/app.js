@@ -478,7 +478,10 @@ function spheresRow(n, color, big = false, whites = 0) {
 }
 
 function itemTile(it, label) {
-  if (!it) return `<div class="tile empty"><span class="ring"><i>${label}</i></span></div>`;
+  if (!it) {
+    const ghost = { Yelmo: 'yelmo', Armadura: 'cota', 'Túnica': 'tunica', Botas: 'botas', Mano: 'espada', 'Poción': 'pocion', Pergamino: 'pergamino' }[label];
+    return `<div class="tile empty" title="${label || ''}"><span class="ring">${ghost ? `<img class="ghost" src="img/objetos/${ghost}-1.webp" alt="">` : ''}<i>${label}</i></span></div>`;
+  }
   return `<button class="tile" data-a="item" data-id="${it.id}" title="${esc(it.nombre)}"><span class="ring">${itemIcon(it)}</span><span>${esc(it.nombre)}</span></button>`;
 }
 

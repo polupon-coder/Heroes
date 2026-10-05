@@ -936,6 +936,9 @@ function renderMagic() {
   if (!amounts.includes(ui.curse.amount)) ui.curse.amount = amounts[0] || 5;
   const targets = others().filter((o) => !o.cursedThisRound);
   if (ui.curse.target && !targets.some((o) => o.id === ui.curse.target)) ui.curse.target = null;
+  // Si solo hay un rival posible, ya queda elegido.
+  if (!ui.curse.target && targets.length === 1) ui.curse.target = targets[0].id;
+  const tName = ui.curse.target && byId(ui.curse.target) ? byId(ui.curse.target).name : '';
   return `
     <h3>Maleficio</h3>
     ${amounts.length && targets.length ? `
@@ -944,7 +947,7 @@ function renderMagic() {
         ? `<button class="btn small" disabled title="Ya tiene un maleficio esta ronda">${esc(o.name)} <small>(ya tiene uno)</small></button>`
         : `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
       <div class="row">${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} Maná</button>`).join('')}</div>
-      <div class="row"><button class="btn primary" data-a="curse" ${ui.curse.target ? '' : 'disabled'}>Lanzar maleficio</button></div>`
+      <div class="row"><button class="btn primary" data-a="curse" ${ui.curse.target ? '' : 'disabled'}>${tName ? `Lanzar maleficio a ${esc(tName)}` : 'Toca un rival para elegirlo'}</button></div>`
     : `<p class="muted small center">${amounts.length ? 'Todos los rivales ya han recibido un maleficio esta ronda.' : 'Necesitas al menos 5 de Maná disponible.'}</p>`}`;
 }
 

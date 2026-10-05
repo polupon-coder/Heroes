@@ -335,7 +335,7 @@ function render() {
 function statusText() {
   switch (S.phase) {
     case 'lobby': return 'Preparando la partida';
-    case 'prep': return S.round > S.rounds ? 'Preparación para el Torneo' : `Fase 1 · Entre combates · Próxima ronda ${S.round}/${S.rounds}`;
+    case 'prep': return S.tournament && S.tournament.stage === 'prefinal' ? 'Fase 2 · Torneo · Antes de la final' : S.round > S.rounds ? 'Preparación para el Torneo' : `Fase 1 · Entre combates · Próxima ronda ${S.round}/${S.rounds}`;
     case 'combat': return `Fase 1 · Aventura · Ronda ${S.round}/${S.rounds}`;
     case 'torneo': return 'Fase 2 · Torneo';
     case 'fin': return 'Partida terminada';
@@ -784,7 +784,7 @@ const RULES = {
       Cada héroe recibe como mucho uno por ronda.</p></section>`],
   torneo: ['Torneo', `
     <section><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. El que más Fuerza + Maná tiene elige rival;
-      se juega un duelo detrás de otro.</p></section>
+      se juega un duelo detrás de otro. Antes de la final hay una ronda para comerciar, comprar, robar o lanzar maleficios.</p></section>
     <section><h4>Golpear</h4><p>Saca esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Se ataca por turnos hasta que uno cae.</p></section>
     <section><h4>Premios</h4><p>Quien gana una semifinal elige <b>un objeto</b> del vencido y se lleva sus <b>monedas</b> y un premio.
       Los finalistas recuperan la Vida antes de la final.</p></section>`],
@@ -896,10 +896,11 @@ function renderMain() {
 function renderPrep() {
   const p = me();
   const torneo = S.round > S.rounds;
+  const prefinal = S.tournament && S.tournament.stage === 'prefinal';
   const incoming = pendingCounters().length + unansweredTrades().length;
   return `
   <div class="card prep-card">
-    <h2>${torneo ? 'Preparación para el Torneo' : `Ronda ${S.round} de ${S.rounds}`}</h2>
+    <h2>${prefinal ? 'Preparación para la final' : torneo ? 'Preparación para el Torneo' : `Ronda ${S.round} de ${S.rounds}`}</h2>
     <div class="prep-actions">
       ${p.ready
         ? '<button class="seal green" data-a="ready" data-v="0">Listo ✔</button>'

@@ -210,7 +210,8 @@ class Game {
       p.stoleThisRound = false;
       p.boughtThisRound = false;
       p.shop = this.makeShop(p);
-      p.ready = false;
+      // Antes de la final solo tienen que confirmar los finalistas.
+      p.ready = !!this.pendingFinal && !this.pendingFinal.includes(p.id);
       p.stage = null;
       p.offers = null;
       p.monster = null;
@@ -223,6 +224,13 @@ class Game {
     if (this.phase !== 'prep') return;
     if (!this.players.every((p) => p.ready)) return;
     this.trades = [];
+    if (this.pendingFinal) {
+      const [a, b] = this.pendingFinal;
+      this.pendingFinal = null;
+      this.phase = 'torneo';
+      this.startFinal(a, b);
+      return;
+    }
     if (this.round > C.ROUNDS) {
       this.startTournament();
       return;
@@ -700,7 +708,11 @@ class Game {
     if (next) { this.startAttack(next); return; }
     if (t.matches.every((x) => x.winner)) {
       const finalists = t.bye ? [t.bye, t.matches[0].winner] : t.matches.map((x) => x.winner);
-      this.startFinal(finalists[0], finalists[1]);
+      // Antes de la final, una ronda de preparación como en la aventura.
+      this.pendingFinal = finalists;
+      t.stage = 'prefinal';
+      this.startPrep();
+      this.say('Antes de la final: podéis comerciar, comprar, robar o lanzar maleficios.');
     }
   }
 

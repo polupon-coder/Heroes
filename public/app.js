@@ -666,7 +666,7 @@ function renderOutcome() {
         <div class="reward-pick">${p.rewards.map((it, i) => `
           <button class="reward-choice" data-a="reward" data-i="${i}">
             <span class="big-item">${itemIcon(it)}</span>
-            <b>${esc(it.nombre)}</b><small>${itemDesc(it)}</small>
+            <span class="rc-text"><b>${esc(it.nombre)}</b><small>${itemDesc(it)}</small></span>
           </button>`).join('')}</div>
       </div>`;
   }

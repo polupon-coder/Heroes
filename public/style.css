@@ -1435,3 +1435,6 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .duel-curse { display: flex; justify-content: center; margin-top: 4px; }
 .duel-curse .btn { display: inline-flex; align-items: center; gap: 8px; }
 .duel-curse .btn img { width: 26px; height: 26px; object-fit: contain; }
+
+/* Esfera anulada por un maleficio: solo la calavera, hay que relanzarla. */
+.die.maldita img, .die.cursed.maldita img { opacity: 1 !important; filter: drop-shadow(0 0 4px rgba(122, 75, 176, .8)) !important; }

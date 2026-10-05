@@ -383,7 +383,7 @@ class Game {
     combat.dice = Array.from({ length: combat.diceCount }, () => ({ face: null, shape: null, held: false, fixed: false }));
     this.applyWhites(p);
     if (combat.cursesLeft > 0) {
-      combat.events.push(`Arrastra ${combat.cursesLeft} maldición(es): deberá repetir dados exitosos.`);
+      combat.events.push(`Arrastra ${combat.cursesLeft} maldición(es): se le anularán esferas acertadas.`);
     }
     return combat;
   }
@@ -415,7 +415,7 @@ class Game {
     if (have >= want) return;
     // Primero las que aún no se han tirado o no sirven; después cualquiera.
     const used = cb.rolls ? this.bestTarget(cb).used : new Set();
-    const order = cb.dice.map((d, i) => i).filter((i) => !cb.dice[i].fixed)
+    const order = cb.dice.map((d, i) => i).filter((i) => !cb.dice[i].fixed && !cb.dice[i].maldita)
       .sort((a, b) => (used.has(a) ? 1 : 0) - (used.has(b) ? 1 : 0));
     for (const i of order) {
       if (have >= want) break;
@@ -434,7 +434,8 @@ class Game {
     } else {
       const holdSet = new Set((hold || []).map(Number));
       cb.dice.forEach((d, i) => {
-        d.held = d.fixed || holdSet.has(i);
+        // La esfera maldita no se puede guardar: hay que relanzarla.
+        d.held = d.fixed || (holdSet.has(i) && !d.maldita);
       });
       newIdx = cb.dice.map((d, i) => (d.held ? -1 : i)).filter((i) => i >= 0);
       if (newIdx.length === 0) fail('Selecciona al menos un dado para volver a tirar');
@@ -442,12 +443,14 @@ class Game {
     const rollDie = (i) => {
       cb.dice[i].face = D.rollFace(this.rng);
       cb.dice[i].shape = D.rollShape(this.rng);
+      delete cb.dice[i].maldita;
     };
     for (const i of newIdx) rollDie(i);
     cb.rolls += 1;
     cb.events.push(`Tirada ${cb.rolls}`);
 
-    // Maleficio: cada uno obliga a repetir una esfera acertada.
+    // Maleficio: cada uno anula una esfera acertada de esta tirada. Queda con la
+    // calavera, no cuenta para nada y hay que relanzarla en la siguiente.
     cb.cursed = [];
     while (cb.cursesLeft > 0) {
       const succ = new Set();
@@ -457,9 +460,11 @@ class Game {
       if (succ.size === 0) break;
       const ci = [...succ][0];
       cb.cursed.push({ index: ci, face: cb.dice[ci].face, shape: cb.dice[ci].shape });
-      rollDie(ci);
+      cb.dice[ci].face = 'maldita';
+      cb.dice[ci].shape = 'maldita';
+      cb.dice[ci].maldita = true;
       cb.cursesLeft -= 1;
-      cb.events.push('Maleficio: una esfera acertada se repite');
+      cb.events.push('Maleficio: una esfera acertada se pierde; relánzala');
     }
     for (const d of cb.dice) d.held = d.fixed;
     this.afterCombatStep(p);
@@ -1021,7 +1026,7 @@ const ACTIONS = {
     p.hero.manaDebt += amt;
     t.hero.curses += n;
     t.cursedThisRound = true;
-    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${t.name}: repetirá ${n} dado(s) exitoso(s).`);
+    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${t.name}: se le anulará(n) ${n} esfera(s) acertada(s).`);
   },
   // Tienda: una compra por ronda.
   buy(p, { itemId }) {
@@ -1230,7 +1235,7 @@ const ACTIONS = {
     // Si el rival está atacando y aún no ha lanzado, le afecta ya; si no, en su próximo ataque.
     if (m.attacker === rival.id && rival.combat && rival.combat.status === 'activo' && rival.combat.rolls === 0) rival.combat.cursesLeft += n;
     else rival.hero.curses += n;
-    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${rival.name}: repetirá ${n} dado(s) exitoso(s).`);
+    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${rival.name}: se le anulará(n) ${n} esfera(s) acertada(s).`);
   },
   takeLoot(p, { itemId }) {
     this.takeLoot(p, itemId);

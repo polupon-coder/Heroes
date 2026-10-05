@@ -222,7 +222,7 @@ test('dos monstruos a la vez: colores o formas, y se presenta contra uno', () =>
   assert.strictEqual(p.monster, p.offers[0]);
 });
 
-test('maleficio: repite una esfera acertada', () => {
+test('maleficio: anula una esfera acertada y obliga a relanzarla', () => {
   const { g, p } = soloGame(seq([0.5]), 'durgan', 'guerrero');
   p.hero.curses = 1;
   p.combat.cursesLeft = 1;
@@ -233,6 +233,15 @@ test('maleficio: repite una esfera acertada', () => {
   // Queda anotado qué esfera repitió el maleficio y qué había salido.
   assert.strictEqual(p.combat.cursed.length, 1);
   assert.strictEqual(p.combat.cursed[0].face, 'rojo');
+  const i = p.combat.cursed[0].index;
+  // La esfera queda anulada (no cuenta para nada)…
+  assert.strictEqual(p.combat.dice[i].face, 'maldita');
+  assert.ok(!g.targetStatus(p.combat).some((t) => t.used.has(i)));
+  // …y aunque intentes guardarla, se relanza.
+  g.rng = () => F.azul;
+  g.act(p.id, 'roll', { hold: [i] });
+  assert.strictEqual(p.combat.dice[i].face, 'azul');
+  assert.ok(!p.combat.dice[i].maldita);
 });
 
 test('caer a 0 Vida: pierde todos sus objetos', () => {

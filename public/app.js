@@ -88,6 +88,8 @@ const WILD = { color: 'multicolor', forma: 'espiral' };
 // Una esfera: figura de su forma rellena de su color (img/formas). Sin color = solo
 // el contorno de la forma (lo que pide un monstruo de formas). Sin forma = esfera de color.
 function die(face, { cls = '', attrs = '', sm = false, shape = null } = {}) {
+  // Esfera anulada por un maleficio: solo la calavera.
+  if (face === 'maldita') return `<div class="die piece maldita ${sm ? 'sm' : ''} ${cls}" ${attrs} title="Maleficio: esta esfera no cuenta, relánzala"><img src="img/ui/calavera.webp" alt="Maleficio" draggable="false"></div>`;
   const title = [FACE_LABEL[face], SHAPE_LABEL[shape]].filter(Boolean).join(' · ');
   if (shape) {
     const src = `img/formas/${shape}-${face || 'tinta'}.webp`;
@@ -508,7 +510,7 @@ function spheresRow(n, color, big = false, whites = 0, cursed = 0) {
   const w = Math.min(n, whites);
   return Array.from({ length: n }, (_, i) => {
     const c = cursed > 0 && i >= n - cursed;
-    return `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'multicolor' : 'gris'} ${c ? 'cursed' : ''}" ${c ? 'title="Maleficio: repetirás una esfera acertada en tu próximo combate"' : ''}></span>`;
+    return `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'multicolor' : 'gris'} ${c ? 'cursed' : ''}" ${c ? 'title="Maleficio: en tu próximo combate se anulará una esfera acertada y tendrás que relanzarla"' : ''}></span>`;
   }).join('');
 }
 
@@ -652,13 +654,13 @@ function renderOutcome() {
   // Aviso: alguien te ha lanzado un maleficio.
   if (ui.curseAlert) {
     const who = ui.curseAlert.split(' gasta ')[0];
-    const n = (ui.curseAlert.match(/repetirá (\d+)/) || [])[1] || '1';
+    const n = (ui.curseAlert.match(/anulará\(n\) (\d+)/) || [])[1] || '1';
     return `
       <div class="card outcome curse-alert">
         <div class="curse-sign"><img src="img/ui/calavera.webp" alt=""></div>
         <div class="outcome-title">Maleficio</div>
         <p class="center"><b>${esc(who)}</b> te ha lanzado un maleficio.</p>
-        <p class="center">En tu próximo combate tendrás que repetir ${n} esfera(s) acertada(s).</p>
+        <p class="center">En tu próximo combate se anulará(n) ${n} esfera(s) acertada(s) de tu tirada: saldrán con la calavera y tendrás que relanzarla(s).</p>
         <div class="row center-row"><button class="btn primary" data-a="closeCurse">Entendido</button></div>
       </div>`;
   }
@@ -805,7 +807,7 @@ const RULES = {
     <section><div class="rule-ill"><img src="img/objetos/pocion-1.webp" alt=""><span class="plus">⇄</span><img src="img/objetos/botas-1.webp" alt=""></div><h4>Comerciar</h4><p>Ofreces objetos; los demás te dicen qué te dan a cambio y tú aceptas o rechazas. Una oferta por ronda.</p></section>
     <section><div class="rule-ill"><img src="img/objetos/escudo-1.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Comprar</h4><p>Cada ronda la tienda tiene objetos nuevos con su precio en <b>monedas</b>. Una compra por ronda.</p></section>
     <section><div class="rule-ill"><img src="img/objetos/pergamino-2.webp" alt=""><span class="lbl">1-2 ✔<br>3-5 ✘<br>6 –</span></div><h4>Robar</h4><p>Con Pergamino de Robo, seguro. Sin él tiras un dado: <b>1–2</b> robas · <b>3–5</b> pierdes tu Maná en el próximo combate · <b>6</b> nada.</p></section>
-    <section><div class="rule-ill"><img src="img/ui/calavera.webp" alt=""></div><h4>Maleficio</h4><p>Gasta 5 de Maná: el rival repetirá una esfera acertada en su próximo combate (verás cuál, con la calavera).
+    <section><div class="rule-ill"><img src="img/ui/calavera.webp" alt=""></div><h4>Maleficio</h4><p>Gasta 5 de Maná: en su próximo combate, al rival se le anula una esfera acertada: sale con la calavera, no cuenta y tiene que relanzarla (verás cuál, con la calavera).
       Cada héroe recibe como mucho uno por ronda.</p></section>`],
   torneo: ['Torneo', `
     <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. Las semifinales se sortean;
@@ -1177,8 +1179,7 @@ function renderCombat(p, controllable) {
         controllable && ui.manaMode && (ui.manaSel === i || ui.manaPick.has(i)) ? 'picking' : '',
       ].join(' ');
       const html = die(faces[i], { cls, shape: d.shape, attrs: controllable ? `data-a="die" data-i="${i}"` : '' });
-      // Esfera repetida por un maleficio: la calavera encima.
-      return cls.includes('cursed') ? html.replace(/<\/div>$/, '<img class="skull" src="img/ui/calavera.webp" alt="Maleficio"></div>') : html;
+      return html;
     }).join('')
     : Array.from({ length: cb.diceCount }, () => die(null)).join('');
 
@@ -1219,7 +1220,7 @@ function renderCombat(p, controllable) {
     ${monster ? foesHtml(p, cb, all, controllable) : cb.kind === 'duelo' ? duelNeedHtml(cb) : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
     ${controllable || cb.kind === 'duelo' ? '' : `<div class="rolls-count">${cb.rolls}/3</div>`}
     ${monster || cb.kind === 'duelo' ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
-    ${cb.cursesLeft && cb.rolls === 0 ? `<div class="curse-note">Te afecta un maleficio: en tu primera tirada se repetirá${cb.cursesLeft > 1 ? `n ${cb.cursesLeft} esferas acertadas` : ' 1 esfera acertada'}.</div>` : ''}
+    ${cb.cursesLeft && cb.rolls === 0 ? `<div class="curse-note">Te afecta un maleficio: en tu primera tirada se anulará${cb.cursesLeft > 1 ? `n ${cb.cursesLeft} esferas acertadas` : ' 1 esfera acertada'} y tendrás que relanzarla${cb.cursesLeft > 1 ? 's' : ''}.</div>` : ''}
     <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
         ${result}
     ${controls}
@@ -1461,7 +1462,7 @@ document.addEventListener('click', (e) => {
     case 'die': {
       const i = Number(d.i);
       const cb = me().combat;
-      if (!cb || cb.rolls === 0 || cb.dice[i].fixed) break;
+      if (!cb || cb.rolls === 0 || cb.dice[i].fixed || cb.dice[i].maldita) break;
       if (ui.manaMode) {
         if (ui.manaPick.has(i)) { ui.manaPick.delete(i); ui.manaSel = null; }
         else if (ui.manaPick.size < me().hero.fijables) ui.manaSel = i;

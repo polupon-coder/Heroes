@@ -1062,7 +1062,7 @@ body::-webkit-scrollbar { display: none; }
 .home-credit { margin-top: -3.5vh; position: relative; }
 /* Recompensas resumidas bajo cada monstruo */
 .rewards-sum { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.rewards-sum span { font-size: .85rem; color: var(--ink-soft); padding: 2px 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 248, 230, .45); }
+.rewards-sum > span { font-size: .85rem; color: var(--ink-soft); padding: 2px 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 248, 230, .45); }
 /* Maleficio: esfera repetida bien marcada */
 .die.cursed { outline: 3px solid #6b3fa0; outline-offset: 3px; border-radius: 10px; }
 .die.cursed::before { content: "☠"; position: absolute; left: -8px; top: -8px; width: 20px; height: 20px; border-radius: 50%;
@@ -1207,7 +1207,7 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .foe-card .dice .die, .foe-card .dice.five .die { width: 26px !important; height: 26px !important; }
   .foe-card .dice { gap: 4px !important; flex-wrap: wrap; }
   .foe-card .btn { font-size: .8rem; padding: 6px 8px; }
-  .rewards-sum span { font-size: .7rem; padding: 1px 6px; }
+  .rewards-sum > span { font-size: .7rem; padding: 1px 6px; }
   .combat .dice-zone .dice { gap: 12px; flex-wrap: wrap; }
   .combat .dice .die, .combat .dice-zone .die { width: 50px !important; height: 50px !important; }
   .prep-buttons .btn { min-width: 130px; }
@@ -1425,3 +1425,6 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .prep-card h2 { margin: 0; font-size: 1.7rem; }
 .prep-card .prep-actions { gap: 3vh; }
 @media (max-width: 760px) { .prep-cover { width: 150px; } .prep-card { padding: 22px 10px 26px !important; gap: 14px; } }
+
+/* Armas afines: el +1 extra, mismo tamaño que el +N, en verde. */
+.af { color: var(--ok); font-weight: inherit; }

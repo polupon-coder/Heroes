@@ -298,3 +298,16 @@ test('final: maleficio al rival mientras ataca, uno por intercambio', () => {
   assert.strictEqual(att.combat.cursesLeft, 1);
   assert.throws(() => g.act(def.id, 'duelCurse', { amount: 5 }), /intercambio/);
 });
+
+test('armas afines: +1 de Fuerza solo para su clase', () => {
+  let n = 0;
+  const arco = I.makeEquipment(() => 0.4, 5, () => 'x' + n++, null);
+  const inv = I.emptyInventory();
+  const it = { id: 'a', tipo: 'equipo', slot: 'dosManos', forma: 'arco', bonus: 3, stat: 'fuerza', afin: C.ARMA_AFIN.arco, nombre: 'Arco +3' };
+  inv.manos.push(it);
+  assert.strictEqual(I.equipmentFuerza(inv, 'explorador'), 4);
+  assert.strictEqual(I.equipmentFuerza(inv, 'ladron'), 4);
+  assert.strictEqual(I.equipmentFuerza(inv, 'mago'), 3);
+  // Las armas se llaman sin adornos.
+  if (arco.forma && C.ARMA_AFIN[arco.forma]) assert.match(arco.nombre, /^(Espada|Maza|Arco|Hacha|Báculo|Cayado|Escudo) \+\d+$/);
+});

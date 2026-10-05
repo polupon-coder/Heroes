@@ -7,15 +7,16 @@ const D = require('./dice');
 
 // Cuánto mejora realmente un objeto al héroe: esferas y comodines que gana.
 // La Fuerza deja de servir al llegar a 5 esferas; el Maná sigue sumando comodines.
-function slotGain(h, it) {
+function slotGain(h, it, clase) {
   const inv = h.inv;
-  if (['yelmo', 'armadura', 'botas', 'tunica'].includes(it.slot)) return it.bonus - (inv[it.slot] ? inv[it.slot].bonus : 0);
+  const b = (x) => I.effBonus(x, clase);
+  if (['yelmo', 'armadura', 'botas', 'tunica'].includes(it.slot)) return b(it) - (inv[it.slot] ? b(inv[it.slot]) : 0);
   const hands = inv.manos;
-  const sum = hands.reduce((s2, x) => s2 + x.bonus, 0);
-  if (it.slot === 'dosManos') return it.bonus - sum;
-  if (hands.length < 2 && !(hands[0] && hands[0].slot === 'dosManos')) return it.bonus;
-  if (hands[0] && hands[0].slot === 'dosManos') return it.bonus - hands[0].bonus;
-  return it.bonus - Math.min(...hands.map((x) => x.bonus));
+  const sum = hands.reduce((s2, x) => s2 + b(x), 0);
+  if (it.slot === 'dosManos') return b(it) - sum;
+  if (hands.length < 2 && !(hands[0] && hands[0].slot === 'dosManos')) return b(it);
+  if (hands[0] && hands[0].slot === 'dosManos') return b(it) - b(hands[0]);
+  return b(it) - Math.min(...hands.map(b));
 }
 function gainOf(game, p, it) {
   const h = p.hero;
@@ -24,7 +25,7 @@ function gainOf(game, p, it) {
     if (it.efecto === 'mana') return 1;
     return 0.3;
   }
-  const g = slotGain(h, it);
+  const g = slotGain(h, it, p.clase);
   if (g <= 0) return 0;
   const f = game.effFuerza(p);
   const m = game.availableMana(p) + h.manaDebt;

@@ -47,21 +47,11 @@ function makeEquipment(rng, level, nextId, inv) {
   const forma =
     slot === 'arma' ? pick(rng, ['espada', 'maza'])
       : slot === 'dosManos' ? pick(rng, ['arco', 'hacha', 'baculo', 'cayado'])
+        : slot === 'escudo' ? 'escudo'
         : slot === 'armadura' ? 'cota'
           : slot === 'tunica' ? 'tunica'
           : undefined;
   const names = {
-    arma: {
-      espada: [['Espada de hierro', 'Espada corta'], ['Espada de acero', 'Espada larga'], ['Espada rúnica', 'Espada élfica']],
-      maza: [['Maza de hierro', 'Maza de peregrino'], ['Maza bendita', 'Maza del templo'], ['Maza solar', 'Maza del sumo sacerdote']],
-    }[forma]?.[grado - 1],
-    dosManos: {
-      arco: [['Arco de caza', 'Arco corto'], ['Arco largo', 'Arco de tejo'], ['Arco élfico', 'Arco del bosque']],
-      hacha: [['Hacha de guerra', 'Hacha de leñador'], ['Gran hacha', 'Hacha doble'], ['Hacha rúnica', 'Hacha de los reyes']],
-      baculo: [['Báculo de aprendiz', 'Vara de cristal'], ['Báculo arcano', 'Báculo de zafiro'], ['Báculo astral', 'Báculo del archimago']],
-      cayado: [['Cayado de rama', 'Vara de espino'], ['Cayado de hiedra', 'Cayado del bosque'], ['Cayado del roble ancestral', 'Cayado de la arboleda']],
-    }[forma]?.[grado - 1],
-    escudo: [['Escudo de tablas', 'Escudo de roble'], ['Escudo del bosque', 'Escudo de hierro'], ['Escudo del guardián', 'Escudo de hojas de oro']][grado - 1],
     yelmo: [['Yelmo nasal', 'Casco de cuero y hierro'], ['Yelmo de acero', 'Yelmo de caballero'], ['Yelmo alado', 'Yelmo real']][grado - 1],
     armadura: [['Jubón de cuero', 'Armadura de explorador'], ['Cota de malla del bosque', 'Brigantina'], ['Coraza de hojas de oro', 'Armadura del guardián']][grado - 1],
     tunica: [['Túnica de lana', 'Hábito con capucha'], ['Túnica del bosque', 'Manto de hojas'], ['Túnica del gran druida', 'Manto de la arboleda']][grado - 1],
@@ -69,6 +59,8 @@ function makeEquipment(rng, level, nextId, inv) {
   }[slot];
   // Las túnicas no dan Fuerza sino Maná (el doble de puntos).
   if (slot === 'tunica') bonus *= 2;
+  // Armas y escudos se llaman sin adornos: Espada, Arco, Hacha…
+  const simple = { espada: 'Espada', maza: 'Maza', arco: 'Arco', hacha: 'Hacha', baculo: 'Báculo', cayado: 'Cayado', escudo: 'Escudo' }[forma];
   return {
     id: nextId(),
     tipo: 'equipo',
@@ -77,7 +69,8 @@ function makeEquipment(rng, level, nextId, inv) {
     bonus,
     grado,
     stat: slot === 'tunica' ? 'mana' : 'fuerza',
-    nombre: `${pick(rng, names)} +${bonus}`,
+    afin: C.ARMA_AFIN[forma] || undefined,
+    nombre: `${simple || pick(rng, names)} +${bonus}`,
   };
 }
 
@@ -121,8 +114,18 @@ function allItems(inv) {
   return [...equippedItems(inv), ...inv.pociones, ...inv.pergaminos];
 }
 
-function equipmentFuerza(inv) {
-  return equippedItems(inv).filter((it) => it.stat !== 'mana' && it.slot !== 'tunica').reduce((s, it) => s + it.bonus, 0);
+// +1 si el arma es afín a la clase del héroe.
+function afinBonus(it, clase) {
+  return it && it.afin && clase && it.afin.includes(clase) ? C.ARMA_AFIN_BONUS : 0;
+}
+
+// Lo que el objeto suma de verdad a ese héroe.
+function effBonus(it, clase) {
+  return it.bonus + afinBonus(it, clase);
+}
+
+function equipmentFuerza(inv, clase) {
+  return equippedItems(inv).filter((it) => it.stat !== 'mana' && it.slot !== 'tunica').reduce((s, it) => s + effBonus(it, clase), 0);
 }
 
 function equipmentMana(inv) {
@@ -224,6 +227,8 @@ module.exports = {
   equippedItems,
   allItems,
   equipmentFuerza,
+  afinBonus,
+  effBonus,
   equipmentMana,
   findItem,
   removeItem,

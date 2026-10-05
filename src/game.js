@@ -121,7 +121,7 @@ class Game {
   // ---------------------------------------------------------------- Héroe
 
   effFuerza(p) {
-    return p.hero.base.fuerza + I.equipmentFuerza(p.hero.inv);
+    return p.hero.base.fuerza + I.equipmentFuerza(p.hero.inv, p.clase);
   }
 
   availableMana(p) {

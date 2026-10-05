@@ -135,10 +135,25 @@ function itemIcon(it) {
   return { arma: '🗡', dosManos: '⚔', escudo: '🛡', yelmo: '⛑', armadura: '🥋', botas: '🥾' }[it.slot] || '•';
 }
 
+// Armas afines: +1 de Fuerza si el arma es afín a tu clase (en verde, junto al +N).
+function afBonus(it) {
+  const p = me();
+  return it && it.afin && p && it.afin.includes(p.clase) ? 1 : 0;
+}
+function afPlus(it) { return afBonus(it) ? ' <span class="af">+1</span>' : ''; }
+function itemName(it) { return esc(it.nombre) + afPlus(it); }
+function shortName(it) {
+  const n = { espada: 'Espada', maza: 'Maza', arco: 'Arco', hacha: 'Hacha', baculo: 'Báculo', cayado: 'Cayado', escudo: 'Escudo', yelmo: 'Yelmo', cota: 'Armadura', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' }[it.forma || it.slot];
+  return n ? `${n} +${it.bonus}${afPlus(it)}` : esc(rewardEffect(it));
+}
+
 function itemDesc(it) {
   if (it.tipo === 'equipo') {
     const slot = { arma: 'Arma · ocupa 1 mano', dosManos: 'Arma · ocupa las 2 manos', escudo: 'Escudo · ocupa 1 mano', yelmo: 'Yelmo', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' }[it.slot];
-    return `${slot} · +${it.bonus} ${it.slot === 'tunica' ? 'Maná' : 'Fuerza'}`;
+    let d = `${slot} · +${it.bonus} ${it.slot === 'tunica' ? 'Maná' : 'Fuerza'}`;
+    if (afBonus(it)) d += ` <span class="af">+1</span> · afín a ${esc(className(me()))}`;
+    else if (it.afin && DATA) d += `<br>Afín a: ${it.afin.map((k) => DATA.clases[k].nombre).join(', ')}`;
+    return d;
   }
   if (it.efecto === 'mana') return `+${it.valor} Maná durante un combate`;
   if (it.efecto === 'curacion') return `Recupera ${it.valor} de Vida`;
@@ -502,7 +517,7 @@ function itemTile(it, label) {
     const ghost = { Yelmo: 'yelmo', Armadura: 'cota', 'Túnica': 'tunica', Botas: 'botas', Mano: 'espada', 'Poción': 'pocion', Pergamino: 'pergamino' }[label];
     return `<div class="tile empty" title="${label || ''}"><span class="ring">${ghost ? `<img class="ghost" src="img/objetos/${ghost}-1.webp" alt="">` : ''}<i>${label}</i></span></div>`;
   }
-  return `<button class="tile" data-a="item" data-id="${it.id}" title="${esc(it.nombre)}"><span class="ring">${itemIcon(it)}</span><span>${esc(it.nombre)}</span></button>`;
+  return `<button class="tile" data-a="item" data-id="${it.id}" title="${esc(it.nombre)}"><span class="ring">${itemIcon(it)}</span><span>${itemName(it)}</span></button>`;
 }
 
 function renderSheet() {
@@ -547,7 +562,7 @@ function renderItemDetail() {
   return `
     <div class="card detail">
       <div class="big-item">${itemIcon(it)}</div>
-      <h2>${esc(it.nombre)}</h2>
+      <h2>${itemName(it)}</h2>
       <p class="muted">${itemDesc(it)}</p>
       <div class="row center-row">${useBtn(it)}${discardBtn(it)}<button class="btn" data-a="closeDetail">Cerrar</button></div>
     </div>`;
@@ -704,7 +719,7 @@ function renderOutcome() {
         <div class="reward-pick">${p.rewards.map((it, i) => `
           <button class="reward-choice" data-a="reward" data-i="${i}">
             <span class="big-item">${itemIcon(it)}</span>
-            <span class="rc-text"><b>${esc(it.nombre)}</b><small>${itemDesc(it)}</small></span>
+            <span class="rc-text"><b>${itemName(it)}</b><small>${itemDesc(it)}</small></span>
           </button>`).join('')}</div>
       </div>`;
   }
@@ -768,7 +783,9 @@ const RULES = {
     <section><div class="rule-ill"><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="lbl">15 Fuerza<br>= 3 esferas</span></div><h4>Fuerza</h4><p>Cuántas esferas lanzas: <b>1–5</b> → 1 · <b>6–10</b> → 2 · <b>11–15</b> → 3 · <b>16–20</b> → 4 · <b>21+</b> → 5.</p></section>
     <section><div class="rule-ill"><img src="img/formas/espiral-multicolor.webp" alt=""><span class="lbl">5 Maná<br>= 1 comodín</span></div><h4>Maná</h4><p>Cada <b>5</b> de Maná convierte una esfera en <b>comodín</b> (multicolor con espiral), fijada desde el inicio del combate.</p></section>
     <section><div class="rule-ill"><img src="img/objetos/yelmo-1.webp" alt=""><img src="img/objetos/espada-2.webp" alt=""><img src="img/objetos/tunica-1.webp" alt=""></div><h4>Equipo</h4><p>Yelmo, armadura, túnica, botas y dos manos (un arma a dos manos ocupa las dos).
-      El equipo suma <b>Fuerza</b>; la <b>túnica</b> suma <b>Maná</b>. Hasta 3 pociones y 3 pergaminos.</p></section>`],
+      El equipo suma <b>Fuerza</b>; la <b>túnica</b> suma <b>Maná</b>. Hasta 3 pociones y 3 pergaminos.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/arco-2.webp" alt=""><span class="lbl">Arco +3 <span class="af">+1</span></span></div><h4>Armas afines</h4><p>Cada clase maneja mejor ciertas armas: le dan <b class="af">+1</b> de Fuerza extra.
+      Arco → Explorador y Ladrón · Báculo → Mago · Cayado → Druida · Maza → Clérigo · Hacha → Bárbaro · Espada y Escudo → Guerrero.</p></section>`],
   aventura: ['Aventura', `
     <section><div class="rule-ill"><img class="tall" src="img/monstruos/goblin-2.webp" alt=""><span class="plus">o</span><img class="tall" src="img/monstruos/orco-1.webp" alt=""></div><h4>12 rondas</h4><p>En cada ronda aparecen <b>2 monstruos a la vez</b>. Lanzas tus esferas y, al final, derrotas al que puedas.</p></section>
     <section><div class="rule-ill"><img class="s1" src="img/monstruos/goblin-1.webp" alt=""><img class="s2" src="img/monstruos/goblin-2.webp" alt=""><img class="s3" src="img/monstruos/goblin-3.webp" alt=""></div><h4>Tamaños</h4><p>Pequeño, mediano y grande: cuanto más grande, más esferas pide, más daño hace y mejores recompensas da.</p></section>
@@ -874,7 +891,7 @@ function showReveal() {
   const box = $('reveal');
   if (!box.classList.contains('hidden') || !revealQueue.length) return;
   const it = revealQueue.shift();
-  box.innerHTML = `<div class="reveal-card card"><div class="reveal-title">Has conseguido</div><div class="big-item">${itemIcon(it)}</div><h2>${esc(it.nombre)}</h2><p>${itemDesc(it)}</p></div>`;
+  box.innerHTML = `<div class="reveal-card card"><div class="reveal-title">Has conseguido</div><div class="big-item">${itemIcon(it)}</div><h2>${itemName(it)}</h2><p>${itemDesc(it)}</p></div>`;
   box.classList.remove('hidden');
   Sounds.play('fe');
   clearTimeout(revealTimer);
@@ -959,7 +976,7 @@ function renderTheft() {
     <div class="row">${others().map((o) => `<button class="btn small ${t.targetId === o.id ? 'selected' : ''}" data-a="theftTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
     ${target ? (allItems(target.hero).length ? `<div class="steal-items">${allItems(target.hero).map((it) => `
       <button class="steal-item ${t.itemId === it.id ? 'selected' : ''}" data-a="theftItem" data-id="${it.id}">
-        <span class="ring">${itemIcon(it)}</span><span>${esc(it.nombre)}</span></button>`).join('')}</div>`
+        <span class="ring">${itemIcon(it)}</span><span>${itemName(it)}</span></button>`).join('')}</div>`
       : '<p class="muted center">No tiene objetos.</p>') : '<p class="muted center">Elige a quién robar.</p>'}
     <div class="row">
       ${scroll ? `<button class="btn primary" data-a="steal" data-mode="scroll" ${picked ? '' : 'disabled'}>Usar ${esc(scroll.nombre)}</button>` : ''}
@@ -997,7 +1014,7 @@ function renderMagic() {
 
 function tradeTile(it, { selected = false, attrs = '' } = {}) {
   return `<button class="trade-tile ${selected ? 'selected' : ''}" ${attrs}>
-    <span class="ring">${itemIcon(it)}</span><b>${esc(it.nombre)}</b><small>${esc(rewardEffect(it))}</small></button>`;
+    <span class="ring">${itemIcon(it)}</span><b>${itemName(it)}</b><small>${esc(rewardEffect(it))}</small></button>`;
 }
 function tradeItems(owner, ids) {
   return ids.map((id) => allItems(owner.hero).find((x) => x.id === id)).filter(Boolean);
@@ -1224,7 +1241,7 @@ function foesHtml(p, cb, all, controllable) {
       ${comboHtml(m.combo, false, m.tipo)}
       ${state}
       ${can ? `<button class="btn primary defeat-btn" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}
-      <div class="rewards-sum">${m.rewards.map((it) => `<span>${esc(rewardEffect(it))}</span>`).join('')}</div>
+      <div class="rewards-sum">${m.rewards.map((it) => `<span>${shortName(it)}</span>`).join('')}</div>
     </div>`;
   }).join('<div class="foes-or">o</div>')}</div>`;
 }
@@ -1313,7 +1330,7 @@ function renderRewardsView(p) {
       <div class="reward-pick">${m.rewards.map((it) => `
         <div class="reward-choice static">
           <span class="big-item">${itemIcon(it)}</span>
-          <b>${esc(it.nombre)}</b><small>${itemDesc(it)}</small>
+          <b>${itemName(it)}</b><small>${itemDesc(it)}</small>
         </div>`).join('')}</div>
     </div>`;
 }
@@ -1351,7 +1368,7 @@ function modalHtml() {
   return `
     <div class="card">
       <div class="big-item center">${itemIcon(pend.item)}</div>
-      <h2>${esc(pend.item.nombre)}</h2>
+      <h2>${itemName(pend.item)}</h2>
       <p class="muted center">${itemDesc(pend.item)}</p>
       <p class="center">No tienes espacio libre para este objeto. ¿Qué haces?</p>
       <div class="opts">${pend.options.map((o) => `<button class="btn ${o.torpe ? 'torpe' : 'primary'}" data-a="pending" data-c="${o.id}">${esc(o.label)}</button>`).join('')}</div>

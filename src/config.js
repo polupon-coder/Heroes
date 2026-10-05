@@ -39,6 +39,18 @@ const AFINIDAD = {
   durgan: { natural: ['barbaro', 'guerrero'], rara: ['clerigo', 'mago'] },
   faunar: { natural: ['druida', 'ladron'], rara: ['clerigo'] },
 };
+// Armas afines: la clase que las maneja mejor gana +1 de Fuerza extra.
+const ARMA_AFIN = {
+  arco: ['explorador', 'ladron'],
+  baculo: ['mago'],
+  cayado: ['druida'],
+  maza: ['clerigo'],
+  hacha: ['barbaro'],
+  espada: ['guerrero'],
+  escudo: ['guerrero'],
+};
+const ARMA_AFIN_BONUS = 1;
+
 const AFINIDAD_EFECTO = {
   natural: { vida: 0, mana: 1, fuerza: 1 },
   rara: { vida: -1, mana: 0, fuerza: 0 },
@@ -221,6 +233,8 @@ module.exports = {
   CLASSES,
   AFINIDAD,
   AFINIDAD_EFECTO,
+  ARMA_AFIN,
+  ARMA_AFIN_BONUS,
   afinidad,
   diceForFuerza,
   fixedDiceForMana,

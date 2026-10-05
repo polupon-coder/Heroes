@@ -1255,7 +1255,6 @@ function renderCombat(p, controllable) {
     ${monster ? foesHtml(p, cb, all, controllable) : cb.kind === 'duelo' ? `<div class="duel-target">${comboHtml(cb.combo, false)}</div>` : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
     ${controllable || cb.kind === 'duelo' ? '' : `<div class="rolls-count">${cb.rolls}/3</div>`}
     ${monster || cb.kind === 'duelo' ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
-    ${cb.cursesLeft && cb.rolls === 0 ? `<div class="curse-note">Te afecta un maleficio: en tu primera tirada se anulará${cb.cursesLeft > 1 ? `n ${cb.cursesLeft} esferas acertadas` : ' 1 esfera acertada'} y tendrás que relanzarla${cb.cursesLeft > 1 ? 's' : ''}.</div>` : ''}
     <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
         ${result}
     ${controls}

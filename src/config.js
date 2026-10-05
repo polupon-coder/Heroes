@@ -156,10 +156,10 @@ function variantCombo(combo, variante) {
 
 // Regla 23.
 function monsterDamage(level) {
-  if (level <= 3) return 3;
-  if (level <= 6) return 4;
-  if (level <= 9) return 5;
-  return 6;
+  if (level <= 3) return 4;
+  if (level <= 6) return 5;
+  if (level <= 9) return 6;
+  return 7;
 }
 
 // Regla 27.

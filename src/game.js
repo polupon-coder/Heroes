@@ -275,6 +275,10 @@ class Game {
     // Siempre hay una opción con margen: pide al menos una esfera menos de las que tienes.
     if (dice >= 4 && !fixed.some((m) => m.combo.length < dice)) {
       fixed[0] = this.affordableOffer(dice - 1, fixed[0].level, fixed[0].variante);
+      // Ir sobre seguro rinde menos: la mitad de monedas y recompensas de un nivel menos.
+      fixed[0].margen = true;
+      const lv = Math.min(12, Math.max(1, fixed[0].level + C.VARIANTS[fixed[0].variante].recompensa - 1));
+      fixed[0].rewards = [this.reward(lv, this._invHint), this.reward(lv, this._invHint)];
     }
     // Si los dos han quedado iguales, el segundo baja un nivel para dar a elegir.
     if (fixed[0].level === fixed[1].level && fixed[0].variante === fixed[1].variante && fixed[1].level > 1) {
@@ -547,7 +551,8 @@ class Game {
     const m = p.monster;
     if (won) {
       p.hero.victorias += 1;
-      p.coinsPending = { n: C.coinsFor(m.level, m.variante, p.combat.rolls), rolls: p.combat.rolls };
+      const coins = C.coinsFor(m.level, m.variante, p.combat.rolls);
+      p.coinsPending = { n: m.margen ? Math.max(1, Math.round(coins / 2)) : coins, rolls: p.combat.rolls };
       p.stage = 'recompensa';
       p.rewards = m.rewards;
       this.say(`🗡 ${p.name} derrota a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`);

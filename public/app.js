@@ -791,7 +791,7 @@ const RULES = {
   aventura: ['Aventura', `
     <section><div class="rule-ill"><img class="tall" src="img/monstruos/goblin-2.webp" alt=""><span class="plus">o</span><img class="tall" src="img/monstruos/orco-1.webp" alt=""></div><h4>12 rondas</h4><p>En cada ronda aparecen <b>2 monstruos a la vez</b>. Lanzas tus esferas y, al final, derrotas al que puedas.</p></section>
     <section><div class="rule-ill"><img class="s1" src="img/monstruos/goblin-1.webp" alt=""><img class="s2" src="img/monstruos/goblin-2.webp" alt=""><img class="s3" src="img/monstruos/goblin-3.webp" alt=""></div><h4>Tamaños</h4><p>Pequeño, mediano y grande: cuanto más grande, más esferas pide, más daño hace y mejores recompensas da.
-      Piden como mucho <b>3</b> esferas en las rondas 1–3, <b>4</b> en las 4–7 y <b>5</b> desde la 8; si tienes 4 o más, uno de los dos te deja siempre al menos una de margen.</p></section>
+      Piden como mucho <b>3</b> esferas en las rondas 1–3, <b>4</b> en las 4–7 y <b>5</b> desde la 8; si tienes 4 o más, uno de los dos te deja siempre al menos una de margen, pero rinde menos (la mitad de monedas y peores recompensas).</p></section>
     <section><div class="rule-ill"><img src="img/objetos/espada-1.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Si ganas</h4><p>Eliges 1 de 2 recompensas y además ganas <b>monedas</b>: más cuantas menos tiradas hayas necesitado.</p></section>
     <section><div class="rule-ill"><span class="big-dmg">−4</span><span class="lbl">Vida</span></div><h4>Si pierdes</h4><p>Pierdes la Vida que marca el monstruo. Si caes a 0 pierdes <b>todos tus objetos y monedas</b> y recuperas la Vida inicial.</p></section>`],
   combate: ['Combate', `

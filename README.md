@@ -45,6 +45,14 @@ Railway o Fly.io también sirven: es una app Node normal que escucha en la varia
 - **Reconexión:** si se cierra el navegador o se cae la conexión, al volver a abrir el enlace vuelves a tu partida.
 - **Torneo:** se juega en directo y todos pueden ver los duelos.
 
+## Novedades de esta versión
+
+- **Monedas y tienda:** cada monstruo vencido da monedas (más cuantas menos tiradas necesites; se anuncian después de elegir la recompensa). Entre rondas, **Comprar** muestra 4 objetos con su precio; una compra por ronda. Al caer a 0 Vida se pierden las monedas.
+- **Túnicas:** dan Maná en lugar de Fuerza.
+- **Torneo:** todos empiezan con la Vida completa; los duelos se juegan uno detrás de otro en el centro; el ganador de una semifinal elige un objeto del vencido y se lleva sus monedas y un premio; los finalistas recuperan la Vida antes de la final.
+- **Bots:** valoran los objetos por las esferas y comodines que les dan y eligen el monstruo por probabilidad × valor.
+- **Móvil:** en pantallas estrechas la mesa pasa a una columna (tu héroe, el centro y los rivales) sin desbordes.
+
 ## Estructura
 
 | Archivo | Contenido |

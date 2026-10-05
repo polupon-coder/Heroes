@@ -646,6 +646,8 @@ class Game {
     const dmg = C.pvpDamage(n, this.settings.pvpHits);
     p.combat.damage = dmg;
     p.combat.status = dmg > 0 ? 'victoria' : 'derrota';
+    // Último ataque, para que se pueda ver qué ha pasado.
+    m.last = { by: p.id, to: def.id, dmg, faces: p.combat.dice.map((d) => ({ face: d.face, shape: d.shape })), color: def.color };
     if (dmg > 0) {
       def.hero.vida = Math.max(0, def.hero.vida - dmg);
       this.say(`💥 ${p.name} saca ${Math.min(n, this.settings.pvpHits)} resultado(s) ${def.color} y golpea a ${def.name}: −${dmg} Vida (le quedan ${def.hero.vida}).`);

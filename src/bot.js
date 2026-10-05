@@ -5,6 +5,37 @@ const I = require('./items');
 const C = require('./config');
 const D = require('./dice');
 
+// Cuánto mejora realmente un objeto al héroe: esferas y comodines que gana.
+// La Fuerza deja de servir al llegar a 5 esferas; el Maná sigue sumando comodines.
+function slotGain(h, it) {
+  const inv = h.inv;
+  if (['yelmo', 'armadura', 'botas', 'tunica'].includes(it.slot)) return it.bonus - (inv[it.slot] ? inv[it.slot].bonus : 0);
+  const hands = inv.manos;
+  const sum = hands.reduce((s2, x) => s2 + x.bonus, 0);
+  if (it.slot === 'dosManos') return it.bonus - sum;
+  if (hands.length < 2 && !(hands[0] && hands[0].slot === 'dosManos')) return it.bonus;
+  if (hands[0] && hands[0].slot === 'dosManos') return it.bonus - hands[0].bonus;
+  return it.bonus - Math.min(...hands.map((x) => x.bonus));
+}
+function gainOf(game, p, it) {
+  const h = p.hero;
+  if (it.tipo !== 'equipo') {
+    if (it.efecto === 'curacion') return h.vida < h.base.vida ? 1.5 : 0.8;
+    if (it.efecto === 'mana') return 1;
+    return 0.3;
+  }
+  const g = slotGain(h, it);
+  if (g <= 0) return 0;
+  const f = game.effFuerza(p);
+  const m = game.availableMana(p) + h.manaDebt;
+  if (it.slot === 'tunica') {
+    const dw = C.fixedDiceForMana(m + g) - C.fixedDiceForMana(m);
+    return dw * 4 + g * 0.3;
+  }
+  const dd = C.diceForFuerza(f + g) - C.diceForFuerza(f);
+  return dd * 4 + (C.diceForFuerza(f) >= 5 ? 0.05 : 0.4) * g;
+}
+
 // Jugador automático muy sencillo. Hace como mucho una acción por llamada
 // y devuelve true si ha actuado.
 function botStep(game, p) {
@@ -45,36 +76,28 @@ function botStep(game, p) {
     }
     // Tienda: compra la mejora de equipo que más le aporte (una por ronda).
     if (!p.boughtThisRound && p.shop && p.shop.length) {
-      const gainOf = (it) => {
-        if (it.tipo !== 'equipo') return it.efecto === 'mana' ? 0.5 : 0;
-        const inv = h.inv;
-        if (['yelmo', 'armadura', 'tunica', 'botas'].includes(it.slot)) return it.bonus - (inv[it.slot] ? inv[it.slot].bonus : 0);
-        const hands = inv.manos;
-        const sum = hands.reduce((s2, x) => s2 + x.bonus, 0);
-        if (it.slot === 'dosManos') return it.bonus - sum;
-        if (hands.length < 2 && !(hands[0] && hands[0].slot === 'dosManos')) return it.bonus;
-        return it.bonus - Math.min(...hands.map((x) => x.bonus));
-      };
-      const pickIt = p.shop.filter((it) => it.precio <= h.monedas && gainOf(it) > 0)
-        .sort((a2, b2) => gainOf(b2) / b2.precio - gainOf(a2) / a2.precio)[0];
+      const pickIt = p.shop.filter((it) => it.precio <= h.monedas && gainOf(game, p, it) >= 1)
+        .sort((a2, b2) => gainOf(game, p, b2) / b2.precio - gainOf(game, p, a2) / a2.precio)[0];
       if (pickIt) {
         game.act(p.id, 'buy', { itemId: pickIt.id });
         return true;
       }
     }
-    if (h.vida <= h.base.vida / 2) {
-      const heal = [...h.inv.pociones, ...h.inv.pergaminos].find((it) => it.efecto === 'curacion');
+    const heal0 = [...h.inv.pociones, ...h.inv.pergaminos].filter((it) => it.efecto === 'curacion').sort((a, b) => a.valor - b.valor)[0];
+    if (heal0 && (h.base.vida - h.vida >= heal0.valor || h.vida <= 4)) {
+      const heal = heal0;
       if (heal) {
         game.act(p.id, 'useItem', { itemId: heal.id });
         return true;
       }
     }
     // A partir de la ronda 5, a veces lanza un maleficio al rival más fuerte.
-    if (!p.ready && !p._triedCurse && game.round >= 5 && game.round <= C.ROUNDS && game.availableMana(p) >= C.MANA_PER_CURSE) {
+    if (!p.ready && !p._triedCurse && game.round >= 3 && game.round <= C.ROUNDS && game.availableMana(p) >= C.MANA_PER_CURSE) {
       p._triedCurse = true;
-      if (game.rng() < 0.45) {
+      if (game.rng() < 0.7) {
+        // Prefiere a los jugadores humanos que van mejor.
         const targets = game.players.filter((x) => x !== p && !x.cursedThisRound)
-          .sort((x, y) => game.tourneyScore(y) - game.tourneyScore(x));
+          .sort((x, y) => (y.bot ? 0 : 5) - (x.bot ? 0 : 5) + game.tourneyScore(y) - game.tourneyScore(x));
         if (targets.length) {
           game.act(p.id, 'curse', { targetId: targets[0].id, amount: C.MANA_PER_CURSE });
           return true;
@@ -93,9 +116,7 @@ function botStep(game, p) {
     if (p.stage === 'combate') return fight(game, p);
     if (p.stage === 'recompensa') {
       let idx = 0;
-      p.rewards.forEach((r, i) => {
-        if (r.tipo === 'equipo' && (p.rewards[idx].tipo !== 'equipo' || r.bonus > p.rewards[idx].bonus)) idx = i;
-      });
+      p.rewards.forEach((r, i) => { if (gainOf(game, p, r) > gainOf(game, p, p.rewards[idx])) idx = i; });
       game.act(p.id, 'chooseReward', { index: idx });
       return true;
     }
@@ -123,6 +144,26 @@ function botStep(game, p) {
   return false;
 }
 
+// Probabilidad (simulada) de completar un objetivo con las tiradas que quedan,
+// conservando las esferas útiles y relanzando el resto.
+function chance(cb, t, rollsLeft, trials = 160) {
+  const wild = D.WILD[t.tipo];
+  const key = t.tipo === 'forma' ? 'shape' : 'face';
+  const roll = () => (t.tipo === 'forma' ? C.SHAPES : C.FACES)[Math.floor(Math.random() * (t.tipo === 'forma' ? C.SHAPES.length : C.FACES.length))];
+  let ok = 0;
+  for (let k = 0; k < trials; k++) {
+    let vals = cb.dice.map((d) => d[key]);
+    const fixed = cb.dice.map((d) => d.fixed);
+    for (let r = 0; r < rollsLeft; r++) {
+      const { used, missing } = D.matchDice(vals, t.combo, wild);
+      if (missing === 0) break;
+      vals = vals.map((v, i) => (fixed[i] || used.has(i) ? v : roll()));
+    }
+    if (D.matchDice(vals, t.combo, wild).missing === 0) ok++;
+  }
+  return ok / trials;
+}
+
 function fight(game, p) {
   const cb = p.combat;
   if (cb.rolls === 0) {
@@ -133,18 +174,23 @@ function fight(game, p) {
   let missing;
   if (cb.kind === 'monstruo') {
     const st = game.targetStatus(cb);
-    // Presenta en cuanto completa alguno (prefiere el de más nivel).
-    const ok = st.map((x, i) => i).filter((i) => st[i].ok).sort((a, b) => p.offers[b].level - p.offers[a].level);
+    const value = (m) => m.level * 2 + (m.variante || 1) * 3 + m.dano;
+    // Si completa alguno, presenta el más valioso.
+    const ok = st.map((x, i) => i).filter((i) => st[i].ok).sort((a, b) => value(p.offers[b]) - value(p.offers[a]));
+    const left = C.MAX_ROLLS - cb.rolls;
     if (ok.length) {
+      // Si aún quedan tiradas y el otro es mucho mejor y probable, lo intenta (solo si puede volver a este).
       game.act(p.id, 'present', { index: ok[0] });
       return true;
     }
-    // Persigue el que tenga menos esferas por conseguir (a igualdad, el de más nivel).
-    let t = 0;
+    // Persigue el objetivo con mejor esperanza: probabilidad × valor.
+    let best = 0;
+    let bestScore = -1;
     st.forEach((x, i) => {
-      if (x.missing < st[t].missing || (x.missing === st[t].missing && p.offers[i].level > p.offers[t].level)) t = i;
+      const sc = chance(cb, cb.targets[i], left) * (10 + value(p.offers[i]));
+      if (sc > bestScore) { bestScore = sc; best = i; }
     });
-    ({ used, missing } = st[t]);
+    ({ used, missing } = st[best]);
   } else {
     ({ used, missing } = D.matchDice(cb.dice.map((d) => d.face), cb.combo));
   }

@@ -721,34 +721,38 @@ function renderOutcome() {
 
 const RULES = {
   heroe: ['El héroe', `
-    <p>Cada jugador controla un héroe formado por una <b>Raza</b> y una <b>Clase</b>, y tiene un color propio.</p>
-    <p><b>Vida</b>: resistencia; no se recupera sola, solo con objetos. <b>Fuerza</b>: decide cuántas esferas lanzas
-    (1–5: 1 · 6–10: 2 · 11–15: 3 · 16–20: 4 · 21+: 5). Todos empiezan con Fuerza 10 como mínimo.
-    <b>Maná</b>: cada 5 puntos convierten una de tus esferas en multicolor (comodín) desde el inicio de cada combate. Todos los héroes empiezan con al menos 5.</p>
-    <p>Equipo: yelmo, armadura, botas y dos manos (un arma a dos manos ocupa ambas). Hasta 3 pociones y 3 pergaminos.</p>`],
+    <section><h4>Raza y clase</h4>
+      <p>Tu héroe es una <b>Raza</b> y una <b>Clase</b>. Algunas parejas son <b class="ok">naturales</b> (+1 Fuerza)
+      y otras <b class="bad">raras</b> (−1 Vida): se indica al elegir.</p></section>
+    <section><h4>Vida</h4><p>Lo que aguantas. No se recupera sola: solo con pociones y pergaminos de curación.</p></section>
+    <section><h4>Fuerza</h4><p>Cuántas esferas lanzas: <b>1–5</b> → 1 · <b>6–10</b> → 2 · <b>11–15</b> → 3 · <b>16–20</b> → 4 · <b>21+</b> → 5.</p></section>
+    <section><h4>Maná</h4><p>Cada <b>5</b> de Maná convierte una esfera en <b>comodín</b> (multicolor con espiral), fijada desde el inicio del combate.</p></section>
+    <section><h4>Equipo</h4><p>Yelmo, armadura, túnica, botas y dos manos (un arma a dos manos ocupa las dos).
+      El equipo suma <b>Fuerza</b>; la <b>túnica</b> suma <b>Maná</b>. Hasta 3 pociones y 3 pergaminos.</p></section>`],
   aventura: ['Aventura', `
-    <p>La Fase 1 dura <b>12 rondas</b>. En cada una aparecen <b>2 monstruos a la vez</b>; no eliges antes de lanzar:
-    al terminar tus tiradas presentas tus esferas contra el que puedas o quieras derrotar. Siempre hay monstruos a tu alcance.</p>
-    <p>Los monstruos salen en tres tamaños: pequeño, mediano (★★) y grande (★★★). Cuanto más grandes, más difíciles,
-    más daño hacen y mejores recompensas dan.</p>
-    <p>Si ganas, eliges 1 de 2 recompensas. Si pierdes, pierdes Vida. Si caes a 0, pierdes todos tus objetos
-    y recuperas la Vida inicial.</p>
-    <p>Entre combates puedes comerciar, curarte, robar con pergaminos y lanzar maleficios (uno recibido como máximo por ronda, y un comercio por ronda): cada 5 de Maná obliga a un rival a
-    repetir una esfera acertada en su próximo combate.</p>`],
+    <section><h4>12 rondas</h4><p>En cada ronda aparecen <b>2 monstruos a la vez</b>. Lanzas tus esferas y, al final, derrotas al que puedas.</p></section>
+    <section><h4>Tamaños</h4><p>Pequeño, mediano y grande: cuanto más grande, más esferas pide, más daño hace y mejores recompensas da.</p></section>
+    <section><h4>Si ganas</h4><p>Eliges 1 de 2 recompensas y además ganas <b>monedas</b>: más cuantas menos tiradas hayas necesitado.</p></section>
+    <section><h4>Si pierdes</h4><p>Pierdes la Vida que marca el monstruo. Si caes a 0 pierdes <b>todos tus objetos y monedas</b> y recuperas la Vida inicial.</p></section>`],
   combate: ['Combate', `
-    <p>Cada esfera da a la vez un <b>color</b> y una <b>forma</b>. Colores: rojo, azul, verde, amarillo y <b>multicolor</b> (comodín de color).
-    Formas: círculo, cuadrado, rombo, triángulo y <b>espiral</b> (comodín de forma).</p>
-    <p>Cada monstruo pide <b>solo colores</b> o <b>solo formas</b>. Los dos monstruos de la ronda suelen pedir cosas distintas,
-    así que puedes orientar tus tiradas hacia uno u otro.</p>
-    <p>Lanzas tus esferas, conservas las que quieras y relanzas el resto: <b>3 tiradas</b> como máximo. Cuando tu combinación completa
-    lo que pide un monstruo, pulsa <b>Derrotar</b> en él.</p>
-    <p>Tus esferas de Maná salen multicolor con espiral (comodín para los dos) y ya fijadas. Las pociones de Maná añaden más.
-    Si al terminar las tiradas no completas ninguno, pierdes contra el menos dañino.</p>`],
+    <section><h4>Esferas</h4><p>Cada esfera tiene un <b>color</b> (rojo, azul, verde, amarillo o <b>multicolor</b> = comodín)
+      y una <b>forma</b> (círculo, cuadrado, rombo, triángulo o <b>espiral</b> = comodín).</p></section>
+    <section><h4>Qué piden</h4><p>Cada monstruo pide <b>solo colores</b> o <b>solo formas</b>. Puedes ir a por cualquiera de los dos.</p></section>
+    <section><h4>3 tiradas</h4><p>Pulsa <b>Atacar</b>. Las esferas que te sirven se quedan; las marcadas con la flecha se relanzan
+      (toca una esfera para marcarla o desmarcarla). Cuando completes un monstruo, pulsa <b>Derrotar</b>.</p></section>
+    <section><h4>Si no llegas</h4><p>Pierdes contra el monstruo que menos daño hace.</p></section>`],
+  entre: ['Entre rondas', `
+    <section><h4>Comerciar</h4><p>Ofreces objetos; los demás te dicen qué te dan a cambio y tú aceptas o rechazas. Una oferta por ronda.</p></section>
+    <section><h4>Comprar</h4><p>Cada ronda la tienda tiene objetos nuevos con su precio en <b>monedas</b>. Una compra por ronda.</p></section>
+    <section><h4>Robar</h4><p>Con Pergamino de Robo, seguro. Sin él tiras un dado: <b>1–2</b> robas · <b>3–5</b> pierdes tu Maná en el próximo combate · <b>6</b> nada.</p></section>
+    <section><h4>Maleficio</h4><p>Gasta 5 de Maná: el rival repetirá una esfera acertada en su próximo combate (verás cuál, en morado).
+      Cada héroe recibe como mucho uno por ronda.</p></section>`],
   torneo: ['Torneo', `
-    <p>Tras la ronda 12 empieza el torneo. El héroe con más Fuerza + Maná elige rival para su semifinal; los otros dos se enfrentan entre sí.
-    Los ganadores juegan la final. Todos empiezan el Torneo con la Vida completa.</p>
-    <p>Para golpear hay que sacar esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Ataca primero el más débil y se alterna
-    hasta que uno llega a 0 Vida. Quien gana la final, gana la partida.</p>`],
+    <section><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. El que más Fuerza + Maná tiene elige rival;
+      se juega un duelo detrás de otro.</p></section>
+    <section><h4>Golpear</h4><p>Saca esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Se ataca por turnos hasta que uno cae.</p></section>
+    <section><h4>Premios</h4><p>Quien gana una semifinal elige <b>un objeto</b> del vencido y se lleva sus <b>monedas</b> y un premio.
+      Los finalistas recuperan la Vida antes de la final.</p></section>`],
 };
 
 function renderRules() {
@@ -832,7 +836,7 @@ function showReveal() {
   box.classList.remove('hidden');
   Sounds.play('fe');
   clearTimeout(revealTimer);
-  revealTimer = setTimeout(closeReveal, 3200);
+  revealTimer = setTimeout(closeReveal, 7000);
 }
 function closeReveal() {
   $('reveal').classList.add('hidden');
@@ -1208,6 +1212,11 @@ function renderTournament() {
     <div class="card duel-card">
       <h2 class="duel-title">${esc(m.label)}</h2>
       <div class="vs duel-pair">${fighter(a)}<span class="faceoff-vs">vs</span>${fighter(b)}</div>
+      ${m.last ? `<div class="last-attack ${m.last.dmg ? 'hit' : 'miss'}">
+        <span>${esc(byId(m.last.by).name)}: </span>
+        <span class="dice">${m.last.faces.map((f) => die(f.face, { sm: true, shape: f.shape })).join('')}</span>
+        <b>${m.last.dmg ? `¡Golpe! ${esc(byId(m.last.to).name)} −${m.last.dmg} Vida` : 'Ataque fallido'}</b>
+      </div>` : ''}
       ${att.combat ? renderCombat(att, att.id === S.me) : ''}
     </div>`;
 }

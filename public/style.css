@@ -1508,3 +1508,5 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .outcome .duel-pair .portrait.duelist { width: 100%; max-width: 130px; height: auto; aspect-ratio: 3 / 4; margin: 0 auto; }
   .outcome .duel-pair .faceoff-vs { flex: 0 0 auto; white-space: nowrap; font-size: 1.05rem; }
 }
+.duel-curse { border: none !important; background: none !important; padding: 0 !important; margin: 6px 0 2px; }
+.duel-curse .btn { color: #6b3fa0; border-color: rgba(107, 63, 160, .5); }

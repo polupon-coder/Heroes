@@ -302,10 +302,14 @@ test('torneo: maleficio al rival en cada uno de sus ataques', () => {
   assert.strictEqual(g.tournament.stage, 'final');
   const att = g.player(m.attacker);
   const def = g.player(m.attacker === a.id ? b.id : a.id);
-  assert.throws(() => g.act(att.id, 'duelCurse', { amount: 5 }), /ataque tu rival/);
+  // Mientras ataca el rival: le afecta ya; solo uno por ataque.
   g.act(def.id, 'duelCurse', { amount: 5 });
   assert.strictEqual(att.combat.cursesLeft, 1);
   assert.throws(() => g.act(def.id, 'duelCurse', { amount: 5 }), /este ataque/);
+  // En tu propio turno: afecta al siguiente ataque del rival.
+  g.act(att.id, 'duelCurse', { amount: 5 });
+  assert.strictEqual(def.hero.curses, 1);
+  assert.throws(() => g.act(att.id, 'duelCurse', { amount: 5 }), /este ataque/);
 });
 
 test('antes de la final: maleficio y robo solo al rival; sin comercio con él', () => {

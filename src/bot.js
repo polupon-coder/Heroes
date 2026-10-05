@@ -142,7 +142,7 @@ function botStep(game, p) {
       return true;
     }
     const m0 = game.matchOf(p);
-    if (m0 && m0.attacker !== p.id && p.duelCurseAt !== m0.turns
+    if (m0 && m0.attacker !== p.id && p.duelCurseAt !== m0.turns && p.duelCurseAt !== m0.turns - 1
       && game.availableMana(p) >= C.MANA_PER_CURSE + 5 && game.rng() < 0.5) {
       try { game.act(p.id, 'duelCurse', { amount: C.MANA_PER_CURSE }); return true; } catch (e) { p.duelCurseAt = m0.turns; }
     }

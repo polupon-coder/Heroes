@@ -841,7 +841,7 @@ const RULES = {
       Cada héroe recibe como mucho uno por ronda.</p></section>`],
   torneo: ['Torneo', `
     <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. Las semifinales se sortean;
-      se juega un duelo detrás de otro. En cada ataque de tu rival puedes lanzarle un <b>maleficio</b> (5 Maná).
+      se juega un duelo detrás de otro. Puedes lanzar a tu rival un <b>maleficio</b> (5 Maná) para cada uno de sus ataques: en tu turno o mientras él ataca.
       Antes de la final hay una ronda para comprar, comerciar (no con tu rival de la final), y robar o lanzar maleficios (solo a tu rival de la final).</p></section>
     <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ 1 daño</span></div><h4>Golpear</h4><p>Saca esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Se ataca por turnos hasta que uno cae.</p></section>
     <section><div class="rule-ill"><img src="img/objetos/yelmo-3.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Premios</h4><p>Quien gana una semifinal elige <b>un objeto</b> del vencido y se lleva sus <b>monedas</b> y un premio.
@@ -1230,7 +1230,8 @@ function renderCombat(p, controllable) {
         ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
         ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
-      <div class="rolls-count" title="Tiradas">${cb.rolls}/3${cb.cursesLeft ? ` · Maleficio: ${cb.cursesLeft}` : ''}</div>
+      ${cb.kind === 'duelo' && S.tournament ? (() => { const m = S.tournament.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id)); return m ? duelCurseHtml(S.tournament, m) : ''; })() : ''}
+      <div class="rolls-count" title="Tiradas">${cb.rolls}/3</div>
       ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">${duelBtnText(p, duelDamage(cb, faces))}</button></div>` : ''}
@@ -1247,7 +1248,7 @@ function renderCombat(p, controllable) {
   }
   return `
   <div class="combat">
-    ${monster ? foesHtml(p, cb, all, controllable) : cb.kind === 'duelo' ? duelNeedHtml(cb) : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
+    ${monster ? foesHtml(p, cb, all, controllable) : cb.kind === 'duelo' ? `<div class="duel-target">${comboHtml(cb.combo, false)}</div>` : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
     ${controllable || cb.kind === 'duelo' ? '' : `<div class="rolls-count">${cb.rolls}/3</div>`}
     ${monster || cb.kind === 'duelo' ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
     ${cb.cursesLeft && cb.rolls === 0 ? `<div class="curse-note">Te afecta un maleficio: en tu primera tirada se anulará${cb.cursesLeft > 1 ? `n ${cb.cursesLeft} esferas acertadas` : ' 1 esfera acertada'} y tendrás que relanzarla${cb.cursesLeft > 1 ? 's' : ''}.</div>` : ''}
@@ -1266,17 +1267,6 @@ function duelBtnText(p, dmg) {
   return dmg ? `Terminar: quitas ${dmg} de Vida a ${name}` : 'Terminar sin hacer daño';
 }
 
-// Duelo: cuántas esferas del color del rival hacen falta y cuánto daño hacen.
-function duelNeedHtml(cb) {
-  const hits = cb.combo.length;
-  const col = cb.combo[0];
-  const opts = [];
-  for (let n = hits - 2; n <= hits; n++) {
-    if (n <= 0) continue;
-    opts.push(`<div class="dn-opt"><span class="dn-sph">${Array.from({ length: n }, () => `<span class="sphere ${col}"></span>`).join('')}</span><b>−${3 - (hits - n)} Vida</b></div>`);
-  }
-  return `<div class="duel-need"><div class="dn-title">Saca esferas ${({ rojo: 'rojas', azul: 'azules', verde: 'verdes', amarillo: 'amarillas' })[col] || ''} para golpear</div><div class="dn-opts">${opts.join('')}</div></div>`;
-}
 
 
 // Efecto de una recompensa en pocas palabras (sin nombre).
@@ -1347,19 +1337,20 @@ function renderTournament() {
       <h2 class="duel-title">${esc(m.label)}</h2>
       <div class="vs duel-pair">${fighter(a)}<span class="faceoff-vs">vs</span>${fighter(b)}</div>
       ${att.combat ? renderCombat(att, att.id === S.me) : ''}
-      ${duelCurseHtml(t, m)}
+      ${m.attacker === S.me ? '' : duelCurseHtml(t, m)}
     </div>`;
 }
 
-// Mientras ataca tu rival: un maleficio por cada ataque suyo (semifinales y final).
+// Maleficio al rival en el torneo: uno por cada ataque suyo. Se puede lanzar en
+// tu turno (afecta a su siguiente ataque) o mientras él ataca.
 function duelCurseHtml(t, m) {
   if (m.a !== S.me && m.b !== S.me) return '';
   const p = me();
   const rival = byId(m.a === S.me ? m.b : m.a);
-  if (m.attacker !== rival.id) return '';
-  if (p.duelCurseAt === m.turns) return '<p class="muted small center">Maleficio lanzado.</p>';
+  const target = m.attacker === rival.id ? m.turns : m.turns + 1;
+  if (p.duelCurseAt === target) return '<p class="muted small center">Maleficio lanzado.</p>';
   if (p.hero.manaDisponible < 5) return '';
-  return `<div class="duel-curse"><button class="btn primary" data-a="duelCurse" data-n="5"><img src="img/ui/calavera.webp" alt="">Maleficio a ${esc(rival.name)} · 5 Maná</button></div>`;
+  return `<div class="duel-curse"><button class="btn" data-a="duelCurse" data-n="5"><img src="img/ui/calavera.webp" alt="">Maleficio a ${esc(rival.name)} · 5 Maná</button></div>`;
 }
 
 function renderEnd() {

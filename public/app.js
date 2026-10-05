@@ -353,7 +353,7 @@ function afinidadDe(raza, clase) {
 
 function mods(x) {
   const f = (n) => (n > 0 ? `+${n}` : `${n}`);
-  return `V ${f(x.vida)} · M ${f(x.mana)} · F ${f(x.fuerza)}`;
+  return `V${f(x.vida)} · M${f(x.mana)} · F${f(x.fuerza)}`;
 }
 
 function renderLobby() {

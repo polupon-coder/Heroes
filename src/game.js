@@ -35,6 +35,7 @@ class Game {
     // Sala en dos pasos: primero se eligen los contrincantes y luego cada uno configura su héroe.
     this.lobbyStage = 'rivales';
     this.round = 0;
+    this.roboLeft = 2;
     this.players = [];
     this.trades = [];
     this.tournament = null;
@@ -318,8 +319,8 @@ class Game {
       combo: C.variantCombo(base, variante),
       dano: C.monsterDamage(level) + v.dano,
       rewards: [
-        I.makeReward(this.rng, rewardLevel, () => this.nextId(), this._invHint),
-        I.makeReward(this.rng, rewardLevel, () => this.nextId(), this._invHint),
+        this.reward(rewardLevel, this._invHint),
+        this.reward(rewardLevel, this._invHint),
       ],
     };
   }
@@ -747,17 +748,27 @@ class Game {
 
   // ---------------------------------------------------------------- Vista
 
+  // Recompensa de monstruo: los Pergaminos de Robo son raros (2 como mucho por partida, contando la tienda).
+  reward(level, inv) {
+    const it = I.makeReward(this.rng, level, () => this.nextId(), inv, { robo: this.roboLeft > 0 });
+    if (it.efecto === 'robo') this.roboLeft -= 1;
+    return it;
+  }
+
   // Tienda de cada jugador para esta ronda: objetos de su nivel con su precio.
   makeShop(p) {
     if (!p.hero) return [];
     const lvl = Math.min(12, Math.max(1, this.round));
-    const items = [];
-    for (let i = 0; i < C.TIENDA_OBJETOS; i++) {
-      const level = Math.min(12, lvl + Math.floor(this.rng() * 4) - 1);
-      const it = I.makeReward(this.rng, Math.max(1, level), () => this.nextId(), p.hero.inv);
-      it.precio = C.itemPrice(it);
-      items.push(it);
-    }
+    const lv = () => Math.max(1, Math.min(12, lvl + Math.floor(this.rng() * 4) - 1));
+    const id = () => this.nextId();
+    // Siempre una poción y un pergamino, y al menos uno de los dos cura.
+    const cura = this.rng() < 0.5 ? 'pocion' : 'pergamino';
+    const pot = I.makeConsumable(this.rng, lv(), 'pocion', id, cura === 'pocion' ? { efecto: 'curacion' } : {});
+    const scroll = I.makeConsumable(this.rng, lv(), 'pergamino', id, cura === 'pergamino' ? { efecto: 'curacion' } : { robo: this.roboLeft > 0 });
+    if (scroll.efecto === 'robo') this.roboLeft -= 1;
+    const items = [pot, scroll];
+    while (items.length < C.TIENDA_OBJETOS) items.push(I.makeEquipment(this.rng, lv(), id, p.hero.inv));
+    for (const it of items) it.precio = C.itemPrice(it);
     return items.sort((a, b) => a.precio - b.precio);
   }
 

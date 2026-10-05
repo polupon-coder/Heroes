@@ -81,10 +81,14 @@ function makeEquipment(rng, level, nextId, inv) {
   };
 }
 
-function makeConsumable(rng, level, tipo, nextId) {
+// opts.efecto fuerza el efecto; opts.robo permite (rara vez) un Pergamino de Robo.
+function makeConsumable(rng, level, tipo, nextId, opts = {}) {
   const valor = C.consumablePower(level);
-  const efectos = tipo === 'pocion' ? ['mana', 'curacion'] : ['mana', 'curacion', 'robo'];
-  const efecto = pick(rng, efectos);
+  let efecto = opts.efecto;
+  if (!efecto) {
+    if (tipo === 'pergamino' && opts.robo && rng() < 0.12) efecto = 'robo';
+    else efecto = pick(rng, ['mana', 'curacion']);
+  }
   const base = tipo === 'pocion' ? 'Poción' : 'Pergamino';
   let nombre;
   if (efecto === 'mana') nombre = `${base} de Maná +${valor}`;
@@ -95,12 +99,12 @@ function makeConsumable(rng, level, tipo, nextId) {
   return { id: nextId(), tipo, efecto, grado, valor: efecto === 'robo' ? 0 : valor, nombre };
 }
 
-function makeReward(rng, level, nextId, inv) {
+function makeReward(rng, level, nextId, inv, opts = {}) {
   const r = rng();
   const w = C.REWARD_WEIGHTS;
   if (r < w.equipo) return makeEquipment(rng, level, nextId, inv);
-  if (r < w.equipo + w.pocion) return makeConsumable(rng, level, 'pocion', nextId);
-  return makeConsumable(rng, level, 'pergamino', nextId);
+  if (r < w.equipo + w.pocion) return makeConsumable(rng, level, 'pocion', nextId, opts);
+  return makeConsumable(rng, level, 'pergamino', nextId, opts);
 }
 
 // --- Inventario del héroe ---------------------------------------------------

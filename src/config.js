@@ -174,7 +174,7 @@ function coinsFor(level, variante, rolls) {
 // Precio en la tienda.
 function itemPrice(it) {
   if (it.tipo === 'equipo') return it.slot === 'tunica' ? 3 * it.bonus + 3 : 6 * it.bonus + 4;
-  if (it.efecto === 'robo') return 14;
+  if (it.efecto === 'robo') return 30;
   return 3 * (it.valor || 1) + 3;
 }
 const TIENDA_OBJETOS = 4;

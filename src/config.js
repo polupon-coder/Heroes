@@ -57,7 +57,7 @@ const CLASSES = {
   ladron: { nombre: 'Ladrón', vida: 2, mana: 1, fuerza: 2 },
   druida: { nombre: 'Druida', vida: 2, mana: 2, fuerza: 2 },
   explorador: { nombre: 'Explorador', vida: 2, mana: 1, fuerza: 2 },
-  clerigo: { nombre: 'Clérigo', vida: 2, mana: 0, fuerza: 1 },
+  clerigo: { nombre: 'Clérigo', vida: 2, mana: 0, fuerza: 3 },
   barbaro: { nombre: 'Bárbaro', vida: 2, mana: 1, fuerza: 2 },
 };
 

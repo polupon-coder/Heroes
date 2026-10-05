@@ -86,7 +86,7 @@ function scheduleBots(room) {
       if (acted) break; // una acción cada vez para que se pueda seguir
     }
     if (acted) broadcast(room);
-  }, BOT_DELAY_MS);
+  }, g.phase === 'torneo' ? BOT_DELAY_MS * 2.5 : BOT_DELAY_MS);
 }
 
 function attach(room, socket, playerId) {

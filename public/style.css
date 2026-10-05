@@ -1346,3 +1346,25 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .die.cursed::before { left: -5px; top: -5px; width: 16px; height: 16px; line-height: 16px; font-size: 10px; }
   .die.reroll::after { right: -4px; top: -4px; width: 16px; height: 16px; line-height: 16px; font-size: 11px; }
 }
+/* Torneo: vida bien visible y ventanas de cada ataque */
+.duel-lifebar { width: 150px; height: 18px; margin-top: 4px; }
+.duel-lifebar span { font-size: .8rem; }
+.modal .card.duel-pop { max-width: 520px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.duel-pop-head { font-family: var(--title); color: var(--muted); letter-spacing: .15em; text-transform: uppercase; font-size: .8rem; }
+.duel-pop.hit .outcome-title { color: var(--rubric); }
+.duel-pop.miss .outcome-title { color: var(--muted); }
+.duel-pop-pair { display: flex; align-items: center; gap: 14px; }
+.duel-pop-pair .portrait.duelist { width: 96px; height: 128px; }
+.duel-pop .dice { justify-content: center; gap: 8px; flex-wrap: nowrap; }
+.duel-pop .dice .die { width: 44px; height: 44px; }
+.duel-life { width: 80%; text-align: center; }
+.duel-life .life { height: 20px; }
+.combat .events { display: none; }
+/* Rivales en el torneo: el retrato del oponente en su caja, sin recortar */
+.rival-foe .foe-imgs .portrait.foe { width: 100% !important; height: 100% !important; object-fit: contain; object-position: center bottom; }
+@media (max-width: 760px) {
+  .duel-lifebar { width: 110px; }
+  .modal .card.outcome.duel-pop { min-height: 0; max-height: none; justify-content: center; }
+  .duel-pop .dice .die { width: min(44px, 13vw); height: min(44px, 13vw); }
+}
+.rival-info .life.thin { height: 9px; }

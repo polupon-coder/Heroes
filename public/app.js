@@ -283,8 +283,24 @@ $('chatForm').onsubmit = (e) => {
 
 // ------------------------------------------------------------ render
 
+// Ataques de mi duelo del torneo: se cuentan uno a uno en ventanas flotantes.
+function trackDuel() {
+  if (!S.tournament) return;
+  ui.duelQueue = ui.duelQueue || [];
+  ui.duelSeen = ui.duelSeen || new Set();
+  for (const m of S.tournament.matches) {
+    if (!m.last || (m.a !== S.me && m.b !== S.me)) continue;
+    const key = `${m.id}:${m.turns}:${m.last.by}:${m.last.dmg}:${m.last.faces.map((f) => f.face).join('')}`;
+    if (ui.duelSeen.has(key)) continue;
+    ui.duelSeen.add(key);
+    if (ui.duelPrimed) ui.duelQueue.push({ ...m.last, label: m.label, vida: byId(m.last.to).hero.vida, max: byId(m.last.to).hero.base.vida });
+  }
+  ui.duelPrimed = true;
+}
+
 function render() {
   if (!S) return;
+  trackDuel();
   const mp = me();
   if (mp && mp.monster) ui.lastMonster = mp.monster;
   $('home').classList.add('hidden');
@@ -642,6 +658,23 @@ function renderOutcome() {
         <div class="outcome-title">Botín</div>
         <p class="center">Has vencido a ${esc(loser.name)}. Elige uno de sus objetos:</p>
         <div class="trade-grid">${allItems(loser.hero).map((it) => tradeTile(it, { attrs: `data-a="loot" data-id="${it.id}"` })).join('')}</div>
+      </div>`;
+  }
+  if (ui.duelQueue && ui.duelQueue.length) {
+    const a = ui.duelQueue[0];
+    const by = byId(a.by);
+    const to = byId(a.to);
+    const mine = a.by === S.me;
+    const pct = Math.max(0, Math.min(100, (a.vida / a.max) * 100));
+    return `
+      <div class="card outcome duel-pop ${a.dmg ? 'hit' : 'miss'}">
+        <div class="duel-pop-head">${esc(a.label)}</div>
+        <div class="outcome-title">${mine ? 'Tu ataque' : `Ataque de ${esc(by.name)}`}</div>
+        <div class="duel-pop-pair">${heroPortrait(by, 'duelist')}<span class="faceoff-vs">→</span>${heroPortrait(to, 'duelist')}</div>
+        <div class="dice">${a.faces.map((f) => die(f.face, { shape: f.shape })).join('')}</div>
+        <p class="center big-text">${a.dmg ? `¡Golpe! ${mine ? esc(to.name) : 'Pierdes'} −${a.dmg} Vida` : (mine ? 'Has fallado el ataque' : `${esc(by.name)} falla su ataque`)}</p>
+        <div class="duel-life"><span>${esc(to.name)}</span><div class="life"><i style="width:${pct}%"></i><span>${a.vida} / ${a.max}</span></div></div>
+        <div class="row center-row"><button class="btn primary" data-a="nextDuel">Continuar</button></div>
       </div>`;
   }
   if (ui.stealResult) {
@@ -1213,7 +1246,8 @@ function renderTournament() {
   const a = byId(m.a);
   const b = byId(m.b);
   const att = byId(m.attacker);
-  const fighter = (x) => `<div class="fighter big ${m.attacker === x.id ? 'attacking' : ''}">${heroPortrait(x, 'duelist')}<b>${esc(x.name)}</b><span class="hp">${x.hero.vida} / ${x.hero.base.vida} Vida</span></div>`;
+  const fighter = (x) => `<div class="fighter big ${m.attacker === x.id ? 'attacking' : ''}">${heroPortrait(x, 'duelist')}<b>${esc(x.name)}</b>
+    <div class="life duel-lifebar"><i style="width:${Math.max(0, Math.min(100, (x.hero.vida / x.hero.base.vida) * 100))}%"></i><span>${x.hero.vida} / ${x.hero.base.vida}</span></div></div>`;
   return `
     <div class="card duel-card">
       <h2 class="duel-title">${esc(m.label)}</h2>
@@ -1343,6 +1377,7 @@ document.addEventListener('click', (e) => {
     case 'prepWin': ui.prepWin = d.w; render(); break;
     case 'buy': act('buy', { itemId: d.id }); ui.prepWin = null; render(); break;
     case 'loot': act('takeLoot', { itemId: d.id }); break;
+    case 'nextDuel': ui.duelQueue.shift(); renderModal(); break;
     case 'closeCoins': ui.coinsMsg = null; renderModal(); break;
     case 'closePrep': ui.prepWin = null; ui.theft = null; render(); break;
     case 'closeSteal': ui.stealResult = null; renderModal(); break;

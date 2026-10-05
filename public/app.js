@@ -1233,7 +1233,7 @@ function renderCombat(p, controllable) {
       <div class="rolls-count" title="Tiradas">${cb.rolls}/3${cb.cursesLeft ? ` · Maleficio: ${cb.cursesLeft}` : ''}</div>
       ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
-      ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">${duelDamage(cb, faces) ? `Golpear (−${duelDamage(cb, faces)} Vida)` : 'Terminar ataque'}</button></div>` : ''}
+      ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">${duelBtnText(p, duelDamage(cb, faces))}</button></div>` : ''}
       ${cb.rolls >= 3 && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
   }
 
@@ -1258,12 +1258,24 @@ function renderCombat(p, controllable) {
   </div>`;
 }
 
-// Duelo: qué hace falta, en una línea (esferas del color del rival → daño).
+// Botón para acabar el ataque en un duelo: dice qué pasará.
+function duelBtnText(p, dmg) {
+  const m = S.tournament && S.tournament.matches.find((x) => !x.winner && (x.a === p.id || x.b === p.id));
+  const foe = m && byId(m.a === p.id ? m.b : m.a);
+  const name = foe ? esc(foe.name) : 'tu rival';
+  return dmg ? `Terminar: quitas ${dmg} de Vida a ${name}` : 'Terminar sin hacer daño';
+}
+
+// Duelo: cuántas esferas del color del rival hacen falta y cuánto daño hacen.
 function duelNeedHtml(cb) {
   const hits = cb.combo.length;
-  const steps = [];
-  for (let n = hits - 2; n <= hits; n++) if (n > 0) steps.push(`<b>${n}</b> → −${3 - (hits - n)}`);
-  return `<div class="duel-need">${die(cb.combo[0], { sm: true })}<span>${steps.join(' · ')}</span></div>`;
+  const col = cb.combo[0];
+  const opts = [];
+  for (let n = hits - 2; n <= hits; n++) {
+    if (n <= 0) continue;
+    opts.push(`<div class="dn-opt"><span class="dn-sph">${Array.from({ length: n }, () => `<span class="sphere ${col}"></span>`).join('')}</span><b>−${3 - (hits - n)} Vida</b></div>`);
+  }
+  return `<div class="duel-need"><div class="dn-title">Saca esferas ${({ rojo: 'rojas', azul: 'azules', verde: 'verdes', amarillo: 'amarillas' })[col] || ''} para golpear</div><div class="dn-opts">${opts.join('')}</div></div>`;
 }
 
 

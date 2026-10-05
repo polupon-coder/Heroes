@@ -1488,3 +1488,23 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .lobby-heroes.v2 .pick-stats { display: grid; grid-template-columns: auto auto; justify-items: start; align-items: start; column-gap: 28px; row-gap: 10px; width: auto; }
   .lobby-heroes.v2 .pstat { text-align: left; align-items: flex-start; }
 }
+
+/* Duelo: qué hace falta para golpear, con esferas */
+.duel-need { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.duel-need .dn-title { font-family: var(--title); font-size: .9rem; color: var(--ink-soft); }
+.duel-need .dn-opts { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.duel-need .dn-opt { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 248, 230, .45); }
+.duel-need .dn-sph { display: flex; gap: 2px; }
+.duel-need .dn-sph .sphere { width: 14px; height: 14px; }
+.duel-need .dn-opt b { font-family: var(--title); font-size: .8rem; color: var(--rubric); }
+
+/* Ventanas de comercio: todo centrado */
+.trade-block, .trade-block h4, .trade-counter, .trade-counter .who, .trade-pop h3, .trade-pop h4, .trade-pop p { text-align: center; }
+
+/* Resultado de un duelo ajeno en móvil: los dos héroes caben */
+@media (max-width: 760px) {
+  .outcome .duel-pair { gap: 6px; align-items: flex-end; width: 100%; }
+  .outcome .duel-pair figure { flex: 1 1 0; min-width: 0; }
+  .outcome .duel-pair .portrait.duelist { width: 100%; max-width: 130px; height: auto; aspect-ratio: 3 / 4; margin: 0 auto; }
+  .outcome .duel-pair .faceoff-vs { flex: 0 0 auto; white-space: nowrap; font-size: 1.05rem; }
+}

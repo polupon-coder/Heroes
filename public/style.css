@@ -1261,3 +1261,9 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .mini-name { font-size: .9rem; }
   .modal .card { max-height: none; }
 }
+/* Portada en vertical: pergamino vertical, sin estirar */
+@media (max-width: 760px), (orientation: portrait) {
+  .home-sheet { border-image: url(img/ui/pergamino-v-suave.webp) 110 fill / 44px stretch !important; border-width: 44px; }
+  body.at-home .home { padding: 10px; }
+  .home-title { width: min(520px, 76vw); }
+}

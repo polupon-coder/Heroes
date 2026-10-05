@@ -372,12 +372,13 @@ class Game {
       dice: [],
       rolls: 0,
       manaUsed: false,
-      manaBonus: 0,
+      manaBonus: p.hero.manaNext || 0,
       cursesLeft: p.hero.curses,
       status: 'activo',
       events: [],
     };
     p.hero.curses = 0;
+    p.hero.manaNext = 0;
     p.combat = combat;
     // El Maná se convierte en esferas multicolor (comodín) ya fijadas desde el principio.
     combat.dice = Array.from({ length: combat.diceCount }, () => ({ face: null, shape: null, held: false, fixed: false }));
@@ -546,7 +547,9 @@ class Game {
   endCombat(p, won) {
     const cb = p.combat;
     cb.status = won ? 'victoria' : 'derrota';
-    p.hero.manaDebt = 0;
+    // El Maná de un maleficio lanzado durante este ataque cuenta para el siguiente.
+    p.hero.manaDebt = p.hero.debtNext || 0;
+    p.hero.debtNext = 0;
     if (cb.kind === 'monstruo') this.endMonsterCombat(p, won);
     else this.endDuelAttack(p);
   }
@@ -850,6 +853,7 @@ class Game {
           fuerza: this.effFuerza(p),
           mana: h.base.mana,
           manaDisponible: this.availableMana(p),
+          manaNext: p.hero.manaNext || 0,
           manaCombate: this.combatMana(p),
           dados: this.diceCount(p),
           fijables: C.fixedDiceForMana(this.combatMana(p)),
@@ -900,7 +904,14 @@ function useConsumable(game, p, data) {
   if (inCombat) game.activeCombat(p);
   const myDuel = game.phase === 'torneo' && inCombat;
   if (it.efecto === 'mana') {
-    if (!inCombat) fail('El Maná temporal se usa durante un combate');
+    if (!inCombat) {
+      // Fuera de tu combate: el Maná se guarda para el próximo.
+      if (game.phase !== 'prep' && game.phase !== 'torneo' && game.phase !== 'combat') fail('Ahora no puedes usarla');
+      p.hero.manaNext = (p.hero.manaNext || 0) + it.valor;
+      I.removeItem(p.hero.inv, it.id);
+      game.say(`${p.name} usa ${it.nombre}: +${it.valor} de Maná en su próximo combate.`);
+      return;
+    }
     p.combat.manaBonus += it.valor;
     p.combat.events.push(`${it.nombre}: Maná ${game.combatMana(p)} en este combate`);
     I.removeItem(p.hero.inv, it.id);
@@ -1232,6 +1243,8 @@ const ACTIONS = {
     if (amt > this.availableMana(p)) fail('No tienes tanto Maná disponible');
     const n = amt / C.MANA_PER_CURSE;
     p.hero.manaDebt += amt;
+    // Lanzado en tu propio ataque: también te falta en el siguiente.
+    if (m.attacker === p.id) p.hero.debtNext = (p.hero.debtNext || 0) + amt;
     p.duelCurseAt = target;
     // Si el rival está atacando y aún no ha lanzado, le afecta ya; si no, en su próximo ataque.
     if (m.attacker === rival.id && rival.combat && rival.combat.status === 'activo' && rival.combat.rolls === 0) rival.combat.cursesLeft += n;

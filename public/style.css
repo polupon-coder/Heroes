@@ -1536,3 +1536,4 @@ button.trade-tile:not([data-a]) { cursor: default; }
 /* Botones de preparación: el texto siempre centrado aunque la palabra sea larga */
 .prep-buttons .btn { display: flex; align-items: center; justify-content: center; gap: 4px; padding-left: 6px; padding-right: 6px; white-space: nowrap; text-align: center; }
 @media (max-width: 760px) { .prep-buttons .btn { font-size: .95rem; letter-spacing: .02em; } }
+.mana-next { font-size: .55em; color: #34568b; margin-left: 2px; vertical-align: super; }

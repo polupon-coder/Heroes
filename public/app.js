@@ -573,7 +573,7 @@ function renderSheet() {
   </div>
   <div class="glyphs three">
     <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
-    <div title="Cada 5 de Maná es una esfera multicolor"><b>${h.manaDisponible}</b><span>Maná</span></div>
+    <div title="Cada 5 de Maná es una esfera multicolor"><b>${h.manaDisponible}${h.manaNext ? `<small class="mana-next">+${h.manaNext}</small>` : ''}</b><span>Maná</span></div>
     <div title="Monedas para la tienda"><b>${h.monedas ?? 0}</b><span>Monedas</span></div>
   </div>
   <div class="tiles">
@@ -610,12 +610,13 @@ function useBtn(it) {
   const h = p.hero;
   const myCombat = isMyTurnCombat();
   let ok = false;
-  if (it.efecto === 'mana') ok = myCombat;
+  if (it.efecto === 'mana') ok = myCombat || S.phase === 'prep' || S.phase === 'combat' || S.phase === 'torneo';
   const fullSoon = S.phase === 'prep' && (S.round > S.rounds || (S.tournament && S.tournament.stage === 'prefinal'));
   if (it.efecto === 'curacion') ok = h.vida < h.base.vida && !fullSoon && (S.phase === 'prep' || S.phase === 'combat' || (S.phase === 'torneo' && myCombat));
   if (it.efecto === 'robo') ok = S.phase === 'prep';
   if (!ok) return '';
-  return `<button class="btn primary" data-a="use" data-id="${it.id}" data-efecto="${it.efecto}">Usar</button>`;
+  const label = it.efecto === 'mana' && !myCombat ? 'Beber para el próximo combate' : 'Usar';
+  return `<button class="btn primary" data-a="use" data-id="${it.id}" data-efecto="${it.efecto}">${label}</button>`;
 }
 
 // ---------- Mesa: cada héroe y contra quién se enfrenta

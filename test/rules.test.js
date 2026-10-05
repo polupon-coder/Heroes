@@ -307,8 +307,12 @@ test('torneo: maleficio al rival en cada uno de sus ataques', () => {
   assert.strictEqual(att.combat.cursesLeft, 1);
   assert.throws(() => g.act(def.id, 'duelCurse', { amount: 5 }), /este ataque/);
   // En tu propio turno: afecta al siguiente ataque del rival.
+  const debt = att.hero.manaDebt;
   g.act(att.id, 'duelCurse', { amount: 5 });
   assert.strictEqual(def.hero.curses, 1);
+  // El Maná gastado en tu turno también falta en tu siguiente ataque.
+  g.endCombat(att, false);
+  assert.strictEqual(att.hero.manaDebt, 5);
   assert.throws(() => g.act(att.id, 'duelCurse', { amount: 5 }), /este ataque/);
 });
 
@@ -370,4 +374,20 @@ test('solo un escudo: el segundo compite con el primero', () => {
   assert.deepStrictEqual(I.tryPlace(inv, e2), [e1]);
   I.resolveConflict(inv, e2, 'e1');
   assert.deepStrictEqual(inv.manos.map((x) => x.id).sort(), ['e2', 's']);
+});
+
+test('poción de Maná fuera del combate: se guarda para el próximo', () => {
+  const g = new Game('T', { rng: () => 0.5 });
+  const a = g.addPlayer('A');
+  g.act(a.id, 'setHero', { raza: 'humano', clase: 'mago' });
+  for (const pl of g.players) pl.ready = true;
+  g.act(a.id, 'start');
+  g.phase = 'prep';
+  a.hero.inv.pociones.push({ id: 'pm', tipo: 'pocion', efecto: 'mana', valor: 4, nombre: 'Poción de Maná +4' });
+  g.act(a.id, 'useItem', { itemId: 'pm' });
+  assert.strictEqual(a.hero.manaNext, 4);
+  const m0 = g.availableMana(a);
+  g.newCombat(a, { kind: 'monstruo', combo: ['rojo'] });
+  assert.strictEqual(g.combatMana(a), m0 + 4);
+  assert.strictEqual(a.hero.manaNext, 0);
 });

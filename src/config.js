@@ -19,7 +19,7 @@ const MIN_FUERZA_INICIAL = 10;
 // valores negativos (la Fuerza y el Maná tienen mínimos, así que un negativo
 // sería un punto perdido). Todos empiezan con al menos 5 de Maná.
 const RACES = {
-  humano: { nombre: 'Humano', vida: 2, mana: 2, fuerza: 0 },
+  humano: { nombre: 'Humano', vida: 2, mana: 1, fuerza: 0 },
   elfo: { nombre: 'Elfo', vida: 2, mana: 2, fuerza: 0 },
   enano: { nombre: 'Enano', vida: 2, mana: 1, fuerza: 1 },
   gnomo: { nombre: 'Gnomo', vida: 2, mana: 2, fuerza: 0 },

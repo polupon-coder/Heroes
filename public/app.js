@@ -639,7 +639,7 @@ function renderOutcome() {
     const n = (ui.curseAlert.match(/repetirá (\d+)/) || [])[1] || '1';
     return `
       <div class="card outcome curse-alert">
-        <div class="curse-sign"><span class="sphere big gris cursed"></span></div>
+        <div class="curse-sign"><img src="img/ui/calavera.webp" alt=""></div>
         <div class="outcome-title">Maleficio</div>
         <p class="center"><b>${esc(who)}</b> te ha lanzado un maleficio.</p>
         <p class="center">En tu próximo combate tendrás que repetir ${n} esfera(s) acertada(s).</p>
@@ -1139,7 +1139,9 @@ function renderCombat(p, controllable) {
         controllable && !ui.manaMode && cb.rolls > 0 && cb.rolls < 3 && !ui.held.has(i) && !d.fixed ? 'reroll' : '',
         controllable && ui.manaMode && (ui.manaSel === i || ui.manaPick.has(i)) ? 'picking' : '',
       ].join(' ');
-      return die(faces[i], { cls, shape: d.shape, attrs: controllable ? `data-a="die" data-i="${i}"` : '' });
+      const html = die(faces[i], { cls, shape: d.shape, attrs: controllable ? `data-a="die" data-i="${i}"` : '' });
+      // Esfera repetida por un maleficio: la calavera encima.
+      return cls.includes('cursed') ? html.replace(/<\/div>$/, '<img class="skull" src="img/ui/calavera.webp" alt="Maleficio"></div>') : html;
     }).join('')
     : Array.from({ length: cb.diceCount }, () => die(null)).join('');
 

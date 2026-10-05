@@ -1382,3 +1382,11 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .curse-sign { display: flex; justify-content: center; margin: 4px 0; }
 .curse-sign .sphere.big { width: 72px; height: 72px; font-size: 2.2rem; }
 .curse-sign .sphere.big { flex: none; min-width: 72px; min-height: 72px; max-height: 72px; aspect-ratio: 1; }
+/* Maleficio con la ilustración de la calavera */
+.sphere.cursed { background: url(img/ui/calavera.webp) center / contain no-repeat !important; box-shadow: none; border-radius: 0; }
+.sphere.cursed::after { content: none; }
+.die.cursed::before { content: none !important; display: none !important; }
+.die.cursed { filter: none !important; }
+.die.cursed img:not(.skull) { opacity: .3; filter: none !important; }
+.die.cursed .skull { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: contain; opacity: 1 !important; filter: drop-shadow(0 0 4px rgba(122, 75, 176, .8)) !important; pointer-events: none; z-index: 3; }
+.curse-sign img { width: 96px; height: 96px; object-fit: contain; }

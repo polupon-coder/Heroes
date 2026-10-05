@@ -1419,3 +1419,9 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .rule-ill .reroll-ill { position: relative; opacity: .7; }
 .rule-ill .reroll-ill::after { content: "↻"; position: absolute; right: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%; background: var(--rubric); color: #fff; font-size: 12px; line-height: 18px; text-align: center; }
 @media (max-width: 760px) { .rule-ill { min-height: 60px; } .rule-ill img { height: 44px; } .rule-ill img.tall { height: 64px; } }
+/* Portada de cada ronda: espadas cruzadas */
+.prep-card { justify-content: center; gap: 2.4vh; }
+.prep-cover { width: min(230px, 26vh); height: auto; filter: drop-shadow(0 4px 6px rgba(58, 34, 15, .25)); }
+.prep-card h2 { margin: 0; font-size: 1.7rem; }
+.prep-card .prep-actions { gap: 3vh; }
+@media (max-width: 760px) { .prep-cover { width: 150px; } .prep-card { padding: 22px 10px 26px !important; gap: 14px; } }

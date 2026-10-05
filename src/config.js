@@ -78,7 +78,7 @@ function fixedDiceForMana(mana) {
   return Math.min(5, Math.floor(mana / 5));
 }
 
-const ROUNDS = 12;
+const ROUNDS = Number(process.env.HEROES_RONDAS) || 12; // (la variable solo se usa en pruebas)
 const MAX_ROLLS = 3;
 
 // Regla 21.

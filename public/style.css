@@ -1103,3 +1103,24 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .big-text { font-size: 1.2rem; }
 .glyphs.three span { font-size: .6rem; letter-spacing: .08em; }
 .glyphs.three b { font-size: 1.15rem; }
+
+/* ===== Torneo: un duelo en el centro ===== */
+.duel-card { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; }
+.duel-card .duel-title { margin: 0; }
+.duel-card .duel-pair { gap: 4vw; align-items: flex-end; }
+.duel-card .portrait.duelist { height: 24vh; width: 18vh; }
+.duel-card .fighter.big b { font-family: var(--title); font-size: 1.1rem; }
+.duel-card .fighter.attacking b { color: var(--rubric); }
+.duel-card .faceoff-vs { font-family: var(--title); font-style: italic; color: var(--rubric); font-size: 1.4rem; }
+.duel-card .combat { width: 100%; }
+.duel-card .combat > h2 { font-size: 1.1rem; }
+.duel-card .rival-pick { margin-top: 3vh; }
+/* ===== Victoria final ===== */
+.end-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; }
+.end-logo { width: min(560px, 80%); }
+.portrait.end { height: 40vh; width: 30vh; }
+.end-victory { font-family: var(--title); font-size: 2.6rem; color: var(--rubric-dark); letter-spacing: .12em; }
+.end-logo { width: min(420px, 70%); }
+.portrait.end { height: 32vh; width: 24vh; }
+.end-victory { font-size: 2.2rem; line-height: 1.1; }
+.end-card { gap: 4px; }

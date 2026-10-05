@@ -690,7 +690,7 @@ function renderOutcome() {
         <div class="card outcome">
           <div class="outcome-title">${esc(other.label)}</div>
           <div class="duel-pair">
-            <figure>${heroPortrait(w, 'duelist')}<figcaption><b>${esc(w.name)}</b><br>${w.hero.vida} Vida</figcaption></figure>
+            <figure>${heroPortrait(w, 'duelist')}<figcaption><b>${esc(w.name)}</b></figcaption></figure>
             <span class="faceoff-vs">vence a</span>
             <figure class="lost">${heroPortrait(l, 'duelist')}<figcaption><b>${esc(l.name)}</b></figcaption></figure>
           </div>
@@ -1184,58 +1184,44 @@ function duelDamage(cb, faces) {
 
 function renderTournament() {
   const t = S.tournament;
-  const rank = `
-    <div class="card">
-      <h2>Torneo</h2>
-      <p class="muted small">El atacante saca resultados del color del rival (el multicolor vale como comodín). Daño: ${S.settings.pvpHits - 2} resultados → 1, ${S.settings.pvpHits - 1} → 2, ${S.settings.pvpHits} → 3. Puedes terminar el ataque cuando quieras.</p>
-      <h4>Clasificación (Fuerza + Maná)</h4>
-      ${t.ranking.map((id, i) => { const x = byId(id); return `<div class="fighter">${i + 1}. ${heroPortrait(x, 'xs')} ${chip(x.color)} ${esc(x.name)} <span class="hp">${x.hero.puntuacion}</span></div>`; }).join('')}
-    </div>`;
-  let choose = '';
   if (t.stage === 'eleccion') {
     if (t.ranking[0] === S.me) {
-      choose = `<div class="card"><h3>Elige rival para tu semifinal</h3><div class="row rival-pick">
+      return `<div class="card duel-card"><h2>Elige rival para tu semifinal</h2><div class="row rival-pick">
         ${t.ranking.slice(1).map((id) => { const x = byId(id); return `<button class="rival-card" data-a="rival" data-id="${id}">${heroPortrait(x, 'duelist')}<b>${esc(x.name)}</b><span>${x.hero.vida} Vida · Fuerza ${x.hero.fuerza} · Maná ${x.hero.mana}</span></button>`; }).join('')}
       </div></div>`;
-    } else {
-      choose = `<div class="card muted">${esc(byId(t.ranking[0]).name)} está eligiendo rival…</div>`;
     }
+    return `<div class="card duel-card"><h2>Torneo</h2><p class="muted center">${esc(byId(t.ranking[0]).name)} está eligiendo rival…</p></div>`;
   }
-  const matches = t.matches.slice().reverse().map((m) => {
-    const a = byId(m.a);
-    const b = byId(m.b);
-    const live = !m.winner;
-    const att = byId(m.attacker);
-    const mineMatch = m.a === S.me || m.b === S.me;
-    const fighter = (x) => `<div class="fighter big ${m.winner === x.id ? 'win' : ''} ${live && m.attacker === x.id ? 'attacking' : ''}">${heroPortrait(x, 'duelist')}<b>${esc(x.name)}</b><span class="hp">${x.hero.vida} Vida</span></div>`;
-    return `
-    <div class="card match ${live ? 'live' : ''}">
-      <h3>${esc(m.label)}${m.winner ? ` · gana ${esc(byId(m.winner).name)}` : ''}</h3>
+  if (t.stage === 'botin' && t.loot) {
+    const w = byId(t.loot.winner);
+    const l = byId(t.loot.loser);
+    return `<div class="card duel-card"><h2>Botín</h2><p class="center muted">${esc(w.name)} elige un objeto de ${esc(l.name)}…</p></div>`;
+  }
+  // Un único duelo en el centro: el que se está jugando.
+  const m = t.matches.find((x) => x.started && !x.winner);
+  if (!m) return '<div class="card duel-card"><p class="muted center">Preparando el siguiente duelo…</p></div>';
+  const a = byId(m.a);
+  const b = byId(m.b);
+  const att = byId(m.attacker);
+  const fighter = (x) => `<div class="fighter big ${m.attacker === x.id ? 'attacking' : ''}">${heroPortrait(x, 'duelist')}<b>${esc(x.name)}</b><span class="hp">${x.hero.vida} / ${x.hero.base.vida} Vida</span></div>`;
+  return `
+    <div class="card duel-card">
+      <h2 class="duel-title">${esc(m.label)}</h2>
       <div class="vs duel-pair">${fighter(a)}<span class="faceoff-vs">vs</span>${fighter(b)}</div>
-      ${live && mineMatch && att.combat ? `<div style="margin-top:12px">${renderCombat(att, att.id === S.me)}</div>` : ''}
-      ${live && !mineMatch ? '<p class="muted center small">Duelo en curso…</p>' : ''}
+      ${att.combat ? renderCombat(att, att.id === S.me) : ''}
     </div>`;
-  }).join('');
-  const bye = t.bye ? `<div class="card muted">${esc(byId(t.bye).name)} espera en la final.</div>` : '';
-  const myMatch = t.matches.find((m) => !m.winner && (m.a === S.me || m.b === S.me));
-  const spectator = !myMatch && t.stage !== 'eleccion' ? '<div class="card muted">Estás como espectador.</div>' : '';
-  return choose + matches + bye + spectator + rank;
 }
 
 function renderEnd() {
   const w = byId(S.winner);
   return `
-  <div class="card winner-banner">
-    ${heroPortrait(w, 'lg')}
-    <h1>${esc(w.name)}</h1>
-    <p>${raceName(w)} ${className(w)} gana la partida con ${w.hero.vida} de Vida.</p>
+  <div class="card winner-banner end-card">
+    <img class="end-logo" src="img/logo-tinta.webp" alt="Héroes">
+    ${heroPortrait(w, 'end')}
+    <div class="end-victory">Victoria</div>
+    <p class="center"><b>${esc(w.name)}</b> · ${raceName(w)} ${className(w)}</p>
     <button class="btn primary" data-a="leave">Volver al inicio</button>
-  </div>
-  ${S.tournament ? renderTournamentHistory() : ''}`;
-}
-
-function renderTournamentHistory() {
-  return S.tournament.matches.map((m) => `<div class="card match"><b>${esc(m.label)}</b>: ${esc(byId(m.a).name)} vs ${esc(byId(m.b).name)} → gana <b>${esc(byId(m.winner).name)}</b></div>`).join('');
+  </div>`;
 }
 
 // ---------- Modal de objeto pendiente

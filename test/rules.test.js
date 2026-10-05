@@ -277,3 +277,24 @@ test('robo con tirada: 1-2 roba, 3-5 pierde el Maná, uno por ronda', () => {
   const nada = mk(0.95); // 6
   assert.strictEqual(nada.g.availableMana(nada.a), nada.a.hero.base.mana);
 });
+
+test('final: maleficio al rival mientras ataca, uno por intercambio', () => {
+  const g = new Game('T', { rng: () => 0.5 });
+  const a = g.addPlayer('A');
+  const b = g.addPlayer('B');
+  for (const p of [a, b]) g.act(p.id, 'setHero', { raza: 'humano', clase: 'mago' });
+  for (const pl of g.players) pl.ready = true;
+  g.act(a.id, 'start');
+  for (const p of [a, b]) p.hero.inv.armadura = { id: p.id + 'arm', tipo: 'equipo', slot: 'armadura', bonus: 20, nombre: 'Coraza' };
+  g.round = 13;
+  g.act(a.id, 'ready');
+  g.act(b.id, 'ready');
+  const m = g.tournament.matches.find((x) => !x.winner);
+  assert.strictEqual(g.tournament.stage, 'final');
+  const att = g.player(m.attacker);
+  const def = g.player(m.attacker === a.id ? b.id : a.id);
+  assert.throws(() => g.act(att.id, 'duelCurse', { amount: 5 }), /ataque tu rival/);
+  g.act(def.id, 'duelCurse', { amount: 5 });
+  assert.strictEqual(att.combat.cursesLeft, 1);
+  assert.throws(() => g.act(def.id, 'duelCurse', { amount: 5 }), /intercambio/);
+});

@@ -784,7 +784,7 @@ const RULES = {
       Cada héroe recibe como mucho uno por ronda.</p></section>`],
   torneo: ['Torneo', `
     <section><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. El que más Fuerza + Maná tiene elige rival;
-      se juega un duelo detrás de otro. Antes de la final hay una ronda para comerciar, comprar, robar o lanzar maleficios.</p></section>
+      se juega un duelo detrás de otro. Antes de la final hay una ronda para comerciar, comprar, robar o lanzar maleficios, y durante la final puedes lanzar un maleficio a tu rival en cada intercambio de ataques (mientras él ataca).</p></section>
     <section><h4>Golpear</h4><p>Saca esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Se ataca por turnos hasta que uno cae.</p></section>
     <section><h4>Premios</h4><p>Quien gana una semifinal elige <b>un objeto</b> del vencido y se lleva sus <b>monedas</b> y un premio.
       Los finalistas recuperan la Vida antes de la final.</p></section>`],
@@ -1258,8 +1258,24 @@ function renderTournament() {
         <span class="dice">${m.last.faces.map((f) => die(f.face, { sm: true, shape: f.shape })).join('')}</span>
         <b>${m.last.dmg ? `¡Golpe! ${esc(byId(m.last.to).name)} −${m.last.dmg} Vida` : 'Ataque fallido'}</b>
       </div>` : ''}
+      ${duelCurseHtml(t, m)}
       ${att.combat ? renderCombat(att, att.id === S.me) : ''}
     </div>`;
+}
+
+// En la final: maleficio al rival mientras ataca (uno por intercambio).
+function duelCurseHtml(t, m) {
+  if (t.stage !== 'final' || (m.a !== S.me && m.b !== S.me)) return '';
+  const p = me();
+  const rival = byId(m.a === S.me ? m.b : m.a);
+  const used = p.duelCurseAt === m.turns || p.duelCurseAt === m.turns - 1;
+  const mana = p.hero.manaDisponible;
+  if (m.attacker !== rival.id) return used ? '<p class="muted small center">Maleficio lanzado en este intercambio.</p>' : '';
+  if (used) return '<p class="muted small center">Ya has lanzado un maleficio en este intercambio.</p>';
+  if (mana < 5) return '';
+  const amounts = [];
+  for (let a = 5; a <= mana; a += 5) amounts.push(a);
+  return `<div class="duel-curse"><span>Maleficio a ${esc(rival.name)}:</span>${amounts.map((a) => `<button class="btn small" data-a="duelCurse" data-n="${a}">${a} Maná</button>`).join('')}</div>`;
 }
 
 function renderEnd() {
@@ -1378,6 +1394,7 @@ document.addEventListener('click', (e) => {
     case 'prepWin': ui.prepWin = d.w; render(); break;
     case 'buy': act('buy', { itemId: d.id }); ui.prepWin = null; render(); break;
     case 'loot': act('takeLoot', { itemId: d.id }); break;
+    case 'duelCurse': act('duelCurse', { amount: Number(d.n) }); break;
     case 'nextDuel': ui.duelQueue.shift(); renderModal(); break;
     case 'closeCoins': ui.coinsMsg = null; renderModal(); break;
     case 'closePrep': ui.prepWin = null; ui.theft = null; render(); break;

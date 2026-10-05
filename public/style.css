@@ -1368,3 +1368,5 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .duel-pop .dice .die { width: min(44px, 13vw); height: min(44px, 13vw); }
 }
 .rival-info .life.thin { height: 9px; }
+.duel-curse { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 6px 12px; border: 1px solid rgba(107, 63, 160, .45); border-radius: 14px; color: #6b3fa0; background: rgba(107, 63, 160, .06); }
+.duel-curse span { font-weight: 600; }

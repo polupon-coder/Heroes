@@ -789,6 +789,7 @@ class Game {
         stoleThisRound: !!p.stoleThisRound,
         offeredThisRound: !!p.offeredThisRound,
         boughtThisRound: !!p.boughtThisRound,
+        duelCurseAt: p.duelCurseAt ?? null,
         shop: p.id === forId ? p.shop || [] : undefined,
         stage: p.stage,
         offers: p.offers,
@@ -1159,6 +1160,28 @@ const ACTIONS = {
   },
 
   // Torneo
+  // En la final, cada jugador puede lanzar un maleficio a su rival en cada
+  // intercambio de ataques (una vez entre dos ataques suyos). Afecta al
+  // siguiente ataque del rival y el Maná gastado no estará en el propio.
+  duelCurse(p, { amount }) {
+    const t = this.tournament;
+    if (this.phase !== 'torneo' || !t || t.stage !== 'final') fail('Solo en la final');
+    const m = t.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id));
+    if (!m) fail('No estás jugando la final');
+    const rival = this.player(m.a === p.id ? m.b : m.a);
+    if (m.attacker !== rival.id) fail('Lanza el maleficio cuando ataque tu rival');
+    if (p.duelCurseAt === m.turns || p.duelCurseAt === m.turns - 1) fail('Ya has lanzado un maleficio en este intercambio');
+    const amt = Number(amount);
+    if (!Number.isInteger(amt) || amt < C.MANA_PER_CURSE || amt % C.MANA_PER_CURSE !== 0) fail(`El Maná se usa en bloques de ${C.MANA_PER_CURSE}`);
+    if (amt > this.availableMana(p)) fail('No tienes tanto Maná disponible');
+    const n = amt / C.MANA_PER_CURSE;
+    p.hero.manaDebt += amt;
+    p.duelCurseAt = m.turns;
+    // Si el rival está atacando y aún no ha lanzado, le afecta ya; si no, en su próximo ataque.
+    if (m.attacker === rival.id && rival.combat && rival.combat.status === 'activo' && rival.combat.rolls === 0) rival.combat.cursesLeft += n;
+    else rival.hero.curses += n;
+    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${rival.name}: repetirá ${n} dado(s) exitoso(s).`);
+  },
   takeLoot(p, { itemId }) {
     this.takeLoot(p, itemId);
   },

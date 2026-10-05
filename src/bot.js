@@ -138,6 +138,11 @@ function botStep(game, p) {
       game.act(p.id, 'takeLoot', { itemId: best.id });
       return true;
     }
+    const m0 = game.matchOf(p);
+    if (m0 && t.stage === 'final' && m0.attacker !== p.id && p.duelCurseAt !== m0.turns && p.duelCurseAt !== m0.turns - 1
+      && game.availableMana(p) >= C.MANA_PER_CURSE + 5 && game.rng() < 0.5) {
+      try { game.act(p.id, 'duelCurse', { amount: C.MANA_PER_CURSE }); return true; } catch (e) { p.duelCurseAt = m0.turns; }
+    }
     const m = game.matchOf(p);
     if (m && m.attacker === p.id && p.combat && p.combat.status === 'activo') return fight(game, p);
   }

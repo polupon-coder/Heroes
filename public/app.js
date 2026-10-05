@@ -898,7 +898,10 @@ function playEventSounds() {
   const stole = texts.find((t) => /^(🦝|🪤|🎲) /.test(t) && t.includes(`${name} saca`));
   if (stole) ui.stealResult = { ok: stole.startsWith('🦝'), text: stole.replace(/^\S+ /, '') };
   const cursed = texts.find((t) => t.includes(`lanza un maleficio a ${name}:`));
-  if (cursed) { ui.curseAlert = cursed; Sounds.play('fe'); }
+  // Maleficio: risa cuando te lo lanzan o cuando lo lanzas tú.
+  const castByMe = texts.some((t) => t.startsWith(`${name} gasta `) && t.includes('lanza un maleficio'));
+  if (cursed || castByMe) Sounds.play('risa');
+  if (cursed) { ui.curseAlert = cursed; }
   else if (texts.some((t) => /^💥/.test(t) && t.includes(name))) Sounds.play('batalla');
   else if (texts.some((t) => /^🔮/.test(t) && t.includes(name))) Sounds.play('fe');
   else if (texts.some((t) => t.startsWith(`${name} se enfrenta a`))) Sounds.play('batalla');

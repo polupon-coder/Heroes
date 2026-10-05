@@ -43,6 +43,25 @@ function botStep(game, p) {
         return true;
       }
     }
+    // Tienda: compra la mejora de equipo que más le aporte (una por ronda).
+    if (!p.boughtThisRound && p.shop && p.shop.length) {
+      const gainOf = (it) => {
+        if (it.tipo !== 'equipo') return it.efecto === 'mana' ? 0.5 : 0;
+        const inv = h.inv;
+        if (['yelmo', 'armadura', 'tunica', 'botas'].includes(it.slot)) return it.bonus - (inv[it.slot] ? inv[it.slot].bonus : 0);
+        const hands = inv.manos;
+        const sum = hands.reduce((s2, x) => s2 + x.bonus, 0);
+        if (it.slot === 'dosManos') return it.bonus - sum;
+        if (hands.length < 2 && !(hands[0] && hands[0].slot === 'dosManos')) return it.bonus;
+        return it.bonus - Math.min(...hands.map((x) => x.bonus));
+      };
+      const pickIt = p.shop.filter((it) => it.precio <= h.monedas && gainOf(it) > 0)
+        .sort((a2, b2) => gainOf(b2) / b2.precio - gainOf(a2) / a2.precio)[0];
+      if (pickIt) {
+        game.act(p.id, 'buy', { itemId: pickIt.id });
+        return true;
+      }
+    }
     if (h.vida <= h.base.vida / 2) {
       const heal = [...h.inv.pociones, ...h.inv.pergaminos].find((it) => it.efecto === 'curacion');
       if (heal) {
@@ -89,6 +108,13 @@ function botStep(game, p) {
       const rivals = t.ranking.slice(1).map((id) => game.player(id));
       rivals.sort((a, b) => game.tourneyScore(a) - game.tourneyScore(b));
       game.act(p.id, 'chooseRival', { rivalId: rivals[0].id });
+      return true;
+    }
+    if (t.stage === 'botin' && t.loot && t.loot.winner === p.id) {
+      const loser = game.player(t.loot.loser);
+      const val = (it) => it.bonus || it.valor || 1;
+      const best = I.allItems(loser.hero.inv).sort((a, b) => val(b) - val(a))[0];
+      game.act(p.id, 'takeLoot', { itemId: best.id });
       return true;
     }
     const m = game.matchOf(p);

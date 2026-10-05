@@ -138,7 +138,7 @@ function itemIcon(it) {
 function itemDesc(it) {
   if (it.tipo === 'equipo') {
     const slot = { arma: 'Arma · ocupa 1 mano', dosManos: 'Arma · ocupa las 2 manos', escudo: 'Escudo · ocupa 1 mano', yelmo: 'Yelmo', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' }[it.slot];
-    return `${slot} · +${it.bonus} Fuerza`;
+    return `${slot} · +${it.bonus} ${it.slot === 'tunica' ? 'Maná' : 'Fuerza'}`;
   }
   if (it.efecto === 'mana') return `+${it.valor} Maná durante un combate`;
   if (it.efecto === 'curacion') return `Recupera ${it.valor} de Vida`;
@@ -502,9 +502,10 @@ function renderSheet() {
     <div class="life"><i style="width:${pct}%"></i><span>${h.vida} / ${h.base.vida}</span></div>
     <div class="me-sub">${raceName(p)} · ${className(p)}</div>
   </div>
-  <div class="glyphs two">
+  <div class="glyphs three">
     <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
     <div title="Cada 5 de Maná es una esfera multicolor"><b>${h.manaDisponible}</b><span>Maná</span></div>
+    <div title="Monedas para la tienda"><b class="coins">${coinIcon()}${h.monedas ?? 0}</b><span>Monedas</span></div>
   </div>
   ${h.curses ? `<p class="warn center">Maleficio: repetirás ${h.curses} esfera(s) acertada(s) en tu próximo combate.</p>` : ''}
   <div class="tiles">
@@ -594,7 +595,7 @@ function renderArena() {
         <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
         <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables)}</div>
         <div class="life thin"><i style="width:${pct}%"></i></div>
-        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida}/${h.base.vida}</div>
+        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida}/${h.base.vida} · ${coinIcon()}${h.monedas ?? 0}</div>
       </div>
     </div>`;
   }).join('');
@@ -621,6 +622,24 @@ function renderOutcome() {
         <p class="center"><b>${esc(who)}</b> te ha lanzado un maleficio.</p>
         <p class="center">En tu próximo combate tendrás que repetir ${n} esfera(s) acertada(s).</p>
         <div class="row center-row"><button class="btn primary" data-a="closeCurse">Entendido</button></div>
+      </div>`;
+  }
+  if (ui.coinsMsg && !(p.stage === 'recompensa')) {
+    return `
+      <div class="card outcome coins-pop">
+        <img class="coins-big" src="img/ui/monedas.webp" alt="">
+        <p class="center big-text">${esc(ui.coinsMsg)}</p>
+        <div class="row center-row"><button class="btn primary" data-a="closeCoins">Continuar</button></div>
+      </div>`;
+  }
+  // Botín de la semifinal: el ganador elige un objeto del vencido.
+  if (S.phase === 'torneo' && S.tournament && S.tournament.stage === 'botin' && S.tournament.loot && S.tournament.loot.winner === S.me) {
+    const loser = byId(S.tournament.loot.loser);
+    return `
+      <div class="card outcome prep-win">
+        <div class="outcome-title">Botín</div>
+        <p class="center">Has vencido a ${esc(loser.name)}. Elige uno de sus objetos:</p>
+        <div class="trade-grid">${allItems(loser.hero).map((it) => tradeTile(it, { attrs: `data-a="loot" data-id="${it.id}"` })).join('')}</div>
       </div>`;
   }
   if (ui.stealResult) {
@@ -774,6 +793,8 @@ function playEventSounds() {
   else if (mine(/^🩸/)) { Sounds.play('dados'); Sounds.play('derrota', 600); }
   const lost = texts.find((t) => /^🩸/.test(t) && t.startsWith(`🩸 ${name} no consigue`));
   if (lost) { ui.defeat = { text: lost, monster: meP.monster || ui.lastMonster, fell: mine(/^💀/) }; holdOutcome(); }
+  const coinsTxt = texts.find((t) => t.startsWith(`💰 ${name} gana `));
+  if (coinsTxt) ui.coinsMsg = coinsTxt.replace(/^💰 /, '').replace(`${name} gana`, 'Has ganado');
   const stole = texts.find((t) => /^(🦝|🪤|🎲) /.test(t) && t.includes(`${name} saca`));
   if (stole) ui.stealResult = { ok: stole.startsWith('🦝'), text: stole.replace(/^\S+ /, '') };
   const cursed = texts.find((t) => t.includes(`lanza un maleficio a ${name}:`));
@@ -848,6 +869,7 @@ function renderPrep() {
         <button class="btn ${incoming ? 'alert' : ''}" data-a="prepWin" data-w="trade">Comerciar${incoming ? ` <span class="badge">${incoming}</span>` : ''}</button>
         <button class="btn" data-a="prepWin" data-w="curse" ${S.round <= 1 ? 'disabled title="Desde la ronda 2"' : ''}>Maleficio</button>
         <button class="btn" data-a="prepWin" data-w="steal">Robar</button>
+        <button class="btn" data-a="prepWin" data-w="shop" ${p.boughtThisRound ? 'title="Ya has comprado esta ronda"' : ''}>Comprar</button>
       </div>
     </div>
   </div>`;
@@ -856,8 +878,24 @@ function renderPrep() {
 // Ventana flotante de cada acción entre combates.
 function renderPrepWin() {
   if (S.phase !== 'prep' || !ui.prepWin) return '';
-  const body = ui.prepWin === 'trade' ? renderTrade() : ui.prepWin === 'curse' ? renderMagic() : renderTheft();
+  const body = ui.prepWin === 'trade' ? renderTrade() : ui.prepWin === 'curse' ? renderMagic() : ui.prepWin === 'shop' ? renderShop() : renderTheft();
   return `<div class="card prep-win"><button class="modal-close" data-a="closePrep" aria-label="Cerrar" title="Cerrar">×</button>${body}</div>`;
+}
+
+function renderShop() {
+  const p = me();
+  const coins = p.hero.monedas || 0;
+  const shop = p.shop || [];
+  return `
+    <h3>Comprar</h3>
+    <p class="center shop-coins">${coinIcon()} Tienes <b>${coins}</b> monedas${p.boughtThisRound ? ' · ya has comprado esta ronda' : ' · una compra por ronda'}</p>
+    <div class="trade-grid">${shop.map((it) => {
+      const can = !p.boughtThisRound && coins >= it.precio;
+      return `<div class="shop-item ${can ? '' : 'locked'}">
+        ${tradeTile(it)}
+        <button class="btn small ${can ? 'primary' : ''}" data-a="buy" data-id="${it.id}" ${can ? '' : 'disabled'}>${coinIcon()} ${it.precio}</button>
+      </div>`;
+    }).join('') || '<p class="muted center">No queda nada a la venta.</p>'}</div>`;
 }
 
 function renderTheft() {
@@ -1101,9 +1139,11 @@ function renderCombat(p, controllable) {
   </div>`;
 }
 
+function coinIcon() { return '<img class="coin-ico" src="img/ui/monedas.webp" alt="monedas">'; }
+
 // Efecto de una recompensa en pocas palabras (sin nombre).
 function rewardEffect(it) {
-  if (it.tipo === 'equipo') return `Fuerza +${it.bonus}`;
+  if (it.tipo === 'equipo') return `${it.slot === 'tunica' ? 'Maná' : 'Fuerza'} +${it.bonus}`;
   if (it.efecto === 'mana') return `Maná +${it.valor}`;
   if (it.efecto === 'curacion') return `Curación +${it.valor}`;
   if (it.efecto === 'robo') return 'Robo';
@@ -1300,6 +1340,9 @@ document.addEventListener('click', (e) => {
       break;
     }
     case 'prepWin': ui.prepWin = d.w; render(); break;
+    case 'buy': act('buy', { itemId: d.id }); ui.prepWin = null; render(); break;
+    case 'loot': act('takeLoot', { itemId: d.id }); break;
+    case 'closeCoins': ui.coinsMsg = null; renderModal(); break;
     case 'closePrep': ui.prepWin = null; ui.theft = null; render(); break;
     case 'closeSteal': ui.stealResult = null; renderModal(); break;
     case 'curseTarget': ui.curse.target = d.id; render(); break;

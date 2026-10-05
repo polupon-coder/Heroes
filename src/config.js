@@ -161,6 +161,25 @@ function consumablePower(level) {
 // Probabilidades de cada tipo de recompensa (suman 1).
 const REWARD_WEIGHTS = { equipo: 0.6, pocion: 0.2, pergamino: 0.2 };
 
+// Monedas: cada monstruo vencido da monedas según su nivel y tamaño, y menos
+// cuantas más tiradas hayas necesitado (no se sabe hasta después de elegir la recompensa).
+const MONEDAS_INICIALES = 3;
+const MONEDAS_POR_TIRADAS = [1, 0.7, 0.45];
+function coinsFor(level, variante, rolls) {
+  const base = 2 + level + 2 * ((variante || 1) - 1);
+  return Math.max(1, Math.round(base * MONEDAS_POR_TIRADAS[Math.min(3, Math.max(1, rolls)) - 1]));
+}
+// Precio en la tienda.
+function itemPrice(it) {
+  if (it.tipo === 'equipo') return it.slot === 'tunica' ? 3 * it.bonus + 3 : 6 * it.bonus + 4;
+  if (it.efecto === 'robo') return 14;
+  return 3 * (it.valor || 1) + 3;
+}
+const TIENDA_OBJETOS = 4;
+// Premio por ganar un duelo del torneo (además de las monedas del vencido).
+const PREMIO_SEMIFINAL = 8;
+const PREMIO_FINAL = 15;
+
 const MAX_POTIONS = 3;
 const MAX_SCROLLS = 3;
 
@@ -214,6 +233,12 @@ module.exports = {
   consumablePower,
   REWARD_WEIGHTS,
   MAX_POTIONS,
+  MONEDAS_INICIALES,
+  coinsFor,
+  itemPrice,
+  TIENDA_OBJETOS,
+  PREMIO_SEMIFINAL,
+  PREMIO_FINAL,
   MAX_SCROLLS,
   MANA_PER_CURSE,
   PVP_DAMAGE,

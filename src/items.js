@@ -67,6 +67,8 @@ function makeEquipment(rng, level, nextId, inv) {
     tunica: [['Túnica de lana', 'Hábito con capucha'], ['Túnica del bosque', 'Manto de hojas'], ['Túnica del gran druida', 'Manto de la arboleda']][grado - 1],
     botas: [['Botas de viaje', 'Botas de cuero'], ['Botas de explorador', 'Botas con hebillas'], ['Botas élficas', 'Botas del bosque']][grado - 1],
   }[slot];
+  // Las túnicas no dan Fuerza sino Maná (el doble de puntos).
+  if (slot === 'tunica') bonus *= 2;
   return {
     id: nextId(),
     tipo: 'equipo',
@@ -74,6 +76,7 @@ function makeEquipment(rng, level, nextId, inv) {
     forma,
     bonus,
     grado,
+    stat: slot === 'tunica' ? 'mana' : 'fuerza',
     nombre: `${pick(rng, names)} +${bonus}`,
   };
 }
@@ -115,7 +118,11 @@ function allItems(inv) {
 }
 
 function equipmentFuerza(inv) {
-  return equippedItems(inv).reduce((s, it) => s + it.bonus, 0);
+  return equippedItems(inv).filter((it) => it.stat !== 'mana' && it.slot !== 'tunica').reduce((s, it) => s + it.bonus, 0);
+}
+
+function equipmentMana(inv) {
+  return equippedItems(inv).filter((it) => it.stat === 'mana' || it.slot === 'tunica').reduce((s, it) => s + it.bonus, 0);
 }
 
 function findItem(inv, id) {
@@ -213,6 +220,7 @@ module.exports = {
   equippedItems,
   allItems,
   equipmentFuerza,
+  equipmentMana,
   findItem,
   removeItem,
   tryPlace,

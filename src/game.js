@@ -124,7 +124,7 @@ class Game {
   }
 
   availableMana(p) {
-    return p.hero.base.mana - p.hero.manaDebt;
+    return Math.max(0, p.hero.base.mana + I.equipmentMana(p.hero.inv) - p.hero.manaDebt);
   }
 
   diceCount(p) {
@@ -151,6 +151,7 @@ class Game {
       pending: [],
       caidas: 0,
       victorias: 0,
+      monedas: C.MONEDAS_INICIALES,
     };
   }
 
@@ -174,11 +175,12 @@ class Game {
     // Regla 9: al caer a 0 Vida pierde todos sus objetos y recupera la Vida inicial.
     p.hero.inv = I.emptyInventory();
     p.hero.pending = [];
+    p.hero.monedas = 0;
     p.hero.vida = p.hero.base.vida;
     p.hero.caidas += 1;
     this.dropTradesOf(p.id);
     this.say(
-      `💀 ${p.name} cae a 0 Vida: pierde todos sus objetos y recupera su Vida inicial.`
+      `💀 ${p.name} cae a 0 Vida: pierde todos sus objetos y sus monedas, y recupera su Vida inicial.`
     );
   }
 
@@ -206,6 +208,8 @@ class Game {
       p.tradedThisRound = false;
       p.offeredThisRound = false;
       p.stoleThisRound = false;
+      p.boughtThisRound = false;
+      p.shop = this.makeShop(p);
       p.ready = false;
       p.stage = null;
       p.offers = null;
@@ -516,6 +520,7 @@ class Game {
     const m = p.monster;
     if (won) {
       p.hero.victorias += 1;
+      p.coinsPending = { n: C.coinsFor(m.level, m.variante, p.combat.rolls), rolls: p.combat.rolls };
       p.stage = 'recompensa';
       p.rewards = m.rewards;
       this.say(`🗡 ${p.name} derrota a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`);
@@ -571,10 +576,10 @@ class Game {
     const others = t.ranking.filter((id) => id !== p.id && id !== rivalId);
     t.stage = 'semis';
     this.say(`${p.name} elige enfrentarse a ${this.player(rivalId).name}.`);
+    // Las semifinales se juegan una detrás de otra para poder verlas enteras.
     const m1 = this.addMatch('Semifinal 1', p.id, rivalId);
-    const m2 = this.addMatch('Semifinal 2', others[0], others[1]);
+    this.addMatch('Semifinal 2', others[0], others[1]);
     this.startAttack(m1);
-    this.startAttack(m2);
   }
 
   addMatch(label, a, b) {
@@ -584,7 +589,7 @@ class Game {
     // el más fuerte ya tuvo la ventaja de elegir rival). Empate: menos Vida.
     const weaker = this.tourneyScore(pa) - this.tourneyScore(pb) || pa.hero.vida - pb.hero.vida;
     const first = weaker <= 0 ? a : b;
-    const m = { id: this.tournament.matches.length, label, a, b, attacker: first, winner: null, turns: 0 };
+    const m = { id: this.tournament.matches.length, label, a, b, attacker: first, winner: null, turns: 0, started: false };
     this.tournament.matches.push(m);
     this.say(`⚔ ${label}: ${pa.name} contra ${pb.name}. Empieza atacando ${this.player(first).name}.`);
     return m;
@@ -592,10 +597,11 @@ class Game {
 
   matchOf(p) {
     if (!this.tournament) return null;
-    return this.tournament.matches.find((m) => !m.winner && (m.a === p.id || m.b === p.id)) || null;
+    return this.tournament.matches.find((m) => m.started && !m.winner && (m.a === p.id || m.b === p.id)) || null;
   }
 
   startAttack(m) {
+    m.started = true;
     const att = this.player(m.attacker);
     const def = this.player(m.attacker === m.a ? m.b : m.a);
     const hits = this.settings.pvpHits;
@@ -662,19 +668,59 @@ class Game {
     }
     const w = this.player(winnerId);
     this.say(`🏅 ${w.name} gana ${m.label}.`);
+    const vencido = this.player(winnerId === m.a ? m.b : m.a);
+    const premio = this.tournament.stage === 'final' ? C.PREMIO_FINAL : C.PREMIO_SEMIFINAL;
+    const botin = vencido.hero.monedas;
+    vencido.hero.monedas = 0;
+    w.hero.monedas += botin + premio;
+    this.say(`💰 ${w.name} se lleva ${botin} monedas de ${vencido.name} y ${premio} de premio.`);
     const t = this.tournament;
     if (t.stage === 'final') {
       this.finish(winnerId);
       return;
     }
+    // Botín: el ganador de la semifinal elige un objeto del vencido.
+    const loser = this.player(winnerId === m.a ? m.b : m.a);
+    if (I.allItems(loser.hero.inv).length) {
+      t.loot = { match: m.id, winner: winnerId, loser: loser.id };
+      t.stage = 'botin';
+      this.say(`${w.name} puede quedarse con un objeto de ${loser.name}.`);
+      return;
+    }
+    this.continueTournament();
+  }
+
+  // Siguiente semifinal pendiente o, si ya se jugaron todas, la final.
+  continueTournament() {
+    const t = this.tournament;
+    t.stage = 'semis';
+    const next = t.matches.find((x) => !x.started && !x.winner);
+    if (next) { this.startAttack(next); return; }
     if (t.matches.every((x) => x.winner)) {
       const finalists = t.bye ? [t.bye, t.matches[0].winner] : t.matches.map((x) => x.winner);
       this.startFinal(finalists[0], finalists[1]);
     }
   }
 
+  takeLoot(p, itemId) {
+    const t = this.tournament;
+    if (this.phase !== 'torneo' || t.stage !== 'botin' || !t.loot) fail('No hay botín que repartir');
+    if (t.loot.winner !== p.id) fail('El botín no es tuyo');
+    const loser = this.player(t.loot.loser);
+    const it = I.findItem(loser.hero.inv, itemId);
+    if (!it) fail('Ese objeto ya no existe');
+    I.removeItem(loser.hero.inv, it.id);
+    this.say(`💰 ${p.name} se queda con ${it.nombre} de ${loser.name}.`);
+    t.loot = null;
+    this.receiveItem(p, it, 'botín');
+    this.continueTournament();
+  }
+
   startFinal(a, b) {
     this.tournament.stage = 'final';
+    // Antes de la final, los dos finalistas recuperan toda su Vida.
+    for (const id of [a, b]) { const pl = this.player(id); pl.hero.vida = pl.hero.base.vida; }
+    this.say('Los finalistas recuperan toda su Vida.');
     this.startAttack(this.addMatch('Final', a, b));
   }
 
@@ -686,6 +732,20 @@ class Game {
   }
 
   // ---------------------------------------------------------------- Vista
+
+  // Tienda de cada jugador para esta ronda: objetos de su nivel con su precio.
+  makeShop(p) {
+    if (!p.hero) return [];
+    const lvl = Math.min(12, Math.max(1, this.round));
+    const items = [];
+    for (let i = 0; i < C.TIENDA_OBJETOS; i++) {
+      const level = Math.min(12, lvl + Math.floor(this.rng() * 4) - 1);
+      const it = I.makeReward(this.rng, Math.max(1, level), () => this.nextId(), p.hero.inv);
+      it.precio = C.itemPrice(it);
+      items.push(it);
+    }
+    return items.sort((a, b) => a.precio - b.precio);
+  }
 
   // Quita ofertas cerradas y respuestas de quien ya ha comerciado.
   cleanTrades() {
@@ -714,6 +774,8 @@ class Game {
         tradedThisRound: !!p.tradedThisRound,
         stoleThisRound: !!p.stoleThisRound,
         offeredThisRound: !!p.offeredThisRound,
+        boughtThisRound: !!p.boughtThisRound,
+        shop: p.id === forId ? p.shop || [] : undefined,
         stage: p.stage,
         offers: p.offers,
         monster: p.monster,
@@ -733,6 +795,7 @@ class Game {
           pending: p.id === forId ? h.pending : h.pending.map(() => ({})),
           caidas: h.caidas,
           victorias: h.victorias,
+          monedas: h.monedas,
           puntuacion: this.tourneyScore(p),
         },
       };
@@ -897,6 +960,21 @@ const ACTIONS = {
     t.cursedThisRound = true;
     this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${t.name}: repetirá ${n} dado(s) exitoso(s).`);
   },
+  // Tienda: una compra por ronda.
+  buy(p, { itemId }) {
+    requirePrep(this);
+    if (p.boughtThisRound) fail('Ya has comprado esta ronda');
+    const it = (p.shop || []).find((x) => x.id === itemId);
+    if (!it) fail('Ese objeto ya no está a la venta');
+    if (p.hero.monedas < it.precio) fail('No tienes monedas suficientes');
+    p.hero.monedas -= it.precio;
+    p.shop = p.shop.filter((x) => x !== it);
+    p.boughtThisRound = true;
+    const item = { ...it };
+    delete item.precio;
+    this.say(`🛒 ${p.name} compra ${item.nombre} por ${it.precio} monedas.`);
+    this.receiveItem(p, item, 'compra');
+  },
   // Robo sin pergamino: tirada de 1d6. 1-2 roba el objeto, 3-5 pierde su Maná
   // en el próximo combate, 6 no pasa nada. Un intento por ronda.
   stealRoll(p, { targetId, targetItemId }) {
@@ -914,7 +992,7 @@ const ACTIONS = {
       this.say(`🦝 ${p.name} saca un ${d} y roba ${it.nombre} a ${t.name}.`);
       this.receiveItem(p, it, 'robo');
     } else if (d <= 5) {
-      p.hero.manaDebt = p.hero.base.mana;
+      p.hero.manaDebt = 999;
       this.say(`🪤 ${p.name} saca un ${d} intentando robar a ${t.name}: le pillan y pierde su Maná en el próximo combate.`);
     } else {
       this.say(`🎲 ${p.name} saca un 6 intentando robar a ${t.name}: no pasa nada.`);
@@ -1050,6 +1128,12 @@ const ACTIONS = {
     const it = p.rewards[Number(index)];
     if (!it) fail('Recompensa no válida');
     this.receiveItem(p, it, 'recompensa');
+    if (p.coinsPending) {
+      const c = p.coinsPending;
+      p.coinsPending = null;
+      p.hero.monedas += c.n;
+      this.say(`💰 ${p.name} gana ${c.n} monedas por vencer en ${c.rolls} tirada${c.rolls > 1 ? 's' : ''}.`);
+    }
     // Si no cabe, la elección queda abierta: se puede deshacer y escoger la otra.
     if (p.hero.pending.length) {
       p.hero.pending[p.hero.pending.length - 1].fromReward = true;
@@ -1061,6 +1145,9 @@ const ACTIONS = {
   },
 
   // Torneo
+  takeLoot(p, { itemId }) {
+    this.takeLoot(p, itemId);
+  },
   chooseRival(p, { rivalId }) {
     this.chooseRival(p, rivalId);
   },

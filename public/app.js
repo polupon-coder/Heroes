@@ -221,7 +221,7 @@ function showHome() {
   $('home').classList.remove('hidden');
   $('app').classList.add('hidden');
   document.body.classList.add('at-home');
-  $('roomInfo').innerHTML = '';
+  setHtml($('roomInfo'), '');
   Sounds.setMusic(true);
   $('status').textContent = '';
   try { $('nameInput').value = localStorage.getItem('heroes.name') || ''; } catch { /* nada */ }
@@ -315,6 +315,15 @@ function trackDuel() {
   ui.duelPrimed = true;
 }
 
+// Solo reescribe una zona si su HTML ha cambiado: así los botones no se
+// sustituyen (ni se mueven) mientras otro jugador hace algo.
+function setHtml(el, html) {
+  if (el._html === html) return false;
+  el._html = html;
+  el.innerHTML = html;
+  return true;
+}
+
 function render() {
   if (!S) return;
   trackDuel();
@@ -324,7 +333,7 @@ function render() {
   $('homeModal').classList.add('hidden');
   document.body.classList.remove('at-home');
   $('app').classList.remove('hidden');
-  $('roomInfo').innerHTML = `<span class="room-name">Sala ${esc(S.code)}</span><button class="exit-btn" data-a="exit" title="Salir de la sala" aria-label="Salir de la sala">×</button>`;
+  setHtml($('roomInfo'), `<span class="room-name">Sala ${esc(S.code)}</span><button class="exit-btn" data-a="exit" title="Salir de la sala" aria-label="Salir de la sala">×</button>`);
   Sounds.setMusic(S.phase === 'lobby' || S.phase === 'torneo' || S.phase === 'fin');
   playEventSounds();
   $('status').textContent = statusText();
@@ -332,19 +341,18 @@ function render() {
   if (S.phase === 'lobby') {
     $('lobby').classList.remove('hidden');
     $('table').classList.add('hidden');
-    $('lobby').innerHTML = renderLobby();
+    setHtml($('lobby'), renderLobby());
   } else {
     $('lobby').classList.add('hidden');
     $('table').classList.remove('hidden');
     syncCombatUi();
-    $('arena').innerHTML = renderArena();
-    $('sheet').innerHTML = renderSheet();
-    $('main').innerHTML = renderMain();
+    setHtml($('arena'), renderArena());
+    setHtml($('sheet'), renderSheet());
+    setHtml($('main'), renderMain());
   }
   $('journalBtn').classList.remove('hidden');
   const log = $('log');
-  log.innerHTML = S.log.map((l) => `<div>${esc(l.text)}</div>`).join('');
-  log.scrollTop = log.scrollHeight;
+  if (setHtml(log, S.log.map((l) => `<div>${esc(l.text)}</div>`).join(''))) log.scrollTop = log.scrollHeight;
   detectNewItems();
   renderModal();
 }
@@ -456,7 +464,7 @@ function renderLobbyHeroes(p) {
       <div class="pick-center">
         ${p.raza ? portrait(p.raza, showClass, 'pick', p.color) : '<div class="portrait pick missing">Elige una raza</div>'}
         <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
-        ${preview && preview.af ? `<div class="afinidad ${preview.af}">${preview.af === 'natural' ? 'Combinación natural' : 'Combinación rara'}</div>` : ''}
+        <div class="afinidad ${preview && preview.af ? preview.af : ''}">${preview && preview.af ? (preview.af === 'natural' ? 'Combinación natural' : 'Combinación rara') : '&nbsp;'}</div>
       </div>
       <div class="pick-right">
       <div class="pick-stats">
@@ -464,7 +472,11 @@ function renderLobbyHeroes(p) {
           <div class="pstat"><span>Vida</span><b>${preview.vida}</b></div>
           <div class="pstat"><span>Fuerza</span><b>${preview.fuerza}</b></div>
           <div class="pstat"><span>Maná</span><b>${preview.mana}</b></div>
-          <div class="pstat"><span>Esferas</span><div class="spheres-row">${spheresRow(dicePreview(preview.fuerza), p.color, true, Math.floor(preview.mana / 5))}</div></div>` : ''}
+          <div class="pstat"><span>Esferas</span><div class="spheres-row">${spheresRow(dicePreview(preview.fuerza), p.color, true, Math.floor(preview.mana / 5))}</div></div>` : `
+          <div class="pstat"><span>Vida</span><b>–</b></div>
+          <div class="pstat"><span>Fuerza</span><b>–</b></div>
+          <div class="pstat"><span>Maná</span><b>–</b></div>
+          <div class="pstat"><span>Esferas</span><div class="spheres-row">${spheresRow(3, p.color, true, 0)}</div></div>`}
       </div>
       <div class="ready-side">
         ${p.ready
@@ -1264,8 +1276,7 @@ function foesHtml(p, cb, all, controllable) {
       <div class="foe-level">Nivel ${m.level}</div>
       <div class="foe-dmg" title="Vida que pierdes si no lo derrotas">−${m.dano}</div>
       ${comboHtml(m.combo, false, m.tipo)}
-      ${state}
-      ${can ? `<button class="btn primary defeat-btn" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}
+      <div class="foe-slot">${state}${can ? `<button class="btn primary defeat-btn" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}</div>
       <div class="rewards-sum">${m.rewards.map((it) => `<span>${shortName(it)}</span>`).join('')}</div>
     </div>`;
   }).join('<div class="foes-or">o</div>')}</div>`;

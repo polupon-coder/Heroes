@@ -120,6 +120,17 @@ class Game {
 
   // ---------------------------------------------------------------- Héroe
 
+  // Antes de la final: el rival de la final (o null).
+  finalFoe(p) {
+    if (!this.pendingFinal || !this.pendingFinal.includes(p.id)) return null;
+    return this.pendingFinal.find((id) => id !== p.id) || null;
+  }
+
+  requireFinalFoe(p, t, what) {
+    const foe = this.finalFoe(p);
+    if (foe && t.id !== foe) fail(`Antes de la final solo puedes ${what} a ${this.player(foe).name}`);
+  }
+
   effFuerza(p) {
     return p.hero.base.fuerza + I.equipmentFuerza(p.hero.inv, p.clase);
   }
@@ -846,6 +857,7 @@ class Game {
       settings: this.settings,
       players: this.players.map(pub),
       trades: this.trades,
+      pendingFinal: this.pendingFinal || null,
       tournament: this.tournament,
       winner: this.winner,
       log: this.log.slice(-80),
@@ -896,6 +908,7 @@ function useConsumable(game, p, data) {
     requirePrep(game);
     const target = game.player(data.targetId);
     if (target === p) fail('No puedes robarte a ti mismo');
+    game.requireFinalFoe(p, target, 'robar');
     const stolen = I.findItem(target.hero.inv, data.targetItemId);
     if (!stolen) fail('Ese objeto ya no existe');
     I.removeItem(p.hero.inv, it.id);
@@ -985,6 +998,7 @@ const ACTIONS = {
     if (this.round <= 1) fail('Todavía no ha habido combates');
     const t = this.player(targetId);
     if (t === p) fail('No puedes maldecirte a ti mismo');
+    this.requireFinalFoe(p, t, 'lanzar un maleficio');
     if (t.cursedThisRound) fail(`${t.name} ya ha recibido un maleficio esta ronda`);
     const amt = Number(amount);
     if (!Number.isInteger(amt) || amt < C.MANA_PER_CURSE || amt % C.MANA_PER_CURSE !== 0) {
@@ -1019,6 +1033,7 @@ const ACTIONS = {
     if (p.stoleThisRound) fail('Ya has intentado robar esta ronda');
     const t = this.player(targetId);
     if (t === p) fail('No puedes robarte a ti mismo');
+    this.requireFinalFoe(p, t, 'robar');
     const it = I.findItem(t.hero.inv, targetItemId);
     if (!it) fail('Ese objeto ya no existe');
     p.stoleThisRound = true;
@@ -1096,6 +1111,7 @@ const ACTIONS = {
     const t = this.trades.find((x) => x.id === tradeId && x.status === 'abierta');
     if (!t) fail('Esa oferta ya no existe');
     if (t.from === p.id) fail('Es tu propia oferta');
+    if (this.finalFoe(p) === t.from) fail('No puedes comerciar con tu rival de la final');
     if (p.tradedThisRound) fail('Ya has comerciado esta ronda');
     if (t.counters.some((c) => c.by === p.id)) fail('Ya has respondido a esta oferta');
     if (!give.length) fail('Elige qué ofreces a cambio');
@@ -1182,17 +1198,17 @@ const ACTIONS = {
   },
 
   // Torneo
-  // En la final, cada jugador puede lanzar un maleficio a su rival en cada
-  // intercambio de ataques (una vez entre dos ataques suyos). Afecta al
-  // siguiente ataque del rival y el Maná gastado no estará en el propio.
+  // En semifinales y final, cada jugador puede lanzar un maleficio a su rival
+  // en cada ataque de este (uno por ataque). Afecta a ese ataque si aún no ha
+  // tirado (si no, al siguiente) y el Maná gastado no estará en el propio.
   duelCurse(p, { amount }) {
     const t = this.tournament;
-    if (this.phase !== 'torneo' || !t || t.stage !== 'final') fail('Solo en la final');
+    if (this.phase !== 'torneo' || !t) fail('Solo en el torneo');
     const m = t.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id));
-    if (!m) fail('No estás jugando la final');
+    if (!m) fail('No estás jugando ahora');
     const rival = this.player(m.a === p.id ? m.b : m.a);
     if (m.attacker !== rival.id) fail('Lanza el maleficio cuando ataque tu rival');
-    if (p.duelCurseAt === m.turns || p.duelCurseAt === m.turns - 1) fail('Ya has lanzado un maleficio en este intercambio');
+    if (p.duelCurseAt === m.turns) fail('Ya has lanzado un maleficio en este ataque');
     const amt = Number(amount);
     if (!Number.isInteger(amt) || amt < C.MANA_PER_CURSE || amt % C.MANA_PER_CURSE !== 0) fail(`El Maná se usa en bloques de ${C.MANA_PER_CURSE}`);
     if (amt > this.availableMana(p)) fail('No tienes tanto Maná disponible');

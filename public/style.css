@@ -1428,3 +1428,10 @@ button.trade-tile:not([data-a]) { cursor: default; }
 
 /* Armas afines: el +1 extra, mismo tamaño que el +N, en verde. */
 .af { color: var(--ok); font-weight: inherit; }
+
+/* Duelo simplificado: lo que hace falta en una línea y el maleficio en un botón. */
+.duel-need { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--title); color: var(--ink-soft); font-size: 1rem; }
+.duel-need b { color: var(--ink); }
+.duel-curse { display: flex; justify-content: center; margin-top: 4px; }
+.duel-curse .btn { display: inline-flex; align-items: center; gap: 8px; }
+.duel-curse .btn img { width: 26px; height: 26px; object-fit: contain; }

@@ -682,6 +682,8 @@ function renderOutcome() {
   }
   if (ui.duelQueue && ui.duelQueue.length) {
     const a = ui.duelQueue[0];
+    // Se cierra sola enseguida: así nunca tapa el siguiente ataque ni el maleficio.
+    if (!ui.duelTimer) ui.duelTimer = setTimeout(() => { ui.duelTimer = null; if (ui.duelQueue[0] === a) ui.duelQueue.shift(); renderModal(); }, 2200);
     const by = byId(a.by);
     const to = byId(a.to);
     const mine = a.by === S.me;
@@ -806,7 +808,8 @@ const RULES = {
       Cada héroe recibe como mucho uno por ronda.</p></section>`],
   torneo: ['Torneo', `
     <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. Las semifinales se sortean;
-      se juega un duelo detrás de otro. Antes de la final hay una ronda para comerciar, comprar, robar o lanzar maleficios, y durante la final puedes lanzar un maleficio a tu rival en cada intercambio de ataques (mientras él ataca).</p></section>
+      se juega un duelo detrás de otro. En cada ataque de tu rival puedes lanzarle un <b>maleficio</b> (5 Maná).
+      Antes de la final hay una ronda para comprar, comerciar (no con tu rival de la final), y robar o lanzar maleficios (solo a tu rival de la final).</p></section>
     <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ 1 daño</span></div><h4>Golpear</h4><p>Saca esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Se ataca por turnos hasta que uno cae.</p></section>
     <section><div class="rule-ill"><img src="img/objetos/yelmo-3.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Premios</h4><p>Quien gana una semifinal elige <b>un objeto</b> del vencido y se lleva sus <b>monedas</b> y un premio.
       Los finalistas recuperan la Vida antes de la final.</p></section>`],
@@ -963,9 +966,20 @@ function renderShop() {
     }).join('') || '<p class="muted center">No queda nada a la venta.</p>'}</div>`;
 }
 
+// Antes de la final solo puedes robar o lanzar maleficios a tu rival de la final.
+function finalFoeId() {
+  const f = S.pendingFinal;
+  return f && f.includes(S.me) ? f.find((id) => id !== S.me) : null;
+}
+function prepTargets() {
+  const foe = finalFoeId();
+  return foe ? others().filter((o) => o.id === foe) : others();
+}
+
 function renderTheft() {
   const p = me();
   const t = ui.theft || (ui.theft = { targetId: null });
+  if (!t.targetId && prepTargets().length === 1) t.targetId = prepTargets()[0].id;
   const target = t.targetId && byId(t.targetId);
   const scroll = [...p.hero.inv.pergaminos].find((it) => it.efecto === 'robo');
   const picked = target && t.itemId && allItems(target.hero).find((it) => it.id === t.itemId);
@@ -973,7 +987,7 @@ function renderTheft() {
     <h3>Robar</h3>
     <p class="muted small center">Con un Pergamino de Robo te lo llevas seguro. Sin él, tiras un dado:
     1-2 lo robas · 3-5 te pillan y pierdes tu Maná en el próximo combate · 6 no pasa nada.</p>
-    <div class="row">${others().map((o) => `<button class="btn small ${t.targetId === o.id ? 'selected' : ''}" data-a="theftTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
+    <div class="row">${prepTargets().map((o) => `<button class="btn small ${t.targetId === o.id ? 'selected' : ''}" data-a="theftTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
     ${target ? (allItems(target.hero).length ? `<div class="steal-items">${allItems(target.hero).map((it) => `
       <button class="steal-item ${t.itemId === it.id ? 'selected' : ''}" data-a="theftItem" data-id="${it.id}">
         <span class="ring">${itemIcon(it)}</span><span>${itemName(it)}</span></button>`).join('')}</div>`
@@ -993,7 +1007,7 @@ function renderMagic() {
   const amounts = [];
   for (let a = 5; a <= avail; a += 5) amounts.push(a);
   if (!amounts.includes(ui.curse.amount)) ui.curse.amount = amounts[0] || 5;
-  const targets = others().filter((o) => !o.cursedThisRound);
+  const targets = prepTargets().filter((o) => !o.cursedThisRound);
   if (ui.curse.target && !targets.some((o) => o.id === ui.curse.target)) ui.curse.target = null;
   // Si solo hay un rival posible, ya queda elegido.
   if (!ui.curse.target && targets.length === 1) ui.curse.target = targets[0].id;
@@ -1001,8 +1015,8 @@ function renderMagic() {
   return `
     <h3>Maleficio</h3>
     ${amounts.length && targets.length ? `
-      <p class="muted small center">Elige a quién. Cada rival solo puede recibir un maleficio por ronda.</p>
-      <div class="row curse-targets">${others().map((o) => o.cursedThisRound
+      ${finalFoeId() ? '' : '<p class="muted small center">Elige a quién. Cada rival solo puede recibir un maleficio por ronda.</p>'}
+      <div class="row curse-targets">${prepTargets().map((o) => o.cursedThisRound
         ? `<button class="btn small" disabled title="Ya tiene un maleficio esta ronda">${esc(o.name)} <small>(ya tiene uno)</small></button>`
         : `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
       <div class="row">${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} Maná</button>`).join('')}</div>
@@ -1024,7 +1038,8 @@ function myOpenTrade() { return (S.trades || []).find((t) => t.from === S.me && 
 function unansweredTrades() {
   const p = me();
   if (!p || p.tradedThisRound) return [];
-  return (S.trades || []).filter((t) => t.status === 'abierta' && t.from !== S.me && !t.counters.some((c) => c.by === S.me));
+  const foe = finalFoeId();
+  return (S.trades || []).filter((t) => t.status === 'abierta' && t.from !== S.me && t.from !== foe && !t.counters.some((c) => c.by === S.me));
 }
 function pendingCounters() {
   const t = myOpenTrade();
@@ -1059,7 +1074,7 @@ function renderTrade() {
       <div class="trade-block">
         <h4>¿Qué ofreces?</h4>
         ${items.length ? `<div class="trade-grid">${items.map((it) => tradeTile(it, { selected: ui.trade.give.has(it.id), attrs: `data-a="tgive" data-id="${it.id}"` })).join('')}</div>` : '<p class="muted center">No tienes objetos para ofrecer.</p>'}
-        <p class="muted small center">Los demás verán tu oferta y te dirán qué te dan a cambio. Solo puedes hacer una oferta por ronda.</p>
+        <p class="muted small center">${finalFoeId() ? `Antes de la final no puedes comerciar con ${esc(byId(finalFoeId()).name)}.` : 'Los demás verán tu oferta y te dirán qué te dan a cambio. Solo puedes hacer una oferta por ronda.'}</p>
       </div>
       <div class="row"><button class="btn primary" data-a="offer" ${ui.trade.give.size ? '' : 'disabled'}>Ofrecer</button></div>`;
   const others = unansweredTrades();
@@ -1184,9 +1199,9 @@ function renderCombat(p, controllable) {
         ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
       <div class="rolls-count" title="Tiradas">${cb.rolls}/3${cb.cursesLeft ? ` · Maleficio: ${cb.cursesLeft}` : ''}</div>
-      ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
+      ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
-      ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">Terminar ataque (${duelDamage(cb, faces)} de daño)</button></div>` : ''}
+      ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">${duelDamage(cb, faces) ? `Golpear (−${duelDamage(cb, faces)} Vida)` : 'Terminar ataque'}</button></div>` : ''}
       ${cb.rolls >= 3 && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
   }
 
@@ -1200,15 +1215,23 @@ function renderCombat(p, controllable) {
   }
   return `
   <div class="combat">
-    ${monster ? foesHtml(p, cb, all, controllable) : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
-    ${controllable ? '' : `<div class="rolls-count">${cb.rolls}/3</div>`}
-    ${monster ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
+    ${monster ? foesHtml(p, cb, all, controllable) : cb.kind === 'duelo' ? duelNeedHtml(cb) : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
+    ${controllable || cb.kind === 'duelo' ? '' : `<div class="rolls-count">${cb.rolls}/3</div>`}
+    ${monster || cb.kind === 'duelo' ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
     ${cb.cursesLeft && cb.rolls === 0 ? `<div class="curse-note">Te afecta un maleficio: en tu primera tirada se repetirá${cb.cursesLeft > 1 ? `n ${cb.cursesLeft} esferas acertadas` : ' 1 esfera acertada'}.</div>` : ''}
     <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
         ${result}
     ${controls}
-    <div class="events">${cb.events.slice().reverse().map((e) => `<div>${esc(e)}</div>`).join('')}</div>
+    ${cb.kind === 'duelo' ? '' : `<div class="events">${cb.events.slice().reverse().map((e) => `<div>${esc(e)}</div>`).join('')}</div>`}
   </div>`;
+}
+
+// Duelo: qué hace falta, en una línea (esferas del color del rival → daño).
+function duelNeedHtml(cb) {
+  const hits = cb.combo.length;
+  const steps = [];
+  for (let n = hits - 2; n <= hits; n++) if (n > 0) steps.push(`<b>${n}</b> → −${3 - (hits - n)}`);
+  return `<div class="duel-need">${die(cb.combo[0], { sm: true })}<span>${steps.join(' · ')}</span></div>`;
 }
 
 
@@ -1280,29 +1303,20 @@ function renderTournament() {
     <div class="card duel-card">
       <h2 class="duel-title">${esc(m.label)}</h2>
       <div class="vs duel-pair">${fighter(a)}<span class="faceoff-vs">vs</span>${fighter(b)}</div>
-      ${m.last ? `<div class="last-attack ${m.last.dmg ? 'hit' : 'miss'}">
-        <span>${esc(byId(m.last.by).name)}: </span>
-        <span class="dice">${m.last.faces.map((f) => die(f.face, { sm: true, shape: f.shape })).join('')}</span>
-        <b>${m.last.dmg ? `¡Golpe! ${esc(byId(m.last.to).name)} −${m.last.dmg} Vida` : 'Ataque fallido'}</b>
-      </div>` : ''}
-      ${duelCurseHtml(t, m)}
       ${att.combat ? renderCombat(att, att.id === S.me) : ''}
+      ${duelCurseHtml(t, m)}
     </div>`;
 }
 
-// En la final: maleficio al rival mientras ataca (uno por intercambio).
+// Mientras ataca tu rival: un maleficio por cada ataque suyo (semifinales y final).
 function duelCurseHtml(t, m) {
-  if (t.stage !== 'final' || (m.a !== S.me && m.b !== S.me)) return '';
+  if (m.a !== S.me && m.b !== S.me) return '';
   const p = me();
   const rival = byId(m.a === S.me ? m.b : m.a);
-  const used = p.duelCurseAt === m.turns || p.duelCurseAt === m.turns - 1;
-  const mana = p.hero.manaDisponible;
-  if (m.attacker !== rival.id) return used ? '<p class="muted small center">Maleficio lanzado en este intercambio.</p>' : '';
-  if (used) return '<p class="muted small center">Ya has lanzado un maleficio en este intercambio.</p>';
-  if (mana < 5) return '';
-  const amounts = [];
-  for (let a = 5; a <= mana; a += 5) amounts.push(a);
-  return `<div class="duel-curse"><span>Maleficio a ${esc(rival.name)}:</span>${amounts.map((a) => `<button class="btn small" data-a="duelCurse" data-n="${a}">${a} Maná</button>`).join('')}</div>`;
+  if (m.attacker !== rival.id) return '';
+  if (p.duelCurseAt === m.turns) return '<p class="muted small center">Maleficio lanzado.</p>';
+  if (p.hero.manaDisponible < 5) return '';
+  return `<div class="duel-curse"><button class="btn primary" data-a="duelCurse" data-n="5"><img src="img/ui/calavera.webp" alt="">Maleficio a ${esc(rival.name)} · 5 Maná</button></div>`;
 }
 
 function renderEnd() {
@@ -1422,7 +1436,7 @@ document.addEventListener('click', (e) => {
     case 'buy': act('buy', { itemId: d.id }); ui.prepWin = null; render(); break;
     case 'loot': act('takeLoot', { itemId: d.id }); break;
     case 'duelCurse': act('duelCurse', { amount: Number(d.n) }); break;
-    case 'nextDuel': ui.duelQueue.shift(); renderModal(); break;
+    case 'nextDuel': clearTimeout(ui.duelTimer); ui.duelTimer = null; ui.duelQueue.shift(); renderModal(); break;
     case 'closeCoins': ui.coinsMsg = null; renderModal(); break;
     case 'closePrep': ui.prepWin = null; ui.theft = null; render(); break;
     case 'closeSteal': ui.stealResult = null; renderModal(); break;

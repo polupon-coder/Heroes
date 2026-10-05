@@ -278,7 +278,7 @@ test('robo con tirada: 1-2 roba, 3-5 pierde el Maná, uno por ronda', () => {
   assert.strictEqual(nada.g.availableMana(nada.a), nada.a.hero.base.mana);
 });
 
-test('final: maleficio al rival mientras ataca, uno por intercambio', () => {
+test('torneo: maleficio al rival en cada uno de sus ataques', () => {
   const g = new Game('T', { rng: () => 0.5 });
   const a = g.addPlayer('A');
   const b = g.addPlayer('B');
@@ -296,7 +296,27 @@ test('final: maleficio al rival mientras ataca, uno por intercambio', () => {
   assert.throws(() => g.act(att.id, 'duelCurse', { amount: 5 }), /ataque tu rival/);
   g.act(def.id, 'duelCurse', { amount: 5 });
   assert.strictEqual(att.combat.cursesLeft, 1);
-  assert.throws(() => g.act(def.id, 'duelCurse', { amount: 5 }), /intercambio/);
+  assert.throws(() => g.act(def.id, 'duelCurse', { amount: 5 }), /este ataque/);
+});
+
+test('antes de la final: maleficio y robo solo al rival; sin comercio con él', () => {
+  const g = new Game('T', { rng: () => 0.5 });
+  const [a, b, c] = ['A', 'B', 'C'].map((n) => g.addPlayer(n));
+  for (const p of [a, b, c]) g.act(p.id, 'setHero', { raza: 'humano', clase: 'mago' });
+  for (const pl of g.players) pl.ready = true;
+  g.act(a.id, 'start');
+  g.round = 13;
+  g.phase = 'prep';
+  g.pendingFinal = [a.id, b.id];
+  c.hero.inv.yelmo = { id: 'y', tipo: 'equipo', slot: 'yelmo', bonus: 2, nombre: 'Yelmo +2' };
+  a.hero.inv.botas = { id: 'z', tipo: 'equipo', slot: 'botas', bonus: 2, nombre: 'Botas +2' };
+  b.hero.inv.pociones.push({ id: 'q', tipo: 'pocion', efecto: 'curacion', valor: 2, nombre: 'Poción' });
+  assert.throws(() => g.act(a.id, 'curse', { targetId: c.id, amount: 5 }), /solo puedes lanzar un maleficio a B/);
+  assert.throws(() => g.act(a.id, 'stealRoll', { targetId: c.id, targetItemId: 'y' }), /solo puedes robar a B/);
+  g.act(a.id, 'curse', { targetId: b.id, amount: 5 });
+  g.act(a.id, 'offerTrade', { give: ['z'] });
+  const t = g.trades[0];
+  assert.throws(() => g.act(b.id, 'counterTrade', { tradeId: t.id, give: ['q'] }), /rival de la final/);
 });
 
 test('armas afines: +1 de Fuerza solo para su clase', () => {

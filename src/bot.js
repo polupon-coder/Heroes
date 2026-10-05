@@ -63,7 +63,7 @@ function botStep(game, p) {
   if (game.phase === 'prep') {
     // Comercio: responde a ofertas ajenas dando su objeto menos valioso si sale ganando.
     p.botSeen = p.botSeen || new Set();
-    const offer = !p.tradedThisRound && game.trades.find((t) => t.status === 'abierta' && t.from !== p.id && !p.botSeen.has(t.id));
+    const offer = !p.tradedThisRound && game.trades.find((t) => t.status === 'abierta' && t.from !== p.id && t.from !== game.finalFoe(p) && !p.botSeen.has(t.id));
     if (offer) {
       p.botSeen.add(offer.id);
       const owner = game.player(offer.from);
@@ -140,7 +140,7 @@ function botStep(game, p) {
       return true;
     }
     const m0 = game.matchOf(p);
-    if (m0 && t.stage === 'final' && m0.attacker !== p.id && p.duelCurseAt !== m0.turns && p.duelCurseAt !== m0.turns - 1
+    if (m0 && m0.attacker !== p.id && p.duelCurseAt !== m0.turns
       && game.availableMana(p) >= C.MANA_PER_CURSE + 5 && game.rng() < 0.5) {
       try { game.act(p.id, 'duelCurse', { amount: C.MANA_PER_CURSE }); return true; } catch (e) { p.duelCurseAt = m0.turns; }
     }

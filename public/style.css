@@ -1280,3 +1280,8 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .tile.empty .ring { position: relative; }
   .tile.empty .ghost { position: absolute; inset: 0; margin: auto; width: 78%; height: 78%; }
 }
+/* Casillas vacías con la ilustración apagada también en ordenador */
+.tile.empty .ring { position: relative; }
+.tile.empty .ghost { display: block; position: absolute; inset: 0; margin: auto; width: 78%; height: 78%; object-fit: contain; opacity: .32; filter: grayscale(1) sepia(.3); }
+.tile.empty .ring i { display: none; }
+.prep-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }

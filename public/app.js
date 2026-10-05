@@ -373,7 +373,7 @@ function renderLobbyRivals(p) {
     const x = S.players[i];
     const img = `<img class="seat-art" src="img/heroes/${deco[i]}.webp" alt="">`;
     if (x) {
-      const role = x.id === S.me ? 'Tú' : x.id === S.host ? 'Anfitrión' : x.bot ? 'Compañero automático' : x.connected ? 'Amigo' : 'Desconectado';
+      const role = x.id === S.me ? 'Tú' : x.id === S.host ? 'Anfitrión' : x.bot ? 'Rival' : x.connected ? 'Amigo' : 'Desconectado';
       seats.push(`
         <div class="seat-card taken">
           ${img}

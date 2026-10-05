@@ -884,6 +884,8 @@ function useConsumable(game, p, data) {
     if (!inCombat && game.phase !== 'prep' && game.phase !== 'combat') fail('Ahora no puedes curarte');
     if (game.phase === 'torneo' && !myDuel) fail('En el torneo solo puedes curarte en tu turno');
     if (p.hero.vida >= p.hero.base.vida) fail('Ya tienes la Vida al máximo');
+    // Antes del Torneo y antes de la final todos recuperan la Vida: curarse ahí sería tirar la poción.
+    if (game.phase === 'prep' && (game.round > C.ROUNDS || game.pendingFinal)) fail('Vas a recuperar toda la Vida antes de luchar: guarda la curación');
     const healed = game.heal(p, it.valor);
     I.removeItem(p.hero.inv, it.id);
     game.say(`💚 ${p.name} usa ${it.nombre} y recupera ${healed} de Vida.`);

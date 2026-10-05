@@ -84,7 +84,7 @@ function botStep(game, p) {
       }
     }
     const heal0 = [...h.inv.pociones, ...h.inv.pergaminos].filter((it) => it.efecto === 'curacion').sort((a, b) => a.valor - b.valor)[0];
-    if (heal0 && (h.base.vida - h.vida >= heal0.valor || h.vida <= 4)) {
+    if (heal0 && game.round <= C.ROUNDS && !game.pendingFinal && (h.base.vida - h.vida >= heal0.valor || h.vida <= 4)) {
       const heal = heal0;
       if (heal) {
         game.act(p.id, 'useItem', { itemId: heal.id });

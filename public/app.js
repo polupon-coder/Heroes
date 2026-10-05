@@ -564,7 +564,8 @@ function useBtn(it) {
   const myCombat = isMyTurnCombat();
   let ok = false;
   if (it.efecto === 'mana') ok = myCombat;
-  if (it.efecto === 'curacion') ok = h.vida < h.base.vida && (S.phase === 'prep' || S.phase === 'combat' || (S.phase === 'torneo' && myCombat));
+  const fullSoon = S.phase === 'prep' && (S.round > S.rounds || (S.tournament && S.tournament.stage === 'prefinal'));
+  if (it.efecto === 'curacion') ok = h.vida < h.base.vida && !fullSoon && (S.phase === 'prep' || S.phase === 'combat' || (S.phase === 'torneo' && myCombat));
   if (it.efecto === 'robo') ok = S.phase === 'prep';
   if (!ok) return '';
   return `<button class="btn primary" data-a="use" data-id="${it.id}" data-efecto="${it.efecto}">Usar</button>`;
@@ -836,6 +837,8 @@ function playEventSounds() {
   else if (mine(/^🩸/)) { Sounds.play('dados'); Sounds.play('derrota', 600); }
   const lost = texts.find((t) => /^🩸/.test(t) && t.startsWith(`🩸 ${name} no consigue`));
   if (lost) { ui.defeat = { text: lost, monster: meP.monster || ui.lastMonster, fell: mine(/^💀/) }; holdOutcome(); }
+  const healTxt = texts.find((t) => t.startsWith(`💚 ${name} usa `));
+  if (healTxt) { const n = (healTxt.match(/recupera (\d+)/) || [])[1]; toast(`💚 Recuperas ${n} de Vida`); Sounds.play('fe'); }
   const coinsTxt = texts.find((t) => t.startsWith(`💰 ${name} gana `));
   if (coinsTxt) ui.coinsMsg = coinsTxt.replace(/^💰 /, '').replace(`${name} gana`, 'Has ganado');
   const stole = texts.find((t) => /^(🦝|🪤|🎲) /.test(t) && t.includes(`${name} saca`));

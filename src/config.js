@@ -102,6 +102,13 @@ function levelsForRound(round) {
   return [round, round + 1, round + 2];
 }
 
+// Máximo de esferas que puede pedir un monstruo según la ronda.
+function maxComboForRound(round) {
+  if (round <= 3) return 3;
+  if (round <= 7) return 4;
+  return 5;
+}
+
 // Reglas 24 y 25. Monstruos ordenados de menos a más poderosos según sus
 // ilustraciones. Las combinaciones van ligadas al nivel (equilibradas para
 // héroes con Fuerza inicial 10).
@@ -241,6 +248,7 @@ module.exports = {
   ROUNDS,
   MAX_ROLLS,
   levelsForRound,
+  maxComboForRound,
   MONSTERS,
   VARIANTS,
   variantCombo,

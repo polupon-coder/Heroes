@@ -267,8 +267,15 @@ class Game {
     const offers = this.rollOffers();
     // Nunca se ofrecen monstruos a los que el héroe no pueda enfrentarse:
     // primero se prueba un tamaño menor y, si no basta, un nivel más bajo.
+    // Lo que piden depende de la ronda (no de tus esferas): quien sube rápido
+    // de Fuerza va sobrado al principio.
     const dice = p ? this.diceCount(p) : 5;
-    const fixed = offers.map((m) => (m.combo.length <= dice ? m : this.affordableOffer(dice, m.level, m.variante)));
+    const cap = Math.min(dice, C.maxComboForRound(this.round));
+    const fixed = offers.map((m) => (m.combo.length <= cap ? m : this.affordableOffer(cap, m.level, m.variante)));
+    // Siempre hay una opción con margen: pide al menos una esfera menos de las que tienes.
+    if (dice >= 4 && !fixed.some((m) => m.combo.length < dice)) {
+      fixed[0] = this.affordableOffer(dice - 1, fixed[0].level, fixed[0].variante);
+    }
     // Si los dos han quedado iguales, el segundo baja un nivel para dar a elegir.
     if (fixed[0].level === fixed[1].level && fixed[0].variante === fixed[1].variante && fixed[1].level > 1) {
       fixed[1] = this.affordableOffer(dice, fixed[1].level - 1, 3);

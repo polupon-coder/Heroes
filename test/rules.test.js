@@ -331,3 +331,16 @@ test('armas afines: +1 de Fuerza solo para su clase', () => {
   // Las armas se llaman sin adornos.
   if (arco.forma && C.ARMA_AFIN[arco.forma]) assert.match(arco.nombre, /^(Espada|Maza|Arco|Hacha|Báculo|Cayado|Escudo) \+\d+$/);
 });
+
+test('monstruos: tope de esferas por ronda y siempre una opción con margen', () => {
+  const g = new Game('T', { rng: Math.random });
+  for (const [round, dice, max] of [[2, 5, 3], [5, 5, 4], [9, 5, 5], [9, 4, 4]]) {
+    g.round = round;
+    g.diceCount = () => dice;
+    for (let i = 0; i < 200; i++) {
+      const offers = g.makeOffers({ hero: { inv: null } });
+      assert.ok(offers.every((m) => m.combo.length <= max));
+      assert.ok(offers.some((m) => m.combo.length < dice));
+    }
+  }
+});

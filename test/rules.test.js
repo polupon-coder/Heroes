@@ -143,10 +143,12 @@ function fightOut(g, p) {
 }
 
 test('estadísticas iniciales: Maná mínimo 5 y Fuerza mínima 10', () => {
-  // Humano Guerrero es combinación natural: +1 Fuerza.
-  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 14, mana: 8, fuerza: 14 });
+  // Humano Guerrero es combinación natural: +1 Fuerza y +1 Maná.
+  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 14, mana: 10, fuerza: 14 });
   // Durgan Mago es una combinación rara: −1 Vida.
-  assert.strictEqual(baseStats('durgan', 'mago').vida, 11);
+  assert.strictEqual(baseStats('durgan', 'mago').vida, 13);
+  // Nadie empieza con más de 2 comodines.
+  for (const r of Object.keys(C.RACES)) for (const c of Object.keys(C.CLASSES)) assert.ok(C.fixedDiceForMana(baseStats(r, c).mana) <= 2);
   assert.strictEqual(C.afinidad('durgan', 'clerigo'), 'rara');
   for (const r of Object.keys(C.RACES)) for (const c of Object.keys(C.CLASSES)) {
     const b = baseStats(r, c);

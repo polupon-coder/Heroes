@@ -724,7 +724,7 @@ function renderOutcome() {
 const RULES = {
   heroe: ['El héroe', `
     <section><h4>Raza y clase</h4>
-      <p>Tu héroe es una <b>Raza</b> y una <b>Clase</b>. Algunas parejas son <b class="ok">naturales</b> (+1 Fuerza)
+      <p>Tu héroe es una <b>Raza</b> y una <b>Clase</b>. Algunas parejas son <b class="ok">naturales</b> (+1 Fuerza y +1 Maná)
       y otras <b class="bad">raras</b> (−1 Vida): se indica al elegir.</p></section>
     <section><h4>Vida</h4><p>Lo que aguantas. No se recupera sola: solo con pociones y pergaminos de curación.</p></section>
     <section><h4>Fuerza</h4><p>Cuántas esferas lanzas: <b>1–5</b> → 1 · <b>6–10</b> → 2 · <b>11–15</b> → 3 · <b>16–20</b> → 4 · <b>21+</b> → 5.</p></section>

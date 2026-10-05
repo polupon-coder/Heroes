@@ -1276,3 +1276,7 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .prep-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 340px; }
   .prep-buttons .btn { min-width: 0; width: 100%; }
 }
+@media (max-width: 760px) {
+  .tile.empty .ring { position: relative; }
+  .tile.empty .ghost { position: absolute; inset: 0; margin: auto; width: 78%; height: 78%; }
+}

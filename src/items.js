@@ -167,6 +167,9 @@ function tryPlace(inv, item) {
     return [inv[item.slot]];
   }
   const twoHanded = inv.manos.find((it) => it.slot === 'dosManos');
+  // Solo un escudo: uno nuevo compite con el que ya llevas.
+  const shield = inv.manos.find((it) => it.slot === 'escudo');
+  if (item.slot === 'escudo' && shield) return [shield];
   if (item.slot === 'dosManos') {
     if (inv.manos.length === 0) {
       inv.manos.push(item);

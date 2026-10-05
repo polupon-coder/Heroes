@@ -353,3 +353,17 @@ test('monstruos: tope de esferas por ronda y siempre una opción con margen', ()
     }
   }
 });
+
+test('solo un escudo: el segundo compite con el primero', () => {
+  const inv = I.emptyInventory();
+  const e1 = { id: 'e1', tipo: 'equipo', slot: 'escudo', bonus: 1, nombre: 'Escudo +1' };
+  const e2 = { id: 'e2', tipo: 'equipo', slot: 'escudo', bonus: 2, nombre: 'Escudo +2' };
+  assert.strictEqual(I.tryPlace(inv, e1), null);
+  assert.deepStrictEqual(I.tryPlace(inv, e2), [e1]);
+  // Con un arma en la otra mano, el escudo nuevo sigue compitiendo solo con el escudo.
+  const sw = { id: 's', tipo: 'equipo', slot: 'arma', bonus: 2, nombre: 'Espada +2' };
+  assert.strictEqual(I.tryPlace(inv, sw), null);
+  assert.deepStrictEqual(I.tryPlace(inv, e2), [e1]);
+  I.resolveConflict(inv, e2, 'e1');
+  assert.deepStrictEqual(inv.manos.map((x) => x.id).sort(), ['e2', 's']);
+});

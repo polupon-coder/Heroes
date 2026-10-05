@@ -16,6 +16,8 @@ function slotGain(h, it, clase) {
   if (it.slot === 'dosManos') return b(it) - sum;
   if (hands.length < 2 && !(hands[0] && hands[0].slot === 'dosManos')) return b(it);
   if (hands[0] && hands[0].slot === 'dosManos') return b(it) - b(hands[0]);
+  const shield = hands.find((x) => x.slot === 'escudo');
+  if (it.slot === 'escudo' && shield) return b(it) - b(shield);
   return b(it) - Math.min(...hands.map(b));
 }
 function gainOf(game, p, it) {

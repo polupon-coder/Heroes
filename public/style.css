@@ -1446,3 +1446,37 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .pick-stats { min-width: 150px; }
 .pick-stats { width: 170px; }
 .controls [data-a=roll] { width: 170px; }
+
+/* Móvil: en la elección de héroe, los datos separados de los botones; en la
+   partida, la ilustración del héroe más grande y los datos más juntos. */
+@media (max-width: 760px) {
+  .lobby-heroes.v2 .pick-choices { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); gap: 10px; }
+  .pick-right { margin-top: 10px; }
+  .col-me .me-hero { grid-template-columns: 132px 1fr; column-gap: 8px; row-gap: 0; }
+  .col-me .me-hero .portrait.xl { height: 176px !important; width: 132px !important; }
+  .col-me .me-hero > :not(.portrait) { margin-top: 0; margin-bottom: 0; }
+  .col-me .me-name { font-size: 1.05rem; line-height: 1.2; }
+  .col-me .spheres-row { margin: 1px 0; }
+  .col-me .life { margin: 1px 0; }
+  .col-me .me-sub { font-size: .85rem; line-height: 1.2; }
+}
+@media (max-width: 760px) {
+  .col-me .me-hero { grid-template-rows: 1fr auto auto auto auto 1fr; }
+  .col-me .me-hero .portrait.xl { grid-row: 1 / -1; }
+  .col-me .me-hero .me-name { grid-row: 2; }
+  .col-me .me-hero .spheres-row { grid-row: 3; }
+  .col-me .me-hero .life { grid-row: 4; }
+  .col-me .me-hero .me-sub { grid-row: 5; }
+}
+
+/* Pergamino según la proporción de cada ventana (lo elige app.js). */
+[data-perg="h"] { border-image-source: url(img/ui/pergamino-h-suave.webp) !important; }
+[data-perg="133"] { border-image-source: url(img/ui/pergamino-133.webp) !important; }
+[data-perg="100"] { border-image-source: url(img/ui/pergamino-100.webp) !important; }
+[data-perg="075"] { border-image-source: url(img/ui/pergamino-075.webp) !important; }
+[data-perg="v"] { border-image-source: url(img/ui/pergamino-v-suave.webp) !important; }
+@media (max-width: 760px) {
+  .col-me .me-hero .me-name { margin-bottom: 4px; }
+  .col-me .me-hero .spheres-row { margin: 0 0 8px; }
+  .col-me .me-hero .life { margin: 0 0 6px; }
+}

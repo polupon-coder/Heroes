@@ -355,7 +355,25 @@ function render() {
   if (setHtml(log, S.log.map((l) => `<div>${esc(l.text)}</div>`).join(''))) log.scrollTop = log.scrollHeight;
   detectNewItems();
   renderModal();
+  fitParchments();
 }
+
+// Cada ventana usa el pergamino de proporción más parecida a la suya, para que
+// la textura no se vea estirada (horizontal, 4:3, cuadrado, 3:4 o vertical).
+const PERG = [['h', 1.78], ['133', 1.33], ['100', 1], ['075', 0.75], ['v', 0.56]];
+const PERG_SEL = '.card, .journal, .home-sheet, .col-me, .col-rivals, .others-pick';
+function fitParchments() {
+  for (const el of document.querySelectorAll(PERG_SEL)) {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) continue;
+    const ar = r.width / r.height;
+    let best = PERG[0];
+    for (const p of PERG) if (Math.abs(Math.log(p[1] / ar)) < Math.abs(Math.log(best[1] / ar))) best = p;
+    if (el.dataset.perg !== best[0]) el.dataset.perg = best[0];
+  }
+}
+window.addEventListener('resize', () => fitParchments());
+new MutationObserver(() => requestAnimationFrame(fitParchments)).observe(document.body, { childList: true, subtree: true });
 
 function statusText() {
   switch (S.phase) {

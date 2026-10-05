@@ -1370,3 +1370,15 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .rival-info .life.thin { height: 9px; }
 .duel-curse { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 6px 12px; border: 1px solid rgba(107, 63, 160, .45); border-radius: 14px; color: #6b3fa0; background: rgba(107, 63, 160, .06); }
 .duel-curse span { font-weight: 600; }
+/* Maleficio: esfera lila con la calavera en el centro (panel, combate y aviso) */
+.sphere.cursed { position: relative; background-image: radial-gradient(circle at 35% 30%, #c9a6ec, #7a4bb0 60%, #4b2675) !important; box-shadow: 0 0 6px rgba(122, 75, 176, .8); }
+.sphere.cursed::after { content: "☠"; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: .7em; line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+.sphere.big.cursed::after { font-size: 1.1em; }
+.spheres-row .sphere.cursed { font-size: inherit; }
+.die.cursed { outline: none !important; border-radius: 50%; }
+.die.cursed::before { content: "☠" !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%); width: 46% !important; height: 46% !important; border-radius: 50%;
+  display: grid; place-items: center; line-height: 1 !important; font-size: 1rem !important; background: rgba(107, 63, 160, .85) !important; color: #fff; z-index: 3; }
+.die.cursed img, .die.cursed { filter: drop-shadow(0 0 4px #9b6fd0) drop-shadow(0 0 9px #7a4bb0) !important; }
+.curse-sign { display: flex; justify-content: center; margin: 4px 0; }
+.curse-sign .sphere.big { width: 72px; height: 72px; font-size: 2.2rem; }
+.curse-sign .sphere.big { flex: none; min-width: 72px; min-height: 72px; max-height: 72px; aspect-ratio: 1; }

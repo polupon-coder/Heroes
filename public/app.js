@@ -488,9 +488,13 @@ function nextDiceHint(f) {
 
 // Las esferas disponibles se muestran como esferas, no como un número de dados.
 // Las primeras `whites` esferas son multicolor: el Maná las fija como comodín.
-function spheresRow(n, color, big = false, whites = 0) {
+// Las últimas `cursed` esferas salen en lila con la calavera: un maleficio pendiente.
+function spheresRow(n, color, big = false, whites = 0, cursed = 0) {
   const w = Math.min(n, whites);
-  return Array.from({ length: n }, (_, i) => `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'multicolor' : 'gris'}"></span>`).join('');
+  return Array.from({ length: n }, (_, i) => {
+    const c = cursed > 0 && i >= n - cursed;
+    return `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'multicolor' : 'gris'} ${c ? 'cursed' : ''}" ${c ? 'title="Maleficio: repetirás una esfera acertada en tu próximo combate"' : ''}></span>`;
+  }).join('');
 }
 
 function itemTile(it, label) {
@@ -516,7 +520,7 @@ function renderSheet() {
   <div class="me-hero">
     ${heroPortrait(p, 'xl')}
     <div class="me-name">${esc(p.name)}${S.phase === 'prep' && p.ready ? ' <span class="check">✔</span>' : ''}</div>
-    <div class="spheres-row mine" title="${nextDiceHint(h.fuerza)}">${spheresRow(h.dados, p.color, true, h.fijables)}</div>
+    <div class="spheres-row mine" title="${nextDiceHint(h.fuerza)}">${spheresRow(h.dados, p.color, true, h.fijables, h.curses || 0)}</div>
     <div class="life"><i style="width:${pct}%"></i><span>${h.vida} / ${h.base.vida}</span></div>
     <div class="me-sub">${raceName(p)} · ${className(p)}</div>
   </div>
@@ -525,7 +529,6 @@ function renderSheet() {
     <div title="Cada 5 de Maná es una esfera multicolor"><b>${h.manaDisponible}</b><span>Maná</span></div>
     <div title="Monedas para la tienda"><b>${h.monedas ?? 0}</b><span>Monedas</span></div>
   </div>
-  ${h.curses ? `<p class="warn center">Maleficio: repetirás ${h.curses} esfera(s) acertada(s) en tu próximo combate.</p>` : ''}
   <div class="tiles">
     ${itemTile(inv.yelmo, 'Yelmo')}${itemTile(inv.armadura, 'Armadura')}${itemTile(inv.tunica, 'Túnica')}
     ${itemTile(inv.botas, 'Botas')}${handTiles.join('')}
@@ -611,7 +614,7 @@ function renderArena() {
       </div>
       <div class="rival-info">
         <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
-        <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables)}</div>
+        <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables, h.curses || 0)}</div>
         <div class="life thin"><i style="width:${pct}%"></i></div>
         <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida}/${h.base.vida} · ${h.monedas ?? 0} monedas</div>
       </div>
@@ -636,6 +639,7 @@ function renderOutcome() {
     const n = (ui.curseAlert.match(/repetirá (\d+)/) || [])[1] || '1';
     return `
       <div class="card outcome curse-alert">
+        <div class="curse-sign"><span class="sphere big gris cursed"></span></div>
         <div class="outcome-title">Maleficio</div>
         <p class="center"><b>${esc(who)}</b> te ha lanzado un maleficio.</p>
         <p class="center">En tu próximo combate tendrás que repetir ${n} esfera(s) acertada(s).</p>

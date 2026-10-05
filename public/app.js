@@ -1144,8 +1144,7 @@ function renderCombat(p, controllable) {
     ${monster ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
     ${cb.cursesLeft && cb.rolls === 0 ? `<div class="curse-note">Te afecta un maleficio: en tu primera tirada se repetirá${cb.cursesLeft > 1 ? `n ${cb.cursesLeft} esferas acertadas` : ' 1 esfera acertada'}.</div>` : ''}
     <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
-    ${(cb.cursed || []).length ? `<div class="curse-note">Maleficio: ${cb.cursed.map((c) => `${die(c.face, { sm: true, shape: c.shape })}`).join('')} acertada${cb.cursed.length > 1 ? 's' : ''} se ha${cb.cursed.length > 1 ? 'n' : ''} vuelto a lanzar (marcada${cb.cursed.length > 1 ? 's' : ''} en morado).</div>` : ''}
-    ${result}
+        ${result}
     ${controls}
     <div class="events">${cb.events.slice().reverse().map((e) => `<div>${esc(e)}</div>`).join('')}</div>
   </div>`;

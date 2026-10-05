@@ -1337,3 +1337,12 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .btn.choice, .btn.choice:hover:not(:disabled), .btn.choice.selected { border-radius: 10px; padding: 5px 2px; }
   .choice .mods { font-size: .56rem !important; }
 }
+/* Móvil: 5 esferas siempre en una línea */
+@media (max-width: 760px) {
+  .combat .dice-zone .dice { flex-wrap: nowrap; gap: 2.5vw; justify-content: center; }
+  .combat .dice-zone .dice .die { width: min(50px, 14vw) !important; height: min(50px, 14vw) !important; flex: none; }
+  .foe-card .dice, .foe-card .dice.five { flex-wrap: nowrap !important; gap: 2px !important; justify-content: center; }
+  .foe-card .dice.five .die { width: min(26px, 6.6vw) !important; height: min(26px, 6.6vw) !important; }
+  .die.cursed::before { left: -5px; top: -5px; width: 16px; height: 16px; line-height: 16px; font-size: 10px; }
+  .die.reroll::after { right: -4px; top: -4px; width: 16px; height: 16px; line-height: 16px; font-size: 11px; }
+}

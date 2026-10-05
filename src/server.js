@@ -37,6 +37,7 @@ app.get('/api/datos', (req, res) => {
     afinidadEfecto: C.AFINIDAD_EFECTO,
     base: C.BASE_STATS,
     minFuerza: C.MIN_FUERZA_INICIAL,
+    maxMana: C.MAX_MANA_INICIAL,
     monstruos: C.MONSTERS,
     colores: C.COLORS,
     retratos: listImages('heroes'),

@@ -1313,3 +1313,4 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .modal .card.coins-pop .coins-big { width: auto; height: 18dvh; }
 }
 @media (max-width: 760px) { .reveal { bottom: auto; height: 50dvh; } }
+@media (max-width: 760px) { .curse-targets { flex-wrap: wrap; gap: 8px; } }

@@ -62,6 +62,8 @@ const CLASSES = {
 };
 
 const MIN_MANA_INICIAL = 5;
+// Nadie empieza con más de 2 comodines (14 de Maná como máximo).
+const MAX_MANA_INICIAL = 14;
 
 // Regla 10: Fuerza -> dados (mínimo 1 dado, máximo 5).
 function diceForFuerza(fuerza) {
@@ -214,6 +216,7 @@ module.exports = {
   BASE_STATS,
   MIN_FUERZA_INICIAL,
   MIN_MANA_INICIAL,
+  MAX_MANA_INICIAL,
   RACES,
   CLASSES,
   AFINIDAD,

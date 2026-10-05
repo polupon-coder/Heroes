@@ -21,7 +21,7 @@ function baseStats(raza, clase) {
   if (e.vidaMax) vida = Math.max(e.vidaMin, Math.min(e.vidaMax, vida));
   return {
     vida,
-    mana: Math.max(C.MIN_MANA_INICIAL, C.BASE_STATS.mana + r.mana + c.mana + e.mana),
+    mana: Math.min(C.MAX_MANA_INICIAL, Math.max(C.MIN_MANA_INICIAL, C.BASE_STATS.mana + r.mana + c.mana + e.mana)),
     fuerza: Math.max(C.MIN_FUERZA_INICIAL, C.BASE_STATS.fuerza + r.fuerza + c.fuerza + e.fuerza),
   };
 }

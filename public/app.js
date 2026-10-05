@@ -339,7 +339,7 @@ function heroPreview(raza, clase) {
   if (e.vidaMax) vida = Math.max(e.vidaMin, Math.min(e.vidaMax, vida));
   return {
     vida,
-    mana: Math.max(5, DATA.base.mana + r.mana + c.mana + e.mana),
+    mana: Math.min(DATA.maxMana || 14, Math.max(5, DATA.base.mana + r.mana + c.mana + e.mana)),
     fuerza: Math.max(DATA.minFuerza || 0, DATA.base.fuerza + r.fuerza + c.fuerza + e.fuerza),
     af,
   };
@@ -939,7 +939,10 @@ function renderMagic() {
   return `
     <h3>Maleficio</h3>
     ${amounts.length && targets.length ? `
-      <div class="row">${targets.map((o) => `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
+      <p class="muted small center">Elige a quién. Cada rival solo puede recibir un maleficio por ronda.</p>
+      <div class="row curse-targets">${others().map((o) => o.cursedThisRound
+        ? `<button class="btn small" disabled title="Ya tiene un maleficio esta ronda">${esc(o.name)} <small>(ya tiene uno)</small></button>`
+        : `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
       <div class="row">${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} Maná</button>`).join('')}</div>
       <div class="row"><button class="btn primary" data-a="curse" ${ui.curse.target ? '' : 'disabled'}>Lanzar maleficio</button></div>`
     : `<p class="muted small center">${amounts.length ? 'Todos los rivales ya han recibido un maleficio esta ronda.' : 'Necesitas al menos 5 de Maná disponible.'}</p>`}`;

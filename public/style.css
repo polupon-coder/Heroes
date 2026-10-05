@@ -1533,3 +1533,6 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .modal .card.outcome.curse-pick > p { margin: 0; }
 .modal .card.outcome.curse-pick .dc-opts { margin: 4px 0 0; }
 @media (max-width: 760px) { .modal:has(.curse-pick) { align-items: center; } }
+/* Botones de preparación: el texto siempre centrado aunque la palabra sea larga */
+.prep-buttons .btn { display: flex; align-items: center; justify-content: center; gap: 4px; padding-left: 6px; padding-right: 6px; white-space: nowrap; text-align: center; }
+@media (max-width: 760px) { .prep-buttons .btn { font-size: .95rem; letter-spacing: .02em; } }

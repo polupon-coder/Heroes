@@ -38,9 +38,9 @@ Medí partidas con dos bots que liberan contra dos que nunca lo hacen (200 parti
 
 | Coste de liberar | Ganan los que liberan | Ganan los que no |
 | --- | ---: | ---: |
-| Gratis | 86 % | 7 % |
+| Gratis | 86 % | 8 % |
 | 1 Maná | 79 % | 18 % |
-| 2 Maná | 56 % | 40 % |
+| 2 Maná | 56 % | 37 % |
 
 Gratis es una jugada automática que siempre conviene. Con 1 Maná sigue siendo la estrategia fuerte (como eliminar cartas en Dominion), pero obliga a elegir entre el Elemental caro o el más barato más liberar. Si en mesa resulta demasiado dominante, subir a 2.
 

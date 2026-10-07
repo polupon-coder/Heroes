@@ -8,7 +8,7 @@
     --fondo: #f6f5f1; --tinta: #1d1d1f; --suave: #8a8a8f; --linea: #e4e2dc;
     --coste: #a3a3a8; --mana: #a78bfa;
     --fuego: #e5533d; --agua: #3b82f6; --tierra: #3fa66b; --aire: #e8b923; --neutro: #4b5563;
-    --j0: #1d1d1f; --j1: #ec4899; --j2: #14b8a6; --j3: #6366f1;
+    --j0: var(--fuego); --j1: var(--agua); --j2: var(--tierra); --j3: var(--aire);
   }
   * { box-sizing: border-box; margin: 0; }
   body { width: 1280px; height: 800px; justify-content: space-between; background: var(--fondo); color: var(--tinta);
@@ -19,6 +19,7 @@
   .era b { color: var(--tinta); font-weight: 600; }
   .jugadores { display: flex; gap: 18px; }
   .jug { display: flex; align-items: center; gap: 6px; color: var(--suave); }
+  .jug .ico { width: 16px; height: 16px; }
   .jug b { color: var(--tinta); }
   .jug.turno { color: var(--tinta); font-weight: 600; }
   .punto { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -31,8 +32,8 @@
   .sant h3 .val { margin-left: auto; color: var(--suave); font-weight: 400; font-size: 12px; }
   .ico { width: 22px; height: 22px; }
   .fila { display: flex; align-items: center; gap: 4px; height: 16px; margin-top: 7px; }
-  .fila .p { width: 11px; height: 11px; border-radius: 50%; }
-  .fila .p.prot { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--tierra); }
+  .fila .p { width: 13px; height: 13px; border-radius: 50%; }
+  .fila .p.prot { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--tinta); }
   .fila .n { margin-left: auto; font-size: 12px; color: var(--suave); }
   .fila.lider .n { color: var(--tinta); font-weight: 700; }
 
@@ -89,10 +90,10 @@
   <div class="logo">MANA</div>
   <div class="era"><b>Era II</b> · Ronda 3 de 5 · cada Santuario da <b>2 Sellos</b></div>
   <div class="jugadores">
-    <span class="jug turno"><span class="punto" style="background:var(--j0)"></span>Tú <span class="sello">4</span></span>
-    <span class="jug"><span class="punto" style="background:var(--j1)"></span>Ana <span class="sello">5</span></span>
-    <span class="jug"><span class="punto" style="background:var(--j2)"></span>Pol <span class="sello">3</span></span>
-    <span class="jug"><span class="punto" style="background:var(--j3)"></span>Marc <span class="sello">2</span></span>
+    <span class="jug turno"><svg class="ico" style="color:var(--fuego)"><use href="#fuego"/></svg>Tú <span class="sello">4</span></span>
+    <span class="jug"><svg class="ico" style="color:var(--agua)"><use href="#agua"/></svg>Ana <span class="sello">5</span></span>
+    <span class="jug"><svg class="ico" style="color:var(--tierra)"><use href="#tierra"/></svg>Pol <span class="sello">3</span></span>
+    <span class="jug"><svg class="ico" style="color:var(--aire)"><use href="#aire"/></svg>Marc <span class="sello">2</span></span>
   </div>
 </div>
 
@@ -122,9 +123,9 @@
 
   // Santuarios: presencia de Tú, Ana, Pol, Marc (p = protegidas)
   const S = [
-    ['fuego', 'Fuego', [3, 4, 0, 1], []],
-    ['agua', 'Agua', [2, 0, 2, 0], []],
-    ['tierra', 'Tierra', [4, 1, 0, 2], [2, 0, 0, 0]],
+    ['fuego', 'Fuego', [4, 3, 0, 1], []],
+    ['agua', 'Agua', [2, 2, 0, 0], []],
+    ['tierra', 'Tierra', [1, 1, 3, 2], [0, 0, 2, 0]],
     ['aire', 'Aire', [0, 2, 1, 3], []],
   ];
   document.getElementById('santuarios').innerHTML = S.map(([el, nom, ns, prot]) => {

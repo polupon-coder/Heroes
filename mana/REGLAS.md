@@ -26,6 +26,17 @@ Las primeras Eras importan, pero las últimas permiten remontar.
 
 Cada jugador controla a un Guardián. No combaten directamente entre sí ni pueden ser eliminados. Todos comienzan en igualdad de condiciones.
 
+Cada Guardián está ligado a un elemento, y ese es su color:
+
+| Guardián | Color |
+| --- | --- |
+| 🔥 del Fuego | rojo |
+| 💧 del Agua | azul |
+| 🌿 de la Tierra | verde |
+| 💨 del Aire | amarillo |
+
+Sus Presencias son de su color y su mazo inicial lleva un Elemental menor más de su elemento (regla 12), así que tiende hacia su Santuario. Pero no es suyo: cualquiera puede disputárselo, y él puede ganar en los demás.
+
 El **Círculo** de un Guardián son todos sus Elementales: mazo, mano, cartas jugadas y descarte.
 
 ## 3. Los Elementales
@@ -36,8 +47,8 @@ Las cartas representan Elementales vinculados a uno de los cuatro elementos. Los
 
 - 4 Santuarios.
 - 32 tipos de Elemental × 3 copias: **96 cartas de Umbral**.
-- 40 cartas iniciales (10 por jugador).
-- Marcadores de Presencia de cada jugador, marcadores de Protección, marcador de Era, **Sellos**.
+- 40 cartas iniciales: 9 Elementales menores de cada elemento y 4 Motas de Maná (10 por jugador).
+- Marcadores de Presencia en los 4 colores (con el símbolo de su elemento, para distinguirlos sin depender del color), marcadores de Protección, marcador de Era, **Sellos**.
 
 ## 5. Aspecto de un Elemental
 
@@ -88,7 +99,8 @@ Cada carta que juegas se usa **como Acción o como Maná**, nunca ambas. Puedes 
 | Carta | Cantidad | Maná | Acción |
 | --- | ---: | ---: | --- |
 | Elemental menor de Fuego / Agua / Tierra / Aire | 2 de cada | 1 | +1 en su Santuario |
-| Mota de Maná | 2 | 1 | — |
+| Elemental menor de **tu** elemento | 1 más (3 en total) | 1 | +1 en tu Santuario |
+| Mota de Maná | 1 | 1 | — |
 
 Cada jugador baraja sus 10 cartas y roba **5**.
 

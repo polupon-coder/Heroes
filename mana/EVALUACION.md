@@ -14,6 +14,7 @@ Reglas vigentes: [REGLAS.md](REGLAS.md) (**v0.2**). Datos: 400 partidas completa
 | 6 | «Fragmentos de Maná» se confundía con el Maná del turno y con la Mota de Maná. | Los puntos se llaman **Sellos**. Se define el **Círculo**; las cartas iniciales no llevan esfera de Coste. |
 | 7 | Dudas de redacción y un 19 % de victorias compartidas con 4 jugadores. | Elige siempre el jugador activo (y en Desorden el rival elige su descarte), Gran marea redactada como Retorno, Crecimiento «al menos 1 🌿», Cambio de viento permite vincular el nuevo, **desempate final por Sellos de la Era III**. |
 | 8 | Retorno, Fortificar, Desorden y Cambio de viento rendían **peor que una Mota de Maná**, y Quemadura no valía nada con 3-4 jugadores. | Nuevas versiones (ver «Cartas flojas»). |
+| 9 | Los Guardianes no tenían identidad. | **Guardianes de color** (rojo Fuego, azul Agua, verde Tierra, amarillo Aire): su mazo inicial cambia 1 Mota por 1 Menor más de su elemento. |
 
 La regla de empate en un Santuario (nadie puntúa) **se mantiene**: frena al líder sin frustrar y repartir los empates no mejoraba nada.
 
@@ -102,6 +103,24 @@ Con 2-3 jugadores cabe en 30-45 minutos; con 4 se va a unos 50. Las Eras de 4 ro
 
 **Decisión:** mantener 5 rondas y anunciar **30-55 minutos**. Si en mesa una partida a 4 pasa de 50 minutos, jugar Eras de 4 rondas con 4 jugadores.
 
+## Guardianes de color
+
+Propuesta: los jugadores son rojo, azul, verde y amarillo, como los elementos, y tu color te hace tender hacia su Santuario. El riesgo es que, con 4 jugadores, cada uno se quede «su» Santuario y la partida sea un solitario en paralelo. Se probaron cinco formas de afinidad (`node mana/afinidad.js 400`); en todas, los bots prefieren vincular Elementales de su color.
+
+| 4 jugadores | Ganas tu Santuario | Victorias por color (🔥 💧 🌿 💨, justo 25) | Empates en cabeza |
+| --- | ---: | --- | ---: |
+| Solo color | 41 % | 23 / 24 / 21 / 31 % | 8 % |
+| **Mazo: 1 Menor de tu color en lugar de 1 Mota** | **48 %** | **22 / 25 / 25 / 28 %** | 8 % |
+| Empate: ganas los empates en tu Santuario | 46 % | 23 / 25 / 21 / 32 % | 2 % |
+| Descuento: tu elemento cuesta 1 menos | 66 % | 20 / 26 / 22 / 33 % | 7 % |
+| Presencia: empiezas cada Era con 1 en tu Santuario | 55 % | 21 / 28 / 21 / 29 % | 8 % |
+
+- **Mazo** es la elegida: tiendes a tu Santuario (lo ganas la mitad de las veces) sin que sea tuyo, no añade reglas y es la que deja los cuatro colores más igualados. Con 2 jugadores las victorias por color quedan en 49 / 47 / 48 / 56 %.
+- **Descuento** y **Presencia** convierten cada Santuario en el feudo de su Guardián (55-66 %); con Descuento las victorias compartidas a 4 suben al 24 %.
+- **Empate** casi elimina los empates en cabeza (del 8 % al 2 %), y con ellos la jugada de bloquear al líder empatando: se descarta.
+- Con **solo color**, el Aire gana algo más (31 %) y el Fuego y la Tierra algo menos; con Mazo se iguala bastante, aunque el Aire sigue ligeramente por encima (28 %): a vigilar.
+- Diseño visual: como los jugadores comparten color con los elementos, los marcadores de Presencia llevan el símbolo de su elemento. Así se distinguen también con daltonismo (rojo/verde).
+
 ## Sigue pendiente
 
 - **Cartas repetidas** entre elementos, incluidas las +1 de coste 2, que casi no aportan.
@@ -115,22 +134,22 @@ Con 2-3 jugadores cabe en 30-45 minutos; con 4 se va a unos 50. Las Eras de 4 ro
 
 | Medida | v0.1 | v0.2 |
 | --- | ---: | ---: |
-| empate en cabeza (nadie puntúa) | 4 % | 1 % |
+| empate en cabeza (nadie puntúa) | 4 % | 2 % |
 | Santuarios vacíos | 1 % | 1 % |
 | Presencia puesta por jugador y Era | 5.6 | 12.5 |
-| Acciones por turno | 0.86 | 2.54 |
+| Acciones por turno | 0.86 | 2.55 |
 | Maná sobrante por turno (Era I/II/III) | 0.8 / 1.3 / 2.3 | 0.0 / 0.0 / 0.5 |
 | Turnos con vinculación | 93 % | 77 % |
-| Cartas en el mazo al final | 24.0 | 17.0 |
+| Cartas en el mazo al final | 24.0 | 16.9 |
 | Cartas iniciales liberadas por jugador | 0.0 | 4.6 |
-| Sellos medios por jugador | 11.5 | 11.8 |
-| Sellos por Era (I/II/III) | 1.9 / 3.8 / 5.7 | 1.9 / 4.0 / 5.9 |
-| Diferencia 1º-2º | 3.0 | 4.7 |
+| Sellos medios por jugador | 11.5 | 11.7 |
+| Sellos por Era (I/II/III) | 1.9 / 3.8 / 5.7 | 1.9 / 3.9 / 5.9 |
+| Diferencia 1º-2º | 3.0 | 5.3 |
 | Victoria compartida | 23 % | 8 % |
-| Victorias por asiento | 43 % / 35 % | 44 % / 48 % |
-| Sellos extra del último en jugar la Era | -0.18 | 0.06 |
-| La Era III cambia el ganador | 45 % | 36 % |
-| Retiradas / movimientos por partida | 1.8 / 0.5 | 9.3 / 2.6 |
+| Victorias por asiento | 43 % / 35 % | 45 % / 47 % |
+| Sellos extra del último en jugar la Era | -0.18 | -0.03 |
+| La Era III cambia el ganador | 45 % | 33 % |
+| Retiradas / movimientos por partida | 1.8 / 0.5 | 9.5 / 2.3 |
 
 ## 3 jugadores (400 partidas por variante)
 
@@ -138,20 +157,20 @@ Con 2-3 jugadores cabe en 30-45 minutos; con 4 se va a unos 50. Las Eras de 4 ro
 | --- | ---: | ---: |
 | empate en cabeza (nadie puntúa) | 9 % | 5 % |
 | Santuarios vacíos | 0 % | 0 % |
-| Presencia puesta por jugador y Era | 5.7 | 12.6 |
-| Acciones por turno | 0.88 | 2.59 |
+| Presencia puesta por jugador y Era | 5.7 | 12.4 |
+| Acciones por turno | 0.88 | 2.56 |
 | Maná sobrante por turno (Era I/II/III) | 0.9 / 1.2 / 2.2 | 0.0 / 0.0 / 0.3 |
-| Turnos con vinculación | 93 % | 74 % |
-| Cartas en el mazo al final | 24.0 | 16.5 |
+| Turnos con vinculación | 93 % | 75 % |
+| Cartas en el mazo al final | 24.0 | 16.6 |
 | Cartas iniciales liberadas por jugador | 0.0 | 4.6 |
 | Sellos medios por jugador | 7.4 | 7.6 |
-| Sellos por Era (I/II/III) | 1.2 / 2.5 / 3.7 | 1.2 / 2.5 / 3.8 |
-| Diferencia 1º-2º | 2.6 | 2.8 |
-| Victoria compartida | 14 % | 4 % |
-| Victorias por asiento | 34 % / 26 % / 26 % | 30 % / 33 % / 33 % |
-| Sellos extra del último en jugar la Era | -0.17 | 0.20 |
-| La Era III cambia el ganador | 55 % | 60 % |
-| Retiradas / movimientos por partida | 3.3 / 1.4 | 14.7 / 4.7 |
+| Sellos por Era (I/II/III) | 1.2 / 2.5 / 3.7 | 1.2 / 2.6 / 3.8 |
+| Diferencia 1º-2º | 2.6 | 2.7 |
+| Victoria compartida | 14 % | 3 % |
+| Victorias por asiento | 34 % / 26 % / 26 % | 34 % / 30 % / 33 % |
+| Sellos extra del último en jugar la Era | -0.17 | 0.13 |
+| La Era III cambia el ganador | 55 % | 57 % |
+| Retiradas / movimientos por partida | 3.3 / 1.4 | 14.4 / 4.6 |
 
 ## 4 jugadores (400 partidas por variante)
 
@@ -159,54 +178,54 @@ Con 2-3 jugadores cabe en 30-45 minutos; con 4 se va a unos 50. Las Eras de 4 ro
 | --- | ---: | ---: |
 | empate en cabeza (nadie puntúa) | 13 % | 8 % |
 | Santuarios vacíos | 0 % | 0 % |
-| Presencia puesta por jugador y Era | 5.6 | 12.4 |
+| Presencia puesta por jugador y Era | 5.6 | 12.2 |
 | Acciones por turno | 0.88 | 2.52 |
 | Maná sobrante por turno (Era I/II/III) | 0.9 / 1.2 / 2.2 | 0.0 / 0.0 / 0.3 |
 | Turnos con vinculación | 93 % | 74 % |
 | Cartas en el mazo al final | 24.0 | 16.4 |
 | Cartas iniciales liberadas por jugador | 0.0 | 4.7 |
 | Sellos medios por jugador | 5.3 | 5.5 |
-| Sellos por Era (I/II/III) | 0.9 / 1.8 / 2.6 | 0.9 / 1.9 / 2.7 |
-| Diferencia 1º-2º | 1.9 | 2.1 |
+| Sellos por Era (I/II/III) | 0.9 / 1.8 / 2.6 | 0.9 / 1.9 / 2.8 |
+| Diferencia 1º-2º | 1.9 | 2.0 |
 | Victoria compartida | 19 % | 10 % |
-| Victorias por asiento | 25 % / 18 % / 18 % / 20 % | 22 % / 23 % / 23 % / 23 % |
-| Sellos extra del último en jugar la Era | -0.01 | 0.14 |
-| La Era III cambia el ganador | 57 % | 66 % |
-| Retiradas / movimientos por partida | 5.0 / 2.0 | 18.7 / 6.6 |
+| Victorias por asiento | 25 % / 18 % / 18 % / 20 % | 24 % / 23 % / 23 % / 21 % |
+| Sellos extra del último en jugar la Era | -0.01 | 0.10 |
+| La Era III cambia el ganador | 57 % | 63 % |
+| Retiradas / movimientos por partida | 5.0 / 2.0 | 19.0 / 6.4 |
 
 ## Veces que cada carta se juega como Acción (4 jugadores)
 
 | Carta | Coste | v0.1 | v0.2 | Vinculada (v0.2, por partida) |
 | --- | ---: | ---: | ---: | ---: |
-| Chispa | 2 | 14 % | 57 % | 1.58 |
-| Llama | 3 | 60 % | 80 % | 1.73 |
-| Ascua | 2 | 1 % | 72 % | 1.33 |
-| Quemadura | 3 | 7 % | 67 % | 1.55 |
-| Embestida | 4 | 34 % | 65 % | 1.63 |
-| Fuego voraz | 4 | 34 % | 54 % | 1.07 |
-| Incendio | 5 | 19 % | 77 % | 1.61 |
-| Llama de conquista | 6 | 68 % | 73 % | 1.49 |
-| Gota | 2 | 12 % | 58 % | 1.63 |
+| Chispa | 2 | 14 % | 55 % | 1.58 |
+| Llama | 3 | 60 % | 80 % | 1.77 |
+| Ascua | 2 | 1 % | 74 % | 1.45 |
+| Quemadura | 3 | 7 % | 68 % | 1.59 |
+| Embestida | 4 | 34 % | 65 % | 1.66 |
+| Fuego voraz | 4 | 34 % | 52 % | 1.23 |
+| Incendio | 5 | 19 % | 78 % | 1.65 |
+| Llama de conquista | 6 | 68 % | 72 % | 1.52 |
+| Gota | 2 | 12 % | 55 % | 1.55 |
 | Corriente | 3 | 56 % | 80 % | 1.77 |
-| Manantial | 2 | 0 % | 74 % | 1.29 |
-| Fluir | 3 | 2 % | 81 % | 1.49 |
-| Retorno | 3 | 21 % | 81 % | 1.27 |
-| Oleaje | 4 | 22 % | 34 % | 1.72 |
-| Renacer | 5 | 0 % | 67 % | 0.99 |
-| Gran marea | 6 | 66 % | 70 % | 1.18 |
-| Semilla | 2 | 11 % | 54 % | 1.50 |
-| Raíz | 3 | 54 % | 78 % | 1.77 |
-| Brote | 2 | 1 % | 73 % | 1.39 |
-| Fortificar | 3 | 0 % | 92 % | 1.63 |
-| Raíces profundas | 4 | 24 % | 42 % | 0.90 |
-| Crecimiento | 4 | 16 % | 46 % | 1.46 |
-| Bastión | 5 | 1 % | 59 % | 1.42 |
-| Tierra ancestral | 6 | 59 % | 59 % | 0.95 |
-| Brisa | 2 | 17 % | 59 % | 1.60 |
-| Ráfaga | 3 | 63 % | 79 % | 1.76 |
-| Inspiración | 2 | 1 % | 73 % | 1.38 |
-| Desorden | 3 | 1 % | 92 % | 1.66 |
-| Cambio de viento | 3 | 7 % | 79 % | 0.62 |
-| Desvío | 4 | 5 % | 44 % | 0.32 |
-| Corriente ascendente | 4 | 3 % | 56 % | 1.16 |
-| Torbellino | 6 | 44 % | 70 % | 1.41 |
+| Manantial | 2 | 0 % | 73 % | 1.35 |
+| Fluir | 3 | 2 % | 79 % | 1.39 |
+| Retorno | 3 | 21 % | 80 % | 1.31 |
+| Oleaje | 4 | 22 % | 33 % | 1.62 |
+| Renacer | 5 | 0 % | 65 % | 0.97 |
+| Gran marea | 6 | 66 % | 67 % | 1.08 |
+| Semilla | 2 | 11 % | 51 % | 1.55 |
+| Raíz | 3 | 54 % | 77 % | 1.71 |
+| Brote | 2 | 1 % | 72 % | 1.43 |
+| Fortificar | 3 | 0 % | 91 % | 1.59 |
+| Raíces profundas | 4 | 24 % | 41 % | 0.93 |
+| Crecimiento | 4 | 16 % | 45 % | 1.54 |
+| Bastión | 5 | 1 % | 56 % | 1.50 |
+| Tierra ancestral | 6 | 59 % | 58 % | 0.93 |
+| Brisa | 2 | 17 % | 56 % | 1.64 |
+| Ráfaga | 3 | 63 % | 81 % | 1.70 |
+| Inspiración | 2 | 1 % | 74 % | 1.47 |
+| Desorden | 3 | 1 % | 93 % | 1.61 |
+| Cambio de viento | 3 | 7 % | 77 % | 0.61 |
+| Desvío | 4 | 5 % | 47 % | 0.30 |
+| Corriente ascendente | 4 | 3 % | 56 % | 1.23 |
+| Torbellino | 6 | 44 % | 67 % | 1.40 |

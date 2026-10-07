@@ -20,6 +20,7 @@ const BASE = {
   botLiberar: 0.08, // (bot) valor de liberar por turno que le queda; puede ser una lista por jugador
   manoPrimero: 5, // cartas de la primera mano del jugador inicial (con 4 se compensa demasiado)
   desorden: 'rival', // quién elige la carta que descarta el rival en Desorden
+  afinidad: ['mazo'], // Guardianes de color: lista con 'mazo', 'empate', 'descuento' y/o 'presencia' ([] = solo color, null = sin color)
   desempate: 'eraIII', // empate final: más Sellos en la Era III | 'compartir'
   cartas: UMBRAL,
   copias: 3,
@@ -27,7 +28,7 @@ const BASE = {
 };
 
 // Reglamento provisional v0.1, para comparar.
-const V01 = { acciones: 1, proteccion: 'turno', rotacion: 'ronda', liberar: false, desempate: 'compartir', cartas: UMBRAL_V01 };
+const V01 = { afinidad: null, acciones: 1, proteccion: 'turno', rotacion: 'ronda', liberar: false, desempate: 'compartir', cartas: UMBRAL_V01 };
 
 function rngFrom(seed) {
   let s = seed >>> 0 || 1;
@@ -75,14 +76,18 @@ class Partida {
     this.rng = rngFrom(opciones.seed || 1);
     this.n = n;
     this.jug = [];
+    // Guardianes de color: cada jugador es de un elemento distinto (por sorteo)
+    const colores = this.v.afinidad ? shuffle(ELEMENTOS.slice(), this.rng) : null;
     for (let i = 0; i < n; i++) {
       const ini = this.v.inicial.slice();
+      if (colores && this.v.afinidad.includes('mazo')) ini[ini.findIndex((c) => c.nombre === 'Mota de Maná')] = ini.find((c) => c.el === colores[i]);
       // pruebas de fuerza: ese jugador cambia Motas de Maná por la carta indicada
       if (this.v.injertar && this.v.injertar.jugador === i) {
         for (let t = 0; t < (this.v.injertar.copias || 1); t++) ini[ini.findIndex((c) => c.nombre === 'Mota de Maná')] = this.v.injertar.carta;
       }
       const mazo = shuffle(ini, this.rng);
-      this.jug.push({ i, mazo, mano: [], desc: [], jugadas: [], sellos: 0, selloEra: [], vinculadas: 0, liberadas: 0, gusto: ELEMENTOS[Math.floor(this.rng() * 4)] });
+      this.jug.push({ i, mazo, mano: [], desc: [], jugadas: [], sellos: 0, selloEra: [], vinculadas: 0, liberadas: 0, gusto: ELEMENTOS[Math.floor(this.rng() * 4)], color: colores ? colores[i] : null });
+      if (colores) this.jug[i].gusto = colores[i];
     }
     this.jug.forEach((j) => this.robar(j, j.i === 0 ? this.v.manoPrimero : 5));
     this.pila = shuffle(this.v.cartas.flatMap((c) => Array(this.v.copias).fill(c)), this.rng);
@@ -100,6 +105,13 @@ class Partida {
 
   limpiar() {
     for (const s of ELEMENTOS) this.pres[s] = this.jug.map(() => ({ n: 0, prot: 0 }));
+    // afinidad 'presencia': cada Guardián empieza la Era con 1 Presencia en su Santuario
+    if (this.v.afinidad && this.v.afinidad.includes('presencia')) for (const j of this.jug) this.pres[j.color][j.i].n = 1;
+  }
+
+  // Coste de vincular para el jugador i (afinidad 'descuento': los de su color cuestan 1 menos)
+  coste(i, c) {
+    return this.v.afinidad && this.v.afinidad.includes('descuento') && c.el === this.jug[i].color ? Math.max(1, c.coste - 1) : c.coste;
   }
 
   reponer() {
@@ -366,7 +378,7 @@ class Partida {
       if (puedeLiberar && valLib > 0 && (idx < 0 || !this.v.liberarEnLugar) && coste + this.v.liberarCoste <= mana && val + valLib > best.val) best = { idx, val: val + valLib, liberar: true };
     };
     probar(-1, 0, 0);
-    this.umbral.forEach((c, idx) => probar(idx, coef * (fuerza(c, this.v) + (c.el === j.gusto ? 0.4 : 0)), c.coste));
+    this.umbral.forEach((c, idx) => probar(idx, coef * (fuerza(c, this.v) + (c.el === j.gusto ? 0.4 : 0)), this.coste(i, c)));
     return best;
   }
 
@@ -407,7 +419,7 @@ class Partida {
       const { idx, liberar } = this.compra(i, mana - gastado);
       if (idx >= 0) {
         const c = this.umbral.splice(idx, 1)[0];
-        gastado += c.coste;
+        gastado += this.coste(i, c);
         j.desc.push(c);
         j.vinculadas++;
         this.st.vinculadas[c.nombre] = (this.st.vinculadas[c.nombre] || 0) + 1;
@@ -451,13 +463,19 @@ class Partida {
         this.st.vacios++;
         continue;
       }
-      const primeros = ns.map((x, k) => (x === top ? k : -1)).filter((k) => k >= 0);
+      let primeros = ns.map((x, k) => (x === top ? k : -1)).filter((k) => k >= 0);
+      // afinidad 'empate': en su Santuario, el Guardián de ese color gana los empates
+      if (primeros.length > 1 && this.v.afinidad && this.v.afinidad.includes('empate')) {
+        const dueño = primeros.find((k) => this.jug[k].color === s);
+        if (dueño !== undefined) primeros = [dueño];
+      }
       if (primeros.length > 1) {
         this.st.empates++;
         if (this.v.empate === 'reparto') primeros.forEach((k) => (gan[k] += Math.max(0, val - 1)));
         continue;
       }
       gan[primeros[0]] += val;
+      if (this.jug[primeros[0]].color === s) this.st.propio = (this.st.propio || 0) + 1;
       if (this.v.segundo && orden[1] > 0) {
         const seg = ns.map((x, k) => (x === orden[1] ? k : -1)).filter((k) => k >= 0);
         if (seg.length === 1) gan[seg[0]] += Math.floor(val * this.v.segundo);

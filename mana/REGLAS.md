@@ -1,6 +1,6 @@
 # MANA — Reglamento v0.2
 
-**2–4 jugadores · 30–45 minutos · Construcción de mazo**
+**2–4 jugadores · 30–55 minutos · Construcción de mazo**
 
 Cada jugador representa a un **Guardián** capaz de vincularse con espíritus elementales de Fuego, Agua, Tierra y Aire. Durante la partida, los Guardianes atraen nuevos **Elementales** desde **el Umbral**, mejoran progresivamente su mazo y utilizan sus poderes para aumentar su presencia en los cuatro **Santuarios Elementales**.
 
@@ -104,7 +104,7 @@ Baraja los Elementales y revela **5** boca arriba. Al vincular uno: paga su cost
 
    Las cartas robadas durante el turno también pueden jugarse. No tienes que jugar todas.
 2. **Vincular.** Puedes vincular **1 Elemental** del Umbral pagando su coste completo. Va a tu descarte.
-3. **Liberar.** Puedes pagar **1 Maná** para devolver a la caja **1 carta inicial** que hayas jugado este turno (como Acción o como Maná). Sale de la partida.
+3. **Liberar.** Puedes pagar **2 Manás** para devolver a la caja **1 carta inicial** que hayas jugado este turno (como Acción o como Maná). Sale de la partida.
 4. **Final.** Descarta las cartas jugadas y las que te queden en la mano. Roba 5. Si se acaba el mazo, baraja el descarte para formar uno nuevo.
 
 ## 15. El Maná
@@ -136,7 +136,7 @@ Una Presencia movida pasa a contar en el Santuario de destino. Una Presencia pro
 ## 21. Orden de turno y Eras
 
 - Se juega en **sentido horario**, siempre en el mismo orden.
-- Cada Era dura **5 rondas**: cada Guardián juega 5 turnos.
+- Cada Era dura **5 rondas**: cada Guardián juega 5 turnos. (Si a 4 jugadores la partida se alarga, pueden jugarse Eras de 4 rondas; ver [EVALUACION.md](EVALUACION.md).)
 - **Empieza cada Era el Guardián con más Sellos.** En la Era I se sortea. Si hay empate, empieza entre los empatados el primero en sentido horario desde quien empezó la Era anterior.
 
 Así el último turno antes de puntuar, que no tiene respuesta, lo juega quien va detrás.
@@ -176,7 +176,7 @@ Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, ga
 | Chispa | 2 | 1 | +1 🔥 |
 | Llama | 3 | 1 | +2 🔥 |
 | Ascua | 2 | 1 | Roba 1 |
-| Quemadura | 3 | 1 | Retira 1 Presencia rival de cualquier Santuario |
+| Quemadura | 3 | 1 | Retira 1 Presencia rival de 🔥 y pon 1 tuya en 🔥 |
 | Embestida | 4 | 2 | +1 🔥 y retira 1 Presencia rival de cualquier Santuario |
 | Fuego voraz | 4 | 2 | Si un rival tiene más 🔥 que tú, +2 🔥; si no, +1 🔥 |
 | Incendio | 5 | 2 | Retira hasta 2 Presencias rivales de un mismo Santuario y +1 🔥 |
@@ -190,7 +190,7 @@ Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, ga
 | Corriente | 3 | 1 | +2 💧 |
 | Manantial | 2 | 1 | Roba 1 |
 | Fluir | 3 | 1 | Roba 2 y descarta 1 |
-| Retorno | 3 | 1 | Pon 1 carta de tu descarte sobre tu mazo |
+| Retorno | 3 | 1 | Roba 1 y pon 1 carta de tu descarte sobre tu mazo |
 | Oleaje | 4 | 2 | Roba 2 y pon 1 carta de tu mano sobre tu mazo |
 | Renacer | 5 | 2 | Recupera 1 carta de tu descarte a tu mano y roba 1 |
 | Gran marea | 6 | 3 | +2 💧 y pon 1 carta de tu descarte sobre tu mazo |
@@ -202,7 +202,7 @@ Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, ga
 | Semilla | 2 | 1 | +1 🌿 |
 | Raíz | 3 | 1 | +2 🌿 |
 | Brote | 2 | 1 | Roba 1 |
-| Fortificar | 3 | 1 | Protege 2 Presencias propias (en cualquier Santuario) |
+| Fortificar | 3 | 1 | Protege 2 Presencias propias (en cualquier Santuario) y roba 1 |
 | Raíces profundas | 4 | 2 | +1 🌿 protegida |
 | Crecimiento | 4 | 2 | Si ya tienes al menos 1 🌿, +2 🌿 |
 | Bastión | 5 | 2 | Protege todas tus Presencias de un Santuario y +1 🌿 protegida |
@@ -215,8 +215,8 @@ Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, ga
 | Brisa | 2 | 1 | +1 💨 |
 | Ráfaga | 3 | 1 | +2 💨 |
 | Inspiración | 2 | 1 | Roba 1 |
-| Desorden | 3 | 1 | Un rival descarta 1 carta de su mano (la elige él) y roba 1 |
-| Cambio de viento | 3 | 1 | Descarta 1 Elemental del Umbral y repónlo (el nuevo puede vincularse este turno) |
+| Desorden | 3 | 1 | +1 💨 y cada rival descarta 1 carta de su mano (la elige él) |
+| Cambio de viento | 3 | 1 | Roba 1, descarta 1 Elemental del Umbral y repónlo (el nuevo puede vincularse este turno) |
 | Desvío | 4 | 2 | Mueve 1 Presencia rival de un Santuario a otro |
 | Corriente ascendente | 4 | 2 | Mueve 1 Presencia propia a 💨 y roba 1 |
 | Torbellino | 6 | 3 | Mueve hasta 2 Presencias rivales, cada una de un Santuario a otro, y +1 💨 |
@@ -225,9 +225,9 @@ La tabla que usa el simulador está en [`cartas.js`](cartas.js).
 
 ## 31. Resumen de turno
 
-**Juega cartas (cada una, Acción o Maná) → vincula 1 Elemental → libera 1 carta inicial (1 Maná) → descarta → roba 5.**
+**Juega cartas (cada una, Acción o Maná) → vincula 1 Elemental → libera 1 carta inicial (2 Manás) → descarta → roba 5.**
 
-¿Qué Elementales uso por su poder? ¿Cuáles convierto en Maná? ¿Qué nuevo Elemental vinculo? ¿Me deshago de una carta inicial?
+¿Qué Elementales uso por su poder? ¿Cuáles convierto en Maná? ¿Qué nuevo Elemental vinculo, o me guardo 2 Manás para liberar una carta inicial?
 
 ## 32. Idea central
 

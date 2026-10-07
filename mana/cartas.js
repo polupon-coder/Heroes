@@ -12,7 +12,8 @@
 //   ifBehind: +a si un rival tiene más que tú, si no +b
 //   moveRival: mueve hasta N Presencias rivales DESDE el Santuario (s: '*' = desde cualquiera)
 //   moveOwnTo: mueve 1 Presencia propia HACIA el Santuario
-//   disrupt:  un rival descarta 1 y roba 1
+//   disrupt:  un rival descarta 1 y roba 1 (modo 'todos': cada rival descarta 1 que elige él, sin robar)
+//   swap:     retira 1 Presencia rival de un Santuario y pon 1 tuya en ese Santuario
 //   refresh:  cambia 1 carta del Umbral
 
 const ELEMENTOS = ['fuego', 'agua', 'tierra', 'aire'];
@@ -59,15 +60,18 @@ const UMBRAL_V01 = [
 ];
 
 // v0.2: el Fuego retira y el Aire mueve en cualquier Santuario, la Tierra protege en cualquiera,
-// cartas de coste 5 mejoradas y redacciones aclaradas.
+// cartas de coste 5 mejoradas y las cuatro cartas que rendían menos que una Mota de Maná reforzadas.
 const cambios = {
-  Quemadura: [{ remove: 1, s: '*' }],
+  Quemadura: [{ swap: 1, s: 'fuego' }],
   Embestida: [{ add: 1, s: 'fuego' }, { remove: 1, s: '*' }],
   Incendio: [{ remove: 2, s: '*' }, { add: 1, s: 'fuego' }],
   'Llama de conquista': [{ add: 2, s: 'fuego' }, { remove: 1, s: '*' }],
   Renacer: [{ recover: 1 }, { draw: 1 }],
-  Fortificar: [{ protect: 2, s: '*' }],
+  Retorno: [{ draw: 1 }, { topFromDiscard: 1 }],
+  Fortificar: [{ protect: 2, s: '*' }, { draw: 1 }],
   Bastión: [{ protect: 1, all: true, s: '*' }, { add: 1, s: 'tierra', prot: true }],
+  Desorden: [{ add: 1, s: 'aire' }, { disrupt: 1, modo: 'todos' }],
+  'Cambio de viento': [{ draw: 1 }, { refresh: 1 }],
   Desvío: [{ moveRival: 1, s: '*' }],
   Torbellino: [{ moveRival: 2, s: '*' }, { add: 1, s: 'aire' }],
 };

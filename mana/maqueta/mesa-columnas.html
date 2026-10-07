@@ -46,8 +46,10 @@
   .principal .boton { width: 240px; }
 
   /* Santuarios apilados a la derecha */
-  .derecha { display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 22px; }
-  .derecha .sant { width: 280px; height: 112px; }
+  .derecha { background: #fff; border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
+  .derecha .titulo { text-align: center; margin-bottom: 2px; }
+  #santuarios { flex: 1; display: flex; flex-direction: column; gap: 30px; padding-bottom: 22px; } /* hueco para el nombre bajo cada uno */
+  .derecha .sant { width: 100%; flex: 1; }
   .derecha .cuad { flex-direction: row; gap: 9px; }
   .derecha .nucleo { width: 40px; height: 40px; } .derecha .nucleo .ico { width: 20px; height: 20px; }
   .derecha .marca { bottom: -21px; }
@@ -193,7 +195,7 @@
   <div class="zona mano"><div class="titulo">Tu mano</div><div class="cartas" id="mano"></div></div>
   <div class="boton terminar">Terminar turno</div>
 </div>
-<div class="derecha" id="santuarios"></div>
+<div class="derecha"><div class="titulo">Santuarios</div><div id="santuarios"></div></div>
 </div>
 
 <div class="velo-v" id="velo"><div class="ventana" id="ventana"></div></div>

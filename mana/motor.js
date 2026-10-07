@@ -81,10 +81,10 @@ class Partida {
     const colores = this.v.afinidad ? shuffle(ELEMENTOS.slice(), this.rng) : null;
     for (let i = 0; i < n; i++) {
       const ini = this.v.inicial.slice();
-      if (colores && this.v.afinidad.includes('mazo')) ini[ini.findIndex((c) => c.nombre === 'Mota de Maná')] = ini.find((c) => c.el === colores[i]);
-      // pruebas de fuerza: ese jugador cambia Motas de Maná por la carta indicada
+      if (colores && this.v.afinidad.includes('mazo')) ini[ini.findIndex((c) => c.nombre === 'Mota')] = ini.find((c) => c.el === colores[i]);
+      // pruebas de fuerza: ese jugador cambia Motas por la carta indicada
       if (this.v.injertar && this.v.injertar.jugador === i) {
-        for (let t = 0; t < (this.v.injertar.copias || 1); t++) ini[ini.findIndex((c) => c.nombre === 'Mota de Maná')] = this.v.injertar.carta;
+        for (let t = 0; t < (this.v.injertar.copias || 1); t++) ini[ini.findIndex((c) => c.nombre === 'Mota')] = this.v.injertar.carta;
       }
       const mazo = shuffle(ini, this.rng);
       this.jug.push({ i, mazo, mano: [], desc: [], jugadas: [], sellos: 0, selloEra: [], vinculadas: 0, liberadas: 0, gusto: ELEMENTOS[Math.floor(this.rng() * 4)], color: colores ? colores[i] : null });
@@ -551,7 +551,7 @@ class Partida {
         this.reponer();
       }
       if (liberar) {
-        // devuelve a la caja cartas iniciales usadas este turno (primero las Motas de Maná)
+        // devuelve a la caja cartas iniciales usadas este turno (primero las Motas)
         for (let t = 0; t < this.v.liberarMax; t++) {
           const usadas = [...j.jugadas.map((c, k) => ['jugadas', k, c]), ...j.mano.map((c, k) => ['mano', k, c])].filter((x) => x[2].inicial);
           if (!usadas.length) break;

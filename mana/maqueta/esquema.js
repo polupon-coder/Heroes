@@ -44,8 +44,8 @@ const columnas = ELEMENTOS.map(([el, nom, verbo, lema]) => {
 }).join('');
 
 const iniciales = [
-  ...ELEMENTOS.map(([el, nom]) => fila(`Menor de ${nom}`, el, 0, 1, [[el, '+1', el]], `Pon 1 Presencia en ${nom}.`)),
-  fila('Mota de Maná', null, 0, 1, [], 'Solo da Maná.'),
+  ...ELEMENTOS.map(([el, nom]) => fila({ fuego: 'Chispa', agua: 'Rocío', tierra: 'Grano', aire: 'Aliento' }[el], el, 0, 1, [[el, '+1', el]], `Pon 1 Presencia en ${nom}.`)),
+  fila('Mota', null, 0, 1, [], 'Solo da Maná.'),
 ].join('');
 
 const LEYENDA = [
@@ -158,7 +158,7 @@ const html = `<!doctype html>
 
 <div class="iniciales">
   <h2>Cartas iniciales</h2>
-  <p>Cada Guardián empieza con 2 Menores de cada elemento, 1 Menor más de su color y 1 Mota de Maná (10 cartas).</p>
+  <p>Cada Guardián empieza con 2 Menores de cada elemento, 1 Menor más de su color y 1 Mota (10 cartas).</p>
   <div class="grid">${iniciales}</div>
 </div>
 </body>

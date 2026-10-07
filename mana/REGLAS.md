@@ -47,7 +47,7 @@ Las cartas representan Elementales vinculados a uno de los cuatro elementos. Los
 
 - 4 Santuarios.
 - 32 tipos de Elemental × 3 copias: **96 cartas de Umbral**.
-- 40 cartas iniciales: 9 Elementales menores de cada elemento y 4 Motas de Maná (10 por jugador).
+- 40 cartas iniciales: 9 Elementales menores de cada elemento y 4 Motas (10 por jugador).
 - Marcadores de Presencia en los 4 colores (con el símbolo de su elemento, para distinguirlos sin depender del color), marcadores de Protección, marcador de Era, **Sellos**.
 
 ## 5. Aspecto de un Elemental
@@ -100,7 +100,7 @@ Cada carta que juegas se usa **como Acción o como Maná**, nunca ambas. Puedes 
 | --- | ---: | ---: | --- |
 | Elemental menor de Fuego / Agua / Tierra / Aire | 2 de cada | 1 | +1 en su Santuario |
 | Elemental menor de **tu** elemento | 1 más (3 en total) | 1 | +1 en tu Santuario |
-| Mota de Maná | 1 | 1 | — |
+| Mota | 1 | 1 | — |
 
 Cada jugador baraja sus 10 cartas y roba **5**.
 
@@ -188,11 +188,11 @@ Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, ga
 | Ascua | 2 | 1 | +1 🔥 |
 | Llama | 3 | 1 | +2 🔥 |
 | Fulgor | 2 | 1 | Roba 1 |
-| Brasa Viva | 3 | 1 | Retira 1 Presencia rival de 🔥 y pon 1 tuya en 🔥 |
+| Brasa | 3 | 1 | Retira 1 Presencia rival de 🔥 y pon 1 tuya en 🔥 |
 | Ígneo | 4 | 2 | +1 🔥 y retira 1 Presencia rival de cualquier Santuario |
 | Inferno | 4 | 2 | Si un rival tiene más 🔥 que tú, +2 🔥; si no, +1 🔥 |
-| Coloso de Fuego | 5 | 2 | Retira hasta 2 Presencias rivales de un mismo Santuario y +1 🔥 |
-| Espíritu del Volcán | 6 | 3 | +2 🔥 y retira 1 Presencia rival de cualquier Santuario |
+| Magma | 5 | 2 | Retira hasta 2 Presencias rivales de un mismo Santuario y +1 🔥 |
+| Volcán | 6 | 3 | +2 🔥 y retira 1 Presencia rival de cualquier Santuario |
 
 ## 28. Elementales de Agua
 
@@ -204,8 +204,8 @@ Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, ga
 | Flujo | 3 | 1 | Roba 2 y descarta 1 |
 | Torrente | 3 | 1 | Roba 1 y pon 1 carta de tu descarte sobre tu mazo |
 | Marea | 4 | 2 | Roba 2 y pon 1 carta de tu mano sobre tu mazo |
-| Coloso de Agua | 5 | 2 | Recupera 1 carta de tu descarte a tu mano y roba 1 |
-| Espíritu del Océano | 6 | 3 | +2 💧 y pon 1 carta de tu descarte sobre tu mazo |
+| Abismo | 5 | 2 | Recupera 1 carta de tu descarte a tu mano y roba 1 |
+| Océano | 6 | 3 | +2 💧 y pon 1 carta de tu descarte sobre tu mazo |
 
 ## 29. Elementales de Tierra
 
@@ -217,8 +217,8 @@ Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, ga
 | Pedregal | 3 | 1 | Protege 2 Presencias propias (en cualquier Santuario) y roba 1 |
 | Bastión | 4 | 2 | +1 🌿 protegida |
 | Monolito | 4 | 2 | Si ya tienes al menos 1 🌿, +2 🌿 |
-| Coloso de Tierra | 5 | 2 | Protege todas tus Presencias de un Santuario y +1 🌿 protegida |
-| Espíritu de la Montaña | 6 | 3 | +2 🌿 protegidas |
+| Peñón | 5 | 2 | Protege todas tus Presencias de un Santuario y +1 🌿 protegida |
+| Montaña | 6 | 3 | +2 🌿 protegidas |
 
 ## 30. Elementales de Aire
 
@@ -230,8 +230,8 @@ Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, ga
 | Velo | 3 | 1 | +1 💨 y cada rival descarta 1 carta de su mano (la elige él) |
 | Remolino | 3 | 1 | Roba 1, descarta 1 Elemental del Umbral y repónlo (el nuevo puede vincularse este turno) |
 | Vórtice | 4 | 2 | Mueve 1 Presencia rival de un Santuario a otro |
-| Coloso del Aire | 4 | 2 | Mueve 1 Presencia propia a 💨 y roba 1 |
-| Espíritu de la Tormenta | 6 | 3 | Mueve hasta 2 Presencias rivales, cada una de un Santuario a otro, y +1 💨 |
+| Ciclón | 4 | 2 | Mueve 1 Presencia propia a 💨 y roba 1 |
+| Tormenta | 6 | 3 | Mueve hasta 2 Presencias rivales, cada una de un Santuario a otro, y +1 💨 |
 
 La tabla que usa el simulador está en [`cartas.js`](cartas.js).
 

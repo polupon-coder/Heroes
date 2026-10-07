@@ -140,7 +140,9 @@
     display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; }
   .total { width: 108px; height: 108px; opacity: .85; border-radius: 50%; background: url(texturas/esfera-mana.webp) center / contain no-repeat; color: #fff; text-shadow: 0 2px 4px rgba(60,30,90,.5); display: flex; flex-direction: column;
     align-items: center; justify-content: center; font-size: 46px; font-weight: 700; line-height: 1; transition: transform .15s; }
-  .total small { font-size: 10px; letter-spacing: .16em; font-weight: 600; margin-top: 6px; padding-left: .16em; }
+  .mana-pila { color: var(--mana); cursor: default; }
+  /* La letra redondeada tiene la línea base alta: un poco de aire arriba centra el número en la bola */
+  .total, .dorso { padding-top: 7px; }
   .total.latido { transform: scale(1.08); }
 
   /* Botones hundidos en el yeso: textura de la mesa teñida, sombra interior arriba y brillo abajo */
@@ -183,7 +185,7 @@
   .ilus.tx { background: linear-gradient(rgba(255, 251, 244, .18), rgba(255, 251, 244, .18)), var(--tex) center / cover; }
   /* Elementales ilustrados: sin fondo, solo la figura */
   .ilus.con-img { background: none; }
-  /* Mota de Maná: una esfera lila, sin fondo */
+  /* Mota: una esfera lila, sin fondo */
   .ilus.mota span { width: 46%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #e9e1ff, var(--mana) 55%, #7c5fd6);
     box-shadow: 0 6px 14px rgba(124, 95, 214, .35); }
   .ilus.con-img img { width: 118%; height: 118%; flex: none; object-fit: contain; }
@@ -301,7 +303,7 @@
     <div id="mano"></div>
     <div class="arriba">
       <div class="pila"><div class="dorso" id="mazo">0</div>Mazo</div>
-      <div class="total" id="total">0<small>MANÁ</small></div>
+      <div class="pila mana-pila"><div class="total" id="total">0</div>Maná</div>
       <div class="pila"><div class="dorso" id="descarte">0</div>Descarte</div>
     </div>
     <div class="mandos"><div class="boton borde" id="deshacer">Deshacer</div><div class="boton verde" id="terminar">Terminar turno</div></div>
@@ -578,7 +580,7 @@ function verCarta(donde, k) {
   const yo = p.jug[YO];
   if (donde === 'mano') {
     const c = yo.mano[k];
-    // Cartas sin Acción (Mota de Maná): no hay nada que elegir, se usan como Maná al tocarlas
+    // Cartas sin Acción (Mota): no hay nada que elegir, se usan como Maná al tocarlas
     if (!c.accion.length && esMiTurno()) {
       guardar(`${c.nombre} como Maná`);
       nuevas = [];

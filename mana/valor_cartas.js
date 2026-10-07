@@ -1,6 +1,6 @@
 'use strict';
 // Fuerza real de cada Elemental: un jugador empieza la partida con 2 copias de la carta en lugar
-// de sus 2 Motas de Maná, y se mide cuánto sube su porcentaje de victorias. Todas las cartas se
+// de sus 2 Motas, y se mide cuánto sube su porcentaje de victorias. Todas las cartas se
 // prueban con las mismas partidas (mismas semillas) para que la comparación sea justa.
 // Uso: node mana/valor_cartas.js [partidas] [jugadores]
 const { Worker, isMainThread, parentPort, workerData } = require('node:worker_threads');

@@ -25,11 +25,11 @@ const UMBRAL_V01 = [
   C('Ascua', 'fuego', 2, 1, [{ add: 1, s: 'fuego' }]),
   C('Llama', 'fuego', 3, 1, [{ add: 2, s: 'fuego' }]),
   C('Fulgor', 'fuego', 2, 1, [{ draw: 1 }]),
-  C('Brasa Viva', 'fuego', 3, 1, [{ remove: 1, s: 'fuego' }]),
+  C('Brasa', 'fuego', 3, 1, [{ remove: 1, s: 'fuego' }]),
   C('Ígneo', 'fuego', 4, 2, [{ add: 1, s: 'fuego' }, { remove: 1, s: 'fuego' }]),
   C('Inferno', 'fuego', 4, 2, [{ ifBehind: [2, 1], s: 'fuego' }]),
-  C('Coloso de Fuego', 'fuego', 5, 2, [{ remove: 2, s: 'fuego' }]),
-  C('Espíritu del Volcán', 'fuego', 6, 3, [{ add: 2, s: 'fuego' }, { remove: 1, s: 'fuego' }]),
+  C('Magma', 'fuego', 5, 2, [{ remove: 2, s: 'fuego' }]),
+  C('Volcán', 'fuego', 6, 3, [{ add: 2, s: 'fuego' }, { remove: 1, s: 'fuego' }]),
 
   C('Gota', 'agua', 2, 1, [{ add: 1, s: 'agua' }]),
   C('Onda', 'agua', 3, 1, [{ add: 2, s: 'agua' }]),
@@ -37,8 +37,8 @@ const UMBRAL_V01 = [
   C('Flujo', 'agua', 3, 1, [{ draw: 2 }, { discard: 1 }]),
   C('Torrente', 'agua', 3, 1, [{ topFromDiscard: 1 }]),
   C('Marea', 'agua', 4, 2, [{ draw: 2 }, { handToTop: 1 }]),
-  C('Coloso de Agua', 'agua', 5, 2, [{ recover: 1 }]),
-  C('Espíritu del Océano', 'agua', 6, 3, [{ add: 2, s: 'agua' }, { topFromDiscard: 1 }]),
+  C('Abismo', 'agua', 5, 2, [{ recover: 1 }]),
+  C('Océano', 'agua', 6, 3, [{ add: 2, s: 'agua' }, { topFromDiscard: 1 }]),
 
   C('Polvo', 'tierra', 2, 1, [{ add: 1, s: 'tierra' }]),
   C('Roca', 'tierra', 3, 1, [{ add: 2, s: 'tierra' }]),
@@ -46,8 +46,8 @@ const UMBRAL_V01 = [
   C('Pedregal', 'tierra', 3, 1, [{ protect: 1, s: 'tierra' }]),
   C('Bastión', 'tierra', 4, 2, [{ add: 1, s: 'tierra', prot: true }]),
   C('Monolito', 'tierra', 4, 2, [{ ifAny: 2, s: 'tierra' }]),
-  C('Coloso de Tierra', 'tierra', 5, 2, [{ protect: 2, s: 'tierra' }]),
-  C('Espíritu de la Montaña', 'tierra', 6, 3, [{ add: 2, s: 'tierra', prot: true }]),
+  C('Peñón', 'tierra', 5, 2, [{ protect: 2, s: 'tierra' }]),
+  C('Montaña', 'tierra', 6, 3, [{ add: 2, s: 'tierra', prot: true }]),
 
   C('Brisa', 'aire', 2, 1, [{ add: 1, s: 'aire' }]),
   C('Soplo', 'aire', 3, 1, [{ add: 2, s: 'aire' }]),
@@ -55,36 +55,37 @@ const UMBRAL_V01 = [
   C('Velo', 'aire', 3, 1, [{ disrupt: 1 }]),
   C('Remolino', 'aire', 3, 1, [{ refresh: 1 }]),
   C('Vórtice', 'aire', 4, 2, [{ moveRival: 1, s: 'aire' }]),
-  C('Coloso del Aire', 'aire', 4, 2, [{ moveOwnTo: 'aire' }, { draw: 1 }]),
-  C('Espíritu de la Tormenta', 'aire', 6, 3, [{ moveRival: 2, s: 'aire' }, { add: 1, s: 'aire' }]),
+  C('Ciclón', 'aire', 4, 2, [{ moveOwnTo: 'aire' }, { draw: 1 }]),
+  C('Tormenta', 'aire', 6, 3, [{ moveRival: 2, s: 'aire' }, { add: 1, s: 'aire' }]),
 ];
 
 // v0.2: el Fuego retira y el Aire mueve en cualquier Santuario, la Tierra protege en cualquiera,
-// cartas de coste 5 mejoradas y las cuatro cartas que rendían menos que una Mota de Maná reforzadas.
+// cartas de coste 5 mejoradas y las cuatro cartas que rendían menos que una Mota reforzadas.
 const cambios = {
-  'Brasa Viva': [{ swap: 1, s: 'fuego' }],
+  'Brasa': [{ swap: 1, s: 'fuego' }],
   Ígneo: [{ add: 1, s: 'fuego' }, { remove: 1, s: '*' }],
-  'Coloso de Fuego': [{ remove: 2, s: '*' }, { add: 1, s: 'fuego' }],
-  'Espíritu del Volcán': [{ add: 2, s: 'fuego' }, { remove: 1, s: '*' }],
-  'Coloso de Agua': [{ recover: 1 }, { draw: 1 }],
+  'Magma': [{ remove: 2, s: '*' }, { add: 1, s: 'fuego' }],
+  'Volcán': [{ add: 2, s: 'fuego' }, { remove: 1, s: '*' }],
+  'Abismo': [{ recover: 1 }, { draw: 1 }],
   Torrente: [{ draw: 1 }, { topFromDiscard: 1 }],
   Pedregal: [{ protect: 2, s: '*' }, { draw: 1 }],
-  'Coloso de Tierra': [{ protect: 1, all: true, s: '*' }, { add: 1, s: 'tierra', prot: true }],
+  'Peñón': [{ protect: 1, all: true, s: '*' }, { add: 1, s: 'tierra', prot: true }],
   Velo: [{ add: 1, s: 'aire' }, { disrupt: 1, modo: 'todos' }],
   'Remolino': [{ draw: 1 }, { refresh: 1 }],
   Vórtice: [{ moveRival: 1, s: '*' }],
-  'Espíritu de la Tormenta': [{ moveRival: 2, s: '*' }, { add: 1, s: 'aire' }],
+  'Tormenta': [{ moveRival: 2, s: '*' }, { add: 1, s: 'aire' }],
 };
 const UMBRAL = UMBRAL_V01.map((c) => (cambios[c.nombre] ? { ...c, accion: cambios[c.nombre] } : c));
 
 const INICIAL = [
   ...ELEMENTOS.flatMap((el) => {
-    const nombre = { fuego: 'Fuego', agua: 'Agua', tierra: 'Tierra', aire: 'Aire' }[el];
-    const c = C(`Menor de ${nombre}`, el, 0, 1, [{ add: 1, s: el }], true);
+    // Elementales menores: una sola palabra, como el resto
+    const nombre = { fuego: 'Chispa', agua: 'Rocío', tierra: 'Grano', aire: 'Aliento' }[el];
+    const c = C(nombre, el, 0, 1, [{ add: 1, s: el }], true);
     return [c, c];
   }),
-  C('Mota de Maná', null, 0, 1, [], true),
-  C('Mota de Maná', null, 0, 1, [], true),
+  C('Mota', null, 0, 1, [], true),
+  C('Mota', null, 0, 1, [], true),
 ];
 
 module.exports = { ELEMENTOS, UMBRAL, UMBRAL_V01, INICIAL };

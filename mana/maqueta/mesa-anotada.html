@@ -266,8 +266,8 @@
     C('Onda', 'agua', 3, 1, [['agua', '+2']]),
     C('Ígneo', 'fuego', 4, 2, [['fuego', '+1'], ['retira', '−1']]),
     C('Brisa', 'aire', 2, 1, [['aire', '+1']]),
-    C('Coloso de Tierra', 'tierra', 5, 2, [['escudo', '∞'], ['tierra', '+1']]),
-    C('Espíritu de la Tormenta', 'aire', 6, 3, [['mueve', '2'], ['aire', '+1']]),
+    C('Peñón', 'tierra', 5, 2, [['escudo', '∞'], ['tierra', '+1']]),
+    C('Tormenta', 'aire', 6, 3, [['mueve', '2'], ['aire', '+1']]),
   ];
   const reserva = [C('Polvo', 'tierra', 2, 1, [['tierra', '+1']]), C('Soplo', 'aire', 3, 1, [['aire', '+2']]), C('Gota', 'agua', 2, 1, [['agua', '+1']])];
   const estado = { mana: 3, descarte: 4, vinculado: false };
@@ -324,9 +324,9 @@
 
   document.getElementById('mano').innerHTML = [
     carta('Corriente', 'agua', 2, 1, [['roba', '1']], 'usada', 'Maná'),
-    carta('Menor de Fuego', 'fuego', 0, 1, [['fuego', '+1']]),
+    carta('Chispa', 'fuego', 0, 1, [['fuego', '+1']]),
     carta('Llama', 'fuego', 3, 1, [['fuego', '+2']], 'accion', 'Acción'),
-    carta('Mota de Maná', null, 0, 1, []),
+    carta('Mota', null, 0, 1, []),
     carta('Bastión', 'tierra', 4, 2, [['tierra', '+1'], ['escudo', '⛨']], 'usada', 'Maná'),
   ].join('');
 </script>

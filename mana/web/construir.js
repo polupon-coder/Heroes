@@ -28,6 +28,9 @@ const poner = (marca, codigo) => {
   if (codigo.includes('</script')) throw new Error('El código no puede contener </script>');
   html = html.replace(marca, () => codigo);
 };
+// Texturas: se incrustan en el archivo para que funcione sin carpetas al lado
+html = html.replace(/url\(texturas\/([a-z]+)\.webp\)/g, (_, n) =>
+  `url(data:image/webp;base64,${fs.readFileSync(path.join(__dirname, 'texturas', n + '.webp')).toString('base64')})`);
 poner('/*ACCIONES*/', leer('maqueta/acciones.js'));
 poner('/*MODULOS*/', modulos);
 fs.writeFileSync(path.join(raiz, 'jugar.html'), html);

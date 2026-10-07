@@ -7,69 +7,84 @@
   :root {
     --fondo: #f6f5f1; --tinta: #1d1d1f; --suave: #8a8a8f; --linea: #e4e2dc;
     --coste: #a3a3a8; --mana: #a78bfa;
-    --fuego: #e5533d; --agua: #3b82f6; --tierra: #3fa66b; --aire: #e8b923; --neutro: #4b5563;
-    --j0: var(--fuego); --j1: var(--agua); --j2: var(--tierra); --j3: var(--aire);
+    --fuego: #e5533d; --agua: #3b82f6; --tierra: #3fa66b; --aire: #e3b21c; --neutro: #4b5563;
   }
   * { box-sizing: border-box; margin: 0; }
-  body { width: 1280px; height: 800px; justify-content: space-between; background: var(--fondo); color: var(--tinta);
-    font: 14px/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 22px 32px; display: flex; flex-direction: column; gap: 18px; }
-  .barra { display: flex; align-items: center; justify-content: space-between; }
-  .logo { font-weight: 700; letter-spacing: .3em; font-size: 15px; }
-  .era { color: var(--suave); }
+  body { width: 1280px; height: 800px; background: var(--fondo); color: var(--tinta);
+    font: 14px/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 20px 40px;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+  .ico { width: 18px; height: 18px; }
+
+  /* Cabecera: dos Guardianes a cada lado del título */
+  .barra { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+  .lado { display: flex; gap: 22px; }
+  .lado.izq { justify-content: flex-start; } .lado.der { justify-content: flex-end; }
+  .centro { text-align: center; }
+  .logo { font-weight: 700; letter-spacing: .4em; font-size: 15px; padding-left: .4em; }
+  .era { color: var(--suave); font-size: 12px; margin-top: 3px; }
   .era b { color: var(--tinta); font-weight: 600; }
-  .jugadores { display: flex; gap: 18px; }
-  .jug { display: flex; align-items: center; gap: 6px; color: var(--suave); }
-  .jug .ico { width: 16px; height: 16px; }
-  .jug b { color: var(--tinta); }
+  .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); }
   .jug.turno { color: var(--tinta); font-weight: 600; }
-  .punto { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .sello { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
-    border: 1.5px solid var(--tinta); font-size: 11px; font-weight: 700; }
+    border: 1.5px solid currentColor; font-size: 11px; font-weight: 700; }
 
-  .santuarios { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  .sant { background: #fff; border-radius: 14px; padding: 14px 16px; border: 1px solid var(--linea); }
-  .sant h3 { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
-  .sant h3 .val { margin-left: auto; color: var(--suave); font-weight: 400; font-size: 12px; }
-  .ico { width: 22px; height: 22px; }
-  .fila { display: flex; align-items: center; gap: 4px; height: 16px; margin-top: 7px; }
-  .fila .p { width: 13px; height: 13px; border-radius: 50%; }
-  .fila .p.prot { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--tinta); }
-  .fila .n { margin-left: auto; font-size: 12px; color: var(--suave); }
-  .fila.lider .n { color: var(--tinta); font-weight: 700; }
+  /* Santuarios: icono en el centro y un cuadrante por Guardián */
+  .santuarios { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .sant { position: relative; background: #fff; border: 1px solid var(--linea); border-radius: 16px; height: 156px;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .cuad { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+  .cuad .n { font-size: 15px; font-weight: 600; line-height: 1; }
+  .cuad .n.cero { color: var(--linea); }
+  .cuad.lider .n { font-size: 20px; font-weight: 800; }
+  .puntos { display: flex; gap: 3px; height: 10px; }
+  .puntos i { width: 10px; height: 10px; border-radius: 50%; }
+  .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
+  .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%;
+    background: var(--fondo); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .nucleo .ico { width: 24px; height: 24px; }
+  .marca { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); background: var(--fondo); color: var(--suave);
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase; padding: 0 8px; }
+  .cruz::before, .cruz::after { content: ''; position: absolute; background: var(--linea); }
+  .cruz::before { left: 50%; top: 18px; bottom: 18px; width: 1px; }
+  .cruz::after { top: 50%; left: 18px; right: 18px; height: 1px; }
 
-  .zona { display: flex; flex-direction: column; gap: 8px; }
-  .titulo { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--suave); }
-  .cartas { display: flex; gap: 22px; align-items: flex-end; }
+  .zona { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .titulo { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--suave); padding-left: .16em; }
+  .cartas { display: flex; gap: 22px; justify-content: center; align-items: flex-end; }
 
-  .carta { min-width: 128px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .ilus { width: 128px; height: 128px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
-  .ilus svg { width: 58px; height: 58px; }
-  .nombre { font-size: 13px; }
-  .esferas { display: flex; gap: 4px; }
-  .esf { width: 27px; height: 27px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 13px;
+  /* Carta: todo centrado; Maná siempre en el eje */
+  .carta { width: 128px; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .ilus { width: 128px; height: 128px; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
+  .ilus svg { width: 56px; height: 56px; }
+  .nombre { font-size: 13px; text-align: center; }
+  .esferas { display: grid; grid-template-columns: 36px 36px 36px; gap: 6px; justify-items: center; }
+  .esf { width: 36px; height: 36px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 13px;
     display: flex; align-items: center; justify-content: center; gap: 1px; }
-  .esf svg { width: 13px; height: 13px; }
-  .esf.c { background: var(--coste); } .esf.m { background: var(--mana); }
-  .esf.a { width: auto; min-width: 27px; padding: 0 8px; border-radius: 14px; white-space: nowrap; gap: 3px; }
-
-  .umbral .carta { min-width: 128px; } .umbral .ilus { width: 128px; height: 96px; } .umbral .ilus svg { width: 44px; height: 44px; }
+  .esf svg { width: 12px; height: 12px; }
+  .esf.c { background: var(--coste); grid-column: 1; } .esf.m { background: var(--mana); grid-column: 2; } .esf.a { grid-column: 3; }
+  .esf.doble { font-size: 11px; gap: 0; }
+  .esf.doble span { width: 50%; text-align: center; }
+  .umbral .ilus { height: 100px; } .umbral .ilus svg { width: 44px; height: 44px; }
   .umbral .carta.cara { opacity: .38; }
 
-  .abajo { display: flex; gap: 28px; align-items: flex-end; }
-  .mano .titulo { margin-bottom: 18px; }
-  .mano .carta.accion { transform: translateY(-16px); }
+  /* Mano: Mazo y Descarte a los lados, Maná en el eje */
+  .mesa { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 36px; }
+  .mano { gap: 30px; }
+  .pila { justify-self: center; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--suave); font-size: 12px; }
+  .pila .dorso { width: 76px; height: 104px; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--tinta); }
+  .mano .carta.accion { transform: translateY(-14px); }
   .mano .carta.accion .ilus { box-shadow: 0 0 0 3px var(--tinta); }
   .mano .carta.usada .ilus { box-shadow: 0 0 0 3px var(--mana); }
-  .etq { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; height: 12px; }
+  .etq { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; height: 12px; padding-left: .14em; }
   .etq.a { color: var(--tinta); } .etq.m { color: var(--mana); }
 
-  .panel { margin-left: auto; display: flex; flex-direction: column; align-items: center; gap: 14px; padding-bottom: 6px; }
-  .total { width: 92px; height: 92px; border-radius: 50%; background: var(--mana); color: #fff; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; font-size: 36px; font-weight: 700; line-height: 1; }
-  .total small { font-size: 10px; letter-spacing: .14em; font-weight: 600; margin-top: 4px; }
-  .boton { width: 170px; text-align: center; padding: 11px 0; border-radius: 22px; font-weight: 600; font-size: 13px; }
+  .mando { display: grid; grid-template-columns: 170px auto 170px; gap: 26px; align-items: center; }
+  .total { width: 84px; height: 84px; border-radius: 50%; background: var(--mana); color: #fff; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: 32px; font-weight: 700; line-height: 1; }
+  .total small { font-size: 9px; letter-spacing: .16em; font-weight: 600; margin-top: 4px; padding-left: .16em; }
+  .boton { text-align: center; padding: 11px 0; border-radius: 22px; font-weight: 600; font-size: 13px; }
   .boton.lleno { background: var(--tinta); color: #fff; } .boton.borde { border: 1.5px solid var(--tinta); }
-  .pilas { color: var(--suave); font-size: 12px; }
 </style>
 </head>
 <body>
@@ -77,23 +92,27 @@
   <defs>
     <symbol id="fuego" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2.5 1.3-4 2.5-5.2.2 1.7 1 2.7 2 3.2C11 8 11 5 12 2z"/></symbol>
     <symbol id="agua" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.5c3.5 4.6 6 8 6 11.2a6 6 0 0 1-12 0C6 10.5 8.5 7.1 12 2.5z"/></symbol>
-    <symbol id="tierra" viewBox="0 0 24 24"><path fill="currentColor" d="M20 4C11 4 5 8.5 5 15c0 1.6.4 3 1 4l-2 2 1.4 1.4 2-2c1 .7 2.4 1.1 4 1.1C18 21.5 20 13 20 4zM8.5 17.5c2-3.4 4.6-6 8-8-2.6 2.7-4.7 5.2-6.4 9z"/></symbol>
-    <symbol id="aire" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M3 8h11a3 3 0 1 0-3-3M3 13h16a3 3 0 1 1-3 3M3 18h7"/></symbol>
+    <symbol id="tierra" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c4 3 7 6.5 7 10.5A7 7 0 0 1 13 19.4V22h-2v-2.6a7 7 0 0 1-6-6.9C5 8.5 8 5 12 2z"/></symbol>
+    <symbol id="aire" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M4 8h16M2 12h20M4 16h16"/></symbol>
     <symbol id="roba" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 8v7m-3-3 3 3 3-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
     <symbol id="escudo" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></symbol>
-    <symbol id="mueve" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M4 12h15m-4-4 4 4-4 4"/></symbol>
+    <symbol id="mueve" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></symbol>
     <symbol id="retira" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8.5 12h7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
   </defs>
 </svg>
 
 <div class="barra">
-  <div class="logo">MANA</div>
-  <div class="era"><b>Era II</b> · Ronda 3 de 5 · cada Santuario da <b>2 Sellos</b></div>
-  <div class="jugadores">
-    <span class="jug turno"><svg class="ico" style="color:var(--fuego)"><use href="#fuego"/></svg>Tú <span class="sello">4</span></span>
-    <span class="jug"><svg class="ico" style="color:var(--agua)"><use href="#agua"/></svg>Ana <span class="sello">5</span></span>
-    <span class="jug"><svg class="ico" style="color:var(--tierra)"><use href="#tierra"/></svg>Pol <span class="sello">3</span></span>
-    <span class="jug"><svg class="ico" style="color:var(--aire)"><use href="#aire"/></svg>Marc <span class="sello">2</span></span>
+  <div class="lado izq">
+    <span class="jug turno" style="color:var(--fuego)"><svg class="ico"><use href="#fuego"/></svg><span style="color:var(--tinta)">Tú</span><span class="sello" style="color:var(--tinta)">4</span></span>
+    <span class="jug"><svg class="ico" style="color:var(--agua)"><use href="#agua"/></svg>Ana<span class="sello">5</span></span>
+  </div>
+  <div class="centro">
+    <div class="logo">MANA</div>
+    <div class="era"><b>Era II</b> · Ronda 3 de 5 · <b>2 Sellos</b> por Santuario</div>
+  </div>
+  <div class="lado der">
+    <span class="jug"><span class="sello">3</span>Pol<svg class="ico" style="color:var(--tierra)"><use href="#tierra"/></svg></span>
+    <span class="jug"><span class="sello">2</span>Marc<svg class="ico" style="color:var(--aire)"><use href="#aire"/></svg></span>
   </div>
 </div>
 
@@ -104,66 +123,76 @@
   <div class="cartas" id="umbral"></div>
 </div>
 
-<div class="abajo">
-  <div class="zona mano">
-    <div class="titulo">Tu mano</div>
-    <div class="cartas" id="mano"></div>
-  </div>
-  <div class="panel">
-    <div class="total">3<small>MANÁ</small></div>
+<div class="zona mano">
+  <div class="mando">
     <div class="boton borde">Vincular</div>
+    <div class="total">3<small>MANÁ</small></div>
     <div class="boton lleno">Terminar turno</div>
-    <div class="pilas">Mazo 7 · Descarte 4</div>
+  </div>
+  <div class="mesa">
+    <div class="pila"><div class="dorso">7</div>Mazo</div>
+    <div class="cartas" id="mano"></div>
+    <div class="pila"><div class="dorso">4</div>Descarte</div>
   </div>
 </div>
 
 <script>
-  const icono = (id, color = '#fff') => `<svg class="ico" style="color:${color}"><use href="#${id}"/></svg>`;
-  const tono = { fuego: '#fbe3df', agua: '#dfeafd', tierra: '#dcf0e3', aire: '#fbf1d3' };
+  const EL = ['fuego', 'agua', 'tierra', 'aire'];
+  const icono = (id, color) => `<svg class="ico" style="color:${color}"><use href="#${id}"/></svg>`;
+  const tono = { fuego: '#fbe3df', agua: '#dfeafd', tierra: '#dcf0e3', aire: '#faf0d0' };
 
-  // Santuarios: presencia de Tú, Ana, Pol, Marc (p = protegidas)
+  // Presencia de Tú (🔥), Ana (💧), Pol (🌿), Marc (💨): mismo orden que la cabecera, un cuadrante cada uno
   const S = [
     ['fuego', 'Fuego', [4, 3, 0, 1], []],
     ['agua', 'Agua', [2, 2, 0, 0], []],
     ['tierra', 'Tierra', [1, 1, 3, 2], [0, 0, 2, 0]],
     ['aire', 'Aire', [0, 2, 1, 3], []],
   ];
+  const orden = [0, 1, 2, 3]; // cuadrantes: arriba izq, arriba der, abajo izq, abajo der
   document.getElementById('santuarios').innerHTML = S.map(([el, nom, ns, prot]) => {
     const max = Math.max(...ns);
-    const lideres = ns.filter((n) => n === max).length;
-    const filas = ns.map((n, k) => `<div class="fila ${n === max && lideres === 1 ? 'lider' : ''}">${
-      Array.from({ length: n }, (_, t) => `<span class="p ${t < (prot[k] || 0) ? 'prot' : ''}" style="background:var(--j${k})"></span>`).join('')
-    }<span class="n">${n || ''}</span></div>`).join('');
-    return `<div class="sant"><h3>${icono(el, `var(--${el})`)}${nom}<span class="val">${lideres > 1 ? 'empate' : ''}</span></h3>${filas}</div>`;
+    const unico = ns.filter((n) => n === max).length === 1;
+    const cuads = orden.map((k) => {
+      const n = ns[k];
+      const puntos = Array.from({ length: n }, (_, t) => `<i class="${t < (prot[k] || 0) ? 'prot' : ''}" style="background:var(--${EL[k]})"></i>`).join('');
+      return `<div class="cuad ${n === max && unico ? 'lider' : ''}"><div class="n ${n ? '' : 'cero'}" style="${n ? `color:var(--${EL[k]})` : ''}">${n}</div><div class="puntos">${puntos}</div></div>`;
+    }).join('');
+    return `<div class="sant cruz">${cuads}<div class="nucleo">${icono(el, `var(--${el})`)}</div><div class="marca">${nom}${unico ? '' : ' · empate'}</div></div>`;
   }).join('');
 
-  // Acción: lista de partes [tipo, texto]; tipo = elemento (sobre un Santuario) o símbolo neutro
-  const parte = ([tipo, txt]) => {
-    const color = ['fuego', 'agua', 'tierra', 'aire'].includes(tipo) ? `var(--${tipo})` : 'var(--neutro)';
-    return `<span class="esf a" style="background:${color}">${txt}<svg><use href="#${tipo}"/></svg></span>`;
+  // Acción: una sola esfera; con dos efectos, la esfera se parte en dos mitades
+  const color = (t) => (EL.includes(t) ? `var(--${t})` : 'var(--neutro)');
+  const accion = (partes) => {
+    if (!partes.length) return '';
+    if (partes.length === 1) {
+      const [t, txt] = partes[0];
+      return `<span class="esf a" style="background:${color(t)}">${txt}<svg><use href="#${t}"/></svg></span>`;
+    }
+    const [[t1, x1], [t2, x2]] = partes;
+    return `<span class="esf a doble" style="background:linear-gradient(90deg, ${color(t1)} 50%, ${color(t2)} 50%)"><span>${x1}</span><span>${x2}</span></span>`;
   };
-  const carta = (nombre, el, coste, mana, accion, extra = '') => {
+  const carta = (nombre, el, coste, mana, partes, extra = '', etq = '') => {
     const ilus = el ? `<div class="ilus" style="background:${tono[el]}"><svg style="color:var(--${el})"><use href="#${el}"/></svg></div>`
       : `<div class="ilus" style="background:#ede9fe"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="var(--mana)"/></svg></div>`;
-    return `<div class="carta ${extra}">${ilus}<div class="nombre">${nombre}</div><div class="esferas">${
-      coste ? `<span class="esf c">${coste}</span>` : ''}<span class="esf m">${mana}</span>${accion.map(parte).join('')}</div></div>`;
+    const e = etq ? `<div class="etq ${etq === 'Acción' ? 'a' : 'm'}">${etq}</div>` : '<div class="etq"></div>';
+    return `<div class="carta ${extra}">${e}${ilus}<div class="nombre">${nombre}</div><div class="esferas">${
+      coste ? `<span class="esf c">${coste}</span>` : ''}<span class="esf m">${mana}</span>${accion(partes)}</div></div>`;
   };
 
   document.getElementById('umbral').innerHTML = [
     carta('Corriente', 'agua', 3, 1, [['agua', '+2']]),
-    carta('Embestida', 'fuego', 4, 2, [['fuego', '+1'], ['retira', '1']], 'cara'),
-    carta('Bastión', 'tierra', 5, 2, [['escudo', '∞'], ['tierra', '+1']], 'cara'),
+    carta('Embestida', 'fuego', 4, 2, [['fuego', '+1'], ['retira', '−1']], 'cara'),
     carta('Brisa', 'aire', 2, 1, [['aire', '+1']]),
+    carta('Bastión', 'tierra', 5, 2, [['escudo', '∞'], ['tierra', '+1']], 'cara'),
     carta('Torbellino', 'aire', 6, 3, [['mueve', '2'], ['aire', '+1']], 'cara'),
   ].join('');
 
-  const conEtq = (html, etq, cls) => html.replace('<div class="ilus"', `<div class="etq ${cls}">${etq}</div><div class="ilus"`);
   document.getElementById('mano').innerHTML = [
-    conEtq(carta('Llama', 'fuego', 3, 1, [['fuego', '+2']], 'accion'), 'Acción', 'a'),
-    conEtq(carta('Manantial', 'agua', 2, 1, [['roba', '1']], 'usada'), 'Maná', 'm'),
-    conEtq(carta('Raíces profundas', 'tierra', 4, 2, [['tierra', '+1'], ['escudo', '']], 'usada'), 'Maná', 'm'),
-    conEtq(carta('Menor de Aire', 'aire', 0, 1, [['aire', '+1']]), '', ''),
-    conEtq(carta('Mota de Maná', null, 0, 1, []), '', ''),
+    carta('Manantial', 'agua', 2, 1, [['roba', '1']], 'usada', 'Maná'),
+    carta('Raíces profundas', 'tierra', 4, 2, [['tierra', '+1'], ['escudo', '⛨']], 'usada', 'Maná'),
+    carta('Llama', 'fuego', 3, 1, [['fuego', '+2']], 'accion', 'Acción'),
+    carta('Menor de Fuego', 'fuego', 0, 1, [['fuego', '+1']]),
+    carta('Mota de Maná', null, 0, 1, []),
   ].join('');
 </script>
 </body>

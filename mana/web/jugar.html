@@ -60,8 +60,7 @@
   .plazas { width: 100%; display: flex; flex-direction: column; gap: 6px; }
   .plaza { border: 1.5px solid var(--linea); border-radius: 12px; padding: 8px 12px 6px; text-align: left; }
   .plaza.bot { color: var(--suave); border-style: dashed; }
-  .boton-reglas { font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 6px 12px 4px; border-radius: 14px; cursor: pointer;
-    background: var(--mana); color: #fff; margin-left: -6px; }
+  .ventana .boton-reglas, .lado .boton-reglas { font-size: 11px; letter-spacing: .08em; padding: 7px 14px 5px; border-radius: 14px; margin-left: -6px; }
   .reglas { text-align: left; font-size: 12px; line-height: 1.5; color: var(--tinta); max-height: 440px; overflow: auto; text-transform: none; padding-right: 6px; }
   .reglas h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--mana); margin: 12px 0 4px; }
   .reglas h3:first-child { margin-top: 0; }
@@ -139,10 +138,15 @@
   .total small { font-size: 10px; letter-spacing: .16em; font-weight: 600; margin-top: 6px; padding-left: .16em; }
   .total.latido { transform: scale(1.08); }
 
-  .boton { text-align: center; padding: 10px 0; border-radius: 22px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1.5px solid var(--tinta); }
-  .boton.lleno { background: var(--tinta); color: #fff; }
-  .boton.lila { background: var(--mana); border-color: var(--mana); color: #fff; }
-  .boton.verde { background: var(--verde); border-color: var(--verde); color: #fff; }
+  /* Botones hundidos en el yeso: textura de la mesa teñida, sombra interior arriba y brillo abajo */
+  .boton, .boton-reglas { text-align: center; padding: 11px 0 9px; border-radius: 22px; font-weight: 700; font-size: 13px; cursor: pointer; border: 0;
+    --tono: #efe6da; color: #6b5a43; background: var(--tono) url(texturas/fondo.webp) center / cover; background-blend-mode: multiply;
+    box-shadow: inset 2px 3px 6px rgba(60, 35, 10, .32), inset -2px -2px 5px rgba(255, 255, 255, .6), 0 1px 0 rgba(255, 255, 255, .8);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .55); transition: box-shadow .12s; }
+  .boton:active, .boton-reglas:active { box-shadow: inset 3px 5px 9px rgba(60, 35, 10, .45), inset -1px -1px 3px rgba(255, 255, 255, .45); }
+  .boton.lleno { --tono: #ddd2c3; color: #4a3d2c; }
+  .boton.lila, .boton-reglas { --tono: #cfc0f6; color: #fff; text-shadow: 0 1px 2px rgba(70, 40, 130, .45); }
+  .boton.verde { --tono: #9cc7a5; color: #fff; text-shadow: 0 1px 2px rgba(20, 70, 35, .45); }
   .boton.inactivo { opacity: .28; cursor: not-allowed; }
   /* Deshacer y Terminar turno: mismo tamaño, simétricos respecto al eje central */
   .mandos { margin-top: auto; width: 100%; display: grid; grid-template-columns: 200px 200px; justify-content: center; gap: 16px; align-items: center; }

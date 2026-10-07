@@ -50,6 +50,7 @@
   /* Sellos: el número dentro de una esfera de piedra del color del jugador */
   .sello { display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); }
   /* Ventana de inicio sobre el yeso suave de la mesa */
+  .ventana { background: #fbf6ef url(texturas/fondo.webp) center / cover; }
   .ventana.yeso { background: linear-gradient(rgba(255, 252, 247, .3), rgba(255, 252, 247, .3)), url(texturas/fondo.webp) center / cover; }
   .ventana.yeso .campo { background: rgba(255, 255, 255, .6); }
   .titulo-inicio { width: 230px; margin: 4px 0 8px; }
@@ -136,13 +137,16 @@
 
   .arriba { display: grid; grid-template-columns: 108px 1fr 108px; align-items: start; justify-items: center; width: 364px; margin-top: auto; }
   .pila { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--suave); font-size: 13px; }
-  .dorso { width: 108px; height: 108px; opacity: .85; border-radius: 50%; background: url(texturas/esfera-gris.webp) center / contain no-repeat; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.4);
+  .dorso { width: 108px; height: 108px; opacity: .85; border-radius: 50%; background: url(texturas/esfera-beige.webp) center / contain no-repeat; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.4);
     display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; }
   .total { width: 108px; height: 108px; opacity: .85; border-radius: 50%; background: url(texturas/esfera-mana.webp) center / contain no-repeat; color: #fff; text-shadow: 0 2px 4px rgba(60,30,90,.5); display: flex; flex-direction: column;
     align-items: center; justify-content: center; font-size: 46px; font-weight: 700; line-height: 1; transition: transform .15s; }
-  .mana-pila { color: var(--mana); cursor: default; }
+  .mana-pila { color: #957088; cursor: default; }
   /* La letra redondeada tiene la línea base alta: un poco de aire arriba centra el número en la bola */
   .total, .dorso { padding-top: 7px; }
+  /* Fuente en beige, Reserva en blanco roto: números en marrón para que se lean */
+  #mazo, #descarte { color: #6b5a43; text-shadow: 0 1px 0 rgba(255, 255, 255, .6); }
+  #descarte { background-image: url(texturas/esfera-blanco.webp); }
   .total.latido { transform: scale(1.08); }
 
   /* Botones hundidos en el yeso: textura de la mesa teñida, sombra interior arriba y brillo abajo */
@@ -267,6 +271,81 @@
   .aviso { background: var(--tinta); color: #fff; border-radius: 12px; padding: 8px 14px; font-size: 12.5px; box-shadow: 0 8px 22px rgba(0,0,0,.2);
     max-width: 520px; text-align: center; animation: entra .2s ease-out; }
   @keyframes entra { from { opacity: 0; transform: translateY(-6px); } }
+
+  /* ---------- Móvil en vertical: una sola columna (se diseña a 390 px de ancho y se escala) ----------
+     Orden: cabecera · Umbral · Ofrenda · Santuario · Fuente/Maná/Reserva · botones */
+  .movil body { padding: 10px 12px 12px; }
+  /* Cabecera: Era y Ronda en la esquina izquierda, el título en el centro, Reglas a la derecha; debajo, los 4 jugadores en fila */
+  .movil .barra { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 8px; align-items: center; }
+  .movil #yo, .movil .centro, .movil .logo, .movil #rivales { display: contents; }
+  .movil #era-n { grid-row: 1; grid-column: 1; justify-self: start; font-size: 10px; line-height: 1.35; transform: none; }
+  .movil #ronda-n { display: none; }
+  .movil .logo img { grid-row: 1; grid-column: 2 / 4; justify-self: center; height: 34px; }
+  .movil .boton-reglas { grid-row: 1; grid-column: 4; justify-self: end; margin: 0; }
+  .movil .jug { grid-row: 2; justify-self: center; margin: 0; font-size: 12px; gap: 4px; }
+  .movil .era { grid-row: 3; grid-column: 1 / -1; margin: 0; text-align: center; }
+  .movil .era:empty { display: none; }
+  .movil .juego { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .movil .principal { display: contents; }
+  .movil .columna { gap: 4px; flex: none; }
+  .movil .columna:first-child { order: 1; }
+  .movil .principal > .titulo { order: 2; margin: 2px 0 0; }
+  .movil #mano { order: 3; }
+  .movil .columna:last-child { order: 4; }
+  .movil .arriba { order: 5; }
+  .movil .mandos { order: 6; }
+  .movil .titulo.img { height: 24px; padding-top: 0; }
+  .movil .titulo.img img { height: 19px; }
+  .movil .columna > .titulo { padding-top: 0; }
+  /* Umbral: los 5 en una fila */
+  .movil .panel { padding: 6px 4px; }
+  .movil #umbral { flex-direction: row; gap: 2px; }
+  .movil #umbral .linea { display: none; }
+  .movil .fila-u { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1 1 0; min-width: 0; }
+  .movil .fila-u .ilus { width: 54px; height: 54px; }
+  .movil .fila-u .nombre { font-size: 9px; margin: 0; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .movil .fila-u > div:not(.ilus):not(.pista) { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .movil .esferas { grid-template-columns: repeat(3, auto); gap: 2px; }
+  .movil .esferas.sin-coste { grid-template-columns: repeat(2, auto); }
+  .movil .fila-u .esf { width: 20px; height: 20px; font-size: 9px; }
+  .movil .fila-u .esf.solo-num { font-size: 10px; }
+  .movil .fila-u .esf.doble > span, .movil .fila-u .esf.doble > span.solo-num { font-size: 7px; }
+  .movil .fila-u .esf svg { width: 7px; height: 7px; }
+  .movil .pista { display: none !important; }
+  /* Ofrenda: tus cartas en una fila; si robas más, se estrechan */
+  .movil #mano { gap: 4px !important; width: 100%; }
+  .movil .carta { width: auto; flex: 1 1 0; min-width: 0; max-width: 76px; gap: 3px; }
+  .movil .carta .ilus { width: 100%; height: 76px; }
+  .movil .carta .nombre { font-size: 9.5px; height: 2.4em; }
+  .movil .carta .etq { font-size: 8px; height: 10px; }
+  .movil .carta .esf { width: 24px; height: 24px; font-size: 10px; }
+  .movil .carta .esf.solo-num { font-size: 12px; }
+  .movil .carta .esf.doble > span { font-size: 8px; }
+  .movil .carta .esf svg { width: 8px; height: 8px; }
+  /* Santuario: cuatro columnas de color, una fila de esferas por jugador */
+  .movil .panel.col-der { -webkit-mask: none; mask: none; background: none; padding: 0; }
+  .movil #santuarios { flex-direction: row; margin: 0; flex: 1; min-height: 104px; }
+  .movil .columna:last-child { flex: 1 1 auto; max-height: 260px; min-height: 130px; }
+  .movil #santuarios .linea { width: 1px; height: auto; margin: 0; }
+  .movil .sant { padding: 6px 3px; gap: 3px; }
+  .movil .sant::before { background-size: 160% 130%; opacity: .75; }
+  .movil .puntos { gap: 1px; max-width: 100%; }
+  .movil .puntos i { width: 11px; height: 11px; }
+  .movil .sant.lleno .puntos i { width: 8px; height: 8px; }
+  .movil .marca { bottom: 2px; font-size: 8px; }
+  /* Fuente, Maná y Reserva, y los botones al alcance del pulgar */
+  .movil .arriba { width: 270px; grid-template-columns: 70px 1fr 70px; align-self: center; margin-top: auto; padding-top: 8px; }
+  .movil .dorso, .movil .total { width: 64px; height: 64px; font-size: 26px; padding-top: 4px; }
+  .movil .pila { font-size: 10px; gap: 3px; }
+  .movil .mandos { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .movil .mandos .boton { padding: 13px 0 11px; }
+  /* Mensajes: la guía en una franja encima de los botones; ventanas al ancho de la pantalla */
+  .movil #guia { left: 8px !important; right: 8px; top: 6px !important; bottom: auto; width: auto; font-size: 11.5px; padding: 9px 12px 8px; box-shadow: 0 8px 24px rgba(76, 29, 149, .3); }
+  .movil #guia::after { display: none; }
+  .movil #avisos { top: auto; bottom: 64px; width: 92%; flex-direction: column-reverse; }
+  .movil .aviso { font-size: 12px; }
+  .movil .ventana, .movil .ventana.ancha { width: calc(100% - 24px); max-width: 420px; padding: 20px 16px 16px; }
+  .movil .ventana .botones { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
 </style>
 </head>
 <body>
@@ -330,9 +409,18 @@ const $ = (id) => document.getElementById(id);
 
 // Escala: el diseño mide 1280×720 y se amplía para llenar la ventana
 function escalar() {
-  const z = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+  // En el móvil, la página puede medir más que la pantalla (la mesa de escritorio es ancha): manda la pantalla
+  const telefono = screen.width < 700 && screen.height > screen.width;
+  const w = telefono ? Math.min(window.innerWidth, screen.width) : window.innerWidth;
+  const h = telefono ? Math.min(window.innerHeight, screen.height) : window.innerHeight;
+  // Móvil en vertical: una columna de 390 px de ancho que llena la pantalla; si no, la mesa de 1280×720
+  const movil = telefono || (w < 700 && h > w);
+  document.documentElement.classList.toggle('movil', movil);
+  const z = movil ? Math.min(w / 390, h / 720) : Math.min(w / 1280, h / 720);
+  document.body.style.width = movil ? w / z + 'px' : '';
+  document.body.style.height = movil ? h / z + 'px' : '';
   document.body.style.zoom = z;
-  if (window.guiaLista) guia(); // al cambiar el tamaño de la ventana, recoloca el mensaje
+  if (window.guiaLista) { pintar(); guia(); } // al cambiar el tamaño de la ventana, repinta y recoloca el mensaje
 }
 window.addEventListener('resize', escalar);
 escalar();
@@ -388,7 +476,7 @@ function pintar() {
   $('rivales').innerHTML = p.jug.filter((j) => j.i !== YO).map(jugador).join('');
   $('rivales').style.justifyContent = p.n === 2 ? 'flex-end' : 'space-between';
   const quien = p.turno && !entreEras ? (p.turno.i === YO ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
-  $('era-n').textContent = `Era ${ROMANO[p.era]}`;
+  $('era-n').innerHTML = `Era ${ROMANO[p.era]}` + (document.documentElement.classList.contains('movil') ? `<br>Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)}/${p.v.rondas}` : '');
   $('ronda-n').textContent = `Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)}/${p.v.rondas}`;
   $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : '';
 
@@ -443,7 +531,8 @@ function pintar() {
       return `<div class="cuad ${pr.n === max && unico ? 'lider' : ''}"><div class="puntos">${puntos}</div></div>`;
     }).join('');
     const empate = max > 0 && !unico ? '<span class="emp">empate</span>' : '';
-    return `<div class="sant tx-${s}" style="--el:var(--${s})">${cuads}${empate ? `<div class="marca">${empate}</div>` : ''}</div>`;
+    const lleno = Math.max(...ns) > 7;
+    return `<div class="sant tx-${s} ${lleno ? 'lleno' : ''}" style="--el:var(--${s})">${cuads}${empate ? `<div class="marca">${empate}</div>` : ''}</div>`;
   }).join('<div class="linea"></div>');
   guia();
   subirPronto();
@@ -572,7 +661,7 @@ $('velo').addEventListener('click', (e) => { if (e.target === $('velo') && !$('v
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('velo').dataset.fija) cerrar(); });
 
 const cabeceraCarta = (c, coste) => `${ilus(c)}<div class="nombre">${c.nombre}</div>${esferas(c, coste)}
-  <div class="texto">${textoDe(c)}</div><div class="comomana">Como Maná da ${c.mana}</div>`;
+  <div class="texto">${textoDe(c)}</div>`;
 const conObjetivos = (c) => c.accion.some((e) => e.remove || e.moveRival || e.moveOwnTo || e.protect || e.swap || e.disrupt || e.refresh || e.discard || e.handToTop || e.topFromDiscard || e.recover);
 
 // Carta de la mano: Acción o Maná
@@ -598,7 +687,7 @@ function verCarta(donde, k) {
     if (conObjetivos(c)) nota += '<div class="nota">Al jugarla te preguntaré qué eliges en cada efecto.</div>';
     abrir(cabeceraCarta(c, c.coste) + nota, [
       { texto: 'Cancelar' },
-      { texto: `Maná (+${c.mana})`, clase: 'lila', inactivo: !esMiTurno(), accion: () => { guardar(`${c.nombre} como Maná`); nuevas = []; p.humanoMana(k); latido(); pintar(); } },
+      { texto: `Maná +${c.mana}`, clase: 'lila', inactivo: !esMiTurno(), accion: () => { guardar(`${c.nombre} como Maná`); nuevas = []; p.humanoMana(k); latido(); pintar(); } },
       { texto: 'Acción', clase: 'verde', inactivo: !esMiTurno() || !c.accion.length, accion: () => jugarAccion(k) },
     ]);
     return;

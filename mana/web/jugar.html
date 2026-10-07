@@ -45,7 +45,7 @@
   .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); border-radius: 14px; padding: 2px 6px; margin: -2px -6px; }
   /* El nombre centrado con la esfera (la letra tiene la línea base alta) */
   .jug .nom { line-height: 1; padding-top: 4px; }
-  .jug .sello { line-height: 1; padding-top: 2px; }
+  .jug .sello { line-height: 1; padding-top: 2px; filter: saturate(.7) brightness(1.08); }
   .jug.activo, .jug.mio { color: var(--tinta); font-weight: 700; }
   /* Sellos: el número dentro de una esfera de piedra del color del jugador */
   .sello { display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); }
@@ -158,7 +158,7 @@
   .boton.lila, .boton-reglas { --tono: #cfc0f6; color: #fff; text-shadow: 0 1px 2px rgba(70, 40, 130, .45); }
   .boton.verde { --tono: #9cc7a5; color: #fff; text-shadow: 0 1px 2px rgba(20, 70, 35, .45); }
   .boton.parpadea { animation: parpadea 1.1s ease-in-out infinite; }
-  @keyframes parpadea { 50% { filter: brightness(1.12) saturate(1.4); transform: scale(1.04); box-shadow: inset 2px 3px 6px rgba(60, 35, 10, .2), 0 0 0 4px rgba(156, 199, 165, .55); } }
+  @keyframes parpadea { 50% { filter: brightness(1.12) saturate(1.4); box-shadow: inset 2px 3px 6px rgba(60, 35, 10, .2), 0 0 0 4px rgba(156, 199, 165, .55); } }
   @media (prefers-reduced-motion: reduce) { .boton.parpadea { animation: none; box-shadow: 0 0 0 4px rgba(156, 199, 165, .7); } }
   .boton.inactivo { opacity: .28; cursor: not-allowed; }
   /* Deshacer y Terminar turno: mismo tamaño, simétricos respecto al eje central */

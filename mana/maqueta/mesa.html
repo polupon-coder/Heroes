@@ -10,8 +10,8 @@
     --fuego: #e5533d; --agua: #3b82f6; --tierra: #3fa66b; --aire: #e3b21c; --neutro: #4b5563;
   }
   * { box-sizing: border-box; margin: 0; }
-  body { width: 1280px; height: 800px; background: var(--fondo); color: var(--tinta);
-    font: 14px/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 20px 40px;
+  body { width: 1280px; height: 960px; background: var(--fondo); color: var(--tinta);
+    font: 14px/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 34px 40px 40px;
     display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
   .ico { width: 18px; height: 18px; }
 
@@ -30,21 +30,22 @@
 
   /* Santuarios: icono en el centro y un cuadrante por Guardián */
   .santuarios { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-  .sant { position: relative; background: #fff; border: 1px solid var(--linea); border-radius: 16px; height: 156px;
+  .sant { position: relative; background: color-mix(in srgb, var(--el) 13%, #fff); border-radius: 16px; height: 156px; margin-bottom: 26px;
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
   .cuad { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
   .cuad .n { font-size: 15px; font-weight: 600; line-height: 1; }
-  .cuad .n.cero { color: var(--linea); }
+  .cuad .n.cero { color: color-mix(in srgb, var(--el) 30%, transparent); }
   .cuad.lider .n { font-size: 20px; font-weight: 800; }
   .puntos { display: flex; gap: 3px; height: 10px; }
   .puntos i { width: 10px; height: 10px; border-radius: 50%; }
   .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
   .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%;
-    background: var(--fondo); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .nucleo .ico { width: 24px; height: 24px; }
-  .marca { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); background: var(--fondo); color: var(--suave);
-    font-size: 10px; letter-spacing: .14em; text-transform: uppercase; padding: 0 8px; }
-  .cruz::before, .cruz::after { content: ''; position: absolute; background: var(--linea); }
+  .marca { position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%); color: var(--el); font-weight: 600;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding-left: .16em; white-space: nowrap; }
+  .marca .emp { color: var(--suave); font-weight: 400; }
+  .cruz::before, .cruz::after { content: ''; position: absolute; background: color-mix(in srgb, var(--el) 30%, transparent); }
   .cruz::before { left: 50%; top: 18px; bottom: 18px; width: 1px; }
   .cruz::after { top: 50%; left: 18px; right: 18px; height: 1px; }
 
@@ -157,7 +158,7 @@
       const puntos = Array.from({ length: n }, (_, t) => `<i class="${t < (prot[k] || 0) ? 'prot' : ''}" style="background:var(--${EL[k]})"></i>`).join('');
       return `<div class="cuad ${n === max && unico ? 'lider' : ''}"><div class="n ${n ? '' : 'cero'}" style="${n ? `color:var(--${EL[k]})` : ''}">${n}</div><div class="puntos">${puntos}</div></div>`;
     }).join('');
-    return `<div class="sant cruz">${cuads}<div class="nucleo">${icono(el, `var(--${el})`)}</div><div class="marca">${nom}${unico ? '' : ' · empate'}</div></div>`;
+    return `<div class="sant cruz" style="--el:var(--${el})">${cuads}<div class="nucleo">${icono(el, `var(--${el})`)}</div><div class="marca">${nom}${unico ? '' : ' <span class="emp">· empate</span>'}</div></div>`;
   }).join('');
 
   // Acción: una sola esfera; con dos efectos, la esfera se parte en dos mitades

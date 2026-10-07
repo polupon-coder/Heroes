@@ -1302,7 +1302,7 @@ function pintar() {
   $('rivales').innerHTML = p.jug.slice(1).map(jugador).join('');
   $('rivales').style.justifyContent = p.n === 2 ? 'flex-end' : 'space-between';
   const quien = p.turno && !entreEras ? (p.turno.i === 0 ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
-  $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : `<b>Era ${ROMANO[p.era]}</b> · Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)} de ${p.v.rondas} · <b>${p.v.eras[p.era]} Sellos</b> por Santuario · ${quien}`;
+  $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : `<b>Era ${ROMANO[p.era]}</b> · Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)} de ${p.v.rondas} · ${quien}`;
 
   // Umbral
   const miTurno = esMiTurno();

@@ -128,8 +128,9 @@
   /* Esferas */
   .ilus { display: flex; align-items: center; justify-content: center; }
   .ilus.tx { background: linear-gradient(rgba(255, 251, 244, .18), rgba(255, 251, 244, .18)), var(--tex) center / cover; }
-  .ilus.con-img { overflow: hidden; background: linear-gradient(rgba(255, 251, 244, .5), rgba(255, 251, 244, .5)), var(--tex) center / cover; }
-  .ilus.con-img img { width: 92%; height: 92%; object-fit: contain; filter: drop-shadow(0 3px 4px rgba(60, 30, 10, .28)); }
+  /* Elementales ilustrados: sin fondo, solo la figura */
+  .ilus.con-img { background: none; }
+  .ilus.con-img img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 5px rgba(60, 30, 10, .22)); }
   .ilus.tx svg { color: #fff !important; filter: drop-shadow(0 1px 2px rgba(0,0,0,.18)); }
   .esferas { display: grid; grid-template-columns: 32px 32px 32px; gap: 4px; justify-items: center; align-items: center; }
   .esferas.sin-coste { grid-template-columns: 32px 32px; }

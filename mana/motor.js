@@ -379,7 +379,7 @@ class Partida {
   }
 
   anotar(entrada) {
-    if (this.registro) this.registro.push({ era: this.era, ...entrada });
+    if (this.registro) this.registro.push({ era: this.era, ronda: this.rondaEra, ...entrada });
   }
 
   jugarAccion(i, idx) {
@@ -491,6 +491,7 @@ class Partida {
     this.st.desperdicio[this.era] += mana - gastado;
     this.st.turnosEra[this.era]++;
     this.st.turnos++;
+    this.anotar({ i, tipo: 'fin', comoMana: j.mano.map((c) => c.nombre), sinUsar: [] });
     j.desc.push(...j.jugadas, ...j.mano);
     j.jugadas = [];
     j.mano = [];
@@ -501,6 +502,7 @@ class Partida {
     const val = this.v.eras[this.era];
     const gan = this.jug.map(() => 0);
     this.ultimaPuntuacion = [];
+    (this.historial = this.historial || []).push(this.ultimaPuntuacion);
     for (const s of ELEMENTOS) {
       const ns = this.pres[s].map((p) => p.n);
       const detalle = { s, val, presencia: ns.slice(), ganador: null, empate: false };
@@ -686,6 +688,8 @@ class Partida {
 
   humanoTerminar() {
     const j = this.jug[this.turno.i];
+    this.anotar({ i: this.turno.i, tipo: 'fin', comoMana: this.turno.manaUsadas.map((c) => c.nombre), sinUsar: j.mano.map((c) => c.nombre),
+      manaSobrante: this.manaDisponible() });
     j.desc.push(...j.jugadas, ...this.turno.manaUsadas, ...j.mano);
     j.jugadas = [];
     j.mano = [];

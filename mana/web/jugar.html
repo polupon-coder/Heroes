@@ -539,9 +539,71 @@ function describir(e) {
   return `${yo ? 'Juegas' : quien + ' juega'} <b>${e.carta}</b>${partes.length ? ': ' + partes.join(' · ') : ''}`;
 }
 function verRegistro() {
-  const filas = p.registro.slice().reverse().map((e) => `<div>Era ${ROMANO[e.era]} · ${describir(e)}</div>`).join('') || '<div>Todavía no ha pasado nada.</div>';
+  const filas = p.registro.filter((e) => e.tipo !== 'fin').slice().reverse()
+    .map((e) => `<div>Era ${ROMANO[e.era]} · ${describir(e)}</div>`).join('') || '<div>Todavía no ha pasado nada.</div>';
   // al acabar la partida, cerrar el registro vuelve al resultado final
-  abrir(`<h2>Registro de la partida</h2><div class="lista-reg">${filas}</div>`, [{ texto: 'Cerrar', clase: 'lleno', accion: () => { if (p.fin) finPartida(); } }], true, p.fin);
+  abrir(`<h2>Registro de la partida</h2><div class="lista-reg">${filas}</div>`, [
+    { texto: 'Copiar registro', cierra: false, accion: copiarRegistro },
+    { texto: 'Cerrar', clase: 'lleno', accion: () => { if (p.fin) finPartida(); } },
+  ], true, p.fin);
+}
+
+// Texto completo de la partida, para pegarlo en un chat y analizarla
+function textoRegistro() {
+  const limpio = (h) => h.replace(/<[^>]+>/g, '');
+  const L = [];
+  L.push('MANA · registro de partida');
+  L.push('Jugadores: ' + p.jug.map((j) => `${NOMBRES[j.i]} (${NOMBRE_EL[j.color]})`).join(', '));
+  L.push('Sellos' + (p.fin ? ' finales' : ' por ahora') + ': ' + p.jug.map((j) => `${NOMBRES[j.i]} ${j.sellos} (por Era: ${j.selloEra.join(' / ') || '—'})`).join(' · '));
+  if (p.fin) L.push('Ganador: ' + p.ganadores.map((k) => NOMBRES[k]).join(' y '));
+  L.push('');
+  L.push('Resumen por jugador:');
+  for (const j of p.jug) {
+    const mios = p.registro.filter((e) => e.i === j.i);
+    const vinc = mios.filter((e) => e.tipo === 'vincula').map((e) => e.carta);
+    const lib = mios.filter((e) => e.tipo === 'libera').map((e) => e.carta);
+    let puestas = 0, quitadas = 0, acciones = 0, sobrante = 0;
+    for (const e of mios) {
+      if (e.tipo === 'accion') acciones++;
+      if (e.tipo === 'fin') sobrante += e.manaSobrante || 0;
+      for (const x of e.cambios || []) {
+        if (x.k === j.i && x.dn > 0) puestas += x.dn;
+        if (x.k !== j.i && x.dn < 0) quitadas -= x.dn;
+      }
+    }
+    L.push(`- ${NOMBRES[j.i]}: ${acciones} Acciones, ${puestas} Presencias puestas, ${quitadas} Presencias rivales retiradas o movidas, ` +
+      `${vinc.length} vinculados (${vinc.join(', ') || 'ninguno'}), ${lib.length} liberadas${j.i === 0 ? `, Maná sobrante al terminar turnos: ${sobrante}` : ''}`);
+  }
+  (p.historial || []).forEach((h, era) => {
+    L.push('');
+    L.push(`Puntuación de la Era ${ROMANO[era]}: ` + h.map((d) => `${NOMBRE_EL[d.s]} [${d.presencia.map((n, k) => NOMBRES[k] + ' ' + n).join(', ')}] → ` +
+      (d.ganador !== null ? `${NOMBRES[d.ganador]} +${d.val}` : d.empate ? 'empate, nadie' : 'nadie')).join(' | '));
+  });
+  L.push('');
+  L.push('Jugadas:');
+  let clave = '';
+  for (const e of p.registro) {
+    const c = `Era ${ROMANO[e.era]}, ronda ${e.ronda + 1}`;
+    if (c !== clave) { L.push(`— ${c}`); clave = c; }
+    if (e.tipo === 'fin') {
+      if (e.i === 0) L.push(`  Tú terminas: como Maná ${e.comoMana.join(', ') || 'nada'}; sin usar ${e.sinUsar.join(', ') || 'nada'}; Maná sobrante ${e.manaSobrante}`);
+      continue;
+    }
+    L.push('  ' + limpio(describir(e)));
+  }
+  return L.join('\n');
+}
+
+function copiarRegistro() {
+  const texto = textoRegistro();
+  const respaldo = () => {
+    abrir(`<h2>Registro para copiar</h2><textarea id="txt-reg" style="width:100%;height:320px;font:11px/1.4 monospace">${texto.replace(/</g, '&lt;')}</textarea>
+      <div class="texto">Selecciona todo el texto y cópialo.</div>`, [{ texto: 'Cerrar', clase: 'lleno', accion: () => { if (p.fin) finPartida(); } }], true, p.fin);
+    const t = $('txt-reg'); t.focus(); t.select();
+  };
+  try {
+    navigator.clipboard.writeText(texto).then(() => avisar('Registro copiado: pégalo en el chat para analizar la partida', 3500), respaldo);
+  } catch (e) { respaldo(); }
 }
 
 // ---------- Flujo de la partida --------------------------------------------------------------
@@ -584,7 +646,7 @@ function avanzar() {
   setTimeout(() => {
     const desde = p.registro.length;
     p.turnoBot(i);
-    const hechos = p.registro.slice(desde);
+    const hechos = p.registro.slice(desde).filter((e) => e.tipo !== 'fin');
     if (!hechos.length) avisar(`${NOMBRES[i]} no juega Acciones ni vincula`);
     hechos.forEach((e, k) => setTimeout(() => avisar(describir(e), 2200), k * 450 * VEL));
     pintar();
@@ -652,7 +714,7 @@ function finPartida() {
   const gana = p.ganadores.map((k) => NOMBRES[k]);
   const titulo = p.ganadores.length > 1 ? `Victoria compartida: ${gana.join(' y ')}` : p.ganadores[0] === 0 ? '¡Has ganado!' : `Gana ${gana[0]}`;
   abrir(`<h2>${titulo}</h2>${tablaPuntuacion()}<div class="texto">Sellos finales: ${clasificacion()}</div>`,
-    [{ texto: 'Ver registro', accion: verRegistro }, { texto: 'Otra partida', clase: 'verde', accion: inicio }], true, true);
+    [{ texto: 'Ver registro', accion: verRegistro }, { texto: 'Copiar registro', cierra: false, accion: copiarRegistro }, { texto: 'Otra partida', clase: 'verde', accion: inicio }], true, true);
 }
 
 function inicio() {

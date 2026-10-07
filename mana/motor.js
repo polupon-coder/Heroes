@@ -765,6 +765,31 @@ class Partida {
     return true;
   }
 
+  // --- Deshacer dentro del turno de una persona ---------------------------------------------
+  // Copia de todo lo que puede cambiar durante un turno (sin robar ni barajar: eso no se deshace)
+  guardarEstado() {
+    const copia = (cs) => cs.slice();
+    return {
+      jug: this.jug.map((j) => ({ ...j, mazo: copia(j.mazo), mano: copia(j.mano), desc: copia(j.desc), jugadas: copia(j.jugadas), selloEra: copia(j.selloEra) })),
+      pres: this.foto(),
+      umbral: copia(this.umbral),
+      pila: copia(this.pila),
+      turno: { ...this.turno, manaUsadas: copia(this.turno.manaUsadas) },
+      registro: this.registro ? this.registro.length : 0,
+      extra: copia(this.extra),
+    };
+  }
+
+  restaurarEstado(e) {
+    this.jug = e.jug.map((j) => ({ ...j, mazo: j.mazo.slice(), mano: j.mano.slice(), desc: j.desc.slice(), jugadas: j.jugadas.slice(), selloEra: j.selloEra.slice() }));
+    for (const s of ELEMENTOS) this.pres[s] = e.pres[s].map((x) => ({ ...x }));
+    this.umbral = e.umbral.slice();
+    this.pila = e.pila.slice();
+    this.turno = { ...e.turno, manaUsadas: e.turno.manaUsadas.slice() };
+    if (this.registro) this.registro.length = e.registro;
+    this.extra = e.extra.slice();
+  }
+
   humanoTerminar() {
     const j = this.jug[this.turno.i];
     this.anotar({ i: this.turno.i, tipo: 'fin', comoMana: this.turno.manaUsadas.map((c) => c.nombre), sinUsar: j.mano.map((c) => c.nombre),

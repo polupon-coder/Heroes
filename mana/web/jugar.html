@@ -96,7 +96,8 @@
   .boton.lleno { background: var(--tinta); color: #fff; }
   .boton.verde { background: var(--verde); border-color: var(--verde); color: #fff; }
   .boton.inactivo { opacity: .28; cursor: not-allowed; }
-  .principal > .boton { margin-top: auto; width: 240px; }
+  .mandos { margin-top: auto; width: 100%; display: grid; grid-template-columns: 1fr 240px 1fr; gap: 14px; align-items: center; }
+  #deshacer { justify-self: end; width: 150px; }
 
   /* Santuarios */
   #santuarios { flex: 1; display: flex; flex-direction: column; gap: 30px; padding-bottom: 22px; }
@@ -220,7 +221,7 @@
       <div class="total" id="total">0<small>MANÁ</small></div>
       <div class="pila"><div class="dorso" id="descarte">0</div>Descarte</div>
     </div>
-    <div class="boton verde" id="terminar">Terminar turno</div>
+    <div class="mandos"><div class="boton borde" id="deshacer">Deshacer</div><div class="boton verde" id="terminar">Terminar turno</div></div>
   </div>
   <div class="panel"><div class="titulo">Santuarios</div><div id="santuarios"></div></div>
 </div>
@@ -325,6 +326,8 @@ function pintar() {
   $('descarte').textContent = yo.desc.length;
   $('total').firstChild.textContent = miTurno ? p.manaDisponible() : 0;
   $('terminar').className = 'boton verde' + (miTurno ? '' : ' inactivo');
+  $('deshacer').className = 'boton borde' + (miTurno && pasos.length ? '' : ' inactivo');
+  $('deshacer').title = pasos.length ? `Deshacer: ${pasos[pasos.length - 1].texto}` : 'Nada que deshacer en este turno';
   $('terminar').textContent = miTurno ? 'Terminar turno' : p.fin ? 'Partida terminada' : eligiendo ? 'Elige en la ventana…' : p.turno ? `Juega ${NOMBRES[p.turno.i]}…` : 'Terminar turno';
 
   // Santuarios: un cuadrante por Guardián, en el orden de la cabecera
@@ -428,7 +431,20 @@ function guia() {
   g.style.top = Math.max(8, Math.min(720 - gh - 8, top)) + 'px';
 }
 
+let pasos = []; // jugadas de este turno que se pueden deshacer (la última, arriba)
+let revelado = false; // la jugada en curso ha mostrado cartas nuevas (no se podrá deshacer)
 let eligiendo = false; // hay una elección abierta: hasta resolverla no se puede hacer otra cosa
+function guardar(texto) {
+  pasos.push({ estado: p.guardarEstado(), nuevas: nuevas.slice(), texto });
+}
+function deshacer() {
+  if (!esMiTurno() || !pasos.length) return;
+  const u = pasos.pop();
+  p.restaurarEstado(u.estado);
+  nuevas = u.nuevas;
+  avisar(`Deshecho: ${u.texto}`, 2200);
+  pintar();
+}
 const esMiTurno = () => p && !p.fin && !ocupado && !eligiendo && p.turno && p.turno.i === 0;
 
 // ---------- Ventanas -------------------------------------------------------------------------
@@ -464,6 +480,7 @@ function verCarta(donde, k) {
     const c = yo.mano[k];
     // Cartas sin Acción (Mota de Maná): no hay nada que elegir, se usan como Maná al tocarlas
     if (!c.accion.length && esMiTurno()) {
+      guardar(`${c.nombre} como Maná`);
       nuevas = [];
       p.humanoMana(k);
       avisar(`${c.nombre}: +${c.mana} de Maná`, 1800);
@@ -479,7 +496,7 @@ function verCarta(donde, k) {
     if (conObjetivos(c)) nota += '<div class="nota">Al jugarla te preguntaré qué eliges en cada efecto.</div>';
     abrir(cabeceraCarta(c, c.coste) + nota, [
       { texto: 'Cancelar' },
-      { texto: `Maná (+${c.mana})`, clase: 'borde', inactivo: !esMiTurno(), accion: () => { nuevas = []; p.humanoMana(k); latido(); pintar(); } },
+      { texto: `Maná (+${c.mana})`, clase: 'borde', inactivo: !esMiTurno(), accion: () => { guardar(`${c.nombre} como Maná`); nuevas = []; p.humanoMana(k); latido(); pintar(); } },
       { texto: 'Acción', clase: 'lleno', inactivo: !esMiTurno() || !c.accion.length, accion: () => jugarAccion(k) },
     ]);
     return;
@@ -489,13 +506,13 @@ function verCarta(donde, k) {
   let saldo = donde === 'mana' ? 'Usada como Maná este turno.' : 'Jugada como Acción este turno.';
   if (donde === 'mana') {
     const puede = p.manaDisponible() >= c.mana;
-    botones.push({ texto: 'Devolver a la mano', inactivo: !puede, accion: () => { nuevas = []; p.humanoDevolver(k); pintar(); } });
+    botones.push({ texto: 'Devolver a la mano', inactivo: !puede, accion: () => { guardar(`devolver ${c.nombre} a la mano`); nuevas = []; p.humanoDevolver(k); pintar(); } });
     if (!puede) saldo += ' Ya has gastado su Maná.';
   }
   if (c.inicial && p.v.liberar) {
     const puede = p.puedeLiberar();
     botones.push({ texto: `Liberar (${p.v.liberarCoste} Maná)`, clase: 'lleno', inactivo: !puede, accion: () => {
-      p.humanoLiberar(donde, k); avisar(`Liberas ${c.nombre}: sale de la partida.`); latido(); pintar();
+      guardar(`liberar ${c.nombre}`); p.humanoLiberar(donde, k); avisar(`Liberas ${c.nombre}: sale de la partida.`); latido(); pintar();
     } });
     saldo += puede ? ` Puedes liberarla: pagas ${p.v.liberarCoste} de Maná y sale de la partida.`
       : p.turno.liberado ? ' Ya has liberado una carta este turno.' : ` Para liberarla necesitas ${p.v.liberarCoste} de Maná disponible.`;
@@ -516,7 +533,7 @@ function verUmbral(u) {
   abrir(cabeceraCarta(c, coste) + saldo, [
     { texto: 'Cancelar' },
     { texto: 'Vincular', clase: 'lleno', inactivo: !p.puedeVincular(u) || !esMiTurno(), accion: () => {
-      nuevas = []; p.humanoVincular(u); avisar(`Vinculas ${c.nombre}: va a tu descarte.`); latido(); pintar();
+      guardar(`vincular ${c.nombre}`); nuevas = []; p.humanoVincular(u); avisar(`Vinculas ${c.nombre}: va a tu descarte.`); latido(); pintar();
     } },
   ]);
 }
@@ -629,6 +646,8 @@ function copiarRegistro() {
 // Juega una carta como Acción. Los efectos se aplican en orden; si uno pide elegir, se abre una ventana
 async function jugarAccion(k) {
   const desde = p.registro.length;
+  guardar(`jugar ${p.jug[0].mano[k].nombre}`);
+  revelado = false;
   nuevas = [];
   eligiendo = true;
   const c = p.empezarAccion(0, k);
@@ -642,6 +661,11 @@ async function jugarAccion(k) {
   p.terminarAccion(0);
   eligiendo = false;
   cerrar();
+  // si has robado o se ha revelado un Elemental nuevo, ya no se puede volver atrás
+  if (revelado || p.registro.slice(desde).some((e) => (e.robadas || []).length)) {
+    pasos = [];
+    avisar('Has visto cartas nuevas: lo jugado hasta ahora ya no se puede deshacer', 3200);
+  }
   for (const e of p.registro.slice(desde)) {
     avisar(describir(e), 4200);
     nuevas.push(...(e.cartasRobadas || []));
@@ -777,6 +801,7 @@ async function resolver(c, e, n) {
     const ops = p.umbral.map((m, u) => ({ valor: u, html: cartaOpcion(m, ` · Coste ${p.coste(0, m)}`) }));
     const u = await elegir(c, n, 'Cambia 1 Elemental del Umbral', 'Se descarta y se revela otro en su lugar (puedes vincularlo este turno).', ops, 'No cambiar');
     if (u !== null) {
+      revelado = true;
       const fuera = p.elegirCambioUmbral(u);
       avisar(`${fuera.nombre} sale del Umbral; entra ${p.umbral[p.umbral.length - 1].nombre}`);
     }
@@ -794,6 +819,7 @@ function nuevaPartida(n) {
     <div class="texto">Tus Presencias son de tu color. Tu mazo lleva un Elemental menor más de tu elemento.</div>
     <div class="texto"><b>Cada turno:</b> toca tus cartas para usarlas como <b>Acción</b> o como <b>Maná</b>, toca un Elemental del <b>Umbral</b> para vincularlo y pulsa <b>Terminar turno</b>.</div>
     <div class="texto">Al final de cada Era, quien tenga más Presencia en cada Santuario gana sus Sellos (1, 2 y 3). Empate en cabeza: nadie.</div>
+    <div class="texto">¿Te has equivocado? Pulsa <b>Deshacer</b>, junto a «Terminar turno», para volver atrás dentro de tu turno (salvo después de robar cartas).</div>
     <div class="texto" style="color:var(--mana)">Te iré guiando con mensajes lilas. Puedes apagarlos arriba, en «Ayuda».</div>`,
   [{ texto: '¡A jugar!', clase: 'verde' }]);
 }
@@ -802,6 +828,7 @@ function nuevaPartida(n) {
 function avanzar() {
   if (p.fin) { pintar(); return finPartida(); }
   const i = p.comenzarTurno();
+  pasos = [];
   pintar();
   if (i === 0) return;
   ocupado = true;
@@ -827,12 +854,14 @@ function cerrarTurno() {
 $('terminar').onclick = () => {
   if (!esMiTurno()) return;
   nuevas = [];
+  pasos = [];
   const antes = p.jug[0].selloEra.length;
   p.humanoTerminar();
   if (p.jug[0].selloEra.length > antes) return finEra();
   avanzar();
 };
 
+$('deshacer').onclick = deshacer;
 $('mazo').parentElement.onclick = () => {
   if (!p || !p.turno) return;
   const yo = p.jug[0];

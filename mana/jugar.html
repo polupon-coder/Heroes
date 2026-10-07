@@ -80,7 +80,7 @@
   @keyframes aparece { from { opacity: 0; transform: translateY(4px); } }
   @media (prefers-reduced-motion: reduce) { #guia, .aviso { animation: none; } }
 
-  .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 256px 1fr 256px; gap: 24px; margin-top: 48px; min-height: 0; }
+  .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 256px 1fr 256px; gap: 24px; margin-top: 32px; min-height: 0; }
   .titulo { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--suave); padding-left: .16em; text-align: center; }
   .panel { background: rgba(255, 252, 247, .78); border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
   /* Columnas laterales: solo la mancha pintada, sin panel debajo */
@@ -110,8 +110,8 @@
   .linea { height: 1px; background: var(--linea); }
 
   /* Centro */
-  .principal { display: flex; flex-direction: column; align-items: center; padding: 16px 0 18px; min-width: 0; }
-  .principal > .titulo { margin-bottom: 22px; }
+  .principal { display: flex; flex-direction: column; align-items: center; padding: 0 0 18px; min-width: 0; }
+  .principal > .titulo { margin-bottom: 22px; width: 100%; }
   #mano { display: flex; justify-content: center; align-items: flex-end; gap: var(--hueco, 20px); }
   .carta { width: var(--ancho, 108px); display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; cursor: pointer; }
   .carta .ilus { width: var(--ancho, 108px); height: 156px; border-radius: 18px; }
@@ -1935,7 +1935,12 @@ function trasTurno(terminar) {
 
 $('terminar').onclick = () => {
   if (!esMiTurno()) return;
-  trasTurno(() => p.humanoTerminar());
+  const sobra = p.manaDisponible();
+  const quedan = p.jug[YO].mano.length;
+  const aviso = [quedan ? `Te quedan <b>${quedan} ${quedan === 1 ? 'carta' : 'cartas'}</b> en la mano sin usar.` : '',
+    sobra > 0 ? `Tienes <b>${sobra} de Maná</b> sin gastar: se perderá.` : ''].filter(Boolean).join(' ');
+  abrir(`<h2>¿Terminar el turno?</h2><div class="texto">${aviso || 'Descartas lo jugado y robas 5 cartas nuevas.'}</div>`,
+    [{ texto: 'Seguir jugando' }, { texto: 'Terminar', clase: 'verde', accion: () => { if (esMiTurno()) trasTurno(() => p.humanoTerminar()); } }]);
 };
 
 $('deshacer').onclick = deshacer;

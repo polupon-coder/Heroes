@@ -6,4 +6,4 @@
 
 - **Guía:** mensajes lilas que explican cada paso (se apagan en «Ayuda», arriba a la izquierda).
 
-Limitación de esta versión de prueba: al jugar una Acción con objetivos (a quién retiras, dónde proteges, qué carta recuperas…) el juego los elige solo, lo mejor para ti.
+- **Elecciones:** las cartas que hacen elegir (retirar, mover, proteger, descartar, recuperar, cambiar el Umbral) abren una ventana, efecto a efecto.

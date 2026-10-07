@@ -161,6 +161,15 @@
   .opciones { display: flex; gap: 10px; margin: 6px 0; }
   .opcion { border: 1.5px solid var(--linea); border-radius: 14px; padding: 10px 16px; cursor: pointer; font-weight: 600; }
   .opcion.elegida { border-color: var(--tinta); background: var(--fondo); }
+  /* Ventana de elección: una opción por fila */
+  .paso { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--suave); font-weight: 700; }
+  .elecciones { display: flex; flex-direction: column; gap: 8px; width: 100%; max-height: 330px; overflow: auto; }
+  .eleccion { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--linea); border-radius: 14px; padding: 9px 12px;
+    cursor: pointer; text-align: left; font-size: 13px; }
+  .eleccion:hover, .eleccion:focus-visible { border-color: var(--tinta); background: var(--fondo); outline: none; }
+  .eleccion .chip { width: 26px; height: 26px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; }
+  .eleccion .chip svg { width: 14px; height: 14px; color: #fff; }
+  .eleccion small { display: block; color: var(--suave); font-size: 11px; }
   .tabla { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
   .tabla td { padding: 7px 6px; border-top: 1px solid var(--linea); }
   .tabla td:last-child { text-align: right; font-weight: 700; }
@@ -316,7 +325,7 @@ function pintar() {
   $('descarte').textContent = yo.desc.length;
   $('total').firstChild.textContent = miTurno ? p.manaDisponible() : 0;
   $('terminar').className = 'boton verde' + (miTurno ? '' : ' inactivo');
-  $('terminar').textContent = miTurno ? 'Terminar turno' : p.fin ? 'Partida terminada' : p.turno ? `Juega ${NOMBRES[p.turno.i]}…` : 'Terminar turno';
+  $('terminar').textContent = miTurno ? 'Terminar turno' : p.fin ? 'Partida terminada' : eligiendo ? 'Elige en la ventana…' : p.turno ? `Juega ${NOMBRES[p.turno.i]}…` : 'Terminar turno';
 
   // Santuarios: un cuadrante por Guardián, en el orden de la cabecera
   $('santuarios').innerHTML = EL.map((s) => {
@@ -419,7 +428,8 @@ function guia() {
   g.style.top = Math.max(8, Math.min(720 - gh - 8, top)) + 'px';
 }
 
-const esMiTurno = () => p && !p.fin && !ocupado && p.turno && p.turno.i === 0;
+let eligiendo = false; // hay una elección abierta: hasta resolverla no se puede hacer otra cosa
+const esMiTurno = () => p && !p.fin && !ocupado && !eligiendo && p.turno && p.turno.i === 0;
 
 // ---------- Ventanas -------------------------------------------------------------------------
 function abrir(html, botones = [], ancha = false, fija = false) {
@@ -466,7 +476,7 @@ function verCarta(donde, k) {
     let nota = '';
     if (roba) nota += '<div class="saldo">Si juegas su Acción, <b>robas solo</b> de tu mazo: la carta nueva aparece en tu mano, marcada como <b style="color:var(--verde)">NUEVA</b>, y puedes usarla este mismo turno.</div>';
     if (recupera) nota += '<div class="saldo">La carta recuperada vuelve de tu descarte a tu mano y puedes usarla este turno.</div>';
-    if (conObjetivos(c)) nota += '<div class="nota">En esta versión de prueba, las cartas y los objetivos se eligen solos, lo mejor para ti.</div>';
+    if (conObjetivos(c)) nota += '<div class="nota">Al jugarla te preguntaré qué eliges en cada efecto.</div>';
     abrir(cabeceraCarta(c, c.coste) + nota, [
       { texto: 'Cancelar' },
       { texto: `Maná (+${c.mana})`, clase: 'borde', inactivo: !esMiTurno(), accion: () => { nuevas = []; p.humanoMana(k); latido(); pintar(); } },
@@ -616,17 +626,161 @@ function copiarRegistro() {
 }
 
 // ---------- Flujo de la partida --------------------------------------------------------------
-function jugarAccion(k) {
+// Juega una carta como Acción. Los efectos se aplican en orden; si uno pide elegir, se abre una ventana
+async function jugarAccion(k) {
   const desde = p.registro.length;
   nuevas = [];
-  p.humanoAccion(k);
+  eligiendo = true;
+  const c = p.empezarAccion(0, k);
+  pintar();
+  for (let n = 0; n < c.accion.length; n++) {
+    const e = c.accion[n];
+    if (Partida.necesitaEleccion(e)) await resolver(c, e, n);
+    else p.efecto(0, e, true);
+    pintar();
+  }
+  p.terminarAccion(0);
+  eligiendo = false;
+  cerrar();
   for (const e of p.registro.slice(desde)) {
     avisar(describir(e), 4200);
     nuevas.push(...(e.cartasRobadas || []));
     // una carta recuperada del descarte también llega nueva a la mano
-    for (const n of e.notas || []) if (n.tipo === 'recupera') nuevas.push(p.jug[0].mano.find((c) => c.nombre === n.carta));
+    for (const x of e.notas || []) if (x.tipo === 'recupera') nuevas.push(p.jug[0].mano.find((m) => m.nombre === x.carta));
   }
   pintar();
+}
+
+// Abre una ventana con opciones y espera la elección. opciones: [{ html, valor }]. Devuelve el valor o null (saltar)
+function elegir(c, n, titulo, texto, opciones, saltar) {
+  return new Promise((ok) => {
+    const total = c.accion.length;
+    const paso = total > 1 ? `<div class="paso">${c.nombre} · efecto ${n + 1} de ${total}</div>` : `<div class="paso">${c.nombre}</div>`;
+    const botones = saltar ? [{ texto: saltar, accion: () => ok(null) }] : [];
+    abrir(`${paso}<h2>${titulo}</h2><div class="texto">${texto}</div>
+      <div class="elecciones">${opciones.map((o, k) => `<div class="eleccion" tabindex="0" data-o="${k}">${o.html}</div>`).join('')}</div>`, botones, false, true);
+    const lista = $('ventana').querySelector('.elecciones');
+    const tomar = (el) => { if (el) { cerrar(); ok(opciones[Number(el.dataset.o)].valor); } };
+    lista.onclick = (e) => tomar(e.target.closest('.eleccion'));
+    lista.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tomar(e.target.closest('.eleccion')); } };
+  });
+}
+
+const chip = (color, icono) => `<span class="chip" style="background:var(--${color})">${icono ? `<svg><use href="#${icono}"/></svg>` : ''}</span>`;
+const rival = (k) => `<span style="color:var(--${p.jug[k].color})">${NOMBRES[k]}</span>`;
+const presTexto = (s) => p.pres[s].map((x, k) => `${NOMBRES[k]} ${x.n}`).join(' · ');
+const rivalesCon = (s) => p.jug.filter((j) => j.i !== 0 && p.quitables(s, j.i) > 0).map((j) => j.i);
+const cartaOpcion = (m, extra = '') => `${chip(m.el || 'mana', m.el || '')}<div><b>${m.nombre}</b><small>${textoDe(m) || 'Solo da Maná.'}${extra}</small></div>`;
+
+// Resuelve un efecto que pide elegir
+async function resolver(c, e, n) {
+  const sants = e.s === '*' ? EL : [e.s];
+
+  if (e.remove) {
+    let donde = null;
+    for (let t = 0; t < e.remove; t++) {
+      const ops = [];
+      for (const s of donde ? [donde] : sants) for (const k of rivalesCon(s)) {
+        ops.push({ valor: [s, k], html: `${chip(s, s)}<div><b>${NOMBRE_EL[s]}: quitar 1 a ${rival(k)}</b><small>${presTexto(s)}</small></div>` });
+      }
+      if (!ops.length) { if (t === 0) avisar(`${c.nombre}: no hay Presencias rivales que se puedan retirar`); break; }
+      const titulo = e.remove > 1 ? `Retira hasta ${e.remove} Presencias rivales${t ? ` (${t + 1}.ª)` : ''}` : 'Retira 1 Presencia rival';
+      const texto = e.remove > 1 ? 'Todas del mismo Santuario. Las protegidas no se pueden retirar.' : 'De cualquier Santuario. Las protegidas no se pueden retirar.';
+      const v = await elegir(c, n, titulo, texto, ops, e.remove > 1 ? (t ? 'No retirar más' : 'No retirar') : null);
+      if (!v) break;
+      p.elegirRetirar(v[0], v[1]);
+      donde = v[0];
+      pintar();
+    }
+    return;
+  }
+
+  if (e.swap) {
+    const ops = rivalesCon(e.s).map((k) => ({ valor: k, html: `${chip(e.s, e.s)}<div><b>Quitar 1 a ${rival(k)} y poner 1 tuya</b><small>${NOMBRE_EL[e.s]}: ${presTexto(e.s)}</small></div>` }));
+    if (!ops.length) { avisar(`${c.nombre}: ningún rival tiene Presencia que retirar en ${NOMBRE_EL[e.s]}`); return; }
+    const k = await elegir(c, n, `Cambia una Presencia en ${NOMBRE_EL[e.s]}`, 'Retiras 1 Presencia rival y pones 1 tuya en su lugar.', ops, null);
+    p.elegirIntercambio(0, e.s, k);
+    return;
+  }
+
+  if (e.moveRival) {
+    for (let t = 0; t < e.moveRival; t++) {
+      const ops = [];
+      for (const s of sants) for (const k of rivalesCon(s)) ops.push({ valor: [s, k], html: `${chip(s, s)}<div><b>Mover 1 de ${rival(k)} desde ${NOMBRE_EL[s]}</b><small>${presTexto(s)}</small></div>` });
+      if (!ops.length) { if (t === 0) avisar(`${c.nombre}: no hay Presencias rivales que se puedan mover`); break; }
+      const v = await elegir(c, n, `Mueve una Presencia rival${e.moveRival > 1 ? ` (${t + 1} de ${e.moveRival})` : ''}`, 'Primero eliges cuál; después, a qué Santuario va.', ops, 'No mover');
+      if (!v) break;
+      const [o, k] = v;
+      const destinos = EL.filter((d) => d !== o).map((d) => ({ valor: d, html: `${chip(d, d)}<div><b>Llevarla a ${NOMBRE_EL[d]}</b><small>${presTexto(d)}</small></div>` }));
+      const d = await elegir(c, n, `¿A dónde va la Presencia de ${NOMBRES[k]}?`, `Sale de ${NOMBRE_EL[o]}.`, destinos, null);
+      p.elegirMover(o, k, d);
+      pintar();
+    }
+    return;
+  }
+
+  if (e.moveOwnTo) {
+    const dest = e.moveOwnTo;
+    const ops = EL.filter((s) => s !== dest && p.quitables(s, 0) > 0)
+      .map((s) => ({ valor: s, html: `${chip(s, s)}<div><b>Mover 1 tuya de ${NOMBRE_EL[s]} a ${NOMBRE_EL[dest]}</b><small>${presTexto(s)}</small></div>` }));
+    if (!ops.length) { avisar(`${c.nombre}: no tienes Presencias que mover`); return; }
+    const o = await elegir(c, n, `Mueve 1 Presencia tuya a ${NOMBRE_EL[dest]}`, 'Elige de dónde sale. Puedes no moverla.', ops, 'No mover');
+    if (o) p.elegirMover(o, 0, dest);
+    return;
+  }
+
+  if (e.protect) {
+    const veces = e.all ? 1 : e.protect;
+    for (let t = 0; t < veces; t++) {
+      const ops = EL.filter((s) => p.pres[s][0].n > p.pres[s][0].prot).map((s) => {
+        const x = p.pres[s][0];
+        const cuantas = e.all ? `todas (${x.n - x.prot})` : '1';
+        return { valor: s, html: `${chip(s, 'escudo')}<div><b>Proteger ${cuantas} en ${NOMBRE_EL[s]}</b><small>Tienes ${x.n}, protegidas ${x.prot}</small></div>` };
+      });
+      if (!ops.length) { if (t === 0) avisar(`${c.nombre}: no tienes Presencias sin proteger`); break; }
+      const titulo = e.all ? 'Protege todas tus Presencias de un Santuario' : `Protege una Presencia tuya (${t + 1} de ${veces})`;
+      const s = await elegir(c, n, titulo, 'Hasta el final de la Era no se podrán retirar ni mover.', ops, null);
+      p.elegirProteger(0, s, !!e.all);
+      pintar();
+    }
+    return;
+  }
+
+  const yo = p.jug[0];
+  if (e.discard || e.handToTop) {
+    if (!yo.mano.length) return;
+    const ops = yo.mano.map((m, k) => ({ valor: k, html: cartaOpcion(m) }));
+    const k = e.discard
+      ? await elegir(c, n, 'Descarta 1 carta de tu mano', 'Va a tu descarte.', ops, null)
+      : await elegir(c, n, 'Pon 1 carta de tu mano encima de tu mazo', 'La robarás en tu próximo turno.', ops, null);
+    if (e.discard) p.elegirDescartar(0, k); else p.elegirManoEncima(0, k);
+    return;
+  }
+
+  if (e.topFromDiscard || e.recover) {
+    if (!yo.desc.length) { avisar(`${c.nombre}: tu descarte está vacío`); return; }
+    // una opción por carta distinta
+    const vistas = new Set();
+    const ops = [];
+    yo.desc.forEach((m, k) => { if (!vistas.has(m.nombre)) { vistas.add(m.nombre); ops.push({ valor: k, html: cartaOpcion(m) }); } });
+    if (e.recover) {
+      const k = await elegir(c, n, 'Recupera 1 carta de tu descarte', 'Vuelve a tu mano y puedes usarla este turno.', ops, null);
+      p.elegirRecuperar(0, k);
+    } else {
+      const k = await elegir(c, n, 'Pon 1 carta de tu descarte encima de tu mazo', 'La robarás en tu próximo turno.', ops, null);
+      p.elegirDescarteEncima(0, k);
+    }
+    return;
+  }
+
+  if (e.refresh) {
+    const ops = p.umbral.map((m, u) => ({ valor: u, html: cartaOpcion(m, ` · Coste ${p.coste(0, m)}`) }));
+    const u = await elegir(c, n, 'Cambia 1 Elemental del Umbral', 'Se descarta y se revela otro en su lugar (puedes vincularlo este turno).', ops, 'No cambiar');
+    if (u !== null) {
+      const fuera = p.elegirCambioUmbral(u);
+      avisar(`${fuera.nombre} sale del Umbral; entra ${p.umbral[p.umbral.length - 1].nombre}`);
+    }
+  }
 }
 
 function nuevaPartida(n) {

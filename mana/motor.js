@@ -382,29 +382,108 @@ class Partida {
     if (this.registro) this.registro.push({ era: this.era, ronda: this.rondaEra, ...entrada });
   }
 
-  jugarAccion(i, idx) {
+  // Una Acción se juega en tres pasos: empezar (la carta sale de la mano), aplicar sus efectos
+  // y terminar (se apunta en el registro). Así una persona puede elegir entre efecto y efecto.
+  empezarAccion(i, idx) {
     const j = this.jug[i];
     const c = j.mano.splice(idx, 1)[0];
     j.jugadas.push(c);
-    const antes = this.registro ? this.foto() : null;
+    this.accionEnCurso = { c, antes: this.registro ? this.foto() : null };
     // Con registro, se apunta qué cartas se roban, descartan, recuperan o se ponen encima del mazo
-    if (antes) this.captura = { j, robadas: [], notas: [] };
-    if (this.st) this.st.usoAccion[c.nombre] = (this.st.usoAccion[c.nombre] || 0) + 1;
+    if (this.registro) this.captura = { j, robadas: [], notas: [] };
     if (this.st) {
+      this.st.usoAccion[c.nombre] = (this.st.usoAccion[c.nombre] || 0) + 1;
       const inter = c.accion.some((e) => e.remove || e.moveRival || e.moveOwnTo || e.protect || e.disrupt || e.refresh);
       const robo = c.accion.some((e) => e.draw || e.recover || e.topFromDiscard || e.handToTop);
       this.st.acc = this.st.acc || { simple: 0, inter: 0, robo: 0 };
       this.st.acc[inter ? 'inter' : robo ? 'robo' : 'simple']++;
     }
-    for (const e of c.accion) this.efecto(i, e, true);
-    if (antes) {
-      const { robadas, notas } = this.captura;
-      this.captura = null;
-      const pedidas = c.accion.reduce((a, e) => a + (e.draw || 0), 0);
-      this.anotar({ i, tipo: 'accion', carta: c.nombre, cambios: this.cambios(antes), robadas: robadas.map((x) => x.nombre),
-        cartasRobadas: robadas, sinCartas: robadas.length < pedidas, notas });
-    }
+    return c;
   }
+
+  terminarAccion(i) {
+    const { c, antes } = this.accionEnCurso;
+    this.accionEnCurso = null;
+    if (!antes) return;
+    const { robadas, notas } = this.captura;
+    this.captura = null;
+    const pedidas = c.accion.reduce((a, e) => a + (e.draw || 0), 0);
+    this.anotar({ i, tipo: 'accion', carta: c.nombre, cambios: this.cambios(antes), robadas: robadas.map((x) => x.nombre),
+      cartasRobadas: robadas, sinCartas: robadas.length < pedidas, notas });
+  }
+
+  jugarAccion(i, idx) {
+    const c = this.empezarAccion(i, idx);
+    for (const e of c.accion) this.efecto(i, e, true);
+    this.terminarAccion(i);
+  }
+
+  // --- Efectos en los que una persona elige -------------------------------------------------
+  static necesitaEleccion(e) {
+    return !!(e.remove || e.swap || e.moveRival || e.moveOwnTo || e.protect || e.discard || e.handToTop || e.topFromDiscard || e.recover || e.refresh);
+  }
+
+  // Presencias rivales que se pueden quitar (no protegidas) en un Santuario
+  quitables(s, k) {
+    return this.pres[s][k].n - this.pres[s][k].prot;
+  }
+
+  elegirRetirar(s, k) { return this.quitar(s, k); }
+
+  elegirIntercambio(i, s, k) {
+    if (!this.quitar(s, k)) return false;
+    this.pres[s][i].n++;
+    return true;
+  }
+
+  elegirMover(origen, k, destino) {
+    if (origen === destino || !this.quitar(origen, k)) return false;
+    this.pres[destino][k].n++;
+    return true;
+  }
+
+  elegirProteger(i, s, todas) {
+    const p = this.pres[s][i];
+    if (p.prot >= p.n) return false;
+    p.prot = todas ? p.n : p.prot + 1;
+    return true;
+  }
+
+  elegirDescartar(i, idx) {
+    const j = this.jug[i];
+    const [c] = j.mano.splice(idx, 1);
+    j.desc.push(c);
+    this.nota('descarta', c);
+  }
+
+  elegirManoEncima(i, idx) {
+    const j = this.jug[i];
+    const [c] = j.mano.splice(idx, 1);
+    j.mazo.push(c);
+    this.nota('encima', c);
+  }
+
+  elegirDescarteEncima(i, idx) {
+    const j = this.jug[i];
+    const [c] = j.desc.splice(idx, 1);
+    j.mazo.push(c);
+    this.nota('encima', c);
+  }
+
+  elegirRecuperar(i, idx) {
+    const j = this.jug[i];
+    const [c] = j.desc.splice(idx, 1);
+    j.mano.push(c);
+    this.nota('recupera', c);
+    return c;
+  }
+
+  elegirCambioUmbral(u) {
+    const [c] = this.umbral.splice(u, 1);
+    this.reponer();
+    return c;
+  }
+
 
   // Valor de vincular lo mejor posible con 'mana' (para el bot).
   compra(i, mana) {

@@ -55,6 +55,27 @@
   .lateral { background: #fff; border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
   .pie { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; }
   .pie .boton { width: 100%; }
+  .aviso { font-size: 11px; color: var(--suave); text-align: center; line-height: 1.4; padding: 0 10px 10px; }
+
+  /* Ventana de vincular: se abre al tocar un Elemental del Umbral */
+  .velo-v { position: fixed; inset: 0; z-index: 100; background: rgba(29, 29, 31, .4); display: none; align-items: center; justify-content: center; }
+  .velo-v.abierta { display: flex; }
+  .ventana { width: 340px; background: #fff; border-radius: 22px; padding: 26px 26px 22px; display: flex; flex-direction: column;
+    align-items: center; gap: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.25); text-align: center; }
+  .ventana .ilus { width: 132px; height: 132px; border-radius: 22px; }
+  .ventana .ilus svg { width: 60px; height: 60px; }
+  .ventana .nombre { font-size: 17px; font-weight: 700; margin-top: 4px; }
+  .ventana .esferas { grid-template-columns: 38px 38px 46px; gap: 6px; align-items: center; }
+  .ventana .comomana { color: var(--mana); font-size: 11px; font-weight: 600; margin-top: -4px; }
+  .ventana .esf { width: 38px; height: 38px; font-size: 14px; }
+  .ventana .esf.a { width: 46px; height: 46px; }
+  .ventana .texto { color: var(--suave); font-size: 12.5px; line-height: 1.45; max-width: 260px; }
+  .ventana .saldo { font-size: 12px; padding: 8px 14px; border-radius: 12px; background: var(--fondo); width: 100%; }
+  .ventana .saldo b { color: var(--mana); }
+  .ventana .saldo.no { color: var(--tinta); } .ventana .saldo.no b { color: var(--fuego); }
+  .ventana .botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 6px; }
+  .boton { cursor: pointer; }
+  .boton.inactivo { opacity: .28; cursor: not-allowed; }
   .lateral .titulo { text-align: center; margin-bottom: 2px; }
   .fila-u { display: grid; grid-template-columns: 72px 1fr; gap: 16px; align-items: center; position: relative; cursor: pointer; }
   .fila-u .ilus { width: 72px; height: 72px; border-radius: 14px; }
@@ -163,19 +184,21 @@
 
 <div class="juego">
 <div class="lateral"><div id="umbral" style="display:flex;flex-direction:column;gap:11px"></div>
-  <div class="pie"><div class="boton borde">Vincular</div></div>
+  <div class="pie"><div class="aviso">Toca un Elemental para ver qué hace y vincularlo</div></div>
 </div>
 <div class="principal">
   <div class="arriba">
     <div class="pila"><div class="dorso">7</div>Mazo</div>
-    <div class="total">3<small>MANÁ</small></div>
-    <div class="pila"><div class="dorso">4</div>Descarte</div>
+    <div class="total"><span id="mana">3</span><small>MANÁ</small></div>
+    <div class="pila"><div class="dorso" id="descarte">4</div>Descarte</div>
   </div>
   <div class="zona mano"><div class="titulo">Tu mano</div><div class="cartas" id="mano"></div></div>
   <div class="boton lleno">Terminar turno</div>
 </div>
 <div class="derecha" id="santuarios"></div>
 </div>
+
+<div class="velo-v" id="velo"><div class="ventana" id="ventana"></div></div>
 
 <script src="acciones.js"></script>
 <script>
@@ -226,16 +249,71 @@
   };
 
   // Umbral: filas apaisadas (ilustración a la izquierda, nombre y esferas a la derecha)
-  const fila = (nombre, el, coste, mana, partes, extra = '') => `<div class="fila-u ${extra}">
-    <div class="ilus" style="background:${tono[el]}"><svg style="color:var(--${el})"><use href="#${el}"/></svg></div>
-    <div><div class="nombre">${nombre}</div><div class="esferas"><span class="esf c">${coste}</span><span class="esf m">${mana}</span>${accion(partes)}</div></div>${pista(nombre, coste, mana)}</div>`;
-  document.getElementById('umbral').innerHTML = '<div class="titulo">Umbral</div>' + [
-    fila('Corriente', 'agua', 3, 1, [['agua', '+2']]),
-    fila('Embestida', 'fuego', 4, 2, [['fuego', '+1'], ['retira', '−1']], 'cara'),
-    fila('Brisa', 'aire', 2, 1, [['aire', '+1']]),
-    fila('Bastión', 'tierra', 5, 2, [['escudo', '∞'], ['tierra', '+1']], 'cara'),
-    fila('Torbellino', 'aire', 6, 3, [['mueve', '2'], ['aire', '+1']], 'cara'),
-  ].join('<div class="linea"></div>');
+  const fila = (c, i, cara) => `<div class="fila-u ${cara ? 'cara' : ''}" data-i="${i}">
+    <div class="ilus" style="background:${tono[c.el]}"><svg style="color:var(--${c.el})"><use href="#${c.el}"/></svg></div>
+    <div><div class="nombre">${c.nombre}</div><div class="esferas"><span class="esf c">${c.coste}</span><span class="esf m">${c.mana}</span>${accion(c.partes)}</div></div>${pista(c.nombre, c.coste, c.mana)}</div>`;
+
+  // Estado del turno (maqueta): Maná disponible, cartas en el descarte y si ya has vinculado
+  const C = (nombre, el, coste, mana, partes) => ({ nombre, el, coste, mana, partes });
+  const umbral = [
+    C('Corriente', 'agua', 3, 1, [['agua', '+2']]),
+    C('Embestida', 'fuego', 4, 2, [['fuego', '+1'], ['retira', '−1']]),
+    C('Brisa', 'aire', 2, 1, [['aire', '+1']]),
+    C('Bastión', 'tierra', 5, 2, [['escudo', '∞'], ['tierra', '+1']]),
+    C('Torbellino', 'aire', 6, 3, [['mueve', '2'], ['aire', '+1']]),
+  ];
+  const reserva = [C('Semilla', 'tierra', 2, 1, [['tierra', '+1']]), C('Ráfaga', 'aire', 3, 1, [['aire', '+2']]), C('Gota', 'agua', 2, 1, [['agua', '+1']])];
+  const estado = { mana: 3, descarte: 4, vinculado: false };
+
+  const pintarUmbral = () => {
+    document.getElementById('umbral').innerHTML = '<div class="titulo">Umbral</div>' +
+      umbral.map((c, i) => fila(c, i, estado.vinculado || c.coste > estado.mana)).join('<div class="linea"></div>');
+    document.getElementById('mana').textContent = estado.mana;
+    document.getElementById('descarte').textContent = estado.descarte;
+  };
+
+  const velo = document.getElementById('velo');
+  const ventana = document.getElementById('ventana');
+  const cerrar = () => velo.classList.remove('abierta');
+  const abrir = (i) => {
+    const c = umbral[i];
+    const falta = c.coste - estado.mana;
+    const puede = !estado.vinculado && falta <= 0;
+    const saldo = estado.vinculado ? '<div class="saldo no">Ya has vinculado un Elemental este turno.</div>'
+      : falta > 0 ? `<div class="saldo no">Cuesta ${c.coste} y tienes ${estado.mana} de Maná: <b>te falta ${falta}</b>.</div>`
+        : `<div class="saldo">Pagas <b>${c.coste}</b> de tus ${estado.mana} de Maná. Irá a tu descarte.</div>`;
+    ventana.innerHTML = `<div class="ilus" style="background:${tono[c.el]}"><svg style="color:var(--${c.el})"><use href="#${c.el}"/></svg></div>
+      <div class="nombre">${c.nombre}</div>
+      <div class="esferas"><span class="esf c">${c.coste}</span><span class="esf m">${c.mana}</span>${accion(c.partes)}</div>
+      <div class="texto">${(window.ACCIONES[c.nombre] || [, ''])[1]}</div>
+      <div class="comomana">Como Maná da ${c.mana}</div>
+      ${saldo}
+      <div class="botones"><div class="boton borde" data-accion="cancelar">Cancelar</div><div class="boton lleno ${puede ? '' : 'inactivo'}" data-accion="vincular">Vincular</div></div>`;
+    ventana.dataset.i = i;
+    ventana.dataset.puede = puede ? '1' : '';
+    velo.classList.add('abierta');
+  };
+  const vincular = () => {
+    const i = Number(ventana.dataset.i);
+    estado.mana -= umbral[i].coste;
+    estado.descarte += 1;
+    estado.vinculado = true;
+    umbral[i] = reserva.shift() || umbral[i]; // se revela otro Elemental en su lugar
+    pintarUmbral();
+    cerrar();
+  };
+
+  document.getElementById('umbral').addEventListener('click', (e) => {
+    const f = e.target.closest('.fila-u');
+    if (f) abrir(Number(f.dataset.i));
+  });
+  velo.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-accion]');
+    if (e.target === velo || (b && b.dataset.accion === 'cancelar')) cerrar();
+    if (b && b.dataset.accion === 'vincular' && ventana.dataset.puede) vincular();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+  pintarUmbral();
 
   document.getElementById('mano').innerHTML = [
     carta('Manantial', 'agua', 2, 1, [['roba', '1']], 'usada', 'Maná'),

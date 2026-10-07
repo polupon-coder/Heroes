@@ -124,6 +124,8 @@
   /* Esferas */
   .ilus { display: flex; align-items: center; justify-content: center; }
   .ilus.tx { background: linear-gradient(rgba(255, 251, 244, .18), rgba(255, 251, 244, .18)), var(--tex) center / cover; }
+  .ilus.con-img { overflow: hidden; background: linear-gradient(rgba(255, 251, 244, .5), rgba(255, 251, 244, .5)), var(--tex) center / cover; }
+  .ilus.con-img img { width: 92%; height: 92%; object-fit: contain; filter: drop-shadow(0 3px 4px rgba(60, 30, 10, .28)); }
   .ilus.tx svg { color: #fff !important; filter: drop-shadow(0 1px 2px rgba(0,0,0,.18)); }
   .esferas { display: grid; grid-template-columns: 32px 32px 32px; gap: 4px; justify-items: center; align-items: center; }
   .esferas.sin-coste { grid-template-columns: 32px 32px; }
@@ -276,7 +278,11 @@ function accion(partes) {
   return `<span class="esf a doble" style="background:linear-gradient(90deg, ${color(c1)} 50%, ${color(c2)} 50%)"><span>${glifo(s1)}${t1}</span><span>${glifo(s2)}${t2}</span></span>`;
 }
 const esferas = (c, coste) => `<div class="esferas${c.inicial ? ' sin-coste' : ''}">${c.inicial ? '' : `<span class="esf c">${coste}</span>`}<span class="esf m">${c.mana}</span>${accion(partesDe(c))}</div>`;
-const ilus = (c) => c.el
+// Ilustraciones de los Elementales (las incrusta construir.js desde web/elementales/)
+const IMAGENES = /*IMAGENES*/{};
+const ilus = (c) => c.el && IMAGENES[c.nombre]
+  ? `<div class="ilus tx tx-${c.el} con-img"><img src="${IMAGENES[c.nombre]}" alt=""></div>`
+  : c.el
   ? `<div class="ilus tx tx-${c.el}"><svg style="color:var(--${c.el})"><use href="#${c.el}"/></svg></div>`
   : '<div class="ilus" style="background:#ede9fe"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="var(--mana)"/></svg></div>';
 const pista = (c, coste) => `<div class="pista"><b>${c.nombre}</b>${textoDe(c)}<small>${c.inicial ? 'Carta inicial · ' : `Coste ${coste} · `}Como Maná: ${c.mana}</small></div>`;

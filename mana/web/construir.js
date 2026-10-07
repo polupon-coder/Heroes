@@ -31,6 +31,13 @@ const poner = (marca, codigo) => {
 // Texturas: se incrustan en el archivo para que funcione sin carpetas al lado
 html = html.replace(/url\(texturas\/([a-z]+)\.webp\)/g, (_, n) =>
   `url(data:image/webp;base64,${fs.readFileSync(path.join(__dirname, 'texturas', n + '.webp')).toString('base64')})`);
+// Ilustraciones: web/elementales/<nombre de la carta>.webp
+const dirImg = path.join(__dirname, 'elementales');
+const imagenes = {};
+for (const f of fs.existsSync(dirImg) ? fs.readdirSync(dirImg) : []) {
+  if (f.endsWith('.webp')) imagenes[f.slice(0, -5).normalize('NFC')] = `data:image/webp;base64,${fs.readFileSync(path.join(dirImg, f)).toString('base64')}`;
+}
+poner('/*IMAGENES*/{}', JSON.stringify(imagenes));
 poner('/*ACCIONES*/', leer('maqueta/acciones.js'));
 poner('/*MODULOS*/', modulos);
 fs.writeFileSync(path.join(raiz, 'jugar.html'), html);

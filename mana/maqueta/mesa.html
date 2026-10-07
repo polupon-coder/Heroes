@@ -10,8 +10,9 @@
     --fuego: #e5533d; --agua: #3b82f6; --tierra: #3fa66b; --aire: #e3b21c; --neutro: #4b5563;
   }
   * { box-sizing: border-box; margin: 0; }
-  body { width: 1280px; height: 960px; background: var(--fondo); color: var(--tinta);
-    font: 14px/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 34px 40px 40px;
+  html { zoom: 1.5; } /* se diseña a 1280×720 y se muestra a 1920×1080 (Full HD) */
+  body { width: 1280px; height: 720px; background: var(--fondo); color: var(--tinta);
+    font: 14px/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 22px 40px 26px;
     display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
   .ico { width: 18px; height: 18px; }
 
@@ -29,34 +30,35 @@
     border: 1.5px solid currentColor; font-size: 11px; font-weight: 700; }
 
   /* Santuarios: icono en el centro y un cuadrante por Guardián */
-  .santuarios { width: 1040px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-  .sant { position: relative; background: color-mix(in srgb, var(--el) 13%, #fff); border-radius: 14px; height: 128px; margin-bottom: 26px;
+  .medio { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+  .columna { display: flex; flex-direction: column; align-items: center; gap: 40px; }
+  .sant { position: relative; background: color-mix(in srgb, var(--el) 13%, #fff); border-radius: 14px; width: 200px; height: 104px;
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-  .cuad { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+  .cuad { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
   .cuad .n { font-size: 15px; font-weight: 600; line-height: 1; }
   .cuad .n.cero { color: color-mix(in srgb, var(--el) 30%, transparent); }
   .cuad.lider .n { font-size: 20px; font-weight: 800; }
   .puntos { display: flex; gap: 3px; height: 10px; }
   .puntos i { width: 10px; height: 10px; border-radius: 50%; }
   .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
-  .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 44px; height: 44px; border-radius: 50%;
+  .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; border-radius: 50%;
     background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .nucleo .ico { width: 21px; height: 21px; }
-  .marca { position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%); color: var(--el); font-weight: 600;
+  .nucleo .ico { width: 18px; height: 18px; }
+  .marca { position: absolute; left: 50%; bottom: -22px; transform: translateX(-50%); color: var(--el); font-weight: 600;
     font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding-left: .16em; white-space: nowrap; }
   .marca .emp { color: var(--suave); font-weight: 400; }
   .cruz::before, .cruz::after { content: ''; position: absolute; background: color-mix(in srgb, var(--el) 30%, transparent); }
-  .cruz::before { left: 50%; top: 14px; bottom: 14px; width: 1px; }
-  .cruz::after { top: 50%; left: 14px; right: 14px; height: 1px; }
+  .cruz::before { left: 50%; top: 10px; bottom: 10px; width: 1px; }
+  .cruz::after { top: 50%; left: 12px; right: 12px; height: 1px; }
 
   .zona { display: flex; flex-direction: column; align-items: center; gap: 10px; }
   .titulo { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--suave); padding-left: .16em; }
   .cartas { display: flex; gap: 22px; justify-content: center; align-items: flex-end; }
 
   /* Carta: todo centrado; Maná siempre en el eje */
-  .carta { width: 128px; display: flex; flex-direction: column; align-items: center; gap: 7px; }
-  .ilus { width: 128px; height: 128px; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
-  .ilus svg { width: 56px; height: 56px; }
+  .carta { width: 120px; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .ilus { width: 120px; height: 112px; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
+  .ilus svg { width: 50px; height: 50px; }
   .nombre { font-size: 13px; text-align: center; }
   .esferas { display: grid; grid-template-columns: 36px 36px 36px; gap: 6px; justify-items: center; }
   .esf { width: 36px; height: 36px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 13px;
@@ -65,14 +67,14 @@
   .esf.c { background: var(--coste); grid-column: 1; } .esf.m { background: var(--mana); grid-column: 2; } .esf.a { grid-column: 3; }
   .esf.doble { font-size: 11px; gap: 0; }
   .esf.doble span { width: 50%; text-align: center; }
-  .umbral .ilus { height: 100px; } .umbral .ilus svg { width: 44px; height: 44px; }
+  .umbral .ilus { height: 92px; } .umbral .ilus svg { width: 42px; height: 42px; }
   .umbral .carta.cara { opacity: .38; }
 
   /* Mano: Mazo y Descarte a los lados, Maná en el eje */
   .mesa { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 36px; }
-  .mano { gap: 58px; }
-  .pila { justify-self: center; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--suave); font-size: 12px; }
-  .pila .dorso { width: 76px; height: 104px; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff;
+  .mano { gap: 26px; }
+  .pila { justify-self: center; margin-bottom: 28px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--suave); font-size: 12px; }
+  .pila .dorso { width: 68px; height: 92px; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff;
     display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--tinta); }
   .mano .carta.accion { transform: translateY(-14px); }
   .mano .carta.accion .ilus { box-shadow: 0 0 0 3px var(--tinta); }
@@ -81,10 +83,10 @@
   .etq.a { color: var(--tinta); } .etq.m { color: var(--mana); }
 
   .mando { display: grid; grid-template-columns: 170px auto 170px; gap: 26px; align-items: center; }
-  .total { width: 84px; height: 84px; border-radius: 50%; background: var(--mana); color: #fff; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; font-size: 32px; font-weight: 700; line-height: 1; }
+  .total { width: 72px; height: 72px; border-radius: 50%; background: var(--mana); color: #fff; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: 28px; font-weight: 700; line-height: 1; }
   .total small { font-size: 9px; letter-spacing: .16em; font-weight: 600; margin-top: 4px; padding-left: .16em; }
-  .boton { text-align: center; padding: 11px 0; border-radius: 22px; font-weight: 600; font-size: 13px; }
+  .boton { text-align: center; padding: 10px 0; border-radius: 22px; font-weight: 600; font-size: 13px; }
   .boton.lleno { background: var(--tinta); color: #fff; } .boton.borde { border: 1.5px solid var(--tinta); }
 </style>
 </head>
@@ -117,11 +119,13 @@
   </div>
 </div>
 
-<div class="santuarios" id="santuarios"></div>
-
-<div class="zona umbral">
-  <div class="titulo">Umbral</div>
-  <div class="cartas" id="umbral"></div>
+<div class="medio">
+  <div class="columna" id="sant-izq"></div>
+  <div class="zona umbral">
+    <div class="titulo">Umbral</div>
+    <div class="cartas" id="umbral"></div>
+  </div>
+  <div class="columna" id="sant-der"></div>
 </div>
 
 <div class="zona mano">
@@ -150,7 +154,7 @@
     ['aire', 'Aire', [0, 2, 1, 3], []],
   ];
   const orden = [0, 1, 2, 3]; // cuadrantes: arriba izq, arriba der, abajo izq, abajo der
-  document.getElementById('santuarios').innerHTML = S.map(([el, nom, ns, prot]) => {
+  const html = S.map(([el, nom, ns, prot]) => {
     const max = Math.max(...ns);
     const unico = ns.filter((n) => n === max).length === 1;
     const cuads = orden.map((k) => {
@@ -159,7 +163,9 @@
       return `<div class="cuad ${n === max && unico ? 'lider' : ''}"><div class="n ${n ? '' : 'cero'}" style="${n ? `color:var(--${EL[k]})` : ''}">${n}</div><div class="puntos">${puntos}</div></div>`;
     }).join('');
     return `<div class="sant cruz" style="--el:var(--${el})">${cuads}<div class="nucleo">${icono(el, `var(--${el})`)}</div><div class="marca">${nom}${unico ? '' : ' <span class="emp">· empate</span>'}</div></div>`;
-  }).join('');
+  });
+  document.getElementById('sant-izq').innerHTML = html.slice(0, 2).join('');
+  document.getElementById('sant-der').innerHTML = html.slice(2).join('');
 
   // Acción: una sola esfera; con dos efectos, la esfera se parte en dos mitades
   const color = (t) => (EL.includes(t) ? `var(--${t})` : 'var(--neutro)');

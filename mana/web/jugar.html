@@ -44,6 +44,9 @@
   .jug.activo, .jug.mio { color: var(--tinta); font-weight: 700; }
   /* Sellos: el número dentro de una esfera de piedra del color del jugador */
   .sello { display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); }
+  /* Ventana de inicio sobre el yeso suave de la mesa */
+  .ventana.yeso { background: linear-gradient(rgba(255, 252, 247, .3), rgba(255, 252, 247, .3)), url(texturas/fondo.webp) center / cover; }
+  .ventana.yeso .opcion:not(.elegida), .ventana.yeso .campo { background: rgba(255, 255, 255, .6); }
   .titulo-inicio { width: 230px; margin: 4px 0 8px; }
   /* Inicio y sala de partida */
   .campo, .unirse input { width: 100%; border: 1.5px solid var(--linea); border-radius: 14px; padding: 11px 14px 9px; font: inherit; font-size: 15px;
@@ -1064,6 +1067,8 @@ function inicio() {
   abrir(`<img class="titulo-inicio" src="url(texturas/titulo.webp)" alt="MANA">
     <input id="nombre" class="campo" maxlength="14" placeholder="TU NOMBRE" autocomplete="off" value="${limpiarNombre(leerNombre())}">
     <div class="opciones" id="modo"></div><div id="detalle" class="detalle"></div>`, [], false, true);
+  $('ventana').classList.add('yeso');
+  $('nombre').oninput = () => { if (!p.turno) { NOMBRES[YO] = limpiarNombre($('nombre').value) || 'Tú'; pintar(); } };
   $('modo').onclick = (e) => { const o = e.target.closest('[data-m]'); if (o) { modo = o.dataset.m; pintarModo(); } };
   pintarModo();
 }
@@ -1184,6 +1189,7 @@ function subirPronto() {
 // Mesa vacía de fondo mientras se elige
 p = new Partida(4, { seed: 1, registro: true }).iniciar();
 p.turno = null;
+NOMBRES[0] = limpiarNombre(leerNombre()) || 'Tú';
 window.guiaLista = true;
 pintar();
 inicio();

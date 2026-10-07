@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MANA</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Grandstander:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --fondo: #f6f5f1; --tinta: #1d1d1f; --suave: #8a8a8f; --linea: #e4e2dc;
@@ -16,6 +13,8 @@
   }
   /* Mesa de aspecto claro a propósito (mismo look con el tema claro u oscuro del visor) */
   :root { color-scheme: light; }
+  /* Letra incrustada en la página: se ve igual aunque no cargue Google Fonts */
+  @font-face { font-family: 'Grandstander'; font-style: normal; font-weight: 400 700; font-display: block; src: url(texturas/grandstander.woff2) format('woff2'); }
   * { box-sizing: border-box; margin: 0; }
   button, input { font-family: inherit; }
   html { background: #faf6f0 url(texturas/fondo.webp) center / cover fixed; }
@@ -302,9 +301,9 @@
     <div class="titulo img"><img src="url(texturas/titulo-ofrenda.webp)" alt="Ofrenda"></div>
     <div id="mano"></div>
     <div class="arriba">
-      <div class="pila"><div class="dorso" id="mazo">0</div>Mazo</div>
+      <div class="pila"><div class="dorso" id="mazo">0</div>Fuente</div>
       <div class="pila mana-pila"><div class="total" id="total">0</div>Maná</div>
-      <div class="pila"><div class="dorso" id="descarte">0</div>Descarte</div>
+      <div class="pila"><div class="dorso" id="descarte">0</div>Reserva</div>
     </div>
     <div class="mandos"><div class="boton borde" id="deshacer">Deshacer</div><div class="boton verde" id="terminar">Terminar turno</div></div>
   </div>
@@ -479,7 +478,7 @@ function pasoActual() {
   }
   if (p.registro.length && p.registro[p.registro.length - 1].sinCartas && p.registro[p.registro.length - 1].i === YO && !vistos.has('sincartas' + p.registro.length)) {
     vistos.add('sincartas' + p.registro.length);
-    return ['sincartas', 'Tu mazo y tu descarte estaban vacíos: no había cartas que robar.', $('mazo'), 'arriba'];
+    return ['sincartas', 'Tu mazo y tu Reserva estaban vacíos: no había cartas que robar.', $('mazo'), 'arriba'];
   }
   // Primera vez que juegas una Acción: explica los Santuarios
   if (yo.jugadas.length && !vistos.has('santuarios')) {
@@ -488,10 +487,10 @@ function pasoActual() {
   // Liberar: se explica una vez cuando es posible
   const inicialUsada = [...p.turno.manaUsadas, ...yo.jugadas].some((c) => c.inicial);
   if (inicialUsada && p.puedeLiberar() && p.turno.vinculado && !vistos.has('liberar')) {
-    return ['liberar', 'Truco: toca una <b>carta inicial</b> que ya hayas usado y pulsa <b>Liberar</b> (2 de Maná). Sale de la partida y tu mazo queda con cartas mejores.', $('mano'), 'abajo', true];
+    return ['liberar', 'Truco: toca una <b>carta inicial</b> que ya hayas usado y pulsa <b>Liberar</b> (2 de Maná). Sale de la partida y tus cartas mejoran.', $('mano'), 'abajo', true];
   }
   if (puedeComprar) {
-    return ['vincular', `Tienes <b>${disp} de Maná</b>. Toca un Elemental del <b>Umbral</b> para vincularlo: irá a tu descarte y lo robarás en próximos turnos. Solo uno por turno.`, $('umbral').parentElement, 'der'];
+    return ['vincular', `Tienes <b>${disp} de Maná</b>. Toca un Elemental del <b>Umbral</b> para vincularlo: irá a tu Reserva y lo robarás en próximos turnos. Solo uno por turno.`, $('umbral').parentElement, 'der'];
   }
   if (!usadas && yo.mano.length) {
     return ['mano', 'Es tu turno. Toca una carta de tu mano: puedes jugar su <b>Acción</b> (la esfera de color) o usarla como <b>Maná</b> (la esfera lila) para vincular Elementales. Nunca las dos.', $('mano'), 'abajo'];
@@ -593,8 +592,8 @@ function verCarta(donde, k) {
     const roba = c.accion.some((e) => e.draw);
     const recupera = c.accion.some((e) => e.recover);
     let nota = '';
-    if (roba) nota += '<div class="saldo">Si juegas su Acción, <b>robas solo</b> de tu mazo: la carta nueva aparece en tu mano, marcada como <b style="color:var(--verde)">NUEVA</b>, y puedes usarla este mismo turno.</div>';
-    if (recupera) nota += '<div class="saldo">La carta recuperada vuelve de tu descarte a tu mano y puedes usarla este turno.</div>';
+    if (roba) nota += '<div class="saldo">Si juegas su Acción, <b>robas solo</b> de tu Fuente: la carta nueva aparece en tu mano, marcada como <b style="color:var(--verde)">NUEVA</b>, y puedes usarla este mismo turno.</div>';
+    if (recupera) nota += '<div class="saldo">La carta recuperada vuelve de tu Reserva a tu mano y puedes usarla este turno.</div>';
     if (conObjetivos(c)) nota += '<div class="nota">Al jugarla te preguntaré qué eliges en cada efecto.</div>';
     abrir(cabeceraCarta(c, c.coste) + nota, [
       { texto: 'Cancelar' },
@@ -631,11 +630,11 @@ function verUmbral(u) {
   const saldo = !esMiTurno() ? '<div class="saldo">Espera a tu turno para vincular.</div>'
     : p.turno.vinculado ? '<div class="saldo no">Ya has vinculado un Elemental este turno.</div>'
       : falta > 0 ? `<div class="saldo no">Cuesta ${coste} y tienes ${disp} de Maná: <b>te falta ${falta}</b>. Usa cartas de tu mano como Maná.</div>`
-        : `<div class="saldo">Pagas <b>${coste}</b> de tus ${disp} de Maná. Irá a tu descarte.</div>`;
+        : `<div class="saldo">Pagas <b>${coste}</b> de tus ${disp} de Maná. Irá a tu Reserva.</div>`;
   abrir(cabeceraCarta(c, coste) + saldo, [
     { texto: 'Cancelar' },
     { texto: 'Vincular', clase: 'lleno', inactivo: !p.puedeVincular(u) || !esMiTurno(), accion: () => {
-      guardar(`vincular ${c.nombre}`); nuevas = []; p.humanoVincular(u); avisar(`Vinculas ${c.nombre}: va a tu descarte.`); latido(); pintar();
+      guardar(`vincular ${c.nombre}`); nuevas = []; p.humanoVincular(u); avisar(`Vinculas ${c.nombre}: va a tu Reserva.`); latido(); pintar();
     } },
   ]);
 }
@@ -655,7 +654,7 @@ function latido() {
 }
 function describir(e) {
   const quien = NOMBRES[e.i];
-  if (e.tipo === 'vincula') return e.i === YO ? `Vinculas <b>${e.carta}</b>: va a tu descarte` : `${quien} vincula <b>${e.carta}</b>`;
+  if (e.tipo === 'vincula') return e.i === YO ? `Vinculas <b>${e.carta}</b>: va a tu Reserva` : `${quien} vincula <b>${e.carta}</b>`;
   if (e.tipo === 'libera') return e.i === YO ? `Liberas ${e.carta}: sale de la partida` : `${quien} libera ${e.carta}`;
   const partes = (e.cambios || []).map((x) => {
     const t = [];
@@ -671,7 +670,7 @@ function describir(e) {
   if (e.sinCartas) partes.push(yo ? 'no quedaban más cartas para robar' : 'no le quedaban cartas para robar');
   for (const n of e.notas || []) {
     if (n.tipo === 'descarta') partes.push(yo ? `descartas ${n.carta}` : 'descarta 1');
-    if (n.tipo === 'encima') partes.push(yo ? `pones ${n.carta} encima de tu mazo (la robarás en tu próximo turno)` : 'pone 1 carta encima de su mazo');
+    if (n.tipo === 'encima') partes.push(yo ? `pones ${n.carta} encima de tu Fuente (la robarás en tu próximo turno)` : 'pone 1 carta encima de su Fuente');
     if (n.tipo === 'recupera') partes.push(yo ? `recuperas <b>${n.carta}</b> a tu mano` : 'recupera 1 carta');
   }
   return `${yo ? 'Juegas' : quien + ' juega'} <b>${e.carta}</b>${partes.length ? ': ' + partes.join(' · ') : ''}`;
@@ -771,7 +770,7 @@ async function jugarAccion(k) {
   for (const e of p.registro.slice(desde)) {
     avisar(describir(e), 4200);
     nuevas.push(...(e.cartasRobadas || []));
-    // una carta recuperada del descarte también llega nueva a la mano
+    // una carta recuperada de la Reserva también llega nueva a la mano
     for (const x of e.notas || []) if (x.tipo === 'recupera') nuevas.push(p.jug[YO].mano.find((m) => m.nombre === x.carta));
   }
   pintar();
@@ -877,23 +876,23 @@ async function resolver(c, e, n) {
     if (!yo.mano.length) return;
     const ops = yo.mano.map((m, k) => ({ valor: k, html: cartaOpcion(m) }));
     const k = e.discard
-      ? await elegir(c, n, 'Descarta 1 carta de tu mano', 'Va a tu descarte.', ops, null)
-      : await elegir(c, n, 'Pon 1 carta de tu mano encima de tu mazo', 'La robarás en tu próximo turno.', ops, null);
+      ? await elegir(c, n, 'Descarta 1 carta de tu mano', 'Va a tu Reserva.', ops, null)
+      : await elegir(c, n, 'Pon 1 carta de tu mano encima de tu Fuente', 'La robarás en tu próximo turno.', ops, null);
     if (e.discard) p.elegirDescartar(YO, k); else p.elegirManoEncima(YO, k);
     return;
   }
 
   if (e.topFromDiscard || e.recover) {
-    if (!yo.desc.length) { avisar(`${c.nombre}: tu descarte está vacío`); return; }
+    if (!yo.desc.length) { avisar(`${c.nombre}: tu Reserva está vacío`); return; }
     // una opción por carta distinta
     const vistas = new Set();
     const ops = [];
     yo.desc.forEach((m, k) => { if (!vistas.has(m.nombre)) { vistas.add(m.nombre); ops.push({ valor: k, html: cartaOpcion(m) }); } });
     if (e.recover) {
-      const k = await elegir(c, n, 'Recupera 1 carta de tu descarte', 'Vuelve a tu mano y puedes usarla este turno.', ops, null);
+      const k = await elegir(c, n, 'Recupera 1 carta de tu Reserva', 'Vuelve a tu mano y puedes usarla este turno.', ops, null);
       p.elegirRecuperar(YO, k);
     } else {
-      const k = await elegir(c, n, 'Pon 1 carta de tu descarte encima de tu mazo', 'La robarás en tu próximo turno.', ops, null);
+      const k = await elegir(c, n, 'Pon 1 carta de tu Reserva encima de tu Fuente', 'La robarás en tu próximo turno.', ops, null);
       p.elegirDescarteEncima(YO, k);
     }
     return;
@@ -940,7 +939,7 @@ function bienvenida() {
   const yo = p.jug[YO];
   abrir(`<h2>Eres el Guardián ${yo.color === 'agua' ? 'del Agua' : yo.color === 'aire' ? 'del Aire' : yo.color === 'tierra' ? 'de la Tierra' : 'del Fuego'}</h2>
     <span class="piedra esf-${yo.color}" style="width:64px;height:64px"></span>
-    <div class="texto">Tus Presencias son de tu color. Tu mazo lleva un Elemental menor más de tu elemento.</div>
+    <div class="texto">Tus Presencias son de tu color. Tus cartas llevan un Elemental menor más de tu elemento.</div>
     <div class="texto"><b>Cada turno:</b> toca tus cartas para usarlas como <b>Acción</b> o como <b>Maná</b>, toca un Elemental del <b>Umbral</b> para vincularlo y pulsa <b>Terminar turno</b>.</div>
     <div class="texto">Al final de cada Era, quien tenga más Presencia en cada Santuario gana sus Sellos (1, 2 y 3). Empate en cabeza: nadie.</div>
     <div class="texto">¿Te has equivocado? Pulsa <b>Deshacer</b>, junto a «Terminar turno», para volver atrás dentro de tu turno (salvo después de robar cartas).</div>
@@ -996,9 +995,9 @@ $('deshacer').onclick = deshacer;
 $('mazo').parentElement.onclick = () => {
   if (!p || !p.turno) return;
   const yo = p.jug[YO];
-  abrir(`<h2>Tu mazo</h2><div class="dorso" style="margin:4px auto">${yo.mazo.length}</div>
+  abrir(`<h2>Tu Fuente</h2><div class="dorso" style="margin:4px auto">${yo.mazo.length}</div>
     <div class="texto">Son tus cartas boca abajo. <b>No se roba tocándolo:</b> robas 5 automáticamente al terminar tu turno, y más cuando juegas una carta que dice <b>Roba</b>.</div>
-    <div class="texto">Cuando se acaba, tu descarte se baraja y forma un mazo nuevo. Así vuelven los Elementales que vinculas.</div>`, [{ texto: 'Entendido', clase: 'lleno' }]);
+    <div class="texto">Cuando se acaba, tu Reserva se baraja y forma una Fuente nueva. Así vuelven los Elementales que vinculas.</div>`, [{ texto: 'Entendido', clase: 'lleno' }]);
 };
 $('descarte').parentElement.onclick = () => {
   if (!p || !p.turno) return;
@@ -1006,8 +1005,8 @@ $('descarte').parentElement.onclick = () => {
   const cuenta = {};
   for (const c of yo.desc) cuenta[c.nombre] = (cuenta[c.nombre] || 0) + 1;
   const lista = Object.entries(cuenta).map(([n, k]) => `${n}${k > 1 ? ' ×' + k : ''}`).join(', ') || 'Está vacío.';
-  abrir(`<h2>Tu descarte</h2><div class="texto">${lista}</div>
-    <div class="texto">Aquí van las cartas que usas y los Elementales que vinculas. Cuando tu mazo se acaba, se barajan y vuelven a él.</div>`, [{ texto: 'Entendido', clase: 'lleno' }]);
+  abrir(`<h2>Tu Reserva</h2><div class="texto">${lista}</div>
+    <div class="texto">Aquí van las cartas que usas y los Elementales que vinculas. Cuando tu Fuente se acaba, se barajan y vuelven a él.</div>`, [{ texto: 'Entendido', clase: 'lleno' }]);
 };
 $('umbral').addEventListener('click', (e) => { const f = e.target.closest('.fila-u'); if (f && p) verUmbral(Number(f.dataset.u)); });
 $('mano').addEventListener('click', (e) => { const f = e.target.closest('.carta'); if (f && p) verCarta(f.dataset.donde, Number(f.dataset.k)); });
@@ -1029,7 +1028,7 @@ function finEra() {
   const era = p.fin ? 2 : p.era - 1;
   if (p.fin) return finPartida();
   abrir(`<h2>Fin de la Era ${ROMANO[era]}</h2>${tablaPuntuacion()}<div class="texto">Sellos: ${clasificacion()}</div>
-    <div class="texto">Los Santuarios se vacían. Tu mazo se queda contigo. Empieza la Era ${ROMANO[p.era]} quien va primero.</div>`,
+    <div class="texto">Los Santuarios se vacían. Tus cartas se quedan contigo. Empieza la Era ${ROMANO[p.era]} quien va primero.</div>`,
   [{ texto: `Empezar la Era ${ROMANO[p.era]}`, clase: 'verde', accion: () => { entreEras = false; continuar(); } }], true, true);
 }
 
@@ -1045,8 +1044,8 @@ function verReglas() {
     <h3>Objetivo</h3>Eres un Guardián. Vincula Elementales y pon Presencia en los cuatro Santuarios. Al final de cada Era, quien tiene más Presencia en un Santuario gana sus Sellos: 1 en la Era I, 2 en la II y 3 en la III. Tras 3 Eras gana quien tenga más Sellos.
     <h3>Tu turno</h3><ul>
       <li>Juega las cartas de tu mano de una en una. Cada carta se usa <b>como Acción</b> (esfera de color) <b>o como Maná</b> (esfera lila), nunca las dos.</li>
-      <li><b>Vincula</b> 1 Elemental del Umbral pagando su coste (esfera gris). Va a tu descarte y volverá a tu mano más adelante.</li>
-      <li><b>Libera</b> 1 carta inicial jugada este turno pagando 2 Maná: sale de la partida y tu mazo mejora.</li>
+      <li><b>Vincula</b> 1 Elemental del Umbral pagando su coste (esfera gris). Va a tu Reserva y volverá a tu mano más adelante.</li>
+      <li><b>Libera</b> 1 carta inicial jugada este turno pagando 2 Maná: sale de la partida y tus cartas mejoran.</li>
       <li>Al terminar, descartas todo y robas 5. El Maná que no gastes se pierde.</li></ul>
     <h3>Las cartas</h3><ul>
       <li>Esferas en orden <b>Coste · Maná · Acción</b>. Las cartas iniciales no tienen coste.</li>
@@ -1054,7 +1053,7 @@ function verReglas() {
       <li>Fuego retira Presencias rivales, Aire las mueve, Tierra protege las tuyas, Agua juega con las cartas.</li>
       <li>Una Presencia protegida no se puede retirar ni mover hasta el final de la Era.</li></ul>
     <h3>Eras y empates</h3><ul>
-      <li>Cada Era dura 5 rondas. Al acabar se puntúa, se vacían los Santuarios y se renueva el Umbral. Tu mazo se conserva.</li>
+      <li>Cada Era dura 5 rondas. Al acabar se puntúa, se vacían los Santuarios y se renueva el Umbral. Tus cartas se conservan.</li>
       <li>Si dos empatan en cabeza en un Santuario, nadie gana sus Sellos.</li>
       <li>Empieza cada Era quien tiene más Sellos.</li>
       <li>Empate final: gana quien consiguió más Sellos en la Era III.</li></ul>

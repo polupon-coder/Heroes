@@ -34,6 +34,8 @@ html = html.replace(/src="url\(texturas\/([a-z-]+)\.webp\)"/g, (_, n) =>
   `src="data:image/webp;base64,${fs.readFileSync(path.join(__dirname, 'texturas', n + '.webp')).toString('base64')}"`);
 html = html.replace(/url\(texturas\/([a-z-]+)\.webp\)/g, (_, n) =>
   `url(data:image/webp;base64,${fs.readFileSync(path.join(__dirname, 'texturas', n + '.webp')).toString('base64')})`);
+html = html.replace(/url\(texturas\/([a-z-]+)\.woff2\)/g, (_, n) =>
+  `url(data:font/woff2;base64,${fs.readFileSync(path.join(__dirname, 'texturas', n + '.woff2')).toString('base64')})`);
 // Ilustraciones: web/elementales/<nombre de la carta>.webp
 const dirImg = path.join(__dirname, 'elementales');
 const imagenes = {};

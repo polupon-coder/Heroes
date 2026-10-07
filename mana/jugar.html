@@ -77,7 +77,10 @@
   .carta.accion .ilus { box-shadow: 0 0 0 3px var(--tinta); }
   .carta.usada .ilus { box-shadow: 0 0 0 3px var(--mana); }
   .etq { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; height: 12px; padding-left: .14em; }
-  .etq.a { color: var(--tinta); } .etq.m { color: var(--mana); }
+  .etq.a { color: var(--tinta); } .etq.m { color: var(--mana); } .etq.n { color: var(--verde); }
+  .carta.nueva .ilus { box-shadow: 0 0 0 3px var(--verde); animation: llega .5s ease-out; }
+  @keyframes llega { from { transform: translateY(-14px); opacity: 0; } }
+  .pila { cursor: pointer; }
   .vacia { color: var(--suave); font-size: 12px; height: 220px; display: flex; align-items: center; }
 
   .arriba { display: grid; grid-template-columns: 108px 1fr 108px; align-items: center; justify-items: center; width: 364px; margin-top: auto; }
@@ -501,6 +504,7 @@ class Partida {
         j.desc = [];
       }
       j.mano.push(j.mazo.pop());
+      if (this.captura && this.captura.j === j) this.captura.robadas.push(j.mano[j.mano.length - 1]);
     }
   }
 
@@ -676,6 +680,7 @@ class Partida {
       for (let t = 0; t < e.discard && j.mano.length; t++) {
         j.mano.sort((a, b) => clave(a) - clave(b));
         j.desc.push(j.mano.shift());
+        this.nota('descarta', j.desc[j.desc.length - 1]);
       }
     }
     if (e.handToTop && j.mano.length) {
@@ -684,6 +689,7 @@ class Partida {
       j.mano.sort((a, b) => fuerza(b, this.v) - fuerza(a, this.v));
       const c = this.v.acciones <= 1 ? j.mano.shift() : j.mano.pop();
       j.mazo.push(c);
+      this.nota('encima', c);
       this.extra[i] += w * (fuerza(c, this.v) - m);
     }
     if (e.topFromDiscard && j.desc.length) {
@@ -691,11 +697,13 @@ class Partida {
       j.desc.sort((a, b) => fuerza(a, this.v) - fuerza(b, this.v));
       const c = j.desc.pop();
       j.mazo.push(c);
+      this.nota('encima', c);
       this.extra[i] += w * Math.max(0, fuerza(c, this.v) - m);
     }
     if (e.recover && j.desc.length) {
       j.desc.sort((a, b) => clave(a) - clave(b));
       j.mano.push(j.desc.pop());
+      this.nota('recupera', j.mano[j.mano.length - 1]);
     }
     if (e.disrupt) {
       // el jugador activo elige al rival (el que va primero en Sellos); el rival elige qué descarta
@@ -742,6 +750,10 @@ class Partida {
     return lista;
   }
 
+  nota(tipo, carta) {
+    if (this.captura) this.captura.notas.push({ tipo, carta: carta.nombre });
+  }
+
   anotar(entrada) {
     if (this.registro) this.registro.push({ era: this.era, ...entrada });
   }
@@ -751,7 +763,8 @@ class Partida {
     const c = j.mano.splice(idx, 1)[0];
     j.jugadas.push(c);
     const antes = this.registro ? this.foto() : null;
-    const manoAntes = j.mano.length;
+    // Con registro, se apunta qué cartas se roban, descartan, recuperan o se ponen encima del mazo
+    if (antes) this.captura = { j, robadas: [], notas: [] };
     if (this.st) this.st.usoAccion[c.nombre] = (this.st.usoAccion[c.nombre] || 0) + 1;
     if (this.st) {
       const inter = c.accion.some((e) => e.remove || e.moveRival || e.moveOwnTo || e.protect || e.disrupt || e.refresh);
@@ -760,7 +773,13 @@ class Partida {
       this.st.acc[inter ? 'inter' : robo ? 'robo' : 'simple']++;
     }
     for (const e of c.accion) this.efecto(i, e, true);
-    if (antes) this.anotar({ i, tipo: 'accion', carta: c.nombre, cambios: this.cambios(antes), robadas: Math.max(0, j.mano.length - manoAntes) });
+    if (antes) {
+      const { robadas, notas } = this.captura;
+      this.captura = null;
+      const pedidas = c.accion.reduce((a, e) => a + (e.draw || 0), 0);
+      this.anotar({ i, tipo: 'accion', carta: c.nombre, cambios: this.cambios(antes), robadas: robadas.map((x) => x.nombre),
+        cartasRobadas: robadas, sinCartas: robadas.length < pedidas, notas });
+    }
   }
 
   // Valor de vincular lo mejor posible con 'mana' (para el bot).
@@ -1077,6 +1096,7 @@ window.addEventListener('resize', escalar);
 escalar();
 
 let p = null; // la partida
+let nuevas = []; // cartas que acaban de llegar a tu mano (se marcan como NUEVA)
 let entreEras = false; // ventana de fin de Era abierta
 const VEL = location.search.includes('rapido') ? 0.02 : 1; // ?rapido acelera los turnos de los bots (pruebas)
 let ocupado = false; // mientras juegan los bots o hay una ventana de Era
@@ -1132,14 +1152,19 @@ function pintar() {
     yo.jugadas.forEach((c, k) => cartas.push({ c, donde: 'jugadas', k, etq: 'Acción' }));
     p.turno.manaUsadas.forEach((c, k) => cartas.push({ c, donde: 'mana', k, etq: 'Maná' }));
   }
-  yo.mano.forEach((c, k) => cartas.push({ c, donde: 'mano', k, etq: '' }));
+  const porMarcar = nuevas.slice();
+  yo.mano.forEach((c, k) => {
+    const m = porMarcar.indexOf(c);
+    if (m >= 0) porMarcar.splice(m, 1);
+    cartas.push({ c, donde: 'mano', k, etq: m >= 0 ? 'Nueva' : '' });
+  });
   const n = cartas.length;
   const ancho = n <= 5 ? 108 : Math.max(70, Math.floor((640 - (n - 1) * 10) / n));
   $('mano').style.setProperty('--ancho', ancho + 'px');
   $('mano').style.setProperty('--hueco', (n <= 5 ? 20 : 10) + 'px');
   $('mano').innerHTML = n ? cartas.map(({ c, donde, k, etq }) =>
-    `<div class="carta ${etq === 'Acción' ? 'accion' : etq === 'Maná' ? 'usada' : ''}" data-donde="${donde}" data-k="${k}">
-      <div class="etq ${etq === 'Acción' ? 'a' : 'm'}">${etq}</div>${ilus(c)}<div class="nombre">${c.nombre}</div>${esferas(c, c.coste)}${pista(c, c.coste)}</div>`).join('')
+    `<div class="carta ${etq === 'Acción' ? 'accion' : etq === 'Maná' ? 'usada' : etq === 'Nueva' ? 'nueva' : ''}" data-donde="${donde}" data-k="${k}">
+      <div class="etq ${etq === 'Acción' ? 'a' : etq === 'Nueva' ? 'n' : 'm'}">${etq}</div>${ilus(c)}<div class="nombre">${c.nombre}</div>${esferas(c, c.coste)}${pista(c, c.coste)}</div>`).join('')
     : '<div class="vacia">Sin cartas en la mano</div>';
 
   $('mazo').textContent = yo.mazo.length;
@@ -1186,6 +1211,17 @@ function pasoActual() {
   const disp = p.manaDisponible();
   const masBarato = Math.min(...p.umbral.map((c) => p.coste(0, c)));
   const puedeComprar = !p.turno.vinculado && p.umbral.some((_, k) => p.puedeVincular(k));
+  // Acabas de robar: señala la carta nueva
+  if (nuevas.length) {
+    const ultima = p.registro[p.registro.length - 1];
+    const nombres = nuevas.map((c) => `<b>${c.nombre}</b>`).join(' y ');
+    const destino = document.querySelector('#mano .carta.nueva') || $('mano');
+    return ['robo' + p.registro.length, `Has robado ${nombres}. Ya está en tu mano, marcada como <b>NUEVA</b>: tócala para usarla este mismo turno.`, destino, 'abajo'];
+  }
+  if (p.registro.length && p.registro[p.registro.length - 1].sinCartas && p.registro[p.registro.length - 1].i === 0 && !vistos.has('sincartas' + p.registro.length)) {
+    vistos.add('sincartas' + p.registro.length);
+    return ['sincartas', 'Tu mazo y tu descarte estaban vacíos: no había cartas que robar.', $('mazo'), 'arriba'];
+  }
   // Primera vez que juegas una Acción: explica los Santuarios
   if (yo.jugadas.length && !vistos.has('santuarios')) {
     return ['santuarios', 'Tu Acción ha puesto Presencias de <b>tu color</b> en un Santuario. Al final de cada Era, quien tenga <b>más</b> en cada Santuario gana sus Sellos. Las bolitas grandes marcan quién va primero.', $('santuarios').parentElement, 'izq', true];
@@ -1271,10 +1307,15 @@ function verCarta(donde, k) {
   const yo = p.jug[0];
   if (donde === 'mano') {
     const c = yo.mano[k];
-    const nota = conObjetivos(c) ? '<div class="nota">En esta versión de prueba, los objetivos se eligen solos, lo mejor para ti.</div>' : '';
+    const roba = c.accion.some((e) => e.draw);
+    const recupera = c.accion.some((e) => e.recover);
+    let nota = '';
+    if (roba) nota += '<div class="saldo">Si juegas su Acción, <b>robas solo</b> de tu mazo: la carta nueva aparece en tu mano, marcada como <b style="color:var(--verde)">NUEVA</b>, y puedes usarla este mismo turno.</div>';
+    if (recupera) nota += '<div class="saldo">La carta recuperada vuelve de tu descarte a tu mano y puedes usarla este turno.</div>';
+    if (conObjetivos(c)) nota += '<div class="nota">En esta versión de prueba, las cartas y los objetivos se eligen solos, lo mejor para ti.</div>';
     abrir(cabeceraCarta(c, c.coste) + nota, [
       { texto: 'Cancelar' },
-      { texto: `Maná (+${c.mana})`, clase: 'borde', inactivo: !esMiTurno(), accion: () => { p.humanoMana(k); latido(); pintar(); } },
+      { texto: `Maná (+${c.mana})`, clase: 'borde', inactivo: !esMiTurno(), accion: () => { nuevas = []; p.humanoMana(k); latido(); pintar(); } },
       { texto: 'Acción', clase: 'lleno', inactivo: !esMiTurno() || !c.accion.length, accion: () => jugarAccion(k) },
     ]);
     return;
@@ -1284,7 +1325,7 @@ function verCarta(donde, k) {
   let saldo = donde === 'mana' ? 'Usada como Maná este turno.' : 'Jugada como Acción este turno.';
   if (donde === 'mana') {
     const puede = p.manaDisponible() >= c.mana;
-    botones.push({ texto: 'Devolver a la mano', inactivo: !puede, accion: () => { p.humanoDevolver(k); pintar(); } });
+    botones.push({ texto: 'Devolver a la mano', inactivo: !puede, accion: () => { nuevas = []; p.humanoDevolver(k); pintar(); } });
     if (!puede) saldo += ' Ya has gastado su Maná.';
   }
   if (c.inicial && p.v.liberar) {
@@ -1311,7 +1352,7 @@ function verUmbral(u) {
   abrir(cabeceraCarta(c, coste) + saldo, [
     { texto: 'Cancelar' },
     { texto: 'Vincular', clase: 'lleno', inactivo: !p.puedeVincular(u) || !esMiTurno(), accion: () => {
-      p.humanoVincular(u); avisar(`Vinculas ${c.nombre}: va a tu descarte.`); latido(); pintar();
+      nuevas = []; p.humanoVincular(u); avisar(`Vinculas ${c.nombre}: va a tu descarte.`); latido(); pintar();
     } },
   ]);
 }
@@ -1331,16 +1372,26 @@ function latido() {
 }
 function describir(e) {
   const quien = NOMBRES[e.i];
-  if (e.tipo === 'vincula') return `${quien} vincula <b>${e.carta}</b>`;
-  if (e.tipo === 'libera') return `${quien} libera ${e.carta}`;
+  if (e.tipo === 'vincula') return e.i === 0 ? `Vinculas <b>${e.carta}</b>: va a tu descarte` : `${quien} vincula <b>${e.carta}</b>`;
+  if (e.tipo === 'libera') return e.i === 0 ? `Liberas ${e.carta}: sale de la partida` : `${quien} libera ${e.carta}`;
   const partes = (e.cambios || []).map((x) => {
     const t = [];
     if (x.dn) t.push(`${x.dn > 0 ? '+' : '−'}${Math.abs(x.dn)} ${x.k === e.i ? '' : `de ${NOMBRES[x.k]} `}en ${NOMBRE_EL[x.s]}`);
     if (x.dp) t.push(`protege ${x.dp} en ${NOMBRE_EL[x.s]}`);
     return t.join(', ');
   });
-  if (e.robadas) partes.push(`roba ${e.robadas}`);
-  return `${quien} juega <b>${e.carta}</b>${partes.length ? ': ' + partes.join(' · ') : ''}`;
+  const yo = e.i === 0;
+  const lista = (ns) => ns.length > 1 ? ns.slice(0, -1).join(', ') + ' y ' + ns[ns.length - 1] : ns[0];
+  const robadas = e.robadas || [];
+  // tus cartas se nombran; las de los rivales, solo se cuentan
+  if (robadas.length) partes.push(yo ? `robas <b>${lista(robadas)}</b>` : `roba ${robadas.length}`);
+  if (e.sinCartas) partes.push(yo ? 'no quedaban más cartas para robar' : 'no le quedaban cartas para robar');
+  for (const n of e.notas || []) {
+    if (n.tipo === 'descarta') partes.push(yo ? `descartas ${n.carta}` : 'descarta 1');
+    if (n.tipo === 'encima') partes.push(yo ? `pones ${n.carta} encima de tu mazo (la robarás en tu próximo turno)` : 'pone 1 carta encima de su mazo');
+    if (n.tipo === 'recupera') partes.push(yo ? `recuperas <b>${n.carta}</b> a tu mano` : 'recupera 1 carta');
+  }
+  return `${yo ? 'Juegas' : quien + ' juega'} <b>${e.carta}</b>${partes.length ? ': ' + partes.join(' · ') : ''}`;
 }
 function verRegistro() {
   const filas = p.registro.slice().reverse().map((e) => `<div>Era ${ROMANO[e.era]} · ${describir(e)}</div>`).join('') || '<div>Todavía no ha pasado nada.</div>';
@@ -1351,8 +1402,14 @@ function verRegistro() {
 // ---------- Flujo de la partida --------------------------------------------------------------
 function jugarAccion(k) {
   const desde = p.registro.length;
+  nuevas = [];
   p.humanoAccion(k);
-  p.registro.slice(desde).forEach((e) => avisar(describir(e)));
+  for (const e of p.registro.slice(desde)) {
+    avisar(describir(e), 4200);
+    nuevas.push(...(e.cartasRobadas || []));
+    // una carta recuperada del descarte también llega nueva a la mano
+    for (const n of e.notas || []) if (n.tipo === 'recupera') nuevas.push(p.jug[0].mano.find((c) => c.nombre === n.carta));
+  }
   pintar();
 }
 
@@ -1399,12 +1456,29 @@ function cerrarTurno() {
 
 $('terminar').onclick = () => {
   if (!esMiTurno()) return;
+  nuevas = [];
   const antes = p.jug[0].selloEra.length;
   p.humanoTerminar();
   if (p.jug[0].selloEra.length > antes) return finEra();
   avanzar();
 };
 
+$('mazo').parentElement.onclick = () => {
+  if (!p || !p.turno) return;
+  const yo = p.jug[0];
+  abrir(`<h2>Tu mazo</h2><div class="dorso" style="margin:4px auto">${yo.mazo.length}</div>
+    <div class="texto">Son tus cartas boca abajo. <b>No se roba tocándolo:</b> robas 5 automáticamente al terminar tu turno, y más cuando juegas una carta que dice <b>Roba</b>.</div>
+    <div class="texto">Cuando se acaba, tu descarte se baraja y forma un mazo nuevo. Así vuelven los Elementales que vinculas.</div>`, [{ texto: 'Entendido', clase: 'lleno' }]);
+};
+$('descarte').parentElement.onclick = () => {
+  if (!p || !p.turno) return;
+  const yo = p.jug[0];
+  const cuenta = {};
+  for (const c of yo.desc) cuenta[c.nombre] = (cuenta[c.nombre] || 0) + 1;
+  const lista = Object.entries(cuenta).map(([n, k]) => `${n}${k > 1 ? ' ×' + k : ''}`).join(', ') || 'Está vacío.';
+  abrir(`<h2>Tu descarte</h2><div class="texto">${lista}</div>
+    <div class="texto">Aquí van las cartas que usas y los Elementales que vinculas. Cuando tu mazo se acaba, se barajan y vuelven a él.</div>`, [{ texto: 'Entendido', clase: 'lleno' }]);
+};
 $('umbral').addEventListener('click', (e) => { const f = e.target.closest('.fila-u'); if (f && p) verUmbral(Number(f.dataset.u)); });
 $('mano').addEventListener('click', (e) => { const f = e.target.closest('.carta'); if (f && p) verCarta(f.dataset.donde, Number(f.dataset.k)); });
 

@@ -128,6 +128,7 @@ class Partida {
         j.desc = [];
       }
       j.mano.push(j.mazo.pop());
+      if (this.captura && this.captura.j === j) this.captura.robadas.push(j.mano[j.mano.length - 1]);
     }
   }
 
@@ -303,6 +304,7 @@ class Partida {
       for (let t = 0; t < e.discard && j.mano.length; t++) {
         j.mano.sort((a, b) => clave(a) - clave(b));
         j.desc.push(j.mano.shift());
+        this.nota('descarta', j.desc[j.desc.length - 1]);
       }
     }
     if (e.handToTop && j.mano.length) {
@@ -311,6 +313,7 @@ class Partida {
       j.mano.sort((a, b) => fuerza(b, this.v) - fuerza(a, this.v));
       const c = this.v.acciones <= 1 ? j.mano.shift() : j.mano.pop();
       j.mazo.push(c);
+      this.nota('encima', c);
       this.extra[i] += w * (fuerza(c, this.v) - m);
     }
     if (e.topFromDiscard && j.desc.length) {
@@ -318,11 +321,13 @@ class Partida {
       j.desc.sort((a, b) => fuerza(a, this.v) - fuerza(b, this.v));
       const c = j.desc.pop();
       j.mazo.push(c);
+      this.nota('encima', c);
       this.extra[i] += w * Math.max(0, fuerza(c, this.v) - m);
     }
     if (e.recover && j.desc.length) {
       j.desc.sort((a, b) => clave(a) - clave(b));
       j.mano.push(j.desc.pop());
+      this.nota('recupera', j.mano[j.mano.length - 1]);
     }
     if (e.disrupt) {
       // el jugador activo elige al rival (el que va primero en Sellos); el rival elige qué descarta
@@ -369,6 +374,10 @@ class Partida {
     return lista;
   }
 
+  nota(tipo, carta) {
+    if (this.captura) this.captura.notas.push({ tipo, carta: carta.nombre });
+  }
+
   anotar(entrada) {
     if (this.registro) this.registro.push({ era: this.era, ...entrada });
   }
@@ -378,7 +387,8 @@ class Partida {
     const c = j.mano.splice(idx, 1)[0];
     j.jugadas.push(c);
     const antes = this.registro ? this.foto() : null;
-    const manoAntes = j.mano.length;
+    // Con registro, se apunta qué cartas se roban, descartan, recuperan o se ponen encima del mazo
+    if (antes) this.captura = { j, robadas: [], notas: [] };
     if (this.st) this.st.usoAccion[c.nombre] = (this.st.usoAccion[c.nombre] || 0) + 1;
     if (this.st) {
       const inter = c.accion.some((e) => e.remove || e.moveRival || e.moveOwnTo || e.protect || e.disrupt || e.refresh);
@@ -387,7 +397,13 @@ class Partida {
       this.st.acc[inter ? 'inter' : robo ? 'robo' : 'simple']++;
     }
     for (const e of c.accion) this.efecto(i, e, true);
-    if (antes) this.anotar({ i, tipo: 'accion', carta: c.nombre, cambios: this.cambios(antes), robadas: Math.max(0, j.mano.length - manoAntes) });
+    if (antes) {
+      const { robadas, notas } = this.captura;
+      this.captura = null;
+      const pedidas = c.accion.reduce((a, e) => a + (e.draw || 0), 0);
+      this.anotar({ i, tipo: 'accion', carta: c.nombre, cambios: this.cambios(antes), robadas: robadas.map((x) => x.nombre),
+        cartasRobadas: robadas, sinCartas: robadas.length < pedidas, notas });
+    }
   }
 
   // Valor de vincular lo mejor posible con 'mana' (para el bot).

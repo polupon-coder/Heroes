@@ -29,6 +29,9 @@ const poner = (marca, codigo) => {
   html = html.replace(marca, () => codigo);
 };
 // Texturas: se incrustan en el archivo para que funcione sin carpetas al lado
+// En <img src="url(texturas/x.webp)"> se deja solo el data URI
+html = html.replace(/src="url\(texturas\/([a-z-]+)\.webp\)"/g, (_, n) =>
+  `src="data:image/webp;base64,${fs.readFileSync(path.join(__dirname, 'texturas', n + '.webp')).toString('base64')}"`);
 html = html.replace(/url\(texturas\/([a-z-]+)\.webp\)/g, (_, n) =>
   `url(data:image/webp;base64,${fs.readFileSync(path.join(__dirname, 'texturas', n + '.webp')).toString('base64')})`);
 // Ilustraciones: web/elementales/<nombre de la carta>.webp

@@ -14,7 +14,7 @@
   /* Mesa de aspecto claro a propósito (mismo look con el tema claro u oscuro del visor) */
   :root { color-scheme: light; }
   * { box-sizing: border-box; margin: 0; }
-  html { background: var(--fondo) url(texturas/fondo.webp) center / cover fixed; }
+  html { background: #faf6f0 url(texturas/fondo.webp) center / cover fixed; }
   /* Texturas pintadas de cada elemento */
   .tx-fuego { --tex: url(texturas/fuego.webp); --mancha: url(texturas/mancha-fuego.webp); } .tx-agua { --tex: url(texturas/agua.webp); --mancha: url(texturas/mancha-agua.webp); }
   .tx-tierra { --tex: url(texturas/tierra.webp); --mancha: url(texturas/mancha-tierra.webp); } .tx-aire { --tex: url(texturas/aire.webp); --mancha: url(texturas/mancha-aire.webp); }
@@ -30,7 +30,8 @@
   .lado.der { justify-content: space-between; gap: 0; }
   .lado.der .jug { gap: 5px; }
   .centro { text-align: center; }
-  .logo { font-weight: 700; letter-spacing: .4em; font-size: 15px; padding-left: .4em; }
+  .logo { height: 34px; display: flex; justify-content: center; }
+  .logo img { height: 100%; filter: drop-shadow(0 2px 3px rgba(80, 50, 20, .18)); }
   .era { color: var(--suave); font-size: 12px; margin-top: 3px; }
   .era b { color: var(--tinta); font-weight: 600; }
   .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); border-radius: 14px; padding: 2px 6px; margin: -2px -6px; }
@@ -109,16 +110,17 @@
   .mandos { margin-top: auto; width: 100%; display: grid; grid-template-columns: 200px 200px; justify-content: center; gap: 16px; align-items: center; }
 
   /* Santuarios */
-  #santuarios { flex: 1; display: flex; flex-direction: column; gap: 30px; padding-bottom: 22px; }
-  .sant { position: relative; background: var(--mancha) center / 100% 100% no-repeat; border-radius: 14px; width: 100%; flex: 1;
+  #santuarios { flex: 1; display: flex; flex-direction: column; gap: 24px; padding-bottom: 20px; margin: 0 -8px; }
+  /* Santuarios cuadrados, como las manchas de color */
+  .sant { position: relative; background: var(--mancha) center / 100% 100% no-repeat; border-radius: 14px; flex: 1 1 0; min-height: 0; aspect-ratio: 1; align-self: center;
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
   .cuad { display: flex; align-items: center; justify-content: center; }
-  .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 74px; }
-  .puntos i { width: 11px; height: 11px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9); }
-  .cuad.lider .puntos { max-width: 94px; gap: 5px; }
-  .cuad.lider .puntos i { width: 14px; height: 14px; }
+  .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 50px; }
+  .puntos i { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9); }
+  .cuad.lider .puntos { max-width: 56px; gap: 4px; }
+  .cuad.lider .puntos i { width: 12px; height: 12px; }
   .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
-  .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%;
+  .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%;
     background: #fff; display: flex; align-items: center; justify-content: center; }
   .marca { position: absolute; left: 50%; bottom: -21px; transform: translateX(-50%); color: color-mix(in srgb, var(--el) 78%, #000); font-weight: 600;
     font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding-left: .16em; white-space: nowrap; }
@@ -219,7 +221,7 @@
 <div class="barra">
   <div class="lado izq" id="yo"></div>
   <div class="centro">
-    <div class="logo">MANA</div>
+    <div class="logo"><img src="url(texturas/titulo.webp)" alt="MANA"></div>
     <div class="era" id="era"></div>
   </div>
   <div class="lado der" id="rivales"></div>

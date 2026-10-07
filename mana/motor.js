@@ -1,21 +1,30 @@
 'use strict';
 // MANA — motor de reglas y bot para simular partidas completas.
 // Las opciones de VARIANTE permiten comparar el reglamento provisional con cambios.
-const { ELEMENTOS, UMBRAL, INICIAL } = require('./cartas');
+const { ELEMENTOS, UMBRAL, UMBRAL_V01, INICIAL } = require('./cartas');
 
+// Reglamento v0.2 (por defecto).
 const BASE = {
-  acciones: 1, // Elementales jugables como Acción por turno (regla 14). Infinity = cada carta, Acción o Maná.
+  acciones: Infinity, // cada carta jugada: Acción o Maná, sin límite de Acciones
   compras: 1, // vinculaciones por turno
   rondas: 5, // rondas por Era
-  eras: [1, 2, 3], // valor de cada Santuario por Era
-  segundo: 0, // Fragmentos del segundo puesto como fracción del valor (0 = nada)
-  empate: 'nadie', // 'nadie' (regla 23) | 'reparto' (cada empatado recibe valor-1, mínimo 0)
-  proteccion: 'turno', // 'turno' (regla 19) | 'era'
-  rotacion: 'ronda', // 'ronda' (regla 21) | 'era' (empieza la Era quien va primero en Fragmentos)
+  eras: [1, 2, 3], // Sellos de cada Santuario por Era
+  segundo: 0, // Sellos del segundo puesto como fracción del valor (0 = nada)
+  empate: 'nadie', // empate en cabeza de un Santuario: 'nadie' puntúa | 'reparto' (valor-1 a cada uno)
+  proteccion: 'era', // 'era': dura hasta el final de la Era | 'turno': hasta el siguiente turno del propietario
+  rotacion: 'era', // 'era': orden fijo; empieza cada Era quien va primero en Sellos | 'ronda': el inicial rota cada ronda
+  liberar: true, // una vez por turno, devolver a la caja una carta inicial usada ese turno
+  liberarCoste: 1, // Maná que cuesta liberar
+  botLiberar: 0.03, // (bot) valor de liberar por turno que le queda; puede ser una lista por jugador
+  manoPrimero: 5, // cartas de la primera mano del jugador inicial (con 4 se compensa demasiado)
+  desempate: 'eraIII', // empate final: más Sellos en la Era III | 'compartir'
   cartas: UMBRAL,
   copias: 3,
   inicial: INICIAL,
 };
+
+// Reglamento provisional v0.1, para comparar.
+const V01 = { acciones: 1, proteccion: 'turno', rotacion: 'ronda', liberar: false, desempate: 'compartir', cartas: UMBRAL_V01 };
 
 function rngFrom(seed) {
   let s = seed >>> 0 || 1;
@@ -39,16 +48,16 @@ function fuerza(c, v) {
   let p = c.mana * 0.6;
   for (const e of c.accion) {
     if (e.add) p += e.add + (e.prot ? 0.3 : 0);
-    if (e.remove) p += 0.9 * e.remove;
+    if (e.remove) p += (e.s === '*' ? 1.1 : 0.9) * e.remove;
     if (e.ifBehind) p += 1.4;
     if (e.ifAny) p += 1.7;
-    if (e.protect) p += 0.2 * e.protect;
+    if (e.protect) p += (e.s === '*' ? 0.4 : 0.2) * (e.all ? 3 : e.protect);
     if (e.draw) p += (multi ? 0.9 : 0.45) * e.draw;
     if (e.discard) p -= multi ? 0.35 : 0;
     if (e.topFromDiscard) p += 0.5;
     if (e.handToTop) p += 0.2;
     if (e.recover) p += multi ? 1 : 0.6;
-    if (e.moveRival) p += 0.8 * e.moveRival;
+    if (e.moveRival) p += (e.s === '*' ? 1 : 0.8) * e.moveRival;
     if (e.moveOwnTo) p += 0.5;
     if (e.disrupt) p += 0.2;
     if (e.refresh) p += 0.1;
@@ -64,9 +73,9 @@ class Partida {
     this.jug = [];
     for (let i = 0; i < n; i++) {
       const mazo = shuffle(this.v.inicial.slice(), this.rng);
-      this.jug.push({ i, mazo, mano: [], desc: [], jugadas: [], frag: 0, fragEra: [], vinculadas: 0, gusto: ELEMENTOS[Math.floor(this.rng() * 4)] });
+      this.jug.push({ i, mazo, mano: [], desc: [], jugadas: [], sellos: 0, selloEra: [], vinculadas: 0, liberadas: 0, gusto: ELEMENTOS[Math.floor(this.rng() * 4)] });
     }
-    this.jug.forEach((j) => this.robar(j, 5));
+    this.jug.forEach((j) => this.robar(j, j.i === 0 ? this.v.manoPrimero : 5));
     this.pila = shuffle(this.v.cartas.flatMap((c) => Array(this.v.copias).fill(c)), this.rng);
     this.umbral = [];
     this.reponer();
@@ -76,7 +85,7 @@ class Partida {
     this.ronda = 0;
     this.inicio = 0;
     this.restantes = 0; // turnos que quedan en la Era (de todos)
-    this.st = { manaGen: 0, manaGastado: 0, turnos: 0, compras: 0, usoAccion: {}, usoMana: {}, vinculadas: {}, sinObjetivo: 0, retiradas: 0, movidas: 0, puestas: 0, empates: 0, puntuaciones: 0, vacios: 0, desperdicio: [0, 0, 0], turnosEra: [0, 0, 0], ultimoEra: [], accionesTurno: 0 };
+    this.st = { manaGen: 0, manaGastado: 0, turnos: 0, compras: 0, usoAccion: {}, usoMana: {}, vinculadas: {}, sinObjetivo: 0, liberadas: 0, retiradas: 0, movidas: 0, puestas: 0, empates: 0, puntuaciones: 0, vacios: 0, desperdicio: [0, 0, 0], turnosEra: [0, 0, 0], ultimoEra: [], accionesTurno: 0 };
   }
 
   limpiar() {
@@ -98,7 +107,7 @@ class Partida {
     }
   }
 
-  // Valoración del tablero para el jugador i (Fragmentos esperados de esta Era).
+  // Valoración del tablero para el jugador i (Sellos esperados de esta Era).
   valor(i) {
     const val = this.v.eras[this.era];
     const t = this.restantes;
@@ -112,6 +121,8 @@ class Partida {
       if (t <= 0) p = m > 0 ? 1 : 0;
       else p = 1 / (1 + Math.exp(-(m - 0.5) * (2.2 / Math.sqrt(1 + t / this.n))));
       total += val * p;
+      // Presencias protegidas: valen más cuanto más quede de Era (no se pueden retirar ni mover)
+      if (t > 0) total += 0.06 * val * Math.min(this.pres[s][i].prot, 3) * Math.min(1, t / this.n / 2);
     }
     return total;
   }
@@ -176,28 +187,32 @@ class Partida {
       st.puestas = (st.puestas || 0) + e.ifAny;
     }
     if (e.remove) {
-      for (let t = 0; t < e.remove; t++) {
-        const rivales = this.jug.map((x) => x.i).filter((k) => k !== i && this.pres[e.s][k].n - this.pres[e.s][k].prot > 0);
-        if (!rivales.length) {
-          if (this.st) this.st.sinObjetivo++;
-          break;
+      const santuarios = e.s === '*' ? ELEMENTOS : [e.s];
+      const retirar = (c, sa) => {
+        for (let t = 0; t < e.remove; t++) {
+          const rivales = c.jug.map((x) => x.i).filter((k) => k !== i && c.pres[sa][k].n - c.pres[sa][k].prot > 0);
+          if (!rivales.length) return t > 0;
+          c.mejor(i, rivales.map((k) => (cc) => cc.quitar(sa, k)))(c);
+          if (c.st) c.st.retiradas++;
         }
-        const f = this.mejor(i, rivales.map((k) => (c) => c.quitar(e.s, k)));
-        f(this);
-        if (this.st) this.st.retiradas++;
-      }
+      };
+      const f = this.mejor(i, santuarios.map((sa) => (c) => retirar(c, sa)));
+      if (f) f(this);
+      else if (this.st) this.st.sinObjetivo++;
     }
     if (e.moveRival) {
       for (let t = 0; t < e.moveRival; t++) {
         const ops = [() => true];
         for (let k = 0; k < this.n; k++) {
           if (k === i) continue;
-          for (const d of ELEMENTOS) {
-            if (d === e.s) continue;
-            ops.push((c) => {
-              if (!c.quitar(e.s, k)) return false;
-              c.pres[d][k].n++;
-            });
+          for (const o of e.s === '*' ? ELEMENTOS : [e.s]) {
+            for (const d of ELEMENTOS) {
+              if (d === o) continue;
+              ops.push((c) => {
+                if (!c.quitar(o, k)) return false;
+                c.pres[d][k].n++;
+              });
+            }
           }
         }
         const f = this.mejor(i, ops);
@@ -219,8 +234,22 @@ class Partida {
       f(this);
     }
     if (e.protect) {
-      const p = this.pres[e.s][i];
-      p.prot = Math.min(p.n, p.prot + e.protect);
+      const santuarios = e.s === '*' ? ELEMENTOS : [e.s];
+      const proteger = (c, sa, k) => {
+        const p = c.pres[sa][i];
+        if (p.prot >= p.n) return false;
+        p.prot = Math.min(p.n, p.prot + k);
+      };
+      if (e.all) {
+        const f = this.mejor(i, santuarios.map((sa) => (c) => proteger(c, sa, Infinity)));
+        if (f) f(this);
+      } else {
+        for (let t = 0; t < e.protect; t++) {
+          const f = this.mejor(i, santuarios.map((sa) => (c) => proteger(c, sa, 1)));
+          if (!f) break;
+          f(this);
+        }
+      }
     }
     if (e.draw) this.robar(j, e.draw);
     const clave = accionUsada ? (c) => c.mana : (c) => fuerza(c, this.v);
@@ -244,11 +273,12 @@ class Partida {
       j.mano.push(j.desc.pop());
     }
     if (e.disrupt) {
-      const rivales = this.jug.filter((x) => x.i !== i && x.mano.length);
+      // el jugador activo elige al rival (el que va primero en Sellos); el rival elige qué descarta
+      const rivales = this.jug.filter((x) => x.i !== i && x.mano.length).sort((a, b) => b.sellos - a.sellos);
       if (rivales.length) {
-        const r = rivales[Math.floor(this.rng() * rivales.length)];
-        const idx = Math.floor(this.rng() * r.mano.length);
-        r.desc.push(r.mano.splice(idx, 1)[0]);
+        const r = rivales[0];
+        r.mano.sort((a, b) => fuerza(a, this.v) - fuerza(b, this.v));
+        r.desc.push(r.mano.shift());
         this.robar(r, 1);
       }
     }
@@ -271,17 +301,20 @@ class Partida {
   compra(i, mana) {
     const turnosMios = Math.max(0, Math.ceil(this.turnosPartida / this.n) - 1);
     const coef = 0.07 * turnosMios;
-    let best = -1;
-    let bv = 0;
-    this.umbral.forEach((c, k) => {
-      if (c.coste > mana) return;
-      const val = coef * (fuerza(c, this.v) + (c.el === this.jug[i].gusto ? 0.4 : 0));
-      if (val > bv) {
-        bv = val;
-        best = k;
-      }
-    });
-    return { idx: best, val: bv };
+    const j = this.jug[i];
+    // Liberar: el bot le da un valor proporcional a los turnos que le quedan.
+    const k = Array.isArray(this.v.botLiberar) ? this.v.botLiberar[i] : this.v.botLiberar;
+    const puedeLiberar = this.v.liberar && (j.jugadas.some((c) => c.inicial) || j.mano.some((c) => c.inicial));
+    const valLib = k * turnosMios;
+    let best = { idx: -1, val: 0, liberar: false };
+    const probar = (idx, val, coste) => {
+      if (coste > mana) return;
+      if (val > best.val) best = { idx, val, liberar: false };
+      if (puedeLiberar && valLib > 0 && coste + this.v.liberarCoste <= mana && val + valLib > best.val) best = { idx, val: val + valLib, liberar: true };
+    };
+    probar(-1, 0, 0);
+    this.umbral.forEach((c, idx) => probar(idx, coef * (fuerza(c, this.v) + (c.el === j.gusto ? 0.4 : 0)), c.coste));
+    return best;
   }
 
   // Mejor siguiente Acción mirando hasta 'prof' Acciones por delante (k = -1: dejar de jugar Acciones).
@@ -318,15 +351,27 @@ class Partida {
     this.st.manaGen += mana;
     let gastado = 0;
     for (let b = 0; b < this.v.compras; b++) {
-      const { idx } = this.compra(i, mana - gastado);
+      const { idx, liberar } = this.compra(i, mana - gastado);
+      if (idx >= 0) {
+        const c = this.umbral.splice(idx, 1)[0];
+        gastado += c.coste;
+        j.desc.push(c);
+        j.vinculadas++;
+        this.st.vinculadas[c.nombre] = (this.st.vinculadas[c.nombre] || 0) + 1;
+        this.st.compras++;
+        this.reponer();
+      }
+      if (liberar) {
+        // devuelve a la caja una carta inicial usada este turno (primero las Motas de Maná)
+        const usadas = [...j.jugadas.map((c, k) => ['jugadas', k, c]), ...j.mano.map((c, k) => ['mano', k, c])].filter((x) => x[2].inicial);
+        usadas.sort((a, b) => a[2].accion.length - b[2].accion.length);
+        const [donde, k] = usadas[0];
+        j[donde].splice(k, 1);
+        j.liberadas++;
+        gastado += this.v.liberarCoste;
+        this.st.liberadas++;
+      }
       if (idx < 0) break;
-      const c = this.umbral.splice(idx, 1)[0];
-      gastado += c.coste;
-      j.desc.push(c);
-      j.vinculadas++;
-      this.st.vinculadas[c.nombre] = (this.st.vinculadas[c.nombre] || 0) + 1;
-      this.st.compras++;
-      this.reponer();
     }
     this.st.manaGastado += gastado;
     this.st.desperdicio[this.era] += mana - gastado;
@@ -363,8 +408,8 @@ class Partida {
       }
     }
     this.jug.forEach((j, k) => {
-      j.frag += gan[k];
-      j.fragEra.push(gan[k]);
+      j.sellos += gan[k];
+      j.selloEra.push(gan[k]);
     });
   }
 
@@ -373,12 +418,19 @@ class Partida {
     const R = this.v.rondas;
     this.turnosPartida = N * R * this.v.eras.length;
     let ronda = 0;
+    let inicioEra = 0; // en la Era I se sortea: el asiento 0 hace de jugador sorteado
     for (this.era = 0; this.era < this.v.eras.length; this.era++) {
-      let inicioEra = 0;
-      if (this.v.rotacion === 'era') {
-        // empieza el que va primero (así no tiene la última palabra)
-        const orden = this.jug.slice().sort((a, b) => b.frag - a.frag || a.i - b.i);
-        inicioEra = orden[0].i;
+      if (this.v.rotacion === 'era' && this.era > 0) {
+        // empieza el que va primero en Sellos (así no tiene la última palabra);
+        // si hay empate, el primero en sentido horario desde quien empezó la Era anterior
+        const max = Math.max(...this.jug.map((j) => j.sellos));
+        for (let d = 0; d < N; d++) {
+          const k = (inicioEra + d) % N;
+          if (this.jug[k].sellos === max) {
+            inicioEra = k;
+            break;
+          }
+        }
       }
       this.restantes = N * R;
       let ultimo = -1;
@@ -398,10 +450,15 @@ class Partida {
       this.umbral = [];
       this.reponer();
     }
-    const max = Math.max(...this.jug.map((j) => j.frag));
-    this.ganadores = this.jug.filter((j) => j.frag === max).map((j) => j.i);
+    const max = Math.max(...this.jug.map((j) => j.sellos));
+    let gan = this.jug.filter((j) => j.sellos === max);
+    if (gan.length > 1 && this.v.desempate === 'eraIII') {
+      const m3 = Math.max(...gan.map((j) => j.selloEra[2]));
+      gan = gan.filter((j) => j.selloEra[2] === m3);
+    }
+    this.ganadores = gan.map((j) => j.i);
     return this;
   }
 }
 
-module.exports = { Partida, BASE, fuerza, rngFrom };
+module.exports = { Partida, BASE, V01, fuerza, rngFrom };

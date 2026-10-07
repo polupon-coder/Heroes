@@ -1,28 +1,32 @@
-# MANA — Reglamento provisional v0.1
+# MANA — Reglamento v0.2
 
 **2–4 jugadores · 30–45 minutos · Construcción de mazo**
 
 Cada jugador representa a un **Guardián** capaz de vincularse con espíritus elementales de Fuego, Agua, Tierra y Aire. Durante la partida, los Guardianes atraen nuevos **Elementales** desde **el Umbral**, mejoran progresivamente su mazo y utilizan sus poderes para aumentar su presencia en los cuatro **Santuarios Elementales**.
 
-No hay vidas ni eliminación de jugadores. La partida dura **3 Eras**. Al final de cada Era, los Santuarios recompensan a los Guardianes con mayor Presencia.
+No hay vidas ni eliminación de jugadores. La partida dura **3 Eras**. Al final de cada Era, los Santuarios conceden **Sellos** a los Guardianes con mayor Presencia.
 
-> Valoración y propuestas de cambio, con datos de partidas simuladas: [EVALUACION.md](EVALUACION.md).
+> Cambios respecto a la v0.1 y datos de partidas simuladas: [EVALUACION.md](EVALUACION.md).
 
 ## 1. Objetivo
 
-Conseguir más **Fragmentos de Maná** que los demás Guardianes al finalizar la tercera Era.
+Conseguir más **Sellos** que los demás Guardianes al finalizar la tercera Era.
 
 Santuarios: 🔥 Fuego · 💧 Agua · 🌿 Tierra · 💨 Aire.
 
-| Era | Valor de cada Santuario |
+| Era | Sellos de cada Santuario |
 | --- | ---: |
-| Era I | 1 Fragmento |
-| Era II | 2 Fragmentos |
-| Era III | 3 Fragmentos |
+| Era I | 1 |
+| Era II | 2 |
+| Era III | 3 |
+
+Las primeras Eras importan, pero las últimas permiten remontar.
 
 ## 2. Los Guardianes
 
 Cada jugador controla a un Guardián. No combaten directamente entre sí ni pueden ser eliminados. Todos comienzan en igualdad de condiciones.
+
+El **Círculo** de un Guardián son todos sus Elementales: mazo, mano, cartas jugadas y descarte.
 
 ## 3. Los Elementales
 
@@ -32,106 +36,153 @@ Las cartas representan Elementales vinculados a uno de los cuatro elementos. Los
 
 - 4 Santuarios.
 - 32 tipos de Elemental × 3 copias: **96 cartas de Umbral**.
-- 40 cartas iniciales.
-- Marcadores de Presencia de cada jugador, marcadores de Protección, marcador de Era y Ronda, Fragmentos de Maná.
+- 40 cartas iniciales (10 por jugador).
+- Marcadores de Presencia de cada jugador, marcadores de Protección, marcador de Era, **Sellos**.
 
-## 5–10. Aspecto de un Elemental
+## 5. Aspecto de un Elemental
 
 Sin marco tradicional: **ilustración** (la mayor parte de la carta), **nombre** debajo y tres esferas siempre en el orden **COSTE — MANÁ — ACCIÓN**.
 
-- **Coste** (izquierda): siempre **gris**. Maná necesario para vincularlo desde el Umbral (2–6).
-- **Maná** (centro): siempre **lila**. Maná que genera al usarla como recurso (1–3). Una carta usada como Maná no puede usar su Acción ese turno.
-- **Acción** (derecha):
-  - Si afecta a un Santuario, usa el color y la forma del elemento: 🔥 rojo/llama, 💨 amarillo/viento, 💧 azul/agua, 🌿 verde/naturaleza. **+2 🔥** = añade 2 Presencias tuyas al Santuario del Fuego.
-  - Si no, color identificativo sin forma de Santuario y un símbolo: carta + flecha a la mano (roba), carta + flecha circular (recupera), carta + X (descarta), dos cartas con flechas (cambia), marcador + escudo (protege), marcador + flecha (mueve), marcador rival −1 (retira).
+## 6. Esfera de Coste
 
-Ejemplo — **Zorrito de Brasas**: ⚪ 3 · 🟣 1 · 🔥 +2.
+Siempre **gris**. Maná necesario para vincularlo desde el Umbral (2–6). Las cartas iniciales **no tienen esfera de Coste**: así se reconocen a simple vista.
+
+## 7. Esfera de Maná
+
+Siempre **lila**. Maná que genera la carta cuando se usa como recurso (1–3).
+
+## 8. Esfera de Acción: acciones sobre un Santuario
+
+Si la Acción afecta a un Santuario concreto, la esfera usa el color y la forma de su elemento: 🔥 rojo/llama, 💨 amarillo/viento, 💧 azul/agua, 🌿 verde/naturaleza.
+
+**+2 🔥** = añade 2 Presencias tuyas al Santuario del Fuego. No hace falta escribirlo: el icono lo dice todo.
+
+## 9. Esfera de Acción: el resto de acciones
+
+Si la Acción no afecta a un Santuario concreto —incluidas las que actúan **en cualquier Santuario**— la esfera tiene un color identificativo, sin forma de Santuario, y un símbolo:
+
+| Símbolo | Significado |
+| --- | --- |
+| Carta + flecha hacia la mano | Roba carta |
+| Carta + flecha circular | Recupera carta |
+| Carta + X | Descarta carta |
+| Dos cartas con flechas | Cambia o sustituye carta |
+| Marcador + escudo | Protege Presencias propias |
+| Marcador + flecha | Mueve una Presencia |
+| Marcador rival −1 | Retira una Presencia rival |
+
+Una carta con dos efectos (por ejemplo, Embestida: +1 🔥 y retira 1 rival) muestra los dos iconos dentro de la esfera.
+
+## 10. Ejemplo
+
+**Zorrito de Brasas** — ⚪ 3 · 🟣 1 · 🔥 +2. Cuesta 3, genera 1 de Maná, su Acción añade 2 Presencias al Santuario del Fuego.
 
 ## 11. Principio fundamental
 
-Cada Elemental se usa **como Acción o como Maná**, nunca ambas el mismo turno.
+Cada carta que juegas se usa **como Acción o como Maná**, nunca ambas. Puedes jugar tantas Acciones como quieras: cada carta que usas como Acción es Maná que no tendrás para vincular.
 
-## 12. Mazo inicial (10 cartas)
+**¿Utilizo este Elemental por su poder o lo sacrifico para atraer otro mejor?**
+
+## 12. Mazo inicial
 
 | Carta | Cantidad | Maná | Acción |
 | --- | ---: | ---: | --- |
 | Elemental menor de Fuego / Agua / Tierra / Aire | 2 de cada | 1 | +1 en su Santuario |
 | Mota de Maná | 2 | 1 | — |
 
-Cada jugador baraja y roba **5**.
+Cada jugador baraja sus 10 cartas y roba **5**.
 
 ## 13. El Umbral
 
-5 Elementales boca arriba. Al vincular uno: paga su coste, va a tu descarte y se revela otro.
+Baraja los Elementales y revela **5** boca arriba. Al vincular uno: paga su coste, ponlo en tu descarte y revela otro. Siempre hay 5 visibles mientras queden cartas.
 
 ## 14. Turno
 
-1. **Acción:** como máximo **1 Elemental** como Acción.
-2. **Generar Maná:** cualquier cantidad de las cartas restantes.
-3. **Vincular:** como máximo **1 Elemental** del Umbral, pagando su coste completo; va al descarte.
-4. **Final:** descarta lo usado y lo que quede en la mano; roba 5 (si se acaba el mazo, baraja el descarte).
+1. **Jugar cartas.** Juega las cartas de tu mano de una en una, en el orden que quieras. Cada una:
+   - **como Acción:** resuelve su esfera de Acción en ese momento; o
+   - **como Maná:** suma su esfera lila a tu Maná del turno.
+
+   Las cartas robadas durante el turno también pueden jugarse. No tienes que jugar todas.
+2. **Vincular.** Puedes vincular **1 Elemental** del Umbral pagando su coste completo. Va a tu descarte.
+3. **Liberar.** Puedes pagar **1 Maná** para devolver a la caja **1 carta inicial** que hayas jugado este turno (como Acción o como Maná). Sale de la partida.
+4. **Final.** Descarta las cartas jugadas y las que te queden en la mano. Roba 5. Si se acaba el mazo, baraja el descarte para formar uno nuevo.
 
 ## 15. El Maná
 
-Solo existe durante el turno; no se almacena.
+Solo existe durante el turno; no se almacena. El que sobra se pierde.
 
-## 16–17. Presencia y Santuarios
+## 16. Presencia en los Santuarios
 
-Las Presencias permanecen toda la Era salvo que una Acción las retire o desplace. Sin límite por Santuario. Al final de cada Era los Santuarios reconocen a quien tenga más Presencia y se vacían.
+**+2 🔥** = coloca dos Presencias tuyas en el Santuario del Fuego. Permanecen toda la Era salvo que una Acción las retire o las mueva. No hay límite por Santuario.
+
+## 17. Los cuatro Santuarios
+
+No pertenecen a nadie. Al final de cada Era reconocen al Guardián con más Presencia y se vacían.
 
 ## 18. Interacción
 
-Se puede retirar, mover y proteger Presencias, modificar manos y cambiar el Umbral. Ninguna carta destruye o roba cartas del mazo rival, elimina Guardianes ni quita Fragmentos.
+Las cartas pueden retirar, mover y proteger Presencias **en cualquier Santuario**, modificar manos y cambiar el Umbral. Ninguna carta destruye o roba cartas del Círculo de un rival, elimina Guardianes ni quita Sellos.
+
+Cuando una carta afecta a un rival o a una Presencia rival, **elige el jugador activo**: a qué rival, qué Presencia y a qué Santuario se mueve.
 
 ## 19. Protección
 
-Una Presencia protegida no puede retirarse ni moverse. Dura hasta el comienzo del siguiente turno de su propietario.
+Una Presencia protegida **no puede retirarse ni moverse**. La Protección dura **hasta el final de la Era**.
 
 ## 20. Mover Presencias
 
-Una Presencia movida cuenta en el Santuario de destino. Una protegida no se mueve.
+Una Presencia movida pasa a contar en el Santuario de destino. Una Presencia protegida nunca se mueve.
 
-## 21. Rondas y Eras
+## 21. Orden de turno y Eras
 
-Cada Era dura **5 rondas**. Tras cada ronda, el jugador inicial pasa al siguiente en sentido horario. Tras la quinta ronda se puntúan los Santuarios.
+- Se juega en **sentido horario**, siempre en el mismo orden.
+- Cada Era dura **5 rondas**: cada Guardián juega 5 turnos.
+- **Empieza cada Era el Guardián con más Sellos.** En la Era I se sortea. Si hay empate, empieza entre los empatados el primero en sentido horario desde quien empezó la Era anterior.
 
-## 22–23. Puntuación y empates
+Así el último turno antes de puntuar, que no tiene respuesta, lo juega quien va detrás.
 
-En cada Santuario, quien tenga más Presencia gana el valor de la Era. Si hay empate en cabeza, **nadie** puntúa ese Santuario.
+## 22. Puntuación
+
+Al final de cada Era, en cada Santuario el Guardián con más Presencia gana los Sellos de la Era (1, 2 o 3).
+
+Ejemplo, Santuario del Fuego en la Era II: Ana 5, Pol 4, Marc 2 → Ana gana **2 Sellos**.
+
+## 23. Empates
+
+Si dos o más Guardianes empatan en cabeza en un Santuario, **nadie** gana sus Sellos. Provocar un empate es una forma legítima de frenar al líder.
 
 ## 24. Final de una Era
 
-Retira Presencias y Protecciones, los Guardianes conservan sus Elementales, descarta el Umbral y revela 5 nuevos, avanza la Era.
+1. Retira todas las Presencias y Protecciones.
+2. Los Guardianes conservan su Círculo.
+3. Descarta las 5 cartas del Umbral y revela 5 nuevas.
+4. Avanza el marcador de Era. Empieza la siguiente el Guardián con más Sellos (regla 21).
 
 ## 25. Fin de partida
 
-Tras puntuar la tercera Era gana quien tenga más Fragmentos; los empatados comparten la victoria.
+Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, gana quien consiguió más Sellos en la Era III; si persiste, comparten la victoria.
 
 ## 26. Personalidad de los elementos
 
-- 🔥 **Fuego — Presión:** retira Presencia rival. «Te saco de aquí.»
+- 🔥 **Fuego — Presión:** retira Presencia rival en cualquier Santuario y conquista el suyo. «Te saco de aquí.»
 - 💧 **Agua — Ciclo:** roba, recupera y reutiliza. «Mis mejores espíritus vuelven una y otra vez.»
-- 🌿 **Tierra — Permanencia:** protege y consolida. «Intenta moverme.»
-- 💨 **Aire — Manipulación:** altera posiciones, manos y Umbral. «Cambio tus planes.»
+- 🌿 **Tierra — Permanencia:** protege Presencias en cualquier Santuario y consolida el suyo. «Intenta moverme.»
+- 💨 **Aire — Manipulación:** mueve Presencias entre Santuarios, altera manos y el Umbral. «Cambio tus planes.»
 
-## 27–30. Elementales
-
-Las 32 cartas, con su coste, Maná y Acción, están en [`cartas.js`](cartas.js) (tabla única para el simulador y, más adelante, para el juego).
-
-### 🔥 Fuego
+## 27. Elementales de Fuego
 
 | Elemental | Coste | Maná | Acción |
 | --- | ---: | ---: | --- |
 | Chispa | 2 | 1 | +1 🔥 |
 | Llama | 3 | 1 | +2 🔥 |
 | Ascua | 2 | 1 | Roba 1 |
-| Quemadura | 3 | 1 | Retira 1 Presencia rival de 🔥 |
-| Embestida | 4 | 2 | +1 🔥 y retira 1 rival de 🔥 |
-| Fuego voraz | 4 | 2 | Si un rival tiene más 🔥 que tú, +2 🔥; si no, +1 |
-| Incendio | 5 | 2 | Retira hasta 2 Presencias rivales de 🔥 |
-| Llama de conquista | 6 | 3 | +2 🔥 y retira 1 rival de 🔥 |
+| Quemadura | 3 | 1 | Retira 1 Presencia rival de cualquier Santuario |
+| Embestida | 4 | 2 | +1 🔥 y retira 1 Presencia rival de cualquier Santuario |
+| Fuego voraz | 4 | 2 | Si un rival tiene más 🔥 que tú, +2 🔥; si no, +1 🔥 |
+| Incendio | 5 | 2 | Retira hasta 2 Presencias rivales de un mismo Santuario y +1 🔥 |
+| Llama de conquista | 6 | 3 | +2 🔥 y retira 1 Presencia rival de cualquier Santuario |
 
-### 💧 Agua
+## 28. Elementales de Agua
 
 | Elemental | Coste | Maná | Acción |
 | --- | ---: | ---: | --- |
@@ -140,40 +191,48 @@ Las 32 cartas, con su coste, Maná y Acción, están en [`cartas.js`](cartas.js)
 | Manantial | 2 | 1 | Roba 1 |
 | Fluir | 3 | 1 | Roba 2 y descarta 1 |
 | Retorno | 3 | 1 | Pon 1 carta de tu descarte sobre tu mazo |
-| Oleaje | 4 | 2 | Roba 2 y coloca 1 carta de tu mano sobre el mazo |
-| Renacer | 5 | 2 | Recupera 1 carta del descarte a tu mano |
-| Gran marea | 6 | 3 | +2 💧 y recupera 1 carta sobre tu mazo |
+| Oleaje | 4 | 2 | Roba 2 y pon 1 carta de tu mano sobre tu mazo |
+| Renacer | 5 | 2 | Recupera 1 carta de tu descarte a tu mano y roba 1 |
+| Gran marea | 6 | 3 | +2 💧 y pon 1 carta de tu descarte sobre tu mazo |
 
-### 🌿 Tierra
+## 29. Elementales de Tierra
 
 | Elemental | Coste | Maná | Acción |
 | --- | ---: | ---: | --- |
 | Semilla | 2 | 1 | +1 🌿 |
 | Raíz | 3 | 1 | +2 🌿 |
 | Brote | 2 | 1 | Roba 1 |
-| Fortificar | 3 | 1 | Protege 1 🌿 propia |
+| Fortificar | 3 | 1 | Protege 2 Presencias propias (en cualquier Santuario) |
 | Raíces profundas | 4 | 2 | +1 🌿 protegida |
-| Crecimiento | 4 | 2 | Si ya tienes 🌿, añade +2 🌿 |
-| Bastión | 5 | 2 | Protege hasta 2 🌿 propias |
+| Crecimiento | 4 | 2 | Si ya tienes al menos 1 🌿, +2 🌿 |
+| Bastión | 5 | 2 | Protege todas tus Presencias de un Santuario y +1 🌿 protegida |
 | Tierra ancestral | 6 | 3 | +2 🌿 protegidas |
 
-### 💨 Aire
+## 30. Elementales de Aire
 
 | Elemental | Coste | Maná | Acción |
 | --- | ---: | ---: | --- |
 | Brisa | 2 | 1 | +1 💨 |
 | Ráfaga | 3 | 1 | +2 💨 |
 | Inspiración | 2 | 1 | Roba 1 |
-| Desorden | 3 | 1 | Un rival descarta 1 y roba 1 |
-| Cambio de viento | 3 | 1 | Descarta 1 Elemental del Umbral y repónlo |
-| Desvío | 4 | 2 | Mueve 1 Presencia rival de 💨 a otro Santuario |
+| Desorden | 3 | 1 | Un rival descarta 1 carta de su mano (la elige él) y roba 1 |
+| Cambio de viento | 3 | 1 | Descarta 1 Elemental del Umbral y repónlo (el nuevo puede vincularse este turno) |
+| Desvío | 4 | 2 | Mueve 1 Presencia rival de un Santuario a otro |
 | Corriente ascendente | 4 | 2 | Mueve 1 Presencia propia a 💨 y roba 1 |
-| Torbellino | 6 | 3 | Mueve hasta 2 Presencias rivales de 💨 y añade +1 💨 |
+| Torbellino | 6 | 3 | Mueve hasta 2 Presencias rivales, cada una de un Santuario a otro, y +1 💨 |
+
+La tabla que usa el simulador está en [`cartas.js`](cartas.js).
 
 ## 31. Resumen de turno
 
-**1 Acción → generar Maná → vincular 1 Elemental → descartar → robar 5.**
+**Juega cartas (cada una, Acción o Maná) → vincula 1 Elemental → libera 1 carta inicial (1 Maná) → descarta → roba 5.**
+
+¿Qué Elementales uso por su poder? ¿Cuáles convierto en Maná? ¿Qué nuevo Elemental vinculo? ¿Me deshago de una carta inicial?
 
 ## 32. Idea central
 
-**Mejora** (tu Círculo es más poderoso al final), **Interacción** (los Santuarios obligan a mirar a los demás) y **Remontada** (perder una Era no te deja fuera). Los Santuarios se reinician. **Tu mazo no.**
+**Mejora:** tu Círculo es claramente más poderoso al final que al principio.
+**Interacción:** los cuatro Santuarios obligan a observar constantemente a los demás Guardianes.
+**Remontada:** perder una Era no significa quedar fuera de la partida.
+
+Los Santuarios se reinician. **Tu mazo no.**

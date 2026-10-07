@@ -11,7 +11,7 @@ NOTAS = [
     ('.lateral', 'izq', 'Umbral', 'Elementales que puedes vincular. Los atenuados cuestan más Maná del que tienes.'),
     ('#umbral .fila-u .esferas', 'izq', 'Esferas', 'Coste (gris) · Maná que da (lila) · Acción, del color del Santuario al que afecta.'),
     ('#umbral > .fila-u:nth-child(4) .esf.a', 'der', 'Dos efectos', 'Esfera partida: Embestida da +1 🔥 y retira 1 Presencia rival.'),
-    ('.lateral .aviso', 'izq', 'Vincular', 'Toca un Elemental: se abre una ventana con lo que hace y el botón Vincular.'),
+    ('#umbral > .fila-u:nth-child(6) .ilus', 'izq', 'Vincular', 'Toca un Elemental: se abre una ventana con lo que hace y el botón Vincular.'),
     ('.arriba .pila:first-child .dorso', 'izq', 'Mazo', 'Cartas que te quedan por robar.'),
     ('.total', 'izq', 'Maná del turno', 'Suma de las cartas usadas como Maná. Lo que sobra se pierde.'),
     ('.arriba .pila:last-child .dorso', 'izq', 'Descarte', 'Cartas usadas. Se barajan cuando se acaba el mazo.'),

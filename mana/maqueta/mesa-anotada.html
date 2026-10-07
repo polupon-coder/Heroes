@@ -7,7 +7,7 @@
   :root {
     --fondo: #f6f5f1; --tinta: #1d1d1f; --suave: #8a8a8f; --linea: #e4e2dc;
     --coste: #a3a3a8; --mana: #a78bfa;
-    --fuego: #e5533d; --agua: #3b82f6; --tierra: #3fa66b; --aire: #e3b21c; --neutro: #4b5563;
+    --verde: #2e9d5b; --fuego: #e5533d; --agua: #3b82f6; --tierra: #3fa66b; --aire: #e3b21c; --neutro: #4b5563;
   }
   * { box-sizing: border-box; margin: 0; }
   html { zoom: 1.5; } /* se diseña a 1280×720 y se muestra a 1920×1080 (Full HD) */
@@ -53,9 +53,6 @@
   .derecha .marca { bottom: -21px; }
 
   .lateral { background: #fff; border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
-  .pie { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-  .pie .boton { width: 100%; }
-  .aviso { font-size: 11px; color: var(--suave); text-align: center; line-height: 1.4; padding: 0 10px 10px; }
 
   /* Ventana de vincular: se abre al tocar un Elemental del Umbral */
   .velo-v { position: fixed; inset: 0; z-index: 100; background: rgba(29, 29, 31, .4); display: none; align-items: center; justify-content: center; }
@@ -75,6 +72,7 @@
   .ventana .saldo.no { color: var(--tinta); } .ventana .saldo.no b { color: var(--fuego); }
   .ventana .botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 6px; }
   .boton { cursor: pointer; }
+  .boton.terminar { background: var(--verde); border: 1.5px solid var(--verde); color: #fff; }
   .boton.inactivo { opacity: .28; cursor: not-allowed; }
   .lateral .titulo { text-align: center; margin-bottom: 2px; }
   .fila-u { display: grid; grid-template-columns: 72px 1fr; gap: 16px; align-items: center; position: relative; cursor: pointer; }
@@ -184,7 +182,6 @@
 
 <div class="juego">
 <div class="lateral"><div id="umbral" style="display:flex;flex-direction:column;gap:11px"></div>
-  <div class="pie"><div class="aviso">Toca un Elemental para ver qué hace y vincularlo</div></div>
 </div>
 <div class="principal">
   <div class="arriba">
@@ -193,7 +190,7 @@
     <div class="pila"><div class="dorso" id="descarte">4</div>Descarte</div>
   </div>
   <div class="zona mano"><div class="titulo">Tu mano</div><div class="cartas" id="mano"></div></div>
-  <div class="boton lleno">Terminar turno</div>
+  <div class="boton terminar">Terminar turno</div>
 </div>
 <div class="derecha" id="santuarios"></div>
 </div>
@@ -341,7 +338,7 @@
     border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
 </style>
 <script>
-  const NOTAS = [[".lado.izq .jug", "izq", "Tú", "Guardián del Fuego (rojo). El número rodeado son tus Sellos."], [".centro .era b", "antes", "Era y ronda", "Era II, ronda 3 de 5. En esta Era cada Santuario da 2 Sellos."], [".lado.der", "izq", "Rivales", "Ana (Agua), Pol (Tierra) y Marc (Aire), con sus Sellos."], [".lateral", "izq", "Umbral", "Elementales que puedes vincular. Los atenuados cuestan más Maná del que tienes."], ["#umbral .fila-u .esferas", "izq", "Esferas", "Coste (gris) · Maná que da (lila) · Acción, del color del Santuario al que afecta."], ["#umbral > .fila-u:nth-child(4) .esf.a", "der", "Dos efectos", "Esfera partida: Embestida da +1 🔥 y retira 1 Presencia rival."], [".lateral .aviso", "izq", "Vincular", "Toca un Elemental: se abre una ventana con lo que hace y el botón Vincular."], [".arriba .pila:first-child .dorso", "izq", "Mazo", "Cartas que te quedan por robar."], [".total", "izq", "Maná del turno", "Suma de las cartas usadas como Maná. Lo que sobra se pierde."], [".arriba .pila:last-child .dorso", "izq", "Descarte", "Cartas usadas. Se barajan cuando se acaba el mazo."], [".mano .carta.accion .ilus", "izq", "Acción", "Carta jugada por su poder (marco negro): Llama pone +2 Presencias en Fuego."], [".mano .carta.usada .ilus", "izq", "Maná", "Cartas usadas como Maná (marco lila): no hacen su Acción."], [".mano .carta:nth-child(5) .ilus", "izq", "Sin jugar", "Las cartas que no juegues se descartan al acabar el turno."], [".principal > .boton", "izq", "Terminar turno", "Descartas todo y robas 5 cartas nuevas."], [".derecha .sant:nth-child(1)", "izq", "Santuario", "Un cuadrante por Guardián, en el orden de la cabecera. Cada bolita es una Presencia; las más grandes, quien va primero."], [".derecha .sant:nth-child(2) .marca", "fuera", "Empate", "Empate en cabeza: nadie gana los Sellos de ese Santuario."], [".derecha .sant:nth-child(3) .cuad:nth-child(3) .puntos", "fuera", "Protegida", "Anillo: Presencia que no se puede retirar ni mover."], [".derecha .sant:nth-child(4)", "izq", "Final de Era", "En cada Santuario, quien tiene más Presencia gana sus Sellos. Luego se vacía."]];
+  const NOTAS = [[".lado.izq .jug", "izq", "Tú", "Guardián del Fuego (rojo). El número rodeado son tus Sellos."], [".centro .era b", "antes", "Era y ronda", "Era II, ronda 3 de 5. En esta Era cada Santuario da 2 Sellos."], [".lado.der", "izq", "Rivales", "Ana (Agua), Pol (Tierra) y Marc (Aire), con sus Sellos."], [".lateral", "izq", "Umbral", "Elementales que puedes vincular. Los atenuados cuestan más Maná del que tienes."], ["#umbral .fila-u .esferas", "izq", "Esferas", "Coste (gris) · Maná que da (lila) · Acción, del color del Santuario al que afecta."], ["#umbral > .fila-u:nth-child(4) .esf.a", "der", "Dos efectos", "Esfera partida: Embestida da +1 🔥 y retira 1 Presencia rival."], ["#umbral > .fila-u:nth-child(6) .ilus", "izq", "Vincular", "Toca un Elemental: se abre una ventana con lo que hace y el botón Vincular."], [".arriba .pila:first-child .dorso", "izq", "Mazo", "Cartas que te quedan por robar."], [".total", "izq", "Maná del turno", "Suma de las cartas usadas como Maná. Lo que sobra se pierde."], [".arriba .pila:last-child .dorso", "izq", "Descarte", "Cartas usadas. Se barajan cuando se acaba el mazo."], [".mano .carta.accion .ilus", "izq", "Acción", "Carta jugada por su poder (marco negro): Llama pone +2 Presencias en Fuego."], [".mano .carta.usada .ilus", "izq", "Maná", "Cartas usadas como Maná (marco lila): no hacen su Acción."], [".mano .carta:nth-child(5) .ilus", "izq", "Sin jugar", "Las cartas que no juegues se descartan al acabar el turno."], [".principal > .boton", "izq", "Terminar turno", "Descartas todo y robas 5 cartas nuevas."], [".derecha .sant:nth-child(1)", "izq", "Santuario", "Un cuadrante por Guardián, en el orden de la cabecera. Cada bolita es una Presencia; las más grandes, quien va primero."], [".derecha .sant:nth-child(2) .marca", "fuera", "Empate", "Empate en cabeza: nadie gana los Sellos de ese Santuario."], [".derecha .sant:nth-child(3) .cuad:nth-child(3) .puntos", "fuera", "Protegida", "Anillo: Presencia que no se puede retirar ni mover."], [".derecha .sant:nth-child(4)", "izq", "Final de Era", "En cada Santuario, quien tiene más Presencia gana sus Sellos. Luego se vacía."]];
   const leyenda = document.createElement('div');
   leyenda.className = 'leyenda';
   leyenda.innerHTML = '<h2>Qué es cada cosa</h2>' + NOTAS.map(([, , t, x], k) =>

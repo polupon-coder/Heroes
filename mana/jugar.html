@@ -39,6 +39,8 @@
   .era { color: var(--suave); font-size: 12px; margin-top: 18px; }
   .era b { color: var(--tinta); font-weight: 600; }
   .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); border-radius: 14px; padding: 2px 6px; margin: -2px -6px; }
+  /* El nombre centrado con la esfera (la letra tiene la línea base alta) */
+  .jug .nom, .jug .sello { line-height: 1; padding-top: 4px; }
   .jug.activo { color: var(--tinta); font-weight: 700; background: #fff; box-shadow: 0 0 0 1.5px var(--tinta); }
   /* Sellos: el número dentro de una esfera de piedra del color del jugador */
   .sello { display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); }
@@ -1293,7 +1295,7 @@ const pista = (c, coste) => `<div class="pista"><b>${c.nombre}</b>${textoDe(c)}<
 // ---------- Dibujo de la mesa ----------------------------------------------------------------
 function jugador(j) {
   const activo = !p.fin && p.turno && p.turno.i === j.i;
-  return `<span class="jug ${activo ? 'activo' : ''}">${NOMBRES[j.i]}<span class="sello piedra esf-${j.color}">${j.sellos}</span></span>`;
+  return `<span class="jug ${activo ? 'activo' : ''}"><span class="nom">${NOMBRES[j.i]}</span><span class="sello piedra esf-${j.color}">${j.sellos}</span></span>`;
 }
 
 function pintar() {

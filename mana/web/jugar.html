@@ -527,7 +527,7 @@ function deshacer() {
   avisar(`Deshecho: ${u.texto}`, 2200);
   pintar();
 }
-const esMiTurno = () => p && !p.fin && !ocupado && !eligiendo && p.turno && p.turno.i === YO;
+const esMiTurno = () => p && !p.fin && !ocupado && !eligiendo && !entreEras && p.turno && p.turno.i === YO;
 
 // ---------- Ventanas -------------------------------------------------------------------------
 function abrir(html, botones = [], ancha = false, fija = false) {

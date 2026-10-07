@@ -75,9 +75,10 @@
   .boton.terminar { background: var(--verde); border: 1.5px solid var(--verde); color: #fff; }
   .boton.inactivo { opacity: .28; cursor: not-allowed; }
   .lateral .titulo { text-align: center; margin-bottom: 2px; }
-  .fila-u { display: grid; grid-template-columns: 72px 1fr; gap: 16px; align-items: center; position: relative; cursor: pointer; }
-  .fila-u .ilus { width: 72px; height: 72px; border-radius: 14px; }
-  .fila-u .ilus svg { width: 34px; height: 34px; }
+  .fila-u { display: grid; grid-template-columns: 84px 1fr; gap: 18px; align-items: center; position: relative; cursor: pointer; flex: 1; }
+  #umbral { flex: 1; display: flex; flex-direction: column; gap: 10px; } /* las 5 cartas se reparten todo el alto */
+  .fila-u .ilus { width: 84px; height: 84px; border-radius: 16px; }
+  .fila-u .ilus svg { width: 38px; height: 38px; }
   .fila-u .nombre { text-align: left; margin-bottom: 4px; }
   .fila-u .esferas { justify-content: start; grid-template-columns: 32px 32px 32px; gap: 5px; }
   .fila-u .esf { width: 32px; height: 32px; font-size: 12px; }
@@ -181,7 +182,7 @@
 </div>
 
 <div class="juego">
-<div class="lateral"><div id="umbral" style="display:flex;flex-direction:column;gap:11px"></div>
+<div class="lateral"><div id="umbral"></div>
 </div>
 <div class="principal">
   <div class="arriba">

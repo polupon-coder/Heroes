@@ -57,13 +57,13 @@
   .pie { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; }
   .pie .boton { width: 100%; }
   .lateral .titulo { text-align: center; margin-bottom: 2px; }
-  .fila-u { display: grid; grid-template-columns: 72px 1fr; gap: 16px; align-items: center; }
+  .fila-u { display: grid; grid-template-columns: 72px 1fr; gap: 16px; align-items: center; position: relative; cursor: pointer; }
   .fila-u .ilus { width: 72px; height: 72px; border-radius: 14px; }
   .fila-u .ilus svg { width: 34px; height: 34px; }
   .fila-u .nombre { text-align: left; margin-bottom: 4px; }
   .fila-u .esferas { justify-content: start; grid-template-columns: 32px 32px 32px; gap: 5px; }
   .fila-u .esf { width: 32px; height: 32px; font-size: 12px; }
-  .fila-u.cara { opacity: .38; }
+  .fila-u.cara > :not(.pista) { opacity: .38; } /* la explicación no se atenúa */
   .linea { height: 1px; background: var(--linea); }
   .sant { position: relative; background: color-mix(in srgb, var(--el) 13%, #fff); border-radius: 14px; width: 200px; height: 104px;
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
@@ -89,7 +89,18 @@
   .cartas { display: flex; gap: 22px; justify-content: center; align-items: flex-end; }
 
   /* Carta: todo centrado; Maná siempre en el eje */
-  .carta { width: 120px; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .carta { width: 120px; display: flex; flex-direction: column; align-items: center; gap: 7px; position: relative; cursor: pointer; }
+
+  /* Explicación al pasar el ratón */
+  .pista { display: none; position: absolute; z-index: 50; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    width: 210px; background: var(--tinta); color: #fff; border-radius: 10px; padding: 9px 12px 10px; font-size: 11px; line-height: 1.4;
+    text-align: left; box-shadow: 0 6px 18px rgba(0,0,0,.2); pointer-events: none; }
+  .pista b { display: block; font-size: 12px; margin-bottom: 2px; }
+  .pista small { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.18); color: #c4b5fd; font-size: 10px; }
+  .pista::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border: 6px solid transparent; border-top-color: var(--tinta); }
+  .carta:hover .pista, .fila-u:hover .pista { display: block; }
+  .fila-u .pista { bottom: auto; top: 50%; left: calc(100% + 14px); transform: translateY(-50%); }
+  .fila-u .pista::after { top: 50%; left: auto; right: 100%; margin: -6px 0 0; border-color: transparent; border-right-color: var(--tinta); }
   .ilus { width: 120px; height: 112px; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
   .ilus svg { width: 50px; height: 50px; }
   .nombre { font-size: 13px; text-align: center; }
@@ -101,7 +112,7 @@
   .esf.doble { font-size: 11px; gap: 0; }
   .esf.doble span { width: 50%; text-align: center; }
   .umbral .ilus { height: 92px; } .umbral .ilus svg { width: 42px; height: 42px; }
-  .umbral .carta.cara { opacity: .38; }
+  .umbral .carta.cara > :not(.pista) { opacity: .38; }
 
   /* Mano: Mazo y Descarte a los lados, Maná en el eje */
   .mesa { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 36px; }
@@ -168,6 +179,7 @@
 <div class="derecha" id="santuarios"></div>
 </div>
 
+<script src="acciones.js"></script>
 <script>
   const EL = ['fuego', 'agua', 'tierra', 'aire'];
   const icono = (id, color) => `<svg class="ico" style="color:${color}"><use href="#${id}"/></svg>`;
@@ -204,18 +216,21 @@
     const [[t1, x1], [t2, x2]] = partes;
     return `<span class="esf a doble" style="background:linear-gradient(90deg, ${color(t1)} 50%, ${color(t2)} 50%)"><span>${x1}</span><span>${x2}</span></span>`;
   };
+  // Explicación de la carta (sale de acciones.js) para mostrarla al pasar el ratón
+  const pista = (nombre, coste, mana) => `<div class="pista"><b>${nombre}</b>${(window.ACCIONES[nombre] || [, ''])[1]}<small>${
+    coste ? `Coste ${coste} · ` : ''}Como Maná: ${mana}</small></div>`;
   const carta = (nombre, el, coste, mana, partes, extra = '', etq = '') => {
     const ilus = el ? `<div class="ilus" style="background:${tono[el]}"><svg style="color:var(--${el})"><use href="#${el}"/></svg></div>`
       : `<div class="ilus" style="background:#ede9fe"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="var(--mana)"/></svg></div>`;
     const e = etq ? `<div class="etq ${etq === 'Acción' ? 'a' : 'm'}">${etq}</div>` : '<div class="etq"></div>';
     return `<div class="carta ${extra}">${e}${ilus}<div class="nombre">${nombre}</div><div class="esferas">${
-      coste ? `<span class="esf c">${coste}</span>` : ''}<span class="esf m">${mana}</span>${accion(partes)}</div></div>`;
+      coste ? `<span class="esf c">${coste}</span>` : ''}<span class="esf m">${mana}</span>${accion(partes)}</div>${pista(nombre, coste, mana)}</div>`;
   };
 
   // Umbral: filas apaisadas (ilustración a la izquierda, nombre y esferas a la derecha)
   const fila = (nombre, el, coste, mana, partes, extra = '') => `<div class="fila-u ${extra}">
     <div class="ilus" style="background:${tono[el]}"><svg style="color:var(--${el})"><use href="#${el}"/></svg></div>
-    <div><div class="nombre">${nombre}</div><div class="esferas"><span class="esf c">${coste}</span><span class="esf m">${mana}</span>${accion(partes)}</div></div></div>`;
+    <div><div class="nombre">${nombre}</div><div class="esferas"><span class="esf c">${coste}</span><span class="esf m">${mana}</span>${accion(partes)}</div></div>${pista(nombre, coste, mana)}</div>`;
   document.getElementById('umbral').innerHTML = '<div class="titulo">Umbral</div>' + [
     fila('Corriente', 'agua', 3, 1, [['agua', '+2']]),
     fila('Embestida', 'fuego', 4, 2, [['fuego', '+1'], ['retira', '−1']], 'cara'),

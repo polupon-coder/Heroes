@@ -2,6 +2,8 @@
 
 Reglas vigentes: [REGLAS.md](REGLAS.md) (**v0.2**). Datos: 400 partidas completas por versión y número de jugadores, jugadas por bots (`node mana/simular.js 400`). Los bots valoran cada jugada por los Sellos que esperan ganar en la Era y por la fuerza de lo que vinculan; juegan con sensatez pero miran poco hacia delante (no explotan del todo la última palabra ni hacen *kingmaking*). Las cifras indican tendencias, no sustituyen a jugar en mesa.
 
+> **Nombres de las cartas:** este documento ya usa los nombres definitivos (Ascua, Llama, Fulgor… Espíritu de la Tormenta). Los análisis se hicieron con nombres provisionales; cada carta conserva su posición y su efecto.
+
 ## Cambios de la v0.1 a la v0.2
 
 | # | Problema en la v0.1 | Cambio en la v0.2 |
@@ -10,10 +12,10 @@ Reglas vigentes: [REGLAS.md](REGLAS.md) (**v0.2**). Datos: 400 partidas completa
 | 2 | La **Protección no protegía de nada**: el Fuego solo retiraba en 🔥, el Aire solo movía desde 💨 y la Tierra solo protegía en 🌿, donde nadie ataca. 💧 y 🌿 eran carreras sin interacción. | El Fuego **retira** y el Aire **mueve** en cualquier Santuario; la Tierra **protege** en cualquiera y la Protección **dura hasta el final de la Era**. |
 | 3 | El jugador inicial rotaba cada ronda: con 2 jugadores uno jugaba dos turnos seguidos (45 % frente a 33 % de victorias) y con 4 uno nunca tenía el último turno de una Era. | Orden horario fijo. **Empieza cada Era quien tiene más Sellos**: el último turno, que no tiene respuesta, lo juega quien va detrás. |
 | 4 | El mazo inicial no se podía adelgazar: al final, 10 de 24 cartas seguían siendo las iniciales. | **Liberar:** tras vincular, puedes pagar **2 Manás** para devolver a la caja 1 carta inicial jugada ese turno. |
-| 5 | Las cartas de coste 5 daban lo mismo que las de 4 pagando 1 más. | **Incendio:** +1 🔥 además de retirar 2. **Renacer:** además roba 1. **Bastión:** protege todas tus Presencias de un Santuario y +1 🌿 protegida. |
+| 5 | Las cartas de coste 5 daban lo mismo que las de 4 pagando 1 más. | **Coloso de Fuego:** +1 🔥 además de retirar 2. **Coloso de Agua:** además roba 1. **Coloso de Tierra:** protege todas tus Presencias de un Santuario y +1 🌿 protegida. |
 | 6 | «Fragmentos de Maná» se confundía con el Maná del turno y con la Mota de Maná. | Los puntos se llaman **Sellos**. Se define el **Círculo**; las cartas iniciales no llevan esfera de Coste. |
-| 7 | Dudas de redacción y un 19 % de victorias compartidas con 4 jugadores. | Elige siempre el jugador activo (y en Desorden el rival elige su descarte), Gran marea redactada como Retorno, Crecimiento «al menos 1 🌿», Cambio de viento permite vincular el nuevo, **desempate final por Sellos de la Era III**. |
-| 8 | Retorno, Fortificar, Desorden y Cambio de viento rendían **peor que una Mota de Maná**, y Quemadura no valía nada con 3-4 jugadores. | Nuevas versiones (ver «Cartas flojas»). |
+| 7 | Dudas de redacción y un 19 % de victorias compartidas con 4 jugadores. | Elige siempre el jugador activo (y en Velo el rival elige su descarte), Espíritu del Océano redactada como Torrente, Monolito «al menos 1 🌿», Remolino permite vincular el nuevo, **desempate final por Sellos de la Era III**. |
+| 8 | Torrente, Pedregal, Velo y Remolino rendían **peor que una Mota de Maná**, y Brasa Viva no valía nada con 3-4 jugadores. | Nuevas versiones (ver «Cartas flojas»). |
 | 9 | Los Guardianes no tenían identidad. | **Guardianes de color** (rojo Fuego, azul Agua, verde Tierra, amarillo Aire): su mazo inicial cambia 1 Mota por 1 Menor más de su elemento. |
 
 La regla de empate en un Santuario (nadie puntúa) **se mantiene**: frena al líder sin frustrar y repartir los empates no mejoraba nada.
@@ -34,41 +36,41 @@ La regla de empate en un Santuario (nadie puntúa) **se mantiene**: frena al lí
 
 ### Cartas flojas
 
-**Método.** Un jugador empieza con 2 copias de una carta en lugar de sus 2 Motas de Maná y se mide cuánto sube su porcentaje de victorias, con las mismas partidas para todas las cartas (`node mana/valor_cartas.js 800 2` y `node mana/valor_cartas.js 1600 4`). Una carta que no aporta nada da +0: es lo mismo que una Mota. Antes se corrigió el bot, que no valoraba preparar el turno siguiente (Retorno, Oleaje) y con Cambio de viento descartaba justo el Elemental que quería.
+**Método.** Un jugador empieza con 2 copias de una carta en lugar de sus 2 Motas de Maná y se mide cuánto sube su porcentaje de victorias, con las mismas partidas para todas las cartas (`node mana/valor_cartas.js 800 2` y `node mana/valor_cartas.js 1600 4`). Una carta que no aporta nada da +0: es lo mismo que una Mota. Antes se corrigió el bot, que no valoraba preparar el turno siguiente (Torrente, Marea) y con Remolino descartaba justo el Elemental que quería.
 
 **Resultado con las cartas de la primera v0.2** (2 jugadores):
 
 | Carta | Diferencia | Diagnóstico |
 | --- | ---: | --- |
-| Retorno | −7,6 | Pierdes 1 Maná este turno para colocar una carta para el siguiente: no compensa. |
-| Fortificar | −7,8 | Proteger sin hacer nada más rara vez vale el Maná que cuesta. |
-| Desorden | −10,3 | El rival elige su peor carta y roba otra: le haces un favor. |
-| Cambio de viento | −11,3 | Cambiar una carta del Umbral no vale 1 Maná. |
-| Oleaje | +28,3 | Bien (en la media de las de coste 4): era el bot el que no la jugaba. |
+| Torrente | −7,6 | Pierdes 1 Maná este turno para colocar una carta para el siguiente: no compensa. |
+| Pedregal | −7,8 | Proteger sin hacer nada más rara vez vale el Maná que cuesta. |
+| Velo | −10,3 | El rival elige su peor carta y roba otra: le haces un favor. |
+| Remolino | −11,3 | Cambiar una carta del Umbral no vale 1 Maná. |
+| Marea | +28,3 | Bien (en la media de las de coste 4): era el bot el que no la jugaba. |
 
-**Problema extra con 3-4 jugadores:** las cartas que golpean a **un solo rival** (Quemadura, o Desorden contra un rival) valen casi 0 (+0,3 con 4 jugadores), porque lo que pierde ese rival lo aprovechan los demás.
+**Problema extra con 3-4 jugadores:** las cartas que golpean a **un solo rival** (Brasa Viva, o Velo contra un rival) valen casi 0 (+0,3 con 4 jugadores), porque lo que pierde ese rival lo aprovechan los demás.
 
 **Versiones probadas** (diferencia de victorias; referencia de coste 3: Llama +13 con 2 jugadores, +16 con 4):
 
 | Carta | Versión | 2 j. | 4 j. |
 | --- | --- | ---: | ---: |
-| Retorno | **Roba 1 y pon 1 de tu descarte sobre tu mazo** | +13,7 | +12,3 |
-| Retorno | Recupera 1 de tu descarte a tu mano | +13,2 | |
-| Fortificar | **Protege 2 propias y roba 1** | +15,9 | +12,5 |
-| Fortificar | +1 🌿 y protege 2 propias | +7,6 | |
-| Cambio de viento | **Roba 1 y cambia 1 del Umbral** | +17,2 | +15,6 |
-| Cambio de viento | +1 💨 y cambia 1 del Umbral | +6,4 | |
-| Desorden | Un rival descarta 1 (la eliges tú) y roba 1 | −3,8 | |
-| Desorden | Un rival descarta 1 (la eliges tú) | +19,4 | +0,4 |
-| Desorden | Un rival descarta 1 (la eliges tú) y tú robas 1 | +46,8 | |
-| Desorden | **+1 💨 y cada rival descarta 1 (la elige él)** | +24,9 | +32,1 |
-| Quemadura | Retira 1 rival de cualquier Santuario y roba 1 | +34,4 | +27,9 |
-| Quemadura | Retira 1 rival de un Santuario y pon 1 tuya allí | +32,8 | +19,4 |
-| Quemadura | **Retira 1 rival de 🔥 y pon 1 tuya en 🔥** | +10,5 | +7,5 |
+| Torrente | **Roba 1 y pon 1 de tu descarte sobre tu mazo** | +13,7 | +12,3 |
+| Torrente | Recupera 1 de tu descarte a tu mano | +13,2 | |
+| Pedregal | **Protege 2 propias y roba 1** | +15,9 | +12,5 |
+| Pedregal | +1 🌿 y protege 2 propias | +7,6 | |
+| Remolino | **Roba 1 y cambia 1 del Umbral** | +17,2 | +15,6 |
+| Remolino | +1 💨 y cambia 1 del Umbral | +6,4 | |
+| Velo | Un rival descarta 1 (la eliges tú) y roba 1 | −3,8 | |
+| Velo | Un rival descarta 1 (la eliges tú) | +19,4 | +0,4 |
+| Velo | Un rival descarta 1 (la eliges tú) y tú robas 1 | +46,8 | |
+| Velo | **+1 💨 y cada rival descarta 1 (la elige él)** | +24,9 | +32,1 |
+| Brasa Viva | Retira 1 rival de cualquier Santuario y roba 1 | +34,4 | +27,9 |
+| Brasa Viva | Retira 1 rival de un Santuario y pon 1 tuya allí | +32,8 | +19,4 |
+| Brasa Viva | **Retira 1 rival de 🔥 y pon 1 tuya en 🔥** | +10,5 | +7,5 |
 
-Elegidas las marcadas en negrita. Quemadura queda algo por debajo de Llama, pero **igual con 2, 3 y 4 jugadores** (+10,5 / +8,2 / +7,5); el Fuego sigue retirando en cualquier Santuario con Embestida, Incendio y Llama de conquista. Desorden queda **algo fuerte para su coste** (a la altura de una de coste 4): vigilarla en mesa; si molesta, quitarle el +1 💨.
+Elegidas las marcadas en negrita. Brasa Viva queda algo por debajo de Llama, pero **igual con 2, 3 y 4 jugadores** (+10,5 / +8,2 / +7,5); el Fuego sigue retirando en cualquier Santuario con Ígneo, Coloso de Fuego y Espíritu del Volcán. Velo queda **algo fuerte para su coste** (a la altura de una de coste 4): vigilarla en mesa; si molesta, quitarle el +1 💨.
 
-**Fuerza final** con las cartas actuales (4 jugadores): las de coste 6 dan +47 a +53, las de 5 +30 a +53, las de 4 +19 a +38, las de 3 +7 a +29 y las de 2 +1 a +9. Ya ninguna rinde menos que una Mota. Las más flojas son las **+1 de coste 2 (Chispa, Semilla, Brisa: +1 a +2)**, que casi no aportan; son de las cartas repetidas que se dejaron para más adelante. Cuando se revisen, conviene darles algo más (por ejemplo, +1 y roba 1). **Renacer** (+52,6) quizá quede algo fuerte tras la mejora: rinde como una de coste 6.
+**Fuerza final** con las cartas actuales (4 jugadores): las de coste 6 dan +47 a +53, las de 5 +30 a +53, las de 4 +19 a +38, las de 3 +7 a +29 y las de 2 +1 a +9. Ya ninguna rinde menos que una Mota. Las más flojas son las **+1 de coste 2 (Ascua, Polvo, Brisa: +1 a +2)**, que casi no aportan; son de las cartas repetidas que se dejaron para más adelante. Cuando se revisen, conviene darles algo más (por ejemplo, +1 y roba 1). **Coloso de Agua** (+52,6) quizá quede algo fuerte tras la mejora: rinde como una de coste 6.
 
 ### ¿Liberar se vuelve automático?
 
@@ -143,7 +145,7 @@ La mesa ya muestra la mano en dos filas de 3 (con 5 cartas, 3 + 2), así que sir
 
 - **Cartas repetidas** entre elementos, incluidas las +1 de coste 2, que casi no aportan.
 - **Mano de 5 o de 6** (ver la sección anterior).
-- **Vigilar en mesa:** Desorden y Renacer (algo fuertes), liberar con coste 2 y la duración a 4 jugadores (cronometrar las primeras partidas).
+- **Vigilar en mesa:** Velo y Coloso de Agua (algo fuertes), liberar con coste 2 y la duración a 4 jugadores (cronometrar las primeras partidas).
 - Con 2 jugadores el segundo gana algo más (48 % frente a 44 %): dentro del margen de error, pero a observar.
 
 ## Resultados completos
@@ -216,35 +218,35 @@ La mesa ya muestra la mano en dos filas de 3 (con 5 cartas, 3 + 2), así que sir
 
 | Carta | Coste | v0.1 | v0.2 | Vinculada (v0.2, por partida) |
 | --- | ---: | ---: | ---: | ---: |
-| Chispa | 2 | 14 % | 55 % | 1.58 |
+| Ascua | 2 | 14 % | 55 % | 1.58 |
 | Llama | 3 | 60 % | 80 % | 1.77 |
-| Ascua | 2 | 1 % | 74 % | 1.45 |
-| Quemadura | 3 | 7 % | 68 % | 1.59 |
-| Embestida | 4 | 34 % | 65 % | 1.66 |
-| Fuego voraz | 4 | 34 % | 52 % | 1.23 |
-| Incendio | 5 | 19 % | 78 % | 1.65 |
-| Llama de conquista | 6 | 68 % | 72 % | 1.52 |
+| Fulgor | 2 | 1 % | 74 % | 1.45 |
+| Brasa Viva | 3 | 7 % | 68 % | 1.59 |
+| Ígneo | 4 | 34 % | 65 % | 1.66 |
+| Inferno | 4 | 34 % | 52 % | 1.23 |
+| Coloso de Fuego | 5 | 19 % | 78 % | 1.65 |
+| Espíritu del Volcán | 6 | 68 % | 72 % | 1.52 |
 | Gota | 2 | 12 % | 55 % | 1.55 |
-| Corriente | 3 | 56 % | 80 % | 1.77 |
-| Manantial | 2 | 0 % | 73 % | 1.35 |
-| Fluir | 3 | 2 % | 79 % | 1.39 |
-| Retorno | 3 | 21 % | 80 % | 1.31 |
-| Oleaje | 4 | 22 % | 33 % | 1.62 |
-| Renacer | 5 | 0 % | 65 % | 0.97 |
-| Gran marea | 6 | 66 % | 67 % | 1.08 |
-| Semilla | 2 | 11 % | 51 % | 1.55 |
-| Raíz | 3 | 54 % | 77 % | 1.71 |
-| Brote | 2 | 1 % | 72 % | 1.43 |
-| Fortificar | 3 | 0 % | 91 % | 1.59 |
-| Raíces profundas | 4 | 24 % | 41 % | 0.93 |
-| Crecimiento | 4 | 16 % | 45 % | 1.54 |
-| Bastión | 5 | 1 % | 56 % | 1.50 |
-| Tierra ancestral | 6 | 59 % | 58 % | 0.93 |
+| Onda | 3 | 56 % | 80 % | 1.77 |
+| Corriente | 2 | 0 % | 73 % | 1.35 |
+| Flujo | 3 | 2 % | 79 % | 1.39 |
+| Torrente | 3 | 21 % | 80 % | 1.31 |
+| Marea | 4 | 22 % | 33 % | 1.62 |
+| Coloso de Agua | 5 | 0 % | 65 % | 0.97 |
+| Espíritu del Océano | 6 | 66 % | 67 % | 1.08 |
+| Polvo | 2 | 11 % | 51 % | 1.55 |
+| Roca | 3 | 54 % | 77 % | 1.71 |
+| Raíz | 2 | 1 % | 72 % | 1.43 |
+| Pedregal | 3 | 0 % | 91 % | 1.59 |
+| Bastión | 4 | 24 % | 41 % | 0.93 |
+| Monolito | 4 | 16 % | 45 % | 1.54 |
+| Coloso de Tierra | 5 | 1 % | 56 % | 1.50 |
+| Espíritu de la Montaña | 6 | 59 % | 58 % | 0.93 |
 | Brisa | 2 | 17 % | 56 % | 1.64 |
-| Ráfaga | 3 | 63 % | 81 % | 1.70 |
-| Inspiración | 2 | 1 % | 74 % | 1.47 |
-| Desorden | 3 | 1 % | 93 % | 1.61 |
-| Cambio de viento | 3 | 7 % | 77 % | 0.61 |
-| Desvío | 4 | 5 % | 47 % | 0.30 |
-| Corriente ascendente | 4 | 3 % | 56 % | 1.23 |
-| Torbellino | 6 | 44 % | 67 % | 1.40 |
+| Soplo | 3 | 63 % | 81 % | 1.70 |
+| Ráfaga | 2 | 1 % | 74 % | 1.47 |
+| Velo | 3 | 1 % | 93 % | 1.61 |
+| Remolino | 3 | 7 % | 77 % | 0.61 |
+| Vórtice | 4 | 5 % | 47 % | 0.30 |
+| Coloso del Aire | 4 | 3 % | 56 % | 1.23 |
+| Espíritu de la Tormenta | 6 | 44 % | 67 % | 1.40 |

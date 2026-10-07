@@ -82,7 +82,7 @@ Si la Acción no afecta a un Santuario concreto —incluidas las que actúan **e
 | Marcador + flecha | Mueve una Presencia |
 | Marcador rival −1 | Retira una Presencia rival |
 
-Una carta con dos efectos (por ejemplo, Embestida: +1 🔥 y retira 1 rival) muestra los dos iconos dentro de la esfera.
+Una carta con dos efectos (por ejemplo, Ígneo: +1 🔥 y retira 1 rival) muestra los dos iconos dentro de la esfera.
 
 ## 10. Ejemplo
 
@@ -185,53 +185,53 @@ Tras puntuar la tercera Era gana el Guardián con más Sellos. Si hay empate, ga
 
 | Elemental | Coste | Maná | Acción |
 | --- | ---: | ---: | --- |
-| Chispa | 2 | 1 | +1 🔥 |
+| Ascua | 2 | 1 | +1 🔥 |
 | Llama | 3 | 1 | +2 🔥 |
-| Ascua | 2 | 1 | Roba 1 |
-| Quemadura | 3 | 1 | Retira 1 Presencia rival de 🔥 y pon 1 tuya en 🔥 |
-| Embestida | 4 | 2 | +1 🔥 y retira 1 Presencia rival de cualquier Santuario |
-| Fuego voraz | 4 | 2 | Si un rival tiene más 🔥 que tú, +2 🔥; si no, +1 🔥 |
-| Incendio | 5 | 2 | Retira hasta 2 Presencias rivales de un mismo Santuario y +1 🔥 |
-| Llama de conquista | 6 | 3 | +2 🔥 y retira 1 Presencia rival de cualquier Santuario |
+| Fulgor | 2 | 1 | Roba 1 |
+| Brasa Viva | 3 | 1 | Retira 1 Presencia rival de 🔥 y pon 1 tuya en 🔥 |
+| Ígneo | 4 | 2 | +1 🔥 y retira 1 Presencia rival de cualquier Santuario |
+| Inferno | 4 | 2 | Si un rival tiene más 🔥 que tú, +2 🔥; si no, +1 🔥 |
+| Coloso de Fuego | 5 | 2 | Retira hasta 2 Presencias rivales de un mismo Santuario y +1 🔥 |
+| Espíritu del Volcán | 6 | 3 | +2 🔥 y retira 1 Presencia rival de cualquier Santuario |
 
 ## 28. Elementales de Agua
 
 | Elemental | Coste | Maná | Acción |
 | --- | ---: | ---: | --- |
 | Gota | 2 | 1 | +1 💧 |
-| Corriente | 3 | 1 | +2 💧 |
-| Manantial | 2 | 1 | Roba 1 |
-| Fluir | 3 | 1 | Roba 2 y descarta 1 |
-| Retorno | 3 | 1 | Roba 1 y pon 1 carta de tu descarte sobre tu mazo |
-| Oleaje | 4 | 2 | Roba 2 y pon 1 carta de tu mano sobre tu mazo |
-| Renacer | 5 | 2 | Recupera 1 carta de tu descarte a tu mano y roba 1 |
-| Gran marea | 6 | 3 | +2 💧 y pon 1 carta de tu descarte sobre tu mazo |
+| Onda | 3 | 1 | +2 💧 |
+| Corriente | 2 | 1 | Roba 1 |
+| Flujo | 3 | 1 | Roba 2 y descarta 1 |
+| Torrente | 3 | 1 | Roba 1 y pon 1 carta de tu descarte sobre tu mazo |
+| Marea | 4 | 2 | Roba 2 y pon 1 carta de tu mano sobre tu mazo |
+| Coloso de Agua | 5 | 2 | Recupera 1 carta de tu descarte a tu mano y roba 1 |
+| Espíritu del Océano | 6 | 3 | +2 💧 y pon 1 carta de tu descarte sobre tu mazo |
 
 ## 29. Elementales de Tierra
 
 | Elemental | Coste | Maná | Acción |
 | --- | ---: | ---: | --- |
-| Semilla | 2 | 1 | +1 🌿 |
-| Raíz | 3 | 1 | +2 🌿 |
-| Brote | 2 | 1 | Roba 1 |
-| Fortificar | 3 | 1 | Protege 2 Presencias propias (en cualquier Santuario) y roba 1 |
-| Raíces profundas | 4 | 2 | +1 🌿 protegida |
-| Crecimiento | 4 | 2 | Si ya tienes al menos 1 🌿, +2 🌿 |
-| Bastión | 5 | 2 | Protege todas tus Presencias de un Santuario y +1 🌿 protegida |
-| Tierra ancestral | 6 | 3 | +2 🌿 protegidas |
+| Polvo | 2 | 1 | +1 🌿 |
+| Roca | 3 | 1 | +2 🌿 |
+| Raíz | 2 | 1 | Roba 1 |
+| Pedregal | 3 | 1 | Protege 2 Presencias propias (en cualquier Santuario) y roba 1 |
+| Bastión | 4 | 2 | +1 🌿 protegida |
+| Monolito | 4 | 2 | Si ya tienes al menos 1 🌿, +2 🌿 |
+| Coloso de Tierra | 5 | 2 | Protege todas tus Presencias de un Santuario y +1 🌿 protegida |
+| Espíritu de la Montaña | 6 | 3 | +2 🌿 protegidas |
 
 ## 30. Elementales de Aire
 
 | Elemental | Coste | Maná | Acción |
 | --- | ---: | ---: | --- |
 | Brisa | 2 | 1 | +1 💨 |
-| Ráfaga | 3 | 1 | +2 💨 |
-| Inspiración | 2 | 1 | Roba 1 |
-| Desorden | 3 | 1 | +1 💨 y cada rival descarta 1 carta de su mano (la elige él) |
-| Cambio de viento | 3 | 1 | Roba 1, descarta 1 Elemental del Umbral y repónlo (el nuevo puede vincularse este turno) |
-| Desvío | 4 | 2 | Mueve 1 Presencia rival de un Santuario a otro |
-| Corriente ascendente | 4 | 2 | Mueve 1 Presencia propia a 💨 y roba 1 |
-| Torbellino | 6 | 3 | Mueve hasta 2 Presencias rivales, cada una de un Santuario a otro, y +1 💨 |
+| Soplo | 3 | 1 | +2 💨 |
+| Ráfaga | 2 | 1 | Roba 1 |
+| Velo | 3 | 1 | +1 💨 y cada rival descarta 1 carta de su mano (la elige él) |
+| Remolino | 3 | 1 | Roba 1, descarta 1 Elemental del Umbral y repónlo (el nuevo puede vincularse este turno) |
+| Vórtice | 4 | 2 | Mueve 1 Presencia rival de un Santuario a otro |
+| Coloso del Aire | 4 | 2 | Mueve 1 Presencia propia a 💨 y roba 1 |
+| Espíritu de la Tormenta | 6 | 3 | Mueve hasta 2 Presencias rivales, cada una de un Santuario a otro, y +1 💨 |
 
 La tabla que usa el simulador está en [`cartas.js`](cartas.js).
 

@@ -72,7 +72,7 @@
   .carta { width: var(--ancho, 108px); display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; cursor: pointer; }
   .carta .ilus { width: var(--ancho, 108px); height: 156px; border-radius: 18px; }
   .carta .ilus svg { width: 50px; height: 50px; }
-  .carta .nombre { font-size: 12px; white-space: nowrap; text-align: center; }
+  .carta .nombre { font-size: 12px; line-height: 1.2; text-align: center; height: 2.4em; display: flex; align-items: center; justify-content: center; } /* nombres largos: hasta 2 líneas, esferas alineadas */
   .carta.accion { transform: translateY(-6px); }
   .carta.accion .ilus { box-shadow: 0 0 0 3px var(--tinta); }
   .carta.usada .ilus { box-shadow: 0 0 0 3px var(--mana); }

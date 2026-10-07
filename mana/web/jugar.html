@@ -62,6 +62,8 @@
   .boton.ancho { width: 100%; }
   .unirse { display: grid; grid-template-columns: 1fr 120px; gap: 10px; width: 100%; }
   .unirse input { letter-spacing: .3em; }
+  .enlace { display: grid; grid-template-columns: 1fr 100px; gap: 8px; width: 100%; }
+  .enlace input { width: 100%; border: 1.5px solid var(--linea); border-radius: 12px; padding: 9px 10px 7px; font: inherit; font-size: 11px; text-transform: none; background: rgba(255,255,255,.7); color: var(--tinta); }
   .codigo-grande { font-size: 40px; font-weight: 700; letter-spacing: .3em; padding-left: .3em; color: var(--mana); }
   .plazas { width: 100%; display: flex; flex-direction: column; gap: 6px; }
   .plaza { border: 1.5px solid var(--linea); border-radius: 12px; padding: 8px 12px 6px; text-align: left; }
@@ -1164,7 +1166,8 @@ function inicio() {
   if (red && red.quitar) red.quitar();
   red = null;
   let n = 4;
-  let modo = 'bots';
+  const salaEnlace = (new URLSearchParams(location.search).get('sala') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  let modo = salaEnlace ? 'amigos' : 'bots';
   const opcionesBots = () => [2, 3, 4].map((k) => `<div class="opcion ${k === n ? 'elegida' : ''}" data-n="${k}">${k - 1} ${k === 2 ? 'bot' : 'bots'}</div>`).join('');
   const pintarModo = () => {
     $('modo').innerHTML = ['bots', 'amigos'].map((m) => `<div class="opcion ${m === modo ? 'elegida' : ''}" data-m="${m}">${m === 'bots' ? 'Contra bots' : 'Con amigos'}</div>`).join('');
@@ -1179,6 +1182,7 @@ function inicio() {
     } else {
       $('crear').onclick = () => crearSala(nombreElegido());
       $('unirme').onclick = () => unirseSala(nombreElegido(), $('codigo').value);
+      if (salaEnlace) $('codigo').value = salaEnlace;
     }
   };
   abrir(`<img class="titulo-inicio" src="url(texturas/titulo.webp)" alt="MANA">
@@ -1194,7 +1198,47 @@ function inicio() {
 // partidas/<código>: { estado: 'sala' | 'juego', anfitrion, asientos, snap, version, por }
 // partidas/<código>/sala/<id>: quién se ha unido (cada uno escribe el suyo)
 let red = null;
+// Con el servidor propio (Render), la misma interfaz de base de datos sobre HTTP y eventos del servidor
+function dbServidor() {
+  const pedir = (ruta, cuerpo) => fetch('/api/doc?ruta=' + encodeURIComponent(ruta), cuerpo === undefined ? { cache: 'no-store' }
+    : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
+    .then((r) => (r.ok ? r.json() : Promise.reject({ code: 'servidor_' + r.status })));
+  const escuchar = (ruta, convertir, next, error) => {
+    const es = new EventSource('/api/escuchar?ruta=' + encodeURIComponent(ruta));
+    es.onmessage = (e) => next(convertir(JSON.parse(e.data)));
+    let fallos = 0;
+    es.onerror = () => { if (++fallos > 20 && error) { es.close(); error({ code: 'unavailable' }); } };
+    es.onopen = () => { fallos = 0; };
+    return () => es.close();
+  };
+  const snapDoc = (d) => ({ exists: d.exists, data: () => d.data });
+  const coleccion = (ruta) => {
+    const q = {
+      orderBy: () => q,
+      doc: (id) => documento(ruta + '/' + id),
+      onSnapshot: (next, error) => escuchar(ruta, (d) => ({ docs: d.docs.map((x) => ({ id: x.id, exists: true, data: () => x.data })) }), next, error),
+    };
+    return q;
+  };
+  const documento = (ruta) => ({
+    get: () => pedir(ruta).then(snapDoc),
+    set: (data) => pedir(ruta, data),
+    onSnapshot: (next, error) => escuchar(ruta, snapDoc, next, error),
+    collection: (sub) => coleccion(ruta + '/' + sub),
+  });
+  return { doc: documento, collection: coleccion };
+}
+// Cada pestaña es un jugador (se conserva al recargar la página)
+function idPestana() {
+  try {
+    let id = sessionStorage.getItem('mana-id');
+    if (!id) { id = 'j' + Math.random().toString(36).slice(2, 10); sessionStorage.setItem('mana-id', id); }
+    return id;
+  } catch (e) { return 'j' + Math.random().toString(36).slice(2, 10); }
+}
+
 async function conectar() {
+  if (window.MANA_SERVIDOR) return { db: dbServidor(), uid: idPestana() };
   if (!window.claude || !window.claude.use) return null;
   const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
   if (!db || !user) return null;
@@ -1224,7 +1268,10 @@ async function crearSala(nombre) {
     $('total-plazas').innerHTML = [2, 3, 4].map((k) => `<div class="opcion ${k === plazas ? 'elegida' : ''}" data-n="${k}">${k} jugadores</div>`).join('');
   };
   abrir(`<h2>Partida ${codigo}</h2>
-    <div class="texto">Pasa a tus amigos el <b>enlace de esta página</b> y este código. Lo escriben en «Con amigos» y pulsan «Unirme».</div>
+    ${window.MANA_SERVIDOR
+    ? `<div class="texto">Pasa este <b>enlace</b> a tus amigos: al abrirlo solo tienen que poner su nombre y pulsar «Unirme».</div>
+       <div class="enlace"><input id="enlace" readonly value="${location.origin}/?sala=${codigo}"><div class="boton lleno" id="copiar-enlace">Copiar</div></div>`
+    : '<div class="texto">Pasa a tus amigos el <b>enlace de esta página</b> y este código. Lo escriben en «Con amigos» y pulsan «Unirme».</div>'}
     <div class="codigo-grande">${codigo}</div>
     <div class="opciones" id="total-plazas"></div><div class="plazas" id="plazas"></div>
     <div class="nota">Los huecos que nadie ocupe los juegan bots.</div>`,
@@ -1236,6 +1283,10 @@ async function crearSala(nombre) {
     escuchar();
     empezarPartida(lista, Math.floor(Math.random() * 1e9));
   } }], true, true);
+  if ($('copiar-enlace')) $('copiar-enlace').onclick = async () => {
+    try { await navigator.clipboard.writeText($('enlace').value); avisar('Enlace copiado'); }
+    catch (e) { $('enlace').select(); avisar('Selecciona el enlace y cópialo'); }
+  };
   $('total-plazas').onclick = (e) => { const o = e.target.closest('[data-n]'); if (o) { plazas = Math.max(Number(o.dataset.n), Math.min(gente.length, 4)); pintarSala(); } };
   const quitarSala = red.ref.collection('sala').orderBy('t').onSnapshot((snap) => {
     gente = snap.docs.map((d) => d.data()).slice(0, 4);

@@ -65,3 +65,21 @@ test('MANA: exportar e importar una partida a medias la deja igual', () => {
   while (!b.fin) { const i = b.comenzarTurno(); b.turnoBot(i); b.terminarTurno(); }
   assert.ok(b.ganadores.length >= 1);
 });
+
+test('MANA: el servidor guarda y devuelve documentos y sirve el juego', async () => {
+  process.env.PORT = '0';
+  const servidor = require('../mana/servidor/servidor');
+  await new Promise((ok) => (servidor.listening ? ok() : servidor.once('listening', ok)));
+  const base = `http://127.0.0.1:${servidor.address().port}`;
+  try {
+    const pagina = await (await fetch(base + '/')).text();
+    assert.ok(pagina.includes('window.MANA_SERVIDOR = true'));
+    assert.equal((await (await fetch(base + '/api/doc?ruta=partidas/ABCD')).json()).exists, false);
+    await fetch(base + '/api/doc?ruta=partidas/ABCD', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: 'sala' }) });
+    assert.deepEqual((await (await fetch(base + '/api/doc?ruta=partidas/ABCD')).json()).data, { estado: 'sala' });
+    assert.equal((await fetch(base + '/api/doc?ruta=../secreto')).status, 400);
+  } finally {
+    servidor.close();
+    servidor.closeAllConnections();
+  }
+});

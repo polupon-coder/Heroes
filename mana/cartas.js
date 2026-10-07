@@ -79,7 +79,8 @@ const UMBRAL = UMBRAL_V01.map((c) => (cambios[c.nombre] ? { ...c, accion: cambio
 
 const INICIAL = [
   ...ELEMENTOS.flatMap((el) => {
-    const c = C(`Menor de ${el}`, el, 0, 1, [{ add: 1, s: el }], true);
+    const nombre = { fuego: 'Fuego', agua: 'Agua', tierra: 'Tierra', aire: 'Aire' }[el];
+    const c = C(`Menor de ${nombre}`, el, 0, 1, [{ add: 1, s: el }], true);
     return [c, c];
   }),
   C('Mota de Maná', null, 0, 1, [], true),

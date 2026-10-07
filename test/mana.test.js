@@ -17,3 +17,38 @@ test('MANA: partidas completas con bots terminan con ganador y 24 Sellos en jueg
     }
   }
 });
+
+test('MANA: un jugador humano (con jugadas al azar) puede completar la partida', () => {
+  for (let seed = 1; seed <= 30; seed++) {
+    const p = new Partida(3, { seed, registro: true }).iniciar();
+    let azar = seed;
+    const r = () => (azar = (azar * 16807) % 2147483647) / 2147483647;
+    let turnos = 0;
+    while (!p.fin) {
+      const i = p.comenzarTurno();
+      if (i !== 0) {
+        p.turnoBot(i);
+        p.terminarTurno();
+      } else {
+        const j = p.jug[0];
+        while (j.mano.length) {
+          const k = Math.floor(r() * j.mano.length);
+          if (r() < 0.4 && j.mano[k].accion.length) p.humanoAccion(k);
+          else p.humanoMana(k);
+        }
+        const u = p.umbral.findIndex((_, k) => p.puedeVincular(k));
+        if (u >= 0) p.humanoVincular(u);
+        const ini = p.turno.manaUsadas.findIndex((c) => c.inicial);
+        if (ini >= 0 && p.puedeLiberar()) p.humanoLiberar('mana', ini);
+        assert.ok(p.manaDisponible() >= 0, 'no se gasta más Maná del que hay');
+        p.humanoTerminar();
+      }
+      assert.ok(++turnos <= 3 * 15, 'la partida termina');
+    }
+    assert.strictEqual(turnos, 45);
+    assert.ok(p.ganadores.length >= 1);
+    const j = p.jug[0];
+    assert.strictEqual(j.mazo.length + j.desc.length + j.mano.length, 10 + j.vinculadas - j.liberadas);
+    assert.ok(p.registro.some((e) => e.tipo === 'vincula'));
+  }
+});

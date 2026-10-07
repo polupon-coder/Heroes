@@ -1,0 +1,1357 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MANA</title>
+<style>
+  :root {
+    --fondo: #f6f5f1; --tinta: #1d1d1f; --suave: #8a8a8f; --linea: #e4e2dc;
+    --coste: #a3a3a8; --mana: #a78bfa;
+    --verde: #2e9d5b; --fuego: #e5533d; --agua: #3b82f6; --tierra: #3fa66b; --aire: #e3b21c; --neutro: #4b5563;
+    --t-fuego: #fbe3df; --t-agua: #dfeafd; --t-tierra: #dcf0e3; --t-aire: #faf0d0;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: var(--fondo); }
+  /* Se diseña a 1280×720 y se escala para llenar la pantalla (zoom calculado al cargar) */
+  body { width: 1280px; height: 720px; background: var(--fondo); color: var(--tinta); user-select: none;
+    font: 14px/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 22px 40px 26px; margin: 0 auto;
+    display: flex; flex-direction: column; align-items: center; }
+  .ico { width: 18px; height: 18px; }
+
+  /* Cabecera */
+  .barra { width: 100%; display: grid; grid-template-columns: 256px 1fr 256px; column-gap: 24px; align-items: center; }
+  .lado { display: flex; gap: 22px; }
+  .lado.der { justify-content: space-between; gap: 0; }
+  .lado.der .jug { gap: 5px; }
+  .centro { text-align: center; }
+  .logo { font-weight: 700; letter-spacing: .4em; font-size: 15px; padding-left: .4em; }
+  .era { color: var(--suave); font-size: 12px; margin-top: 3px; }
+  .era b { color: var(--tinta); font-weight: 600; }
+  .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); border-radius: 14px; padding: 2px 6px; margin: -2px -6px; }
+  .jug.activo { color: var(--tinta); font-weight: 700; background: #fff; box-shadow: 0 0 0 1.5px var(--tinta); }
+  .sello { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
+    border: 1.5px solid currentColor; font-size: 11px; font-weight: 700; }
+  .registro-btn { color: var(--suave); font-size: 11px; text-decoration: underline; cursor: pointer; margin-left: 6px; }
+
+  .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 256px 1fr 256px; gap: 24px; margin-top: 18px; min-height: 0; }
+  .titulo { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--suave); padding-left: .16em; text-align: center; }
+  .panel { background: #fff; border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+
+  /* Umbral */
+  #umbral { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .fila-u { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: center; position: relative; cursor: pointer; flex: 1; }
+  .fila-u .ilus { width: 76px; height: 76px; border-radius: 16px; }
+  .fila-u .ilus svg { width: 36px; height: 36px; }
+  .fila-u .nombre { text-align: left; margin-bottom: 4px; font-size: 13px; }
+  .fila-u .esferas { justify-content: start; }
+  .fila-u.cara > :not(.pista) { opacity: .38; }
+  .linea { height: 1px; background: var(--linea); }
+
+  /* Centro */
+  .principal { display: flex; flex-direction: column; align-items: center; padding: 16px 0 18px; min-width: 0; }
+  .principal > .titulo { margin-bottom: 22px; }
+  #mano { display: flex; justify-content: center; align-items: flex-end; gap: var(--hueco, 20px); }
+  .carta { width: var(--ancho, 108px); display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; cursor: pointer; }
+  .carta .ilus { width: var(--ancho, 108px); height: 156px; border-radius: 18px; }
+  .carta .ilus svg { width: 50px; height: 50px; }
+  .carta .nombre { font-size: 12px; white-space: nowrap; text-align: center; }
+  .carta.accion { transform: translateY(-6px); }
+  .carta.accion .ilus { box-shadow: 0 0 0 3px var(--tinta); }
+  .carta.usada .ilus { box-shadow: 0 0 0 3px var(--mana); }
+  .etq { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; height: 12px; padding-left: .14em; }
+  .etq.a { color: var(--tinta); } .etq.m { color: var(--mana); }
+  .vacia { color: var(--suave); font-size: 12px; height: 220px; display: flex; align-items: center; }
+
+  .arriba { display: grid; grid-template-columns: 108px 1fr 108px; align-items: center; justify-items: center; width: 364px; margin-top: auto; }
+  .pila { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--suave); font-size: 13px; }
+  .dorso { width: 96px; height: 136px; border-radius: 16px; border: 1.5px solid var(--linea); background: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: var(--tinta); }
+  .total { width: 116px; height: 116px; border-radius: 50%; background: var(--mana); color: #fff; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: 46px; font-weight: 700; line-height: 1; transition: transform .15s; }
+  .total small { font-size: 10px; letter-spacing: .16em; font-weight: 600; margin-top: 6px; padding-left: .16em; }
+  .total.latido { transform: scale(1.08); }
+
+  .boton { text-align: center; padding: 10px 0; border-radius: 22px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1.5px solid var(--tinta); }
+  .boton.lleno { background: var(--tinta); color: #fff; }
+  .boton.verde { background: var(--verde); border-color: var(--verde); color: #fff; }
+  .boton.inactivo { opacity: .28; cursor: not-allowed; }
+  .principal > .boton { margin-top: auto; width: 240px; }
+
+  /* Santuarios */
+  #santuarios { flex: 1; display: flex; flex-direction: column; gap: 30px; padding-bottom: 22px; }
+  .sant { position: relative; background: color-mix(in srgb, var(--el) 13%, #fff); border-radius: 14px; width: 100%; flex: 1;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .cuad { display: flex; align-items: center; justify-content: center; }
+  .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 74px; }
+  .puntos i { width: 11px; height: 11px; border-radius: 50%; }
+  .cuad.lider .puntos { max-width: 94px; gap: 5px; }
+  .cuad.lider .puntos i { width: 14px; height: 14px; }
+  .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
+  .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%;
+    background: #fff; display: flex; align-items: center; justify-content: center; }
+  .marca { position: absolute; left: 50%; bottom: -21px; transform: translateX(-50%); color: var(--el); font-weight: 600;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding-left: .16em; white-space: nowrap; }
+  .marca .emp { color: var(--suave); font-weight: 400; }
+  .cruz::before, .cruz::after { content: ''; position: absolute; background: color-mix(in srgb, var(--el) 30%, transparent); }
+  .cruz::before { left: 50%; top: 10px; bottom: 10px; width: 1px; }
+  .cruz::after { top: 50%; left: 12px; right: 12px; height: 1px; }
+
+  /* Esferas */
+  .ilus { display: flex; align-items: center; justify-content: center; }
+  .esferas { display: grid; grid-template-columns: 32px 32px 32px; gap: 4px; justify-items: center; align-items: center; }
+  .esferas.sin-coste { grid-template-columns: 32px 32px; }
+  .esf { width: 32px; height: 32px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 12px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 1px; }
+  .esf svg { width: 11px; height: 11px; }
+  .esf.c { background: var(--coste); } .esf.m { background: var(--mana); }
+  .esf.doble { gap: 0; }
+  .esf.doble > span { width: 50%; display: flex; flex-direction: column; align-items: center; font-size: 9px; line-height: 1; gap: 1px; }
+  .esf.doble svg { width: 8px; height: 8px; }
+
+  /* Explicación al pasar el ratón */
+  .pista { display: none; position: absolute; z-index: 50; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    width: 210px; background: var(--tinta); color: #fff; border-radius: 10px; padding: 9px 12px 10px; font-size: 11px; line-height: 1.4;
+    text-align: left; box-shadow: 0 6px 18px rgba(0,0,0,.2); pointer-events: none; }
+  .pista b { display: block; font-size: 12px; margin-bottom: 2px; }
+  .pista small { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.18); color: #c4b5fd; font-size: 10px; }
+  .carta:hover .pista, .fila-u:hover .pista { display: block; }
+  .fila-u .pista { bottom: auto; top: 50%; left: calc(100% + 14px); transform: translateY(-50%); }
+
+  /* Ventanas */
+  .velo { position: fixed; inset: 0; z-index: 100; background: rgba(29, 29, 31, .4); display: none; align-items: center; justify-content: center; }
+  .velo.abierta { display: flex; }
+  .ventana { width: 340px; max-height: 92%; overflow: auto; background: #fff; border-radius: 22px; padding: 26px 26px 22px; display: flex; flex-direction: column;
+    align-items: center; gap: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.25); text-align: center; }
+  .ventana.ancha { width: 520px; }
+  .ventana h2 { font-size: 17px; }
+  .ventana .ilus { width: 132px; height: 132px; border-radius: 22px; }
+  .ventana .ilus svg { width: 60px; height: 60px; }
+  .ventana .nombre { font-size: 17px; font-weight: 700; margin-top: 4px; }
+  .ventana .esferas { grid-template-columns: 38px 38px 38px; gap: 6px; }
+  .ventana .esferas.sin-coste { grid-template-columns: 38px 38px; }
+  .ventana .esf { width: 38px; height: 38px; font-size: 14px; }
+  .ventana .texto { color: var(--suave); font-size: 12.5px; line-height: 1.45; max-width: 280px; }
+  .ventana .nota { color: var(--suave); font-size: 10.5px; font-style: italic; }
+  .ventana .comomana { color: var(--mana); font-size: 11px; font-weight: 600; margin-top: -4px; }
+  .ventana .saldo { font-size: 12px; padding: 8px 14px; border-radius: 12px; background: var(--fondo); width: 100%; }
+  .ventana .saldo b { color: var(--mana); }
+  .ventana .saldo.no b { color: var(--fuego); }
+  .ventana .botones { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; width: 100%; margin-top: 6px; }
+  .opciones { display: flex; gap: 10px; margin: 6px 0; }
+  .opcion { border: 1.5px solid var(--linea); border-radius: 14px; padding: 10px 16px; cursor: pointer; font-weight: 600; }
+  .opcion.elegida { border-color: var(--tinta); background: var(--fondo); }
+  .tabla { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
+  .tabla td { padding: 7px 6px; border-top: 1px solid var(--linea); }
+  .tabla td:last-child { text-align: right; font-weight: 700; }
+  .lista-reg { width: 100%; text-align: left; font-size: 12px; line-height: 1.5; max-height: 380px; overflow: auto; }
+  .lista-reg div { padding: 3px 0; border-top: 1px solid var(--linea); }
+
+  /* Avisos de lo que pasa (turnos de los bots, tus Acciones) */
+  #avisos { position: fixed; left: 50%; top: 96px; transform: translateX(-50%); z-index: 90; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+  .aviso { background: var(--tinta); color: #fff; border-radius: 12px; padding: 8px 14px; font-size: 12.5px; box-shadow: 0 8px 22px rgba(0,0,0,.2);
+    max-width: 520px; text-align: center; animation: entra .2s ease-out; }
+  @keyframes entra { from { opacity: 0; transform: translateY(-6px); } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="fuego" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2.5 1.3-4 2.5-5.2.2 1.7 1 2.7 2 3.2C11 8 11 5 12 2z"/></symbol>
+    <symbol id="agua" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.5c3.5 4.6 6 8 6 11.2a6 6 0 0 1-12 0C6 10.5 8.5 7.1 12 2.5z"/></symbol>
+    <symbol id="tierra" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c4 3 7 6.5 7 10.5A7 7 0 0 1 13 19.4V22h-2v-2.6a7 7 0 0 1-6-6.9C5 8.5 8 5 12 2z"/></symbol>
+    <symbol id="aire" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M4 8h16M2 12h20M4 16h16"/></symbol>
+    <symbol id="roba" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 8v7m-3-3 3 3 3-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="descarta" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m9.5 8.5 5 5m0-5-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="recupera" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2-4.9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M19 3.5V8h-4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="encima" viewBox="0 0 24 24"><path d="M12 15V4m-4 4 4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="cambia" viewBox="0 0 24 24"><path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4-4-4 4 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="escudo" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></symbol>
+    <symbol id="mueve" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></symbol>
+    <symbol id="retira" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8.5 12h7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="barra">
+  <div class="lado izq" id="yo"></div>
+  <div class="centro">
+    <div class="logo">MANA</div>
+    <div class="era" id="era"></div>
+  </div>
+  <div class="lado der" id="rivales"></div>
+</div>
+
+<div class="juego">
+  <div class="panel"><div class="titulo">Umbral</div><div id="umbral"></div></div>
+  <div class="principal">
+    <div class="titulo">Tu mano</div>
+    <div id="mano"></div>
+    <div class="arriba">
+      <div class="pila"><div class="dorso" id="mazo">0</div>Mazo</div>
+      <div class="total" id="total">0<small>MANÁ</small></div>
+      <div class="pila"><div class="dorso" id="descarte">0</div>Descarte</div>
+    </div>
+    <div class="boton verde" id="terminar">Terminar turno</div>
+  </div>
+  <div class="panel"><div class="titulo">Santuarios</div><div id="santuarios"></div></div>
+</div>
+
+<div class="velo" id="velo"><div class="ventana" id="ventana"></div></div>
+<div id="avisos"></div>
+
+<script>// MANA — símbolos y explicación de la Acción de cada carta.
+// Lo usan la lámina de cartas (esquema.js, en Node) y la mesa (en el navegador, como window.ACCIONES).
+// Partes de la esfera de Acción: [símbolo, texto, color]. Color de elemento = afecta a ese Santuario;
+// 'neutro' = a cualquier Santuario o a cartas. Máximo dos partes (la esfera se parte en dos).
+(function (raiz) {
+  const ACCIONES = {
+    Chispa: [[['fuego', '+1', 'fuego']], 'Pon 1 Presencia en Fuego.'],
+    Llama: [[['fuego', '+2', 'fuego']], 'Pon 2 Presencias en Fuego.'],
+    Ascua: [[['roba', '1', 'neutro']], 'Roba 1 carta.'],
+    Quemadura: [[['retira', '−1', 'fuego'], ['fuego', '+1', 'fuego']], 'Retira 1 Presencia rival de Fuego y pon 1 tuya en Fuego.'],
+    Embestida: [[['fuego', '+1', 'fuego'], ['retira', '−1', 'neutro']], '+1 en Fuego y retira 1 Presencia rival de cualquier Santuario.'],
+    'Fuego voraz': [[['fuego', '+1/2', 'fuego']], '+1 en Fuego, o +2 si algún rival tiene allí más Presencia que tú.'],
+    Incendio: [[['retira', '−2', 'neutro'], ['fuego', '+1', 'fuego']], 'Retira hasta 2 Presencias rivales de un mismo Santuario y +1 en Fuego.'],
+    'Llama de conquista': [[['fuego', '+2', 'fuego'], ['retira', '−1', 'neutro']], '+2 en Fuego y retira 1 Presencia rival de cualquier Santuario.'],
+  
+    Gota: [[['agua', '+1', 'agua']], 'Pon 1 Presencia en Agua.'],
+    Corriente: [[['agua', '+2', 'agua']], 'Pon 2 Presencias en Agua.'],
+    Manantial: [[['roba', '1', 'neutro']], 'Roba 1 carta.'],
+    Fluir: [[['roba', '2', 'neutro'], ['descarta', '1', 'neutro']], 'Roba 2 cartas y descarta 1.'],
+    Retorno: [[['roba', '1', 'neutro'], ['encima', '1', 'neutro']], 'Roba 1 y pon 1 carta de tu descarte encima de tu mazo.'],
+    Oleaje: [[['roba', '2', 'neutro'], ['encima', '1', 'neutro']], 'Roba 2 y pon 1 carta de tu mano encima de tu mazo.'],
+    Renacer: [[['recupera', '1', 'neutro'], ['roba', '1', 'neutro']], 'Recupera 1 carta de tu descarte a tu mano y roba 1.'],
+    'Gran marea': [[['agua', '+2', 'agua'], ['encima', '1', 'neutro']], '+2 en Agua y pon 1 carta de tu descarte encima de tu mazo.'],
+  
+    Semilla: [[['tierra', '+1', 'tierra']], 'Pon 1 Presencia en Tierra.'],
+    Raíz: [[['tierra', '+2', 'tierra']], 'Pon 2 Presencias en Tierra.'],
+    Brote: [[['roba', '1', 'neutro']], 'Roba 1 carta.'],
+    Fortificar: [[['escudo', '2', 'neutro'], ['roba', '1', 'neutro']], 'Protege 2 Presencias tuyas en cualquier Santuario y roba 1.'],
+    'Raíces profundas': [[['tierra', '+1', 'tierra'], ['escudo', '', 'tierra']], '+1 en Tierra, protegida.'],
+    Crecimiento: [[['tierra', '+2*', 'tierra']], '+2 en Tierra si ya tienes al menos 1 Presencia allí.'],
+    Bastión: [[['escudo', '∞', 'neutro'], ['tierra', '+1', 'tierra']], 'Protege todas tus Presencias de un Santuario y +1 protegida en Tierra.'],
+    'Tierra ancestral': [[['tierra', '+2', 'tierra'], ['escudo', '', 'tierra']], '+2 en Tierra, protegidas.'],
+  
+    Brisa: [[['aire', '+1', 'aire']], 'Pon 1 Presencia en Aire.'],
+    Ráfaga: [[['aire', '+2', 'aire']], 'Pon 2 Presencias en Aire.'],
+    Inspiración: [[['roba', '1', 'neutro']], 'Roba 1 carta.'],
+    Desorden: [[['aire', '+1', 'aire'], ['descarta', '1', 'neutro']], '+1 en Aire y cada rival descarta 1 carta de su mano (la elige él).'],
+    'Cambio de viento': [[['roba', '1', 'neutro'], ['cambia', '1', 'neutro']], 'Roba 1 y cambia 1 Elemental del Umbral (el nuevo puede vincularse ya).'],
+    Desvío: [[['mueve', '1', 'neutro']], 'Mueve 1 Presencia rival de un Santuario a otro.'],
+    'Corriente ascendente': [[['mueve', '1', 'aire'], ['roba', '1', 'neutro']], 'Mueve 1 Presencia tuya al Aire y roba 1.'],
+    Torbellino: [[['mueve', '2', 'neutro'], ['aire', '+1', 'aire']], 'Mueve hasta 2 Presencias rivales entre Santuarios y +1 en Aire.'],
+  };
+  // Cartas iniciales
+  for (const [el, nom] of [['fuego', 'Fuego'], ['agua', 'Agua'], ['tierra', 'Tierra'], ['aire', 'Aire']]) {
+    ACCIONES[`Menor de ${nom}`] = [[[el, '+1', el]], `Pon 1 Presencia en ${nom}.`];
+  }
+  ACCIONES['Mota de Maná'] = [[], 'No tiene Acción: solo da Maná.'];
+  if (typeof module !== 'undefined') module.exports = ACCIONES;
+  else raiz.ACCIONES = ACCIONES;
+})(this);
+</script>
+<script>
+const __mods = {};
+function __def(n, f) { __mods[n] = { f, e: null }; }
+function require(n) {
+  n = n.split('/').pop().replace(/\.js$/, '');
+  const m = __mods[n];
+  if (!m.e) { const module = { exports: {} }; m.f(module, module.exports); m.e = module.exports; }
+  return m.e;
+}
+__def('cartas', function (module, exports) {
+'use strict';
+// MANA — tablas del reglamento provisional (secciones 12 y 27-30).
+// Cada acción es una lista de efectos que interpreta motor.js.
+//   add:      +N Presencia en un Santuario (prot: protegidas)
+//   remove:   retira hasta N Presencias rivales de un Santuario (s: '*' = uno cualquiera, el mismo para todas)
+//   draw:     roba N            discard: descarta N de la mano
+//   topFromDiscard: pon 1 carta del descarte sobre el mazo
+//   handToTop: pon 1 carta de la mano sobre el mazo
+//   recover:  1 carta del descarte a la mano
+//   protect:  protege hasta N Presencias propias (s: '*' = en cualquier Santuario; all: todas las de un Santuario)
+//   ifAny:    solo si ya tienes Presencia en ese Santuario
+//   ifBehind: +a si un rival tiene más que tú, si no +b
+//   moveRival: mueve hasta N Presencias rivales DESDE el Santuario (s: '*' = desde cualquiera)
+//   moveOwnTo: mueve 1 Presencia propia HACIA el Santuario
+//   disrupt:  un rival descarta 1 y roba 1 (modo 'todos': cada rival descarta 1 que elige él, sin robar)
+//   swap:     retira 1 Presencia rival de un Santuario y pon 1 tuya en ese Santuario
+//   refresh:  cambia 1 carta del Umbral
+
+const ELEMENTOS = ['fuego', 'agua', 'tierra', 'aire'];
+
+const C = (nombre, el, coste, mana, accion, inicial = false) => ({ nombre, el, coste, mana, accion, inicial });
+
+// Reglamento provisional v0.1 (se conserva para comparar).
+const UMBRAL_V01 = [
+  C('Chispa', 'fuego', 2, 1, [{ add: 1, s: 'fuego' }]),
+  C('Llama', 'fuego', 3, 1, [{ add: 2, s: 'fuego' }]),
+  C('Ascua', 'fuego', 2, 1, [{ draw: 1 }]),
+  C('Quemadura', 'fuego', 3, 1, [{ remove: 1, s: 'fuego' }]),
+  C('Embestida', 'fuego', 4, 2, [{ add: 1, s: 'fuego' }, { remove: 1, s: 'fuego' }]),
+  C('Fuego voraz', 'fuego', 4, 2, [{ ifBehind: [2, 1], s: 'fuego' }]),
+  C('Incendio', 'fuego', 5, 2, [{ remove: 2, s: 'fuego' }]),
+  C('Llama de conquista', 'fuego', 6, 3, [{ add: 2, s: 'fuego' }, { remove: 1, s: 'fuego' }]),
+
+  C('Gota', 'agua', 2, 1, [{ add: 1, s: 'agua' }]),
+  C('Corriente', 'agua', 3, 1, [{ add: 2, s: 'agua' }]),
+  C('Manantial', 'agua', 2, 1, [{ draw: 1 }]),
+  C('Fluir', 'agua', 3, 1, [{ draw: 2 }, { discard: 1 }]),
+  C('Retorno', 'agua', 3, 1, [{ topFromDiscard: 1 }]),
+  C('Oleaje', 'agua', 4, 2, [{ draw: 2 }, { handToTop: 1 }]),
+  C('Renacer', 'agua', 5, 2, [{ recover: 1 }]),
+  C('Gran marea', 'agua', 6, 3, [{ add: 2, s: 'agua' }, { topFromDiscard: 1 }]),
+
+  C('Semilla', 'tierra', 2, 1, [{ add: 1, s: 'tierra' }]),
+  C('Raíz', 'tierra', 3, 1, [{ add: 2, s: 'tierra' }]),
+  C('Brote', 'tierra', 2, 1, [{ draw: 1 }]),
+  C('Fortificar', 'tierra', 3, 1, [{ protect: 1, s: 'tierra' }]),
+  C('Raíces profundas', 'tierra', 4, 2, [{ add: 1, s: 'tierra', prot: true }]),
+  C('Crecimiento', 'tierra', 4, 2, [{ ifAny: 2, s: 'tierra' }]),
+  C('Bastión', 'tierra', 5, 2, [{ protect: 2, s: 'tierra' }]),
+  C('Tierra ancestral', 'tierra', 6, 3, [{ add: 2, s: 'tierra', prot: true }]),
+
+  C('Brisa', 'aire', 2, 1, [{ add: 1, s: 'aire' }]),
+  C('Ráfaga', 'aire', 3, 1, [{ add: 2, s: 'aire' }]),
+  C('Inspiración', 'aire', 2, 1, [{ draw: 1 }]),
+  C('Desorden', 'aire', 3, 1, [{ disrupt: 1 }]),
+  C('Cambio de viento', 'aire', 3, 1, [{ refresh: 1 }]),
+  C('Desvío', 'aire', 4, 2, [{ moveRival: 1, s: 'aire' }]),
+  C('Corriente ascendente', 'aire', 4, 2, [{ moveOwnTo: 'aire' }, { draw: 1 }]),
+  C('Torbellino', 'aire', 6, 3, [{ moveRival: 2, s: 'aire' }, { add: 1, s: 'aire' }]),
+];
+
+// v0.2: el Fuego retira y el Aire mueve en cualquier Santuario, la Tierra protege en cualquiera,
+// cartas de coste 5 mejoradas y las cuatro cartas que rendían menos que una Mota de Maná reforzadas.
+const cambios = {
+  Quemadura: [{ swap: 1, s: 'fuego' }],
+  Embestida: [{ add: 1, s: 'fuego' }, { remove: 1, s: '*' }],
+  Incendio: [{ remove: 2, s: '*' }, { add: 1, s: 'fuego' }],
+  'Llama de conquista': [{ add: 2, s: 'fuego' }, { remove: 1, s: '*' }],
+  Renacer: [{ recover: 1 }, { draw: 1 }],
+  Retorno: [{ draw: 1 }, { topFromDiscard: 1 }],
+  Fortificar: [{ protect: 2, s: '*' }, { draw: 1 }],
+  Bastión: [{ protect: 1, all: true, s: '*' }, { add: 1, s: 'tierra', prot: true }],
+  Desorden: [{ add: 1, s: 'aire' }, { disrupt: 1, modo: 'todos' }],
+  'Cambio de viento': [{ draw: 1 }, { refresh: 1 }],
+  Desvío: [{ moveRival: 1, s: '*' }],
+  Torbellino: [{ moveRival: 2, s: '*' }, { add: 1, s: 'aire' }],
+};
+const UMBRAL = UMBRAL_V01.map((c) => (cambios[c.nombre] ? { ...c, accion: cambios[c.nombre] } : c));
+
+const INICIAL = [
+  ...ELEMENTOS.flatMap((el) => {
+    const nombre = { fuego: 'Fuego', agua: 'Agua', tierra: 'Tierra', aire: 'Aire' }[el];
+    const c = C(`Menor de ${nombre}`, el, 0, 1, [{ add: 1, s: el }], true);
+    return [c, c];
+  }),
+  C('Mota de Maná', null, 0, 1, [], true),
+  C('Mota de Maná', null, 0, 1, [], true),
+];
+
+module.exports = { ELEMENTOS, UMBRAL, UMBRAL_V01, INICIAL };
+
+});
+__def('motor', function (module, exports) {
+'use strict';
+// MANA — motor de reglas y bot para simular partidas completas.
+// Las opciones de VARIANTE permiten comparar el reglamento provisional con cambios.
+const { ELEMENTOS, UMBRAL, UMBRAL_V01, INICIAL } = require('./cartas');
+
+// Reglamento v0.2 (por defecto).
+const BASE = {
+  acciones: Infinity, // cada carta jugada: Acción o Maná, sin límite de Acciones
+  compras: 1, // vinculaciones por turno
+  rondas: 5, // rondas por Era
+  eras: [1, 2, 3], // Sellos de cada Santuario por Era
+  segundo: 0, // Sellos del segundo puesto como fracción del valor (0 = nada)
+  empate: 'nadie', // empate en cabeza de un Santuario: 'nadie' puntúa | 'reparto' (valor-1 a cada uno)
+  proteccion: 'era', // 'era': dura hasta el final de la Era | 'turno': hasta el siguiente turno del propietario
+  rotacion: 'era', // 'era': orden fijo; empieza cada Era quien va primero en Sellos | 'ronda': el inicial rota cada ronda
+  liberar: true, // una vez por turno, devolver a la caja una carta inicial usada ese turno
+  liberarCoste: 2, // Maná que cuesta liberar (con 1, liberar todo lo posible es siempre lo mejor)
+  liberarEnLugar: false, // true: liberar solo en lugar de vincular
+  liberarMax: 1, // cartas iniciales que se liberan cada vez
+  botLiberar: 0.08, // (bot) valor de liberar por turno que le queda; puede ser una lista por jugador
+  mano: 5, // cartas que se roban al final de cada turno
+  manoPrimero: 5, // cartas de la primera mano del jugador inicial (con 4 se compensa demasiado)
+  desorden: 'rival', // quién elige la carta que descarta el rival en Desorden
+  afinidad: ['mazo'], // Guardianes de color: lista con 'mazo', 'empate', 'descuento' y/o 'presencia' ([] = solo color, null = sin color)
+  desempate: 'eraIII', // empate final: más Sellos en la Era III | 'compartir'
+  cartas: UMBRAL,
+  copias: 3,
+  inicial: INICIAL,
+};
+
+// Reglamento provisional v0.1, para comparar.
+const V01 = { afinidad: null, acciones: 1, proteccion: 'turno', rotacion: 'ronda', liberar: false, desempate: 'compartir', cartas: UMBRAL_V01 };
+
+function rngFrom(seed) {
+  let s = seed >>> 0 || 1;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 2 ** 32;
+  };
+}
+
+function shuffle(a, rng) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Fuerza estimada de una carta para el bot (no es parte de las reglas).
+function fuerza(c, v) {
+  const multi = v.acciones > 1;
+  let p = c.mana * 0.6;
+  for (const e of c.accion) {
+    if (e.add) p += e.add + (e.prot ? 0.3 : 0);
+    if (e.remove) p += (e.s === '*' ? 1.1 : 0.9) * e.remove;
+    if (e.ifBehind) p += 1.4;
+    if (e.ifAny) p += 1.7;
+    if (e.protect) p += (e.s === '*' ? 0.4 : 0.2) * (e.all ? 3 : e.protect);
+    if (e.draw) p += (multi ? 0.9 : 0.45) * e.draw;
+    if (e.discard) p -= multi ? 0.35 : 0;
+    if (e.topFromDiscard) p += 0.5;
+    if (e.handToTop) p += 0.2;
+    if (e.recover) p += multi ? 1 : 0.6;
+    if (e.moveRival) p += (e.s === '*' ? 1 : 0.8) * e.moveRival;
+    if (e.moveOwnTo) p += 0.5;
+    if (e.disrupt) p += e.modo === 'todos' ? 0.6 : 0.2;
+    if (e.swap) p += 1.6;
+    if (e.refresh) p += 0.1;
+  }
+  return p;
+}
+
+class Partida {
+  constructor(n, opciones = {}) {
+    this.v = { ...BASE, ...opciones };
+    this.rng = rngFrom(opciones.seed || 1);
+    this.n = n;
+    this.jug = [];
+    // Guardianes de color: cada jugador es de un elemento distinto (por sorteo)
+    const colores = this.v.afinidad ? shuffle(ELEMENTOS.slice(), this.rng) : null;
+    for (let i = 0; i < n; i++) {
+      const ini = this.v.inicial.slice();
+      if (colores && this.v.afinidad.includes('mazo')) ini[ini.findIndex((c) => c.nombre === 'Mota de Maná')] = ini.find((c) => c.el === colores[i]);
+      // pruebas de fuerza: ese jugador cambia Motas de Maná por la carta indicada
+      if (this.v.injertar && this.v.injertar.jugador === i) {
+        for (let t = 0; t < (this.v.injertar.copias || 1); t++) ini[ini.findIndex((c) => c.nombre === 'Mota de Maná')] = this.v.injertar.carta;
+      }
+      const mazo = shuffle(ini, this.rng);
+      this.jug.push({ i, mazo, mano: [], desc: [], jugadas: [], sellos: 0, selloEra: [], vinculadas: 0, liberadas: 0, gusto: ELEMENTOS[Math.floor(this.rng() * 4)], color: colores ? colores[i] : null });
+      if (colores) this.jug[i].gusto = colores[i];
+    }
+    this.jug.forEach((j) => this.robar(j, j.i === 0 ? this.v.manoPrimero : this.v.mano));
+    this.pila = shuffle(this.v.cartas.flatMap((c) => Array(this.v.copias).fill(c)), this.rng);
+    this.umbral = [];
+    this.reponer();
+    this.pres = {}; // pres[santuario][jugador] = { n, prot }
+    this.limpiar();
+    this.extra = this.jug.map(() => 0);
+    this.registro = opciones.registro ? [] : null;
+    this.era = 0;
+    this.ronda = 0;
+    this.inicio = 0;
+    this.restantes = 0; // turnos que quedan en la Era (de todos)
+    this.st = { manaGen: 0, manaGastado: 0, turnos: 0, compras: 0, usoAccion: {}, usoMana: {}, vinculadas: {}, sinObjetivo: 0, liberadas: 0, retiradas: 0, movidas: 0, puestas: 0, empates: 0, puntuaciones: 0, vacios: 0, desperdicio: [0, 0, 0], turnosEra: [0, 0, 0], ultimoEra: [], accionesTurno: 0 };
+  }
+
+  limpiar() {
+    for (const s of ELEMENTOS) this.pres[s] = this.jug.map(() => ({ n: 0, prot: 0 }));
+    // afinidad 'presencia': cada Guardián empieza la Era con 1 Presencia en su Santuario
+    if (this.v.afinidad && this.v.afinidad.includes('presencia')) for (const j of this.jug) this.pres[j.color][j.i].n = 1;
+  }
+
+  // Coste de vincular para el jugador i (afinidad 'descuento': los de su color cuestan 1 menos)
+  coste(i, c) {
+    return this.v.afinidad && this.v.afinidad.includes('descuento') && c.el === this.jug[i].color ? Math.max(1, c.coste - 1) : c.coste;
+  }
+
+  reponer() {
+    while (this.umbral.length < 5 && this.pila.length) this.umbral.push(this.pila.pop());
+  }
+
+  robar(j, k) {
+    for (let t = 0; t < k; t++) {
+      if (!j.mazo.length) {
+        if (!j.desc.length) return;
+        j.mazo = shuffle(j.desc, this.rng);
+        j.desc = [];
+      }
+      j.mano.push(j.mazo.pop());
+    }
+  }
+
+  // Valoración del tablero para el jugador i (Sellos esperados de esta Era).
+  valor(i) {
+    const val = this.v.eras[this.era];
+    const t = this.restantes;
+    let total = 0;
+    for (const s of ELEMENTOS) {
+      const mine = this.pres[s][i].n;
+      let otro = 0;
+      for (let k = 0; k < this.n; k++) if (k !== i) otro = Math.max(otro, this.pres[s][k].n);
+      const m = mine - otro;
+      let p;
+      if (t <= 0) p = m > 0 ? 1 : 0;
+      else p = 1 / (1 + Math.exp(-(m - 0.5) * (2.2 / Math.sqrt(1 + t / this.n))));
+      total += val * p;
+      // Presencias protegidas: valen más cuanto más quede de Era (no se pueden retirar ni mover)
+      if (t > 0) total += 0.06 * val * Math.min(this.pres[s][i].prot, 3) * Math.min(1, t / this.n / 2);
+    }
+    return total + this.extra[i];
+  }
+
+  clonar() {
+    const c = Object.create(Partida.prototype);
+    c.v = this.v;
+    c.n = this.n;
+    const r = rngFrom(Math.floor(this.rng() * 2 ** 32));
+    c.rng = r;
+    c.jug = this.jug.map((j) => ({ ...j, mazo: j.mazo.slice(), mano: j.mano.slice(), desc: j.desc.slice(), jugadas: j.jugadas.slice() }));
+    c.pila = this.pila.slice();
+    c.umbral = this.umbral.slice();
+    c.pres = {};
+    for (const s of ELEMENTOS) c.pres[s] = this.pres[s].map((x) => ({ ...x }));
+    c.era = this.era;
+    c.restantes = this.restantes;
+    c.st = null;
+    c.extra = this.extra.slice();
+    return c;
+  }
+
+  // Elige, entre varias variantes del tablero, la mejor para i.
+  mejor(i, opciones) {
+    let best = null;
+    let bv = -Infinity;
+    for (const f of opciones) {
+      const c = this.clonar();
+      if (f(c) === false) continue;
+      const val = c.valor(i);
+      if (val > bv + 1e-9) {
+        bv = val;
+        best = f;
+      }
+    }
+    return best;
+  }
+
+  quitar(s, k) {
+    const p = this.pres[s][k];
+    if (p.n - p.prot <= 0) return false;
+    p.n--;
+    return true;
+  }
+
+  efecto(i, e, accionUsada) {
+    const j = this.jug[i];
+    const st = this.st || {};
+    if (e.add) {
+      this.pres[e.s][i].n += e.add;
+      if (e.prot) this.pres[e.s][i].prot += e.add;
+      st.puestas = (st.puestas || 0) + e.add;
+    }
+    if (e.ifBehind) {
+      const mine = this.pres[e.s][i].n;
+      const behind = this.pres[e.s].some((p, k) => k !== i && p.n > mine);
+      const k = behind ? e.ifBehind[0] : e.ifBehind[1];
+      this.pres[e.s][i].n += k;
+      st.puestas = (st.puestas || 0) + k;
+    }
+    if (e.ifAny && this.pres[e.s][i].n > 0) {
+      this.pres[e.s][i].n += e.ifAny;
+      st.puestas = (st.puestas || 0) + e.ifAny;
+    }
+    if (e.remove) {
+      const santuarios = e.s === '*' ? ELEMENTOS : [e.s];
+      const retirar = (c, sa) => {
+        for (let t = 0; t < e.remove; t++) {
+          const rivales = c.jug.map((x) => x.i).filter((k) => k !== i && c.pres[sa][k].n - c.pres[sa][k].prot > 0);
+          if (!rivales.length) return t > 0;
+          c.mejor(i, rivales.map((k) => (cc) => cc.quitar(sa, k)))(c);
+          if (c.st) c.st.retiradas++;
+        }
+      };
+      const f = this.mejor(i, santuarios.map((sa) => (c) => retirar(c, sa)));
+      if (f) f(this);
+      else if (this.st) this.st.sinObjetivo++;
+    }
+    if (e.swap) {
+      // retira 1 Presencia rival de un Santuario y pon 1 tuya en ese mismo Santuario
+      const ops = [];
+      for (const sa of e.s === '*' ? ELEMENTOS : [e.s]) {
+        for (let k = 0; k < this.n; k++) {
+          if (k === i) continue;
+          ops.push((c) => {
+            if (!c.quitar(sa, k)) return false;
+            c.pres[sa][i].n++;
+          });
+        }
+      }
+      const f = this.mejor(i, ops);
+      if (f) {
+        f(this);
+        if (this.st) this.st.retiradas++;
+      }
+    }
+    if (e.moveRival) {
+      for (let t = 0; t < e.moveRival; t++) {
+        const ops = [() => true];
+        for (let k = 0; k < this.n; k++) {
+          if (k === i) continue;
+          for (const o of e.s === '*' ? ELEMENTOS : [e.s]) {
+            for (const d of ELEMENTOS) {
+              if (d === o) continue;
+              ops.push((c) => {
+                if (!c.quitar(o, k)) return false;
+                c.pres[d][k].n++;
+              });
+            }
+          }
+        }
+        const f = this.mejor(i, ops);
+        if (f === ops[0]) break;
+        f(this);
+        if (this.st) this.st.movidas++;
+      }
+    }
+    if (e.moveOwnTo) {
+      const ops = [() => true];
+      for (const o of ELEMENTOS) {
+        if (o === e.moveOwnTo) continue;
+        ops.push((c) => {
+          if (!c.quitar(o, i)) return false;
+          c.pres[e.moveOwnTo][i].n++;
+        });
+      }
+      const f = this.mejor(i, ops);
+      f(this);
+    }
+    if (e.protect) {
+      const santuarios = e.s === '*' ? ELEMENTOS : [e.s];
+      const proteger = (c, sa, k) => {
+        const p = c.pres[sa][i];
+        if (p.prot >= p.n) return false;
+        p.prot = Math.min(p.n, p.prot + k);
+      };
+      if (e.all) {
+        const f = this.mejor(i, santuarios.map((sa) => (c) => proteger(c, sa, Infinity)));
+        if (f) f(this);
+      } else {
+        for (let t = 0; t < e.protect; t++) {
+          const f = this.mejor(i, santuarios.map((sa) => (c) => proteger(c, sa, 1)));
+          if (!f) break;
+          f(this);
+        }
+      }
+    }
+    if (e.draw) this.robar(j, e.draw);
+    const clave = accionUsada && this.v.acciones <= 1 ? (c) => c.mana : (c) => fuerza(c, this.v);
+    // Valor (en Sellos) de una carta mejor que la media en el próximo robo; solo lo usa el bot al planificar.
+    const w = 0.15 * this.v.eras[this.era];
+    const media = (cs) => (cs.length ? cs.reduce((a, c) => a + fuerza(c, this.v), 0) / cs.length : 1);
+    if (e.discard) {
+      for (let t = 0; t < e.discard && j.mano.length; t++) {
+        j.mano.sort((a, b) => clave(a) - clave(b));
+        j.desc.push(j.mano.shift());
+      }
+    }
+    if (e.handToTop && j.mano.length) {
+      // con 1 Acción: la mejor carta (ya no se puede jugar); con Acciones ilimitadas: la más floja
+      const m = media([...j.mazo, ...j.desc]);
+      j.mano.sort((a, b) => fuerza(b, this.v) - fuerza(a, this.v));
+      const c = this.v.acciones <= 1 ? j.mano.shift() : j.mano.pop();
+      j.mazo.push(c);
+      this.extra[i] += w * (fuerza(c, this.v) - m);
+    }
+    if (e.topFromDiscard && j.desc.length) {
+      const m = media([...j.mazo, ...j.desc]);
+      j.desc.sort((a, b) => fuerza(a, this.v) - fuerza(b, this.v));
+      const c = j.desc.pop();
+      j.mazo.push(c);
+      this.extra[i] += w * Math.max(0, fuerza(c, this.v) - m);
+    }
+    if (e.recover && j.desc.length) {
+      j.desc.sort((a, b) => clave(a) - clave(b));
+      j.mano.push(j.desc.pop());
+    }
+    if (e.disrupt) {
+      // el jugador activo elige al rival (el que va primero en Sellos); el rival elige qué descarta
+      // modo 'rival': el rival elige su descarte y roba 1 | 'activo': lo eliges tú y roba 1 | 'sinRobo': lo eliges tú y no roba | 'todos'
+      const modo = e.modo || this.v.desorden;
+      const rivales = this.jug.filter((x) => x.i !== i && x.mano.length).sort((a, b) => b.sellos - a.sellos);
+      // 'todos': cada rival descarta 1 carta que elige él, sin robar
+      for (const r of modo === 'todos' ? rivales : rivales.slice(0, 1)) {
+        const m = media([...r.mazo, ...r.desc]);
+        r.mano.sort((a, b) => fuerza(a, this.v) - fuerza(b, this.v));
+        const c = modo === 'rival' || modo === 'todos' ? r.mano.shift() : r.mano.pop();
+        r.desc.push(c);
+        const robo = modo === 'rival' || modo === 'activo';
+        // lo que pierde el rival, repartido entre los rivales
+        this.extra[i] += (w * (fuerza(c, this.v) - (robo ? m : 0))) / (this.n - 1);
+        if (robo) this.robar(r, 1);
+      }
+    }
+    if (e.refresh && this.umbral.length) {
+      // descarta el Elemental que menos le interesa (para ver otro)
+      const g = this.jug[i].gusto;
+      this.umbral.sort((a, b) => fuerza(b, this.v) + (b.el === g ? 0.4 : 0) - fuerza(a, this.v) - (a.el === g ? 0.4 : 0));
+      this.umbral.pop();
+      this.reponer();
+    }
+  }
+
+  // Foto de la Presencia para describir lo que ha cambiado (registro de la partida)
+  foto() {
+    const f = {};
+    for (const s of ELEMENTOS) f[s] = this.pres[s].map((p) => ({ ...p }));
+    return f;
+  }
+
+  cambios(antes) {
+    const lista = [];
+    for (const s of ELEMENTOS) {
+      this.pres[s].forEach((p, k) => {
+        const dn = p.n - antes[s][k].n;
+        const dp = Math.max(0, p.prot - antes[s][k].prot);
+        if (dn || dp) lista.push({ s, k, dn, dp });
+      });
+    }
+    return lista;
+  }
+
+  anotar(entrada) {
+    if (this.registro) this.registro.push({ era: this.era, ...entrada });
+  }
+
+  jugarAccion(i, idx) {
+    const j = this.jug[i];
+    const c = j.mano.splice(idx, 1)[0];
+    j.jugadas.push(c);
+    const antes = this.registro ? this.foto() : null;
+    const manoAntes = j.mano.length;
+    if (this.st) this.st.usoAccion[c.nombre] = (this.st.usoAccion[c.nombre] || 0) + 1;
+    if (this.st) {
+      const inter = c.accion.some((e) => e.remove || e.moveRival || e.moveOwnTo || e.protect || e.disrupt || e.refresh);
+      const robo = c.accion.some((e) => e.draw || e.recover || e.topFromDiscard || e.handToTop);
+      this.st.acc = this.st.acc || { simple: 0, inter: 0, robo: 0 };
+      this.st.acc[inter ? 'inter' : robo ? 'robo' : 'simple']++;
+    }
+    for (const e of c.accion) this.efecto(i, e, true);
+    if (antes) this.anotar({ i, tipo: 'accion', carta: c.nombre, cambios: this.cambios(antes), robadas: Math.max(0, j.mano.length - manoAntes) });
+  }
+
+  // Valor de vincular lo mejor posible con 'mana' (para el bot).
+  compra(i, mana) {
+    const turnosMios = Math.max(0, Math.ceil(this.turnosPartida / this.n) - 1);
+    const coef = 0.07 * turnosMios;
+    const j = this.jug[i];
+    // Liberar: el bot le da un valor proporcional a los turnos que le quedan.
+    const k = Array.isArray(this.v.botLiberar) ? this.v.botLiberar[i] : this.v.botLiberar;
+    const puedeLiberar = this.v.liberar && (j.jugadas.some((c) => c.inicial) || j.mano.some((c) => c.inicial));
+    const valLib = k * turnosMios;
+    let best = { idx: -1, val: 0, liberar: false };
+    const probar = (idx, val, coste) => {
+      if (coste > mana) return;
+      if (val > best.val) best = { idx, val, liberar: false };
+      if (puedeLiberar && valLib > 0 && (idx < 0 || !this.v.liberarEnLugar) && coste + this.v.liberarCoste <= mana && val + valLib > best.val) best = { idx, val: val + valLib, liberar: true };
+    };
+    probar(-1, 0, 0);
+    this.umbral.forEach((c, idx) => probar(idx, coef * (fuerza(c, this.v) + (c.el === j.gusto ? 0.4 : 0)), this.coste(i, c)));
+    return best;
+  }
+
+  // Mejor siguiente Acción mirando hasta 'prof' Acciones por delante (k = -1: dejar de jugar Acciones).
+  plan(i, quedan, prof) {
+    const j = this.jug[i];
+    const base = this.valor(i);
+    let best = { k: -1, val: this.compra(i, j.mano.reduce((a, c) => a + c.mana, 0)).val };
+    if (quedan <= 0 || prof <= 0) return best;
+    j.mano.forEach((c, k) => {
+      if (!c.accion.length) return;
+      const cl = this.clonar();
+      cl.turnosPartida = this.turnosPartida;
+      cl.jugarAccion(i, k);
+      const val = cl.valor(i) - base + cl.plan(i, quedan - 1, prof - 1).val;
+      if (val > best.val + 1e-9) best = { k, val };
+    });
+    return best;
+  }
+
+  turnoBot(i) {
+    const j = this.jug[i];
+    if (this.v.proteccion === 'turno') for (const s of ELEMENTOS) this.pres[s][i].prot = 0;
+    const manaDe = (cs) => cs.reduce((a, c) => a + c.mana, 0);
+    let usadas = 0;
+    while (usadas < this.v.acciones) {
+      const { k } = this.plan(i, this.v.acciones - usadas, 2);
+      if (k < 0) break;
+      this.jugarAccion(i, k);
+      usadas++;
+    }
+    this.st.accionesTurno += usadas;
+    const mana = manaDe(j.mano);
+    for (const c of j.mano) this.st.usoMana[c.nombre] = (this.st.usoMana[c.nombre] || 0) + 1;
+    this.st.manaGen += mana;
+    let gastado = 0;
+    for (let b = 0; b < this.v.compras; b++) {
+      const { idx, liberar } = this.compra(i, mana - gastado);
+      if (idx >= 0) {
+        const c = this.umbral.splice(idx, 1)[0];
+        gastado += this.coste(i, c);
+        j.desc.push(c);
+        j.vinculadas++;
+        this.anotar({ i, tipo: 'vincula', carta: c.nombre });
+        this.st.vinculadas[c.nombre] = (this.st.vinculadas[c.nombre] || 0) + 1;
+        this.st.compras++;
+        this.reponer();
+      }
+      if (liberar) {
+        // devuelve a la caja cartas iniciales usadas este turno (primero las Motas de Maná)
+        for (let t = 0; t < this.v.liberarMax; t++) {
+          const usadas = [...j.jugadas.map((c, k) => ['jugadas', k, c]), ...j.mano.map((c, k) => ['mano', k, c])].filter((x) => x[2].inicial);
+          if (!usadas.length) break;
+          usadas.sort((a, b) => a[2].accion.length - b[2].accion.length);
+          const [donde, k] = usadas[0];
+          const [lib] = j[donde].splice(k, 1);
+          j.liberadas++;
+          this.anotar({ i, tipo: 'libera', carta: lib.nombre });
+          this.st.liberadas++;
+        }
+        gastado += this.v.liberarCoste;
+      }
+      if (idx < 0) break;
+    }
+    this.st.manaGastado += gastado;
+    this.st.desperdicio[this.era] += mana - gastado;
+    this.st.turnosEra[this.era]++;
+    this.st.turnos++;
+    j.desc.push(...j.jugadas, ...j.mano);
+    j.jugadas = [];
+    j.mano = [];
+    this.robar(j, this.v.mano);
+  }
+
+  puntuar() {
+    const val = this.v.eras[this.era];
+    const gan = this.jug.map(() => 0);
+    this.ultimaPuntuacion = [];
+    for (const s of ELEMENTOS) {
+      const ns = this.pres[s].map((p) => p.n);
+      const detalle = { s, val, presencia: ns.slice(), ganador: null, empate: false };
+      this.ultimaPuntuacion.push(detalle);
+      const orden = [...new Set(ns)].sort((a, b) => b - a);
+      const top = orden[0];
+      this.st.puntuaciones++;
+      if (top === 0) {
+        this.st.vacios++;
+        continue;
+      }
+      let primeros = ns.map((x, k) => (x === top ? k : -1)).filter((k) => k >= 0);
+      // afinidad 'empate': en su Santuario, el Guardián de ese color gana los empates
+      if (primeros.length > 1 && this.v.afinidad && this.v.afinidad.includes('empate')) {
+        const dueño = primeros.find((k) => this.jug[k].color === s);
+        if (dueño !== undefined) primeros = [dueño];
+      }
+      if (primeros.length > 1) {
+        detalle.empate = true;
+        this.st.empates++;
+        if (this.v.empate === 'reparto') primeros.forEach((k) => (gan[k] += Math.max(0, val - 1)));
+        continue;
+      }
+      gan[primeros[0]] += val;
+      detalle.ganador = primeros[0];
+      if (this.jug[primeros[0]].color === s) this.st.propio = (this.st.propio || 0) + 1;
+      if (this.v.segundo && orden[1] > 0) {
+        const seg = ns.map((x, k) => (x === orden[1] ? k : -1)).filter((k) => k >= 0);
+        if (seg.length === 1) gan[seg[0]] += Math.floor(val * this.v.segundo);
+      }
+    }
+    this.jug.forEach((j, k) => {
+      j.sellos += gan[k];
+      j.selloEra.push(gan[k]);
+    });
+  }
+
+  // --- Control de turnos paso a paso -------------------------------------------------
+  iniciar() {
+    const N = this.n;
+    this.turnosPartida = N * this.v.rondas * this.v.eras.length;
+    this.era = 0;
+    this.ronda = 0; // rondas jugadas en toda la partida
+    this.rondaEra = 0; // rondas jugadas en la Era actual
+    this.t = 0; // turno dentro de la ronda
+    this.inicioEra = 0; // en la Era I se sortea: el asiento 0 hace de jugador sorteado
+    this.restantes = N * this.v.rondas;
+    this.fin = false;
+    this.ultimo = -1;
+    return this;
+  }
+
+  jugadorActual() {
+    const ini = this.v.rotacion === 'ronda' ? this.ronda % this.n : this.inicioEra;
+    return (ini + this.t) % this.n;
+  }
+
+  comenzarTurno() {
+    const i = this.jugadorActual();
+    this.restantes--;
+    this.turno = { i, manaUsadas: [], gastado: 0, vinculado: false, liberado: false };
+    if (this.v.proteccion === 'turno') for (const s of ELEMENTOS) this.pres[s][i].prot = 0;
+    return i;
+  }
+
+  terminarTurno() {
+    this.turnosPartida--;
+    this.ultimo = this.turno.i;
+    this.t++;
+    if (this.t < this.n) return;
+    this.t = 0;
+    this.ronda++;
+    this.rondaEra++;
+    if (this.rondaEra === this.v.rondas) this.finEra();
+  }
+
+  finEra() {
+    const N = this.n;
+    this.st.ultimoEra.push(this.ultimo);
+    this.puntuar();
+    this.limpiar();
+    this.umbral = [];
+    this.reponer();
+    this.era++;
+    this.rondaEra = 0;
+    this.restantes = N * this.v.rondas;
+    if (this.era === this.v.eras.length) {
+      this.era--; // para que la última Era siga siendo la III al mostrarla
+      const max = Math.max(...this.jug.map((j) => j.sellos));
+      let gan = this.jug.filter((j) => j.sellos === max);
+      if (gan.length > 1 && this.v.desempate === 'eraIII') {
+        const m3 = Math.max(...gan.map((j) => j.selloEra[2]));
+        gan = gan.filter((j) => j.selloEra[2] === m3);
+      }
+      this.ganadores = gan.map((j) => j.i);
+      this.fin = true;
+      return;
+    }
+    if (this.v.rotacion === 'era') {
+      // empieza el que va primero en Sellos (así no tiene la última palabra);
+      // si hay empate, el primero en sentido horario desde quien empezó la Era anterior
+      const max = Math.max(...this.jug.map((j) => j.sellos));
+      for (let d = 0; d < N; d++) {
+        const k = (this.inicioEra + d) % N;
+        if (this.jug[k].sellos === max) {
+          this.inicioEra = k;
+          break;
+        }
+      }
+    }
+  }
+
+  jugar() {
+    this.iniciar();
+    while (!this.fin) {
+      const i = this.comenzarTurno();
+      this.turnoBot(i);
+      this.terminarTurno();
+    }
+    return this;
+  }
+
+  // --- Turno de una persona ---------------------------------------------------------------
+  manaDisponible() {
+    return this.turno.manaUsadas.reduce((a, c) => a + c.mana, 0) - this.turno.gastado;
+  }
+
+  // Juega una carta de la mano como Acción (los objetivos se eligen a favor del jugador)
+  humanoAccion(idx) {
+    this.jugarAccion(this.turno.i, idx);
+  }
+
+  humanoMana(idx) {
+    const j = this.jug[this.turno.i];
+    this.turno.manaUsadas.push(j.mano.splice(idx, 1)[0]);
+  }
+
+  // Devuelve a la mano una carta usada como Maná, si ese Maná no se ha gastado
+  humanoDevolver(k) {
+    const c = this.turno.manaUsadas[k];
+    if (!c || this.manaDisponible() < c.mana) return false;
+    this.jug[this.turno.i].mano.push(...this.turno.manaUsadas.splice(k, 1));
+    return true;
+  }
+
+  puedeVincular(u) {
+    const c = this.umbral[u];
+    return !!c && !this.turno.vinculado && this.coste(this.turno.i, c) <= this.manaDisponible();
+  }
+
+  humanoVincular(u) {
+    if (!this.puedeVincular(u)) return false;
+    const i = this.turno.i;
+    const c = this.umbral.splice(u, 1)[0];
+    this.turno.gastado += this.coste(i, c);
+    this.turno.vinculado = true;
+    this.jug[i].desc.push(c);
+    this.jug[i].vinculadas++;
+    this.anotar({ i, tipo: 'vincula', carta: c.nombre });
+    this.reponer();
+    return true;
+  }
+
+  // Liberar: devolver a la caja una carta inicial jugada este turno (donde: 'jugadas' o 'mana')
+  puedeLiberar() {
+    return this.v.liberar && !this.turno.liberado && this.manaDisponible() >= this.v.liberarCoste;
+  }
+
+  humanoLiberar(donde, k) {
+    const j = this.jug[this.turno.i];
+    const lista = donde === 'mana' ? this.turno.manaUsadas : j.jugadas;
+    const c = lista[k];
+    if (!c || !c.inicial || !this.puedeLiberar()) return false;
+    // si se libera una carta usada como Maná, su Maná sigue contando: pagas con el resto
+    lista.splice(k, 1);
+    if (donde === 'mana') this.turno.gastado -= c.mana;
+    this.turno.gastado += this.v.liberarCoste;
+    this.turno.liberado = true;
+    j.liberadas++;
+    this.anotar({ i: this.turno.i, tipo: 'libera', carta: c.nombre });
+    return true;
+  }
+
+  humanoTerminar() {
+    const j = this.jug[this.turno.i];
+    j.desc.push(...j.jugadas, ...this.turno.manaUsadas, ...j.mano);
+    j.jugadas = [];
+    j.mano = [];
+    this.turno.manaUsadas = [];
+    this.robar(j, this.v.mano);
+    this.st.turnos++;
+    this.terminarTurno();
+  }
+
+}
+
+module.exports = { Partida, BASE, V01, fuerza, rngFrom };
+
+});
+</script>
+<script>
+'use strict';
+const { Partida } = require('motor');
+const EL = ['fuego', 'agua', 'tierra', 'aire'];
+const NOMBRE_EL = { fuego: 'Fuego', agua: 'Agua', tierra: 'Tierra', aire: 'Aire' };
+const NOMBRES = ['Tú', 'Ana', 'Pol', 'Marc'];
+const ROMANO = ['I', 'II', 'III'];
+const $ = (id) => document.getElementById(id);
+
+// Escala: el diseño mide 1280×720 y se amplía para llenar la ventana
+function escalar() {
+  const z = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+  document.body.style.zoom = z;
+}
+window.addEventListener('resize', escalar);
+escalar();
+
+let p = null; // la partida
+let entreEras = false; // ventana de fin de Era abierta
+const VEL = location.search.includes('rapido') ? 0.02 : 1; // ?rapido acelera los turnos de los bots (pruebas)
+let ocupado = false; // mientras juegan los bots o hay una ventana de Era
+
+// ---------- Dibujo de cartas -----------------------------------------------------------------
+const color = (c) => (c === 'neutro' ? 'var(--neutro)' : `var(--${c})`);
+const glifo = (s) => `<svg><use href="#${s}"/></svg>`;
+const partesDe = (c) => (window.ACCIONES[c.nombre] || [[], ''])[0];
+const textoDe = (c) => (window.ACCIONES[c.nombre] || [[], ''])[1];
+function accion(partes) {
+  if (!partes.length) return '';
+  if (partes.length === 1) {
+    const [s, t, c] = partes[0];
+    return `<span class="esf a" style="background:${color(c)}">${t}${glifo(s)}</span>`;
+  }
+  const [[s1, t1, c1], [s2, t2, c2]] = partes;
+  return `<span class="esf a doble" style="background:linear-gradient(90deg, ${color(c1)} 50%, ${color(c2)} 50%)"><span>${glifo(s1)}${t1}</span><span>${glifo(s2)}${t2}</span></span>`;
+}
+const esferas = (c, coste) => `<div class="esferas${c.inicial ? ' sin-coste' : ''}">${c.inicial ? '' : `<span class="esf c">${coste}</span>`}<span class="esf m">${c.mana}</span>${accion(partesDe(c))}</div>`;
+const ilus = (c) => c.el
+  ? `<div class="ilus" style="background:var(--t-${c.el})"><svg style="color:var(--${c.el})"><use href="#${c.el}"/></svg></div>`
+  : '<div class="ilus" style="background:#ede9fe"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="var(--mana)"/></svg></div>';
+const pista = (c, coste) => `<div class="pista"><b>${c.nombre}</b>${textoDe(c)}<small>${c.inicial ? 'Carta inicial · ' : `Coste ${coste} · `}Como Maná: ${c.mana}</small></div>`;
+
+// ---------- Dibujo de la mesa ----------------------------------------------------------------
+function jugador(j) {
+  const activo = !p.fin && p.turno && p.turno.i === j.i;
+  return `<span class="jug ${activo ? 'activo' : ''}"><svg class="ico" style="color:var(--${j.color})"><use href="#${j.color}"/></svg>${NOMBRES[j.i]}<span class="sello">${j.sellos}</span></span>`;
+}
+
+function pintar() {
+  const yo = p.jug[0];
+  $('yo').innerHTML = jugador(yo) + '<span class="registro-btn" id="ver-registro">Registro</span>';
+  $('ver-registro').onclick = verRegistro;
+  $('rivales').innerHTML = p.jug.slice(1).map(jugador).join('');
+  $('rivales').style.justifyContent = p.n === 2 ? 'flex-end' : 'space-between';
+  const quien = p.turno && !entreEras ? (p.turno.i === 0 ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
+  $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : `<b>Era ${ROMANO[p.era]}</b> · Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)} de ${p.v.rondas} · <b>${p.v.eras[p.era]} Sellos</b> por Santuario · ${quien}`;
+
+  // Umbral
+  const miTurno = esMiTurno();
+  $('umbral').innerHTML = p.umbral.map((c, k) => {
+    const coste = p.coste(0, c);
+    const cara = !miTurno || !p.puedeVincular(k);
+    return `<div class="fila-u ${cara ? 'cara' : ''}" data-u="${k}">${ilus(c)}<div><div class="nombre">${c.nombre}</div>${esferas(c, coste)}</div>${pista(c, coste)}</div>`;
+  }).join('<div class="linea"></div>');
+
+  // Mano: jugadas como Acción, usadas como Maná y el resto
+  const cartas = [];
+  if (miTurno) {
+    yo.jugadas.forEach((c, k) => cartas.push({ c, donde: 'jugadas', k, etq: 'Acción' }));
+    p.turno.manaUsadas.forEach((c, k) => cartas.push({ c, donde: 'mana', k, etq: 'Maná' }));
+  }
+  yo.mano.forEach((c, k) => cartas.push({ c, donde: 'mano', k, etq: '' }));
+  const n = cartas.length;
+  const ancho = n <= 5 ? 108 : Math.max(70, Math.floor((640 - (n - 1) * 10) / n));
+  $('mano').style.setProperty('--ancho', ancho + 'px');
+  $('mano').style.setProperty('--hueco', (n <= 5 ? 20 : 10) + 'px');
+  $('mano').innerHTML = n ? cartas.map(({ c, donde, k, etq }) =>
+    `<div class="carta ${etq === 'Acción' ? 'accion' : etq === 'Maná' ? 'usada' : ''}" data-donde="${donde}" data-k="${k}">
+      <div class="etq ${etq === 'Acción' ? 'a' : 'm'}">${etq}</div>${ilus(c)}<div class="nombre">${c.nombre}</div>${esferas(c, c.coste)}${pista(c, c.coste)}</div>`).join('')
+    : '<div class="vacia">Sin cartas en la mano</div>';
+
+  $('mazo').textContent = yo.mazo.length;
+  $('descarte').textContent = yo.desc.length;
+  $('total').firstChild.textContent = miTurno ? p.manaDisponible() : 0;
+  $('terminar').className = 'boton verde' + (miTurno ? '' : ' inactivo');
+  $('terminar').textContent = miTurno ? 'Terminar turno' : p.fin ? 'Partida terminada' : p.turno ? `Juega ${NOMBRES[p.turno.i]}…` : 'Terminar turno';
+
+  // Santuarios: un cuadrante por Guardián, en el orden de la cabecera
+  $('santuarios').innerHTML = EL.map((s) => {
+    const ns = p.pres[s].map((x) => x.n);
+    const max = Math.max(...ns);
+    const unico = max > 0 && ns.filter((x) => x === max).length === 1;
+    const cuads = [0, 1, 2, 3].map((k) => {
+      if (k >= p.n) return '<div class="cuad"></div>';
+      const pr = p.pres[s][k];
+      const puntos = Array.from({ length: pr.n }, (_, t) => `<i class="${t < pr.prot ? 'prot' : ''}" style="background:var(--${p.jug[k].color})"></i>`).join('');
+      return `<div class="cuad ${pr.n === max && unico ? 'lider' : ''}"><div class="puntos">${puntos}</div></div>`;
+    }).join('');
+    const empate = max > 0 && !unico ? ' <span class="emp">· empate</span>' : '';
+    return `<div class="sant cruz" style="--el:var(--${s})">${cuads}<div class="nucleo"><svg class="ico" style="color:var(--${s})"><use href="#${s}"/></svg></div><div class="marca">${NOMBRE_EL[s]}${empate}</div></div>`;
+  }).join('');
+}
+
+const esMiTurno = () => p && !p.fin && !ocupado && p.turno && p.turno.i === 0;
+
+// ---------- Ventanas -------------------------------------------------------------------------
+function abrir(html, botones = [], ancha = false, fija = false) {
+  const v = $('ventana');
+  if (fija) $('velo').dataset.fija = '1'; else delete $('velo').dataset.fija;
+  v.className = 'ventana' + (ancha ? ' ancha' : '');
+  v.innerHTML = html + (botones.length ? `<div class="botones">${botones.map((b, k) =>
+    `<div class="boton ${b.clase || 'borde'} ${b.inactivo ? 'inactivo' : ''}" data-b="${k}">${b.texto}</div>`).join('')}</div>` : '');
+  v.onclick = (e) => {
+    const b = e.target.closest('[data-b]');
+    if (!b) return;
+    const def = botones[Number(b.dataset.b)];
+    if (def.inactivo) return;
+    if (def.cierra !== false) cerrar();
+    if (def.accion) def.accion();
+  };
+  $('velo').classList.add('abierta');
+}
+function cerrar() { $('velo').classList.remove('abierta'); }
+$('velo').addEventListener('click', (e) => { if (e.target === $('velo') && !$('velo').dataset.fija) cerrar(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('velo').dataset.fija) cerrar(); });
+
+const cabeceraCarta = (c, coste) => `${ilus(c)}<div class="nombre">${c.nombre}</div>${esferas(c, coste)}
+  <div class="texto">${textoDe(c)}</div><div class="comomana">Como Maná da ${c.mana}</div>`;
+const conObjetivos = (c) => c.accion.some((e) => e.remove || e.moveRival || e.moveOwnTo || e.protect || e.swap || e.disrupt || e.refresh || e.discard || e.handToTop || e.topFromDiscard || e.recover);
+
+// Carta de la mano: Acción o Maná
+function verCarta(donde, k) {
+  const yo = p.jug[0];
+  if (donde === 'mano') {
+    const c = yo.mano[k];
+    const nota = conObjetivos(c) ? '<div class="nota">En esta versión de prueba, los objetivos se eligen solos, lo mejor para ti.</div>' : '';
+    abrir(cabeceraCarta(c, c.coste) + nota, [
+      { texto: 'Cancelar' },
+      { texto: `Maná (+${c.mana})`, clase: 'borde', inactivo: !esMiTurno(), accion: () => { p.humanoMana(k); latido(); pintar(); } },
+      { texto: 'Acción', clase: 'lleno', inactivo: !esMiTurno() || !c.accion.length, accion: () => jugarAccion(k) },
+    ]);
+    return;
+  }
+  const c = donde === 'mana' ? p.turno.manaUsadas[k] : yo.jugadas[k];
+  const botones = [{ texto: 'Cerrar' }];
+  let saldo = donde === 'mana' ? 'Usada como Maná este turno.' : 'Jugada como Acción este turno.';
+  if (donde === 'mana') {
+    const puede = p.manaDisponible() >= c.mana;
+    botones.push({ texto: 'Devolver a la mano', inactivo: !puede, accion: () => { p.humanoDevolver(k); pintar(); } });
+    if (!puede) saldo += ' Ya has gastado su Maná.';
+  }
+  if (c.inicial && p.v.liberar) {
+    const puede = p.puedeLiberar();
+    botones.push({ texto: `Liberar (${p.v.liberarCoste} Maná)`, clase: 'lleno', inactivo: !puede, accion: () => {
+      p.humanoLiberar(donde, k); avisar(`Liberas ${c.nombre}: sale de la partida.`); latido(); pintar();
+    } });
+    saldo += puede ? ` Puedes liberarla: pagas ${p.v.liberarCoste} de Maná y sale de la partida.`
+      : p.turno.liberado ? ' Ya has liberado una carta este turno.' : ` Para liberarla necesitas ${p.v.liberarCoste} de Maná disponible.`;
+  }
+  abrir(cabeceraCarta(c, c.coste) + `<div class="saldo">${saldo}</div>`, botones);
+}
+
+// Elemental del Umbral: vincular
+function verUmbral(u) {
+  const c = p.umbral[u];
+  const coste = p.coste(0, c);
+  const disp = esMiTurno() ? p.manaDisponible() : 0;
+  const falta = coste - disp;
+  const saldo = !esMiTurno() ? '<div class="saldo">Espera a tu turno para vincular.</div>'
+    : p.turno.vinculado ? '<div class="saldo no">Ya has vinculado un Elemental este turno.</div>'
+      : falta > 0 ? `<div class="saldo no">Cuesta ${coste} y tienes ${disp} de Maná: <b>te falta ${falta}</b>. Usa cartas de tu mano como Maná.</div>`
+        : `<div class="saldo">Pagas <b>${coste}</b> de tus ${disp} de Maná. Irá a tu descarte.</div>`;
+  abrir(cabeceraCarta(c, coste) + saldo, [
+    { texto: 'Cancelar' },
+    { texto: 'Vincular', clase: 'lleno', inactivo: !p.puedeVincular(u) || !esMiTurno(), accion: () => {
+      p.humanoVincular(u); avisar(`Vinculas ${c.nombre}: va a tu descarte.`); latido(); pintar();
+    } },
+  ]);
+}
+
+// ---------- Avisos y registro ----------------------------------------------------------------
+function avisar(texto, ms = 2600) {
+  const d = document.createElement('div');
+  d.className = 'aviso';
+  d.innerHTML = texto;
+  $('avisos').appendChild(d);
+  while ($('avisos').children.length > 3) $('avisos').firstChild.remove();
+  setTimeout(() => d.remove(), ms);
+}
+function latido() {
+  $('total').classList.add('latido');
+  setTimeout(() => $('total').classList.remove('latido'), 160);
+}
+function describir(e) {
+  const quien = NOMBRES[e.i];
+  if (e.tipo === 'vincula') return `${quien} vincula <b>${e.carta}</b>`;
+  if (e.tipo === 'libera') return `${quien} libera ${e.carta}`;
+  const partes = (e.cambios || []).map((x) => {
+    const t = [];
+    if (x.dn) t.push(`${x.dn > 0 ? '+' : '−'}${Math.abs(x.dn)} ${x.k === e.i ? '' : `de ${NOMBRES[x.k]} `}en ${NOMBRE_EL[x.s]}`);
+    if (x.dp) t.push(`protege ${x.dp} en ${NOMBRE_EL[x.s]}`);
+    return t.join(', ');
+  });
+  if (e.robadas) partes.push(`roba ${e.robadas}`);
+  return `${quien} juega <b>${e.carta}</b>${partes.length ? ': ' + partes.join(' · ') : ''}`;
+}
+function verRegistro() {
+  const filas = p.registro.slice().reverse().map((e) => `<div>Era ${ROMANO[e.era]} · ${describir(e)}</div>`).join('') || '<div>Todavía no ha pasado nada.</div>';
+  // al acabar la partida, cerrar el registro vuelve al resultado final
+  abrir(`<h2>Registro de la partida</h2><div class="lista-reg">${filas}</div>`, [{ texto: 'Cerrar', clase: 'lleno', accion: () => { if (p.fin) finPartida(); } }], true, p.fin);
+}
+
+// ---------- Flujo de la partida --------------------------------------------------------------
+function jugarAccion(k) {
+  const desde = p.registro.length;
+  p.humanoAccion(k);
+  p.registro.slice(desde).forEach((e) => avisar(describir(e)));
+  pintar();
+}
+
+function nuevaPartida(n) {
+  p = new Partida(n, { seed: Math.floor(Math.random() * 1e9), registro: true }).iniciar();
+  ocupado = false;
+  avanzar();
+  const yo = p.jug[0];
+  abrir(`<h2>Eres el Guardián ${yo.color === 'agua' ? 'del Agua' : yo.color === 'aire' ? 'del Aire' : yo.color === 'tierra' ? 'de la Tierra' : 'del Fuego'}</h2>
+    <svg style="width:56px;height:56px;color:var(--${yo.color})"><use href="#${yo.color}"/></svg>
+    <div class="texto">Tus Presencias son de tu color. Tu mazo lleva un Elemental menor más de tu elemento.</div>
+    <div class="texto"><b>Cada turno:</b> toca tus cartas para usarlas como <b>Acción</b> o como <b>Maná</b>, toca un Elemental del <b>Umbral</b> para vincularlo y pulsa <b>Terminar turno</b>.</div>
+    <div class="texto">Al final de cada Era, quien tenga más Presencia en cada Santuario gana sus Sellos (1, 2 y 3). Empate en cabeza: nadie.</div>`,
+  [{ texto: '¡A jugar!', clase: 'verde' }]);
+}
+
+// Avanza hasta que le toca a la persona o acaba la partida
+function avanzar() {
+  if (p.fin) { pintar(); return finPartida(); }
+  const i = p.comenzarTurno();
+  pintar();
+  if (i === 0) return;
+  ocupado = true;
+  pintar();
+  setTimeout(() => {
+    const desde = p.registro.length;
+    p.turnoBot(i);
+    const hechos = p.registro.slice(desde);
+    if (!hechos.length) avisar(`${NOMBRES[i]} no juega Acciones ni vincula`);
+    hechos.forEach((e, k) => setTimeout(() => avisar(describir(e), 2200), k * 450 * VEL));
+    pintar();
+    setTimeout(() => { ocupado = false; cerrarTurno(); }, (700 + hechos.length * 450) * VEL);
+  }, 650 * VEL);
+}
+
+function cerrarTurno() {
+  const antes = p.jug[0].selloEra.length;
+  p.terminarTurno();
+  if (p.jug[0].selloEra.length > antes) return finEra();
+  avanzar();
+}
+
+$('terminar').onclick = () => {
+  if (!esMiTurno()) return;
+  const antes = p.jug[0].selloEra.length;
+  p.humanoTerminar();
+  if (p.jug[0].selloEra.length > antes) return finEra();
+  avanzar();
+};
+
+$('umbral').addEventListener('click', (e) => { const f = e.target.closest('.fila-u'); if (f && p) verUmbral(Number(f.dataset.u)); });
+$('mano').addEventListener('click', (e) => { const f = e.target.closest('.carta'); if (f && p) verCarta(f.dataset.donde, Number(f.dataset.k)); });
+
+function tablaPuntuacion() {
+  return `<table class="tabla">${p.ultimaPuntuacion.map((d) => {
+    const quien = d.ganador !== null ? `<span style="color:var(--${p.jug[d.ganador].color});font-weight:700">${NOMBRES[d.ganador]}</span>`
+      : d.empate ? 'Empate: nadie' : 'Nadie tiene Presencia';
+    const pres = d.presencia.map((n, k) => `${NOMBRES[k]} ${n}`).join(' · ');
+    return `<tr><td><b style="color:var(--${d.s})">${NOMBRE_EL[d.s]}</b><br><small style="color:var(--suave)">${pres}</small></td><td>${quien}</td><td>${d.ganador !== null ? '+' + d.val : '—'}</td></tr>`;
+  }).join('')}</table>`;
+}
+const clasificacion = () => p.jug.slice().sort((a, b) => b.sellos - a.sellos)
+  .map((j) => `<span style="color:var(--${j.color});font-weight:700">${NOMBRES[j.i]} ${j.sellos}</span>`).join(' · ');
+
+function finEra() {
+  entreEras = true;
+  pintar();
+  const era = p.fin ? 2 : p.era - 1;
+  if (p.fin) return finPartida();
+  abrir(`<h2>Fin de la Era ${ROMANO[era]}</h2>${tablaPuntuacion()}<div class="texto">Sellos: ${clasificacion()}</div>
+    <div class="texto">Los Santuarios se vacían. Tu mazo se queda contigo. Empieza la Era ${ROMANO[p.era]} quien va primero.</div>`,
+  [{ texto: `Empezar la Era ${ROMANO[p.era]}`, clase: 'verde', accion: () => { entreEras = false; avanzar(); } }], true, true);
+}
+
+function finPartida() {
+  const gana = p.ganadores.map((k) => NOMBRES[k]);
+  const titulo = p.ganadores.length > 1 ? `Victoria compartida: ${gana.join(' y ')}` : p.ganadores[0] === 0 ? '¡Has ganado!' : `Gana ${gana[0]}`;
+  abrir(`<h2>${titulo}</h2>${tablaPuntuacion()}<div class="texto">Sellos finales: ${clasificacion()}</div>`,
+    [{ texto: 'Ver registro', accion: verRegistro }, { texto: 'Otra partida', clase: 'verde', accion: inicio }], true, true);
+}
+
+function inicio() {
+  let n = 4;
+  const pintarOpciones = () => [2, 3, 4].map((k) => `<div class="opcion ${k === n ? 'elegida' : ''}" data-n="${k}">${k - 1} ${k === 2 ? 'rival' : 'rivales'}</div>`).join('');
+  abrir(`<h2 style="letter-spacing:.3em">MANA</h2><div class="texto">Guardianes, Elementales y cuatro Santuarios.<br>3 Eras. Gana quien reúna más Sellos.</div>
+    <div class="opciones" id="opciones">${pintarOpciones()}</div>`,
+  [{ texto: 'Empezar', clase: 'verde', accion: () => nuevaPartida(n) }], false, true);
+  $('opciones').onclick = (e) => { const o = e.target.closest('[data-n]'); if (o) { n = Number(o.dataset.n); $('opciones').innerHTML = pintarOpciones(); } };
+}
+
+// Mesa vacía de fondo mientras se elige
+p = new Partida(4, { seed: 1, registro: true }).iniciar();
+p.turno = null;
+pintar();
+inicio();
+</script>
+</body>
+</html>

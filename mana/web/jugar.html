@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MANA</title>
+<style>
+  :root {
+    --fondo: #f6f5f1; --tinta: #1d1d1f; --suave: #8a8a8f; --linea: #e4e2dc;
+    --coste: #a3a3a8; --mana: #a78bfa;
+    --verde: #2e9d5b; --fuego: #e5533d; --agua: #3b82f6; --tierra: #3fa66b; --aire: #e3b21c; --neutro: #4b5563;
+    --t-fuego: #fbe3df; --t-agua: #dfeafd; --t-tierra: #dcf0e3; --t-aire: #faf0d0;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: var(--fondo); }
+  /* Se diseña a 1280×720 y se escala para llenar la pantalla (zoom calculado al cargar) */
+  body { width: 1280px; height: 720px; background: var(--fondo); color: var(--tinta); user-select: none;
+    font: 14px/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 22px 40px 26px; margin: 0 auto;
+    display: flex; flex-direction: column; align-items: center; }
+  .ico { width: 18px; height: 18px; }
+
+  /* Cabecera */
+  .barra { width: 100%; display: grid; grid-template-columns: 256px 1fr 256px; column-gap: 24px; align-items: center; }
+  .lado { display: flex; gap: 22px; }
+  .lado.der { justify-content: space-between; gap: 0; }
+  .lado.der .jug { gap: 5px; }
+  .centro { text-align: center; }
+  .logo { font-weight: 700; letter-spacing: .4em; font-size: 15px; padding-left: .4em; }
+  .era { color: var(--suave); font-size: 12px; margin-top: 3px; }
+  .era b { color: var(--tinta); font-weight: 600; }
+  .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); border-radius: 14px; padding: 2px 6px; margin: -2px -6px; }
+  .jug.activo { color: var(--tinta); font-weight: 700; background: #fff; box-shadow: 0 0 0 1.5px var(--tinta); }
+  .sello { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
+    border: 1.5px solid currentColor; font-size: 11px; font-weight: 700; }
+  .registro-btn { color: var(--suave); font-size: 11px; text-decoration: underline; cursor: pointer; margin-left: 6px; }
+
+  .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 256px 1fr 256px; gap: 24px; margin-top: 18px; min-height: 0; }
+  .titulo { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--suave); padding-left: .16em; text-align: center; }
+  .panel { background: #fff; border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+
+  /* Umbral */
+  #umbral { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .fila-u { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: center; position: relative; cursor: pointer; flex: 1; }
+  .fila-u .ilus { width: 76px; height: 76px; border-radius: 16px; }
+  .fila-u .ilus svg { width: 36px; height: 36px; }
+  .fila-u .nombre { text-align: left; margin-bottom: 4px; font-size: 13px; }
+  .fila-u .esferas { justify-content: start; }
+  .fila-u.cara > :not(.pista) { opacity: .38; }
+  .linea { height: 1px; background: var(--linea); }
+
+  /* Centro */
+  .principal { display: flex; flex-direction: column; align-items: center; padding: 16px 0 18px; min-width: 0; }
+  .principal > .titulo { margin-bottom: 22px; }
+  #mano { display: flex; justify-content: center; align-items: flex-end; gap: var(--hueco, 20px); }
+  .carta { width: var(--ancho, 108px); display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; cursor: pointer; }
+  .carta .ilus { width: var(--ancho, 108px); height: 156px; border-radius: 18px; }
+  .carta .ilus svg { width: 50px; height: 50px; }
+  .carta .nombre { font-size: 12px; white-space: nowrap; text-align: center; }
+  .carta.accion { transform: translateY(-6px); }
+  .carta.accion .ilus { box-shadow: 0 0 0 3px var(--tinta); }
+  .carta.usada .ilus { box-shadow: 0 0 0 3px var(--mana); }
+  .etq { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; height: 12px; padding-left: .14em; }
+  .etq.a { color: var(--tinta); } .etq.m { color: var(--mana); }
+  .vacia { color: var(--suave); font-size: 12px; height: 220px; display: flex; align-items: center; }
+
+  .arriba { display: grid; grid-template-columns: 108px 1fr 108px; align-items: center; justify-items: center; width: 364px; margin-top: auto; }
+  .pila { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--suave); font-size: 13px; }
+  .dorso { width: 96px; height: 136px; border-radius: 16px; border: 1.5px solid var(--linea); background: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: var(--tinta); }
+  .total { width: 116px; height: 116px; border-radius: 50%; background: var(--mana); color: #fff; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: 46px; font-weight: 700; line-height: 1; transition: transform .15s; }
+  .total small { font-size: 10px; letter-spacing: .16em; font-weight: 600; margin-top: 6px; padding-left: .16em; }
+  .total.latido { transform: scale(1.08); }
+
+  .boton { text-align: center; padding: 10px 0; border-radius: 22px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1.5px solid var(--tinta); }
+  .boton.lleno { background: var(--tinta); color: #fff; }
+  .boton.verde { background: var(--verde); border-color: var(--verde); color: #fff; }
+  .boton.inactivo { opacity: .28; cursor: not-allowed; }
+  .principal > .boton { margin-top: auto; width: 240px; }
+
+  /* Santuarios */
+  #santuarios { flex: 1; display: flex; flex-direction: column; gap: 30px; padding-bottom: 22px; }
+  .sant { position: relative; background: color-mix(in srgb, var(--el) 13%, #fff); border-radius: 14px; width: 100%; flex: 1;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .cuad { display: flex; align-items: center; justify-content: center; }
+  .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 74px; }
+  .puntos i { width: 11px; height: 11px; border-radius: 50%; }
+  .cuad.lider .puntos { max-width: 94px; gap: 5px; }
+  .cuad.lider .puntos i { width: 14px; height: 14px; }
+  .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
+  .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%;
+    background: #fff; display: flex; align-items: center; justify-content: center; }
+  .marca { position: absolute; left: 50%; bottom: -21px; transform: translateX(-50%); color: var(--el); font-weight: 600;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding-left: .16em; white-space: nowrap; }
+  .marca .emp { color: var(--suave); font-weight: 400; }
+  .cruz::before, .cruz::after { content: ''; position: absolute; background: color-mix(in srgb, var(--el) 30%, transparent); }
+  .cruz::before { left: 50%; top: 10px; bottom: 10px; width: 1px; }
+  .cruz::after { top: 50%; left: 12px; right: 12px; height: 1px; }
+
+  /* Esferas */
+  .ilus { display: flex; align-items: center; justify-content: center; }
+  .esferas { display: grid; grid-template-columns: 32px 32px 32px; gap: 4px; justify-items: center; align-items: center; }
+  .esferas.sin-coste { grid-template-columns: 32px 32px; }
+  .esf { width: 32px; height: 32px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 12px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 1px; }
+  .esf svg { width: 11px; height: 11px; }
+  .esf.c { background: var(--coste); } .esf.m { background: var(--mana); }
+  .esf.doble { gap: 0; }
+  .esf.doble > span { width: 50%; display: flex; flex-direction: column; align-items: center; font-size: 9px; line-height: 1; gap: 1px; }
+  .esf.doble svg { width: 8px; height: 8px; }
+
+  /* Explicación al pasar el ratón */
+  .pista { display: none; position: absolute; z-index: 50; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    width: 210px; background: var(--tinta); color: #fff; border-radius: 10px; padding: 9px 12px 10px; font-size: 11px; line-height: 1.4;
+    text-align: left; box-shadow: 0 6px 18px rgba(0,0,0,.2); pointer-events: none; }
+  .pista b { display: block; font-size: 12px; margin-bottom: 2px; }
+  .pista small { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.18); color: #c4b5fd; font-size: 10px; }
+  .carta:hover .pista, .fila-u:hover .pista { display: block; }
+  .fila-u .pista { bottom: auto; top: 50%; left: calc(100% + 14px); transform: translateY(-50%); }
+
+  /* Ventanas */
+  .velo { position: fixed; inset: 0; z-index: 100; background: rgba(29, 29, 31, .4); display: none; align-items: center; justify-content: center; }
+  .velo.abierta { display: flex; }
+  .ventana { width: 340px; max-height: 92%; overflow: auto; background: #fff; border-radius: 22px; padding: 26px 26px 22px; display: flex; flex-direction: column;
+    align-items: center; gap: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.25); text-align: center; }
+  .ventana.ancha { width: 520px; }
+  .ventana h2 { font-size: 17px; }
+  .ventana .ilus { width: 132px; height: 132px; border-radius: 22px; }
+  .ventana .ilus svg { width: 60px; height: 60px; }
+  .ventana .nombre { font-size: 17px; font-weight: 700; margin-top: 4px; }
+  .ventana .esferas { grid-template-columns: 38px 38px 38px; gap: 6px; }
+  .ventana .esferas.sin-coste { grid-template-columns: 38px 38px; }
+  .ventana .esf { width: 38px; height: 38px; font-size: 14px; }
+  .ventana .texto { color: var(--suave); font-size: 12.5px; line-height: 1.45; max-width: 280px; }
+  .ventana .nota { color: var(--suave); font-size: 10.5px; font-style: italic; }
+  .ventana .comomana { color: var(--mana); font-size: 11px; font-weight: 600; margin-top: -4px; }
+  .ventana .saldo { font-size: 12px; padding: 8px 14px; border-radius: 12px; background: var(--fondo); width: 100%; }
+  .ventana .saldo b { color: var(--mana); }
+  .ventana .saldo.no b { color: var(--fuego); }
+  .ventana .botones { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; width: 100%; margin-top: 6px; }
+  .opciones { display: flex; gap: 10px; margin: 6px 0; }
+  .opcion { border: 1.5px solid var(--linea); border-radius: 14px; padding: 10px 16px; cursor: pointer; font-weight: 600; }
+  .opcion.elegida { border-color: var(--tinta); background: var(--fondo); }
+  .tabla { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
+  .tabla td { padding: 7px 6px; border-top: 1px solid var(--linea); }
+  .tabla td:last-child { text-align: right; font-weight: 700; }
+  .lista-reg { width: 100%; text-align: left; font-size: 12px; line-height: 1.5; max-height: 380px; overflow: auto; }
+  .lista-reg div { padding: 3px 0; border-top: 1px solid var(--linea); }
+
+  /* Avisos de lo que pasa (turnos de los bots, tus Acciones) */
+  #avisos { position: fixed; left: 50%; top: 96px; transform: translateX(-50%); z-index: 90; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+  .aviso { background: var(--tinta); color: #fff; border-radius: 12px; padding: 8px 14px; font-size: 12.5px; box-shadow: 0 8px 22px rgba(0,0,0,.2);
+    max-width: 520px; text-align: center; animation: entra .2s ease-out; }
+  @keyframes entra { from { opacity: 0; transform: translateY(-6px); } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="fuego" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2.5 1.3-4 2.5-5.2.2 1.7 1 2.7 2 3.2C11 8 11 5 12 2z"/></symbol>
+    <symbol id="agua" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.5c3.5 4.6 6 8 6 11.2a6 6 0 0 1-12 0C6 10.5 8.5 7.1 12 2.5z"/></symbol>
+    <symbol id="tierra" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c4 3 7 6.5 7 10.5A7 7 0 0 1 13 19.4V22h-2v-2.6a7 7 0 0 1-6-6.9C5 8.5 8 5 12 2z"/></symbol>
+    <symbol id="aire" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M4 8h16M2 12h20M4 16h16"/></symbol>
+    <symbol id="roba" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 8v7m-3-3 3 3 3-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="descarta" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m9.5 8.5 5 5m0-5-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="recupera" viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2-4.9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M19 3.5V8h-4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="encima" viewBox="0 0 24 24"><path d="M12 15V4m-4 4 4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="cambia" viewBox="0 0 24 24"><path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4-4-4 4 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="escudo" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></symbol>
+    <symbol id="mueve" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></symbol>
+    <symbol id="retira" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8.5 12h7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="barra">
+  <div class="lado izq" id="yo"></div>
+  <div class="centro">
+    <div class="logo">MANA</div>
+    <div class="era" id="era"></div>
+  </div>
+  <div class="lado der" id="rivales"></div>
+</div>
+
+<div class="juego">
+  <div class="panel"><div class="titulo">Umbral</div><div id="umbral"></div></div>
+  <div class="principal">
+    <div class="titulo">Tu mano</div>
+    <div id="mano"></div>
+    <div class="arriba">
+      <div class="pila"><div class="dorso" id="mazo">0</div>Mazo</div>
+      <div class="total" id="total">0<small>MANÁ</small></div>
+      <div class="pila"><div class="dorso" id="descarte">0</div>Descarte</div>
+    </div>
+    <div class="boton verde" id="terminar">Terminar turno</div>
+  </div>
+  <div class="panel"><div class="titulo">Santuarios</div><div id="santuarios"></div></div>
+</div>
+
+<div class="velo" id="velo"><div class="ventana" id="ventana"></div></div>
+<div id="avisos"></div>
+
+<script>/*ACCIONES*/</script>
+<script>/*MODULOS*/</script>
+<script>
+'use strict';
+const { Partida } = require('motor');
+const EL = ['fuego', 'agua', 'tierra', 'aire'];
+const NOMBRE_EL = { fuego: 'Fuego', agua: 'Agua', tierra: 'Tierra', aire: 'Aire' };
+const NOMBRES = ['Tú', 'Ana', 'Pol', 'Marc'];
+const ROMANO = ['I', 'II', 'III'];
+const $ = (id) => document.getElementById(id);
+
+// Escala: el diseño mide 1280×720 y se amplía para llenar la ventana
+function escalar() {
+  const z = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+  document.body.style.zoom = z;
+}
+window.addEventListener('resize', escalar);
+escalar();
+
+let p = null; // la partida
+let entreEras = false; // ventana de fin de Era abierta
+const VEL = location.search.includes('rapido') ? 0.02 : 1; // ?rapido acelera los turnos de los bots (pruebas)
+let ocupado = false; // mientras juegan los bots o hay una ventana de Era
+
+// ---------- Dibujo de cartas -----------------------------------------------------------------
+const color = (c) => (c === 'neutro' ? 'var(--neutro)' : `var(--${c})`);
+const glifo = (s) => `<svg><use href="#${s}"/></svg>`;
+const partesDe = (c) => (window.ACCIONES[c.nombre] || [[], ''])[0];
+const textoDe = (c) => (window.ACCIONES[c.nombre] || [[], ''])[1];
+function accion(partes) {
+  if (!partes.length) return '';
+  if (partes.length === 1) {
+    const [s, t, c] = partes[0];
+    return `<span class="esf a" style="background:${color(c)}">${t}${glifo(s)}</span>`;
+  }
+  const [[s1, t1, c1], [s2, t2, c2]] = partes;
+  return `<span class="esf a doble" style="background:linear-gradient(90deg, ${color(c1)} 50%, ${color(c2)} 50%)"><span>${glifo(s1)}${t1}</span><span>${glifo(s2)}${t2}</span></span>`;
+}
+const esferas = (c, coste) => `<div class="esferas${c.inicial ? ' sin-coste' : ''}">${c.inicial ? '' : `<span class="esf c">${coste}</span>`}<span class="esf m">${c.mana}</span>${accion(partesDe(c))}</div>`;
+const ilus = (c) => c.el
+  ? `<div class="ilus" style="background:var(--t-${c.el})"><svg style="color:var(--${c.el})"><use href="#${c.el}"/></svg></div>`
+  : '<div class="ilus" style="background:#ede9fe"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="var(--mana)"/></svg></div>';
+const pista = (c, coste) => `<div class="pista"><b>${c.nombre}</b>${textoDe(c)}<small>${c.inicial ? 'Carta inicial · ' : `Coste ${coste} · `}Como Maná: ${c.mana}</small></div>`;
+
+// ---------- Dibujo de la mesa ----------------------------------------------------------------
+function jugador(j) {
+  const activo = !p.fin && p.turno && p.turno.i === j.i;
+  return `<span class="jug ${activo ? 'activo' : ''}"><svg class="ico" style="color:var(--${j.color})"><use href="#${j.color}"/></svg>${NOMBRES[j.i]}<span class="sello">${j.sellos}</span></span>`;
+}
+
+function pintar() {
+  const yo = p.jug[0];
+  $('yo').innerHTML = jugador(yo) + '<span class="registro-btn" id="ver-registro">Registro</span>';
+  $('ver-registro').onclick = verRegistro;
+  $('rivales').innerHTML = p.jug.slice(1).map(jugador).join('');
+  $('rivales').style.justifyContent = p.n === 2 ? 'flex-end' : 'space-between';
+  const quien = p.turno && !entreEras ? (p.turno.i === 0 ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
+  $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : `<b>Era ${ROMANO[p.era]}</b> · Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)} de ${p.v.rondas} · <b>${p.v.eras[p.era]} Sellos</b> por Santuario · ${quien}`;
+
+  // Umbral
+  const miTurno = esMiTurno();
+  $('umbral').innerHTML = p.umbral.map((c, k) => {
+    const coste = p.coste(0, c);
+    const cara = !miTurno || !p.puedeVincular(k);
+    return `<div class="fila-u ${cara ? 'cara' : ''}" data-u="${k}">${ilus(c)}<div><div class="nombre">${c.nombre}</div>${esferas(c, coste)}</div>${pista(c, coste)}</div>`;
+  }).join('<div class="linea"></div>');
+
+  // Mano: jugadas como Acción, usadas como Maná y el resto
+  const cartas = [];
+  if (miTurno) {
+    yo.jugadas.forEach((c, k) => cartas.push({ c, donde: 'jugadas', k, etq: 'Acción' }));
+    p.turno.manaUsadas.forEach((c, k) => cartas.push({ c, donde: 'mana', k, etq: 'Maná' }));
+  }
+  yo.mano.forEach((c, k) => cartas.push({ c, donde: 'mano', k, etq: '' }));
+  const n = cartas.length;
+  const ancho = n <= 5 ? 108 : Math.max(70, Math.floor((640 - (n - 1) * 10) / n));
+  $('mano').style.setProperty('--ancho', ancho + 'px');
+  $('mano').style.setProperty('--hueco', (n <= 5 ? 20 : 10) + 'px');
+  $('mano').innerHTML = n ? cartas.map(({ c, donde, k, etq }) =>
+    `<div class="carta ${etq === 'Acción' ? 'accion' : etq === 'Maná' ? 'usada' : ''}" data-donde="${donde}" data-k="${k}">
+      <div class="etq ${etq === 'Acción' ? 'a' : 'm'}">${etq}</div>${ilus(c)}<div class="nombre">${c.nombre}</div>${esferas(c, c.coste)}${pista(c, c.coste)}</div>`).join('')
+    : '<div class="vacia">Sin cartas en la mano</div>';
+
+  $('mazo').textContent = yo.mazo.length;
+  $('descarte').textContent = yo.desc.length;
+  $('total').firstChild.textContent = miTurno ? p.manaDisponible() : 0;
+  $('terminar').className = 'boton verde' + (miTurno ? '' : ' inactivo');
+  $('terminar').textContent = miTurno ? 'Terminar turno' : p.fin ? 'Partida terminada' : p.turno ? `Juega ${NOMBRES[p.turno.i]}…` : 'Terminar turno';
+
+  // Santuarios: un cuadrante por Guardián, en el orden de la cabecera
+  $('santuarios').innerHTML = EL.map((s) => {
+    const ns = p.pres[s].map((x) => x.n);
+    const max = Math.max(...ns);
+    const unico = max > 0 && ns.filter((x) => x === max).length === 1;
+    const cuads = [0, 1, 2, 3].map((k) => {
+      if (k >= p.n) return '<div class="cuad"></div>';
+      const pr = p.pres[s][k];
+      const puntos = Array.from({ length: pr.n }, (_, t) => `<i class="${t < pr.prot ? 'prot' : ''}" style="background:var(--${p.jug[k].color})"></i>`).join('');
+      return `<div class="cuad ${pr.n === max && unico ? 'lider' : ''}"><div class="puntos">${puntos}</div></div>`;
+    }).join('');
+    const empate = max > 0 && !unico ? ' <span class="emp">· empate</span>' : '';
+    return `<div class="sant cruz" style="--el:var(--${s})">${cuads}<div class="nucleo"><svg class="ico" style="color:var(--${s})"><use href="#${s}"/></svg></div><div class="marca">${NOMBRE_EL[s]}${empate}</div></div>`;
+  }).join('');
+}
+
+const esMiTurno = () => p && !p.fin && !ocupado && p.turno && p.turno.i === 0;
+
+// ---------- Ventanas -------------------------------------------------------------------------
+function abrir(html, botones = [], ancha = false, fija = false) {
+  const v = $('ventana');
+  if (fija) $('velo').dataset.fija = '1'; else delete $('velo').dataset.fija;
+  v.className = 'ventana' + (ancha ? ' ancha' : '');
+  v.innerHTML = html + (botones.length ? `<div class="botones">${botones.map((b, k) =>
+    `<div class="boton ${b.clase || 'borde'} ${b.inactivo ? 'inactivo' : ''}" data-b="${k}">${b.texto}</div>`).join('')}</div>` : '');
+  v.onclick = (e) => {
+    const b = e.target.closest('[data-b]');
+    if (!b) return;
+    const def = botones[Number(b.dataset.b)];
+    if (def.inactivo) return;
+    if (def.cierra !== false) cerrar();
+    if (def.accion) def.accion();
+  };
+  $('velo').classList.add('abierta');
+}
+function cerrar() { $('velo').classList.remove('abierta'); }
+$('velo').addEventListener('click', (e) => { if (e.target === $('velo') && !$('velo').dataset.fija) cerrar(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('velo').dataset.fija) cerrar(); });
+
+const cabeceraCarta = (c, coste) => `${ilus(c)}<div class="nombre">${c.nombre}</div>${esferas(c, coste)}
+  <div class="texto">${textoDe(c)}</div><div class="comomana">Como Maná da ${c.mana}</div>`;
+const conObjetivos = (c) => c.accion.some((e) => e.remove || e.moveRival || e.moveOwnTo || e.protect || e.swap || e.disrupt || e.refresh || e.discard || e.handToTop || e.topFromDiscard || e.recover);
+
+// Carta de la mano: Acción o Maná
+function verCarta(donde, k) {
+  const yo = p.jug[0];
+  if (donde === 'mano') {
+    const c = yo.mano[k];
+    const nota = conObjetivos(c) ? '<div class="nota">En esta versión de prueba, los objetivos se eligen solos, lo mejor para ti.</div>' : '';
+    abrir(cabeceraCarta(c, c.coste) + nota, [
+      { texto: 'Cancelar' },
+      { texto: `Maná (+${c.mana})`, clase: 'borde', inactivo: !esMiTurno(), accion: () => { p.humanoMana(k); latido(); pintar(); } },
+      { texto: 'Acción', clase: 'lleno', inactivo: !esMiTurno() || !c.accion.length, accion: () => jugarAccion(k) },
+    ]);
+    return;
+  }
+  const c = donde === 'mana' ? p.turno.manaUsadas[k] : yo.jugadas[k];
+  const botones = [{ texto: 'Cerrar' }];
+  let saldo = donde === 'mana' ? 'Usada como Maná este turno.' : 'Jugada como Acción este turno.';
+  if (donde === 'mana') {
+    const puede = p.manaDisponible() >= c.mana;
+    botones.push({ texto: 'Devolver a la mano', inactivo: !puede, accion: () => { p.humanoDevolver(k); pintar(); } });
+    if (!puede) saldo += ' Ya has gastado su Maná.';
+  }
+  if (c.inicial && p.v.liberar) {
+    const puede = p.puedeLiberar();
+    botones.push({ texto: `Liberar (${p.v.liberarCoste} Maná)`, clase: 'lleno', inactivo: !puede, accion: () => {
+      p.humanoLiberar(donde, k); avisar(`Liberas ${c.nombre}: sale de la partida.`); latido(); pintar();
+    } });
+    saldo += puede ? ` Puedes liberarla: pagas ${p.v.liberarCoste} de Maná y sale de la partida.`
+      : p.turno.liberado ? ' Ya has liberado una carta este turno.' : ` Para liberarla necesitas ${p.v.liberarCoste} de Maná disponible.`;
+  }
+  abrir(cabeceraCarta(c, c.coste) + `<div class="saldo">${saldo}</div>`, botones);
+}
+
+// Elemental del Umbral: vincular
+function verUmbral(u) {
+  const c = p.umbral[u];
+  const coste = p.coste(0, c);
+  const disp = esMiTurno() ? p.manaDisponible() : 0;
+  const falta = coste - disp;
+  const saldo = !esMiTurno() ? '<div class="saldo">Espera a tu turno para vincular.</div>'
+    : p.turno.vinculado ? '<div class="saldo no">Ya has vinculado un Elemental este turno.</div>'
+      : falta > 0 ? `<div class="saldo no">Cuesta ${coste} y tienes ${disp} de Maná: <b>te falta ${falta}</b>. Usa cartas de tu mano como Maná.</div>`
+        : `<div class="saldo">Pagas <b>${coste}</b> de tus ${disp} de Maná. Irá a tu descarte.</div>`;
+  abrir(cabeceraCarta(c, coste) + saldo, [
+    { texto: 'Cancelar' },
+    { texto: 'Vincular', clase: 'lleno', inactivo: !p.puedeVincular(u) || !esMiTurno(), accion: () => {
+      p.humanoVincular(u); avisar(`Vinculas ${c.nombre}: va a tu descarte.`); latido(); pintar();
+    } },
+  ]);
+}
+
+// ---------- Avisos y registro ----------------------------------------------------------------
+function avisar(texto, ms = 2600) {
+  const d = document.createElement('div');
+  d.className = 'aviso';
+  d.innerHTML = texto;
+  $('avisos').appendChild(d);
+  while ($('avisos').children.length > 3) $('avisos').firstChild.remove();
+  setTimeout(() => d.remove(), ms);
+}
+function latido() {
+  $('total').classList.add('latido');
+  setTimeout(() => $('total').classList.remove('latido'), 160);
+}
+function describir(e) {
+  const quien = NOMBRES[e.i];
+  if (e.tipo === 'vincula') return `${quien} vincula <b>${e.carta}</b>`;
+  if (e.tipo === 'libera') return `${quien} libera ${e.carta}`;
+  const partes = (e.cambios || []).map((x) => {
+    const t = [];
+    if (x.dn) t.push(`${x.dn > 0 ? '+' : '−'}${Math.abs(x.dn)} ${x.k === e.i ? '' : `de ${NOMBRES[x.k]} `}en ${NOMBRE_EL[x.s]}`);
+    if (x.dp) t.push(`protege ${x.dp} en ${NOMBRE_EL[x.s]}`);
+    return t.join(', ');
+  });
+  if (e.robadas) partes.push(`roba ${e.robadas}`);
+  return `${quien} juega <b>${e.carta}</b>${partes.length ? ': ' + partes.join(' · ') : ''}`;
+}
+function verRegistro() {
+  const filas = p.registro.slice().reverse().map((e) => `<div>Era ${ROMANO[e.era]} · ${describir(e)}</div>`).join('') || '<div>Todavía no ha pasado nada.</div>';
+  // al acabar la partida, cerrar el registro vuelve al resultado final
+  abrir(`<h2>Registro de la partida</h2><div class="lista-reg">${filas}</div>`, [{ texto: 'Cerrar', clase: 'lleno', accion: () => { if (p.fin) finPartida(); } }], true, p.fin);
+}
+
+// ---------- Flujo de la partida --------------------------------------------------------------
+function jugarAccion(k) {
+  const desde = p.registro.length;
+  p.humanoAccion(k);
+  p.registro.slice(desde).forEach((e) => avisar(describir(e)));
+  pintar();
+}
+
+function nuevaPartida(n) {
+  p = new Partida(n, { seed: Math.floor(Math.random() * 1e9), registro: true }).iniciar();
+  ocupado = false;
+  avanzar();
+  const yo = p.jug[0];
+  abrir(`<h2>Eres el Guardián ${yo.color === 'agua' ? 'del Agua' : yo.color === 'aire' ? 'del Aire' : yo.color === 'tierra' ? 'de la Tierra' : 'del Fuego'}</h2>
+    <svg style="width:56px;height:56px;color:var(--${yo.color})"><use href="#${yo.color}"/></svg>
+    <div class="texto">Tus Presencias son de tu color. Tu mazo lleva un Elemental menor más de tu elemento.</div>
+    <div class="texto"><b>Cada turno:</b> toca tus cartas para usarlas como <b>Acción</b> o como <b>Maná</b>, toca un Elemental del <b>Umbral</b> para vincularlo y pulsa <b>Terminar turno</b>.</div>
+    <div class="texto">Al final de cada Era, quien tenga más Presencia en cada Santuario gana sus Sellos (1, 2 y 3). Empate en cabeza: nadie.</div>`,
+  [{ texto: '¡A jugar!', clase: 'verde' }]);
+}
+
+// Avanza hasta que le toca a la persona o acaba la partida
+function avanzar() {
+  if (p.fin) { pintar(); return finPartida(); }
+  const i = p.comenzarTurno();
+  pintar();
+  if (i === 0) return;
+  ocupado = true;
+  pintar();
+  setTimeout(() => {
+    const desde = p.registro.length;
+    p.turnoBot(i);
+    const hechos = p.registro.slice(desde);
+    if (!hechos.length) avisar(`${NOMBRES[i]} no juega Acciones ni vincula`);
+    hechos.forEach((e, k) => setTimeout(() => avisar(describir(e), 2200), k * 450 * VEL));
+    pintar();
+    setTimeout(() => { ocupado = false; cerrarTurno(); }, (700 + hechos.length * 450) * VEL);
+  }, 650 * VEL);
+}
+
+function cerrarTurno() {
+  const antes = p.jug[0].selloEra.length;
+  p.terminarTurno();
+  if (p.jug[0].selloEra.length > antes) return finEra();
+  avanzar();
+}
+
+$('terminar').onclick = () => {
+  if (!esMiTurno()) return;
+  const antes = p.jug[0].selloEra.length;
+  p.humanoTerminar();
+  if (p.jug[0].selloEra.length > antes) return finEra();
+  avanzar();
+};
+
+$('umbral').addEventListener('click', (e) => { const f = e.target.closest('.fila-u'); if (f && p) verUmbral(Number(f.dataset.u)); });
+$('mano').addEventListener('click', (e) => { const f = e.target.closest('.carta'); if (f && p) verCarta(f.dataset.donde, Number(f.dataset.k)); });
+
+function tablaPuntuacion() {
+  return `<table class="tabla">${p.ultimaPuntuacion.map((d) => {
+    const quien = d.ganador !== null ? `<span style="color:var(--${p.jug[d.ganador].color});font-weight:700">${NOMBRES[d.ganador]}</span>`
+      : d.empate ? 'Empate: nadie' : 'Nadie tiene Presencia';
+    const pres = d.presencia.map((n, k) => `${NOMBRES[k]} ${n}`).join(' · ');
+    return `<tr><td><b style="color:var(--${d.s})">${NOMBRE_EL[d.s]}</b><br><small style="color:var(--suave)">${pres}</small></td><td>${quien}</td><td>${d.ganador !== null ? '+' + d.val : '—'}</td></tr>`;
+  }).join('')}</table>`;
+}
+const clasificacion = () => p.jug.slice().sort((a, b) => b.sellos - a.sellos)
+  .map((j) => `<span style="color:var(--${j.color});font-weight:700">${NOMBRES[j.i]} ${j.sellos}</span>`).join(' · ');
+
+function finEra() {
+  entreEras = true;
+  pintar();
+  const era = p.fin ? 2 : p.era - 1;
+  if (p.fin) return finPartida();
+  abrir(`<h2>Fin de la Era ${ROMANO[era]}</h2>${tablaPuntuacion()}<div class="texto">Sellos: ${clasificacion()}</div>
+    <div class="texto">Los Santuarios se vacían. Tu mazo se queda contigo. Empieza la Era ${ROMANO[p.era]} quien va primero.</div>`,
+  [{ texto: `Empezar la Era ${ROMANO[p.era]}`, clase: 'verde', accion: () => { entreEras = false; avanzar(); } }], true, true);
+}
+
+function finPartida() {
+  const gana = p.ganadores.map((k) => NOMBRES[k]);
+  const titulo = p.ganadores.length > 1 ? `Victoria compartida: ${gana.join(' y ')}` : p.ganadores[0] === 0 ? '¡Has ganado!' : `Gana ${gana[0]}`;
+  abrir(`<h2>${titulo}</h2>${tablaPuntuacion()}<div class="texto">Sellos finales: ${clasificacion()}</div>`,
+    [{ texto: 'Ver registro', accion: verRegistro }, { texto: 'Otra partida', clase: 'verde', accion: inicio }], true, true);
+}
+
+function inicio() {
+  let n = 4;
+  const pintarOpciones = () => [2, 3, 4].map((k) => `<div class="opcion ${k === n ? 'elegida' : ''}" data-n="${k}">${k - 1} ${k === 2 ? 'rival' : 'rivales'}</div>`).join('');
+  abrir(`<h2 style="letter-spacing:.3em">MANA</h2><div class="texto">Guardianes, Elementales y cuatro Santuarios.<br>3 Eras. Gana quien reúna más Sellos.</div>
+    <div class="opciones" id="opciones">${pintarOpciones()}</div>`,
+  [{ texto: 'Empezar', clase: 'verde', accion: () => nuevaPartida(n) }], false, true);
+  $('opciones').onclick = (e) => { const o = e.target.closest('[data-n]'); if (o) { n = Number(o.dataset.n); $('opciones').innerHTML = pintarOpciones(); } };
+}
+
+// Mesa vacía de fondo mientras se elige
+p = new Partida(4, { seed: 1, registro: true }).iniciar();
+p.turno = null;
+pintar();
+inicio();
+</script>
+</body>
+</html>

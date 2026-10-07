@@ -31,4 +31,20 @@ const poner = (marca, codigo) => {
 poner('/*ACCIONES*/', leer('maqueta/acciones.js'));
 poner('/*MODULOS*/', modulos);
 fs.writeFileSync(path.join(raiz, 'jugar.html'), html);
+
+// Versión para publicar como página (sin envoltura html/head/body; la pone quien la publica)
+const destino = process.argv[2];
+if (destino) {
+  const pagina = html
+    .replace(/<!doctype html>\s*/i, '')
+    .replace(/<html[^>]*>\s*/i, '')
+    .replace(/<head>\s*/i, '')
+    .replace(/<meta charset="utf-8">\s*/i, '')
+    .replace(/<meta name="viewport"[^>]*>\s*/i, '')
+    .replace(/<\/head>\s*/i, '')
+    .replace(/<body>\s*/i, '')
+    .replace(/\s*<\/body>\s*<\/html>\s*$/i, '\n');
+  fs.writeFileSync(destino, pagina);
+  console.log(`versión para publicar: ${destino}`);
+}
 console.log(`mana/jugar.html generado (${Math.round(html.length / 1024)} KB)`);

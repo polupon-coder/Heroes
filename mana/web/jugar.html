@@ -57,6 +57,10 @@
   .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 256px 1fr 256px; gap: 24px; margin-top: 18px; min-height: 0; }
   .titulo { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--suave); padding-left: .16em; text-align: center; }
   .panel { background: rgba(255, 252, 247, .78); border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .panel.col-izq { background: url(texturas/columna.webp) center / 100% 100%; border-radius: 0; }
+  .col-izq .titulo { color: #6b5a43; }
+  .col-izq .linea { background: rgba(255, 251, 244, .45); }
+  .col-izq .fila-u.cara > :not(.pista) { opacity: .5; }
 
   /* Umbral */
   #umbral { flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -219,7 +223,7 @@
 </div>
 
 <div class="juego">
-  <div class="panel"><div class="titulo">Umbral</div><div id="umbral"></div></div>
+  <div class="panel col-izq"><div class="titulo">Umbral</div><div id="umbral"></div></div>
   <div class="principal">
     <div class="titulo">Tu mano</div>
     <div id="mano"></div>

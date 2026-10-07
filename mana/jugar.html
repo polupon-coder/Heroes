@@ -1293,7 +1293,7 @@ const pista = (c, coste) => `<div class="pista"><b>${c.nombre}</b>${textoDe(c)}<
 // ---------- Dibujo de la mesa ----------------------------------------------------------------
 function jugador(j) {
   const activo = !p.fin && p.turno && p.turno.i === j.i;
-  return `<span class="jug ${activo ? 'activo' : ''}"><svg class="ico" style="color:var(--${j.color})"><use href="#${j.color}"/></svg>${NOMBRES[j.i]}<span class="sello piedra esf-${j.color}">${j.sellos}</span></span>`;
+  return `<span class="jug ${activo ? 'activo' : ''}">${NOMBRES[j.i]}<span class="sello piedra esf-${j.color}">${j.sellos}</span></span>`;
 }
 
 function pintar() {

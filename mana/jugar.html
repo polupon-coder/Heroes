@@ -105,8 +105,8 @@
   .boton.lleno { background: var(--tinta); color: #fff; }
   .boton.verde { background: var(--verde); border-color: var(--verde); color: #fff; }
   .boton.inactivo { opacity: .28; cursor: not-allowed; }
-  .mandos { margin-top: auto; width: 100%; display: grid; grid-template-columns: 1fr 240px 1fr; gap: 14px; align-items: center; }
-  #deshacer { justify-self: end; width: 150px; }
+  /* Deshacer y Terminar turno: mismo tamaño, simétricos respecto al eje central */
+  .mandos { margin-top: auto; width: 100%; display: grid; grid-template-columns: 200px 200px; justify-content: center; gap: 16px; align-items: center; }
 
   /* Santuarios */
   #santuarios { flex: 1; display: flex; flex-direction: column; gap: 30px; padding-bottom: 22px; }

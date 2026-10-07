@@ -131,11 +131,12 @@
   .sant { isolation: isolate; }
   /* Una fila por jugador, centrada; en blanco si no tiene presencia */
   .cuad { display: flex; align-items: center; justify-content: center; min-height: 12px; }
-  .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 220px; }
-  .puntos i { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9); }
-  .cuad.lider .puntos { gap: 4px; }
-  .cuad.lider .puntos i { width: 12px; height: 12px; }
-  .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
+  .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 1px; max-width: 220px; }
+  /* Presencia: esferas de piedra del color de cada jugador */
+  .puntos i { width: 16px; height: 16px; border-radius: 50%; background: var(--esf) center / contain no-repeat; }
+  .cuad.lider .puntos { gap: 2px; }
+  .cuad.lider .puntos i { width: 21px; height: 21px; }
+  .puntos i.prot { box-shadow: 0 0 0 1.5px var(--tinta); }
   .marca { position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%); color: color-mix(in srgb, var(--el) 78%, #000); font-weight: 600;
     font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding-left: .16em; white-space: nowrap; }
   .marca .emp { color: var(--suave); font-weight: 400; }
@@ -1348,7 +1349,7 @@ function pintar() {
     const cuads = [0, 1, 2, 3].map((k) => {
       if (k >= p.n) return '';
       const pr = p.pres[s][k];
-      const puntos = Array.from({ length: pr.n }, (_, t) => `<i class="${t < pr.prot ? 'prot' : ''}" style="background:var(--${p.jug[k].color})"></i>`).join('');
+      const puntos = Array.from({ length: pr.n }, (_, t) => `<i class="esf-${p.jug[k].color} ${t < pr.prot ? 'prot' : ''}"></i>`).join('');
       return `<div class="cuad ${pr.n === max && unico ? 'lider' : ''}"><div class="puntos">${puntos}</div></div>`;
     }).join('');
     const empate = max > 0 && !unico ? '<span class="emp">empate</span>' : '';

@@ -137,9 +137,9 @@
 
   .arriba { display: grid; grid-template-columns: 108px 1fr 108px; align-items: start; justify-items: center; width: 364px; margin-top: auto; }
   .pila { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--suave); font-size: 13px; }
-  .dorso { width: 108px; height: 108px; opacity: .85; border-radius: 50%; background: url(texturas/esfera-beige.webp) center / contain no-repeat; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.4);
+  .dorso { width: 108px; height: 108px; border-radius: 50%; background: url(texturas/esfera-beige.webp) center / contain no-repeat; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.4);
     display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; }
-  .total { width: 108px; height: 108px; opacity: .85; border-radius: 50%; background: url(texturas/esfera-mana.webp) center / contain no-repeat; color: #fff; text-shadow: 0 2px 4px rgba(60,30,90,.5); display: flex; flex-direction: column;
+  .total { width: 108px; height: 108px; border-radius: 50%; background: url(texturas/esfera-mana.webp) center / contain no-repeat; color: #fff; text-shadow: 0 1px 2px rgba(60,30,60,.35); display: flex; flex-direction: column;
     align-items: center; justify-content: center; font-size: 46px; font-weight: 700; line-height: 1; transition: transform .15s; }
   .mana-pila { color: #957088; cursor: default; }
   /* La letra redondeada tiene la línea base alta: un poco de aire arriba centra el número en la bola */
@@ -287,11 +287,11 @@
   .movil .era:empty { display: none; }
   .movil .juego { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
   .movil .principal { display: contents; }
-  .movil .columna { gap: 4px; flex: none; }
+  .movil .columna { gap: 10px; flex: none; }
   .movil .columna:first-child { order: 1; }
-  .movil .principal > .titulo { order: 2; margin: 2px 0 0; }
+  .movil .principal > .titulo { order: 2; margin: 4px 0 6px; }
   .movil #mano { order: 3; }
-  .movil .columna:last-child { order: 4; }
+  .movil .columna:last-child { order: 4; margin-top: 12px; }
   .movil .arriba { order: 5; }
   .movil .mandos { order: 6; }
   .movil .titulo.img { height: 24px; padding-top: 0; }
@@ -324,8 +324,8 @@
   .movil .carta .esf svg { width: 8px; height: 8px; }
   /* Santuario: cuatro columnas de color, una fila de esferas por jugador */
   .movil .panel.col-der { -webkit-mask: none; mask: none; background: none; padding: 0; }
-  .movil #santuarios { flex-direction: row; margin: 0; flex: 1; min-height: 104px; }
-  .movil .columna:last-child { flex: 1 1 auto; max-height: 260px; min-height: 130px; }
+  .movil #santuarios { flex-direction: row; margin: 0; flex: none; }
+  .movil .sant { aspect-ratio: 1; }
   .movil #santuarios .linea { width: 1px; height: auto; margin: 0; }
   .movil .sant { padding: 6px 3px; gap: 3px; }
   .movil .sant::before { background-size: 160% 130%; opacity: .75; }

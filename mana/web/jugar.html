@@ -40,7 +40,8 @@
   .era b { color: var(--tinta); font-weight: 600; }
   .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); border-radius: 14px; padding: 2px 6px; margin: -2px -6px; }
   .jug.activo { color: var(--tinta); font-weight: 700; background: #fff; box-shadow: 0 0 0 1.5px var(--tinta); }
-  .sello { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; font-weight: 700; color: var(--tinta); }
+  /* Sellos: el número dentro de una esfera de piedra del color del jugador */
+  .sello { display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); }
   .registro-btn { color: var(--suave); font-size: 11px; text-decoration: underline; cursor: pointer; margin-left: 6px; }
 
   /* Guía: mensajes flotantes que explican el siguiente paso */
@@ -164,7 +165,7 @@
   .esf.c { background: var(--coste); }
   /* Esferas de piedra: Maná lila; Sellos del color de cada jugador */
   .esf.m { background: var(--mana); }
-  .piedra { display: inline-block; width: 20px; height: 20px; background: var(--esf) center / contain no-repeat; vertical-align: middle; }
+  .piedra { width: 26px; height: 26px; background: var(--esf) center / contain no-repeat; vertical-align: middle; }
   .esf-fuego { --esf: url(texturas/esfera-fuego.webp); } .esf-agua { --esf: url(texturas/esfera-agua.webp); }
   .esf-tierra { --esf: url(texturas/esfera-tierra.webp); } .esf-aire { --esf: url(texturas/esfera-aire.webp); }
   .esf.doble { gap: 0; }
@@ -329,7 +330,7 @@ const pista = (c, coste) => `<div class="pista"><b>${c.nombre}</b>${textoDe(c)}<
 // ---------- Dibujo de la mesa ----------------------------------------------------------------
 function jugador(j) {
   const activo = !p.fin && p.turno && p.turno.i === j.i;
-  return `<span class="jug ${activo ? 'activo' : ''}"><svg class="ico" style="color:var(--${j.color})"><use href="#${j.color}"/></svg>${NOMBRES[j.i]}<span class="sello"><i class="piedra esf-${j.color}"></i>${j.sellos}</span></span>`;
+  return `<span class="jug ${activo ? 'activo' : ''}"><svg class="ico" style="color:var(--${j.color})"><use href="#${j.color}"/></svg>${NOMBRES[j.i]}<span class="sello piedra esf-${j.color}">${j.sellos}</span></span>`;
 }
 
 function pintar() {

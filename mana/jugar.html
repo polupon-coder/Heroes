@@ -124,9 +124,6 @@
   .cuad.lider .puntos { max-width: 56px; gap: 4px; }
   .cuad.lider .puntos i { width: 12px; height: 12px; }
   .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
-  /* Centro del Santuario: su Elemental de menor poder */
-  .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 44px; height: 44px; pointer-events: none; }
-  .nucleo img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(60, 30, 10, .25)); }
   .marca { position: absolute; left: 50%; bottom: -21px; transform: translateX(-50%); color: color-mix(in srgb, var(--el) 78%, #000); font-weight: 600;
     font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding-left: .16em; white-space: nowrap; }
   .marca .emp { color: var(--suave); font-weight: 400; }
@@ -1336,7 +1333,7 @@ function pintar() {
       return `<div class="cuad ${pr.n === max && unico ? 'lider' : ''}"><div class="puntos">${puntos}</div></div>`;
     }).join('');
     const empate = max > 0 && !unico ? ' <span class="emp">· empate</span>' : '';
-    return `<div class="sant cruz tx-${s}" style="--el:var(--${s})">${cuads}<div class="nucleo"><img src="${IMAGENES[MENOR[s]]}" alt=""></div><div class="marca">${NOMBRE_EL[s]}${empate}</div></div>`;
+    return `<div class="sant cruz tx-${s}" style="--el:var(--${s})">${cuads}<div class="marca">${NOMBRE_EL[s]}${empate}</div></div>`;
   }).join('');
   guia();
 }

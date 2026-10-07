@@ -17,7 +17,7 @@
   .ico { width: 18px; height: 18px; }
 
   /* Cabecera: dos Guardianes a cada lado del título */
-  .barra { width: 100%; display: grid; grid-template-columns: 280px 1fr 280px; column-gap: 32px; align-items: center; }
+  .barra { width: 100%; display: grid; grid-template-columns: 256px 1fr 256px; column-gap: 24px; align-items: center; }
   .lado { display: flex; gap: 22px; }
   .lado.izq { justify-content: flex-start; } .lado.der { justify-content: space-between; gap: 0; }
   .lado.der .jug { gap: 5px; }
@@ -31,17 +31,17 @@
     border: 1.5px solid currentColor; font-size: 11px; font-weight: 700; }
 
   /* Santuarios: icono en el centro y un cuadrante por Guardián */
-.juego { width: 100%; flex: 1; display: grid; grid-template-columns: 280px 1fr 280px; gap: 32px; margin-top: 18px; min-height: 0; }
+.juego { width: 100%; flex: 1; display: grid; grid-template-columns: 256px 1fr 256px; gap: 24px; margin-top: 18px; min-height: 0; }
   .principal { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 6px 0 18px; }
-  .principal > .total { margin-top: auto; margin-bottom: 22px; }
+  .arriba { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; justify-items: center; width: 74%; margin-top: auto; }
   .principal > .boton { margin-top: auto; }
   .principal .titulo { margin-bottom: -2px; }
-  /* Mano en dos filas de 3 (con 5 cartas: 3 + 2), Mazo y Descarte a los lados */
-  .fila-mano { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%; }
-  .principal .cartas { width: 412px; flex-wrap: wrap; column-gap: 16px; row-gap: 10px; }
-  .principal .carta { width: 126px; gap: 6px; }
-  .principal .ilus { width: 126px; height: 108px; border-radius: 18px; }
-  .principal .ilus svg { width: 48px; height: 48px; }
+  /* Mano: una fila de 5 cartas verticales, como cartas reales */
+  .principal .mano { margin-top: 34px; }
+  .principal .cartas { column-gap: 20px; }
+  .principal .carta { width: 108px; gap: 6px; }
+  .principal .ilus { width: 108px; height: 156px; border-radius: 18px; }
+  .principal .ilus svg { width: 50px; height: 50px; }
   .principal .esferas { grid-template-columns: 32px 32px 32px; gap: 4px; }
   .principal .esf { width: 32px; height: 32px; font-size: 12px; }
   .principal .nombre { font-size: 12px; white-space: nowrap; }
@@ -79,9 +79,9 @@
   .boton.terminar { background: var(--verde); border: 1.5px solid var(--verde); color: #fff; }
   .boton.inactivo { opacity: .28; cursor: not-allowed; }
   .lateral .titulo { text-align: center; margin-bottom: 2px; }
-  .fila-u { display: grid; grid-template-columns: 84px 1fr; gap: 18px; align-items: center; position: relative; cursor: pointer; flex: 1; }
+  .fila-u { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: center; position: relative; cursor: pointer; flex: 1; }
   #umbral { flex: 1; display: flex; flex-direction: column; gap: 10px; } /* las 5 cartas se reparten todo el alto */
-  .fila-u .ilus { width: 84px; height: 84px; border-radius: 16px; }
+  .fila-u .ilus { width: 76px; height: 76px; border-radius: 16px; }
   .fila-u .ilus svg { width: 38px; height: 38px; }
   .fila-u .nombre { text-align: left; margin-bottom: 4px; }
   .fila-u .esferas { justify-content: start; grid-template-columns: 32px 32px 32px; gap: 5px; }
@@ -189,14 +189,12 @@
 <div class="lateral"><div id="umbral"></div>
 </div>
 <div class="principal">
-  <div class="total"><span id="mana">3</span><small>MANÁ</small></div>
-  <div class="zona mano"><div class="titulo">Tu mano</div>
-    <div class="fila-mano">
-      <div class="pila"><div class="dorso">7</div>Mazo</div>
-      <div class="cartas" id="mano"></div>
-      <div class="pila"><div class="dorso" id="descarte">4</div>Descarte</div>
-    </div>
+  <div class="arriba">
+    <div class="pila"><div class="dorso">7</div>Mazo</div>
+    <div class="total"><span id="mana">3</span><small>MANÁ</small></div>
+    <div class="pila"><div class="dorso" id="descarte">4</div>Descarte</div>
   </div>
+  <div class="zona mano"><div class="titulo">Tu mano</div><div class="cartas" id="mano"></div></div>
   <div class="boton terminar">Terminar turno</div>
 </div>
 <div class="derecha"><div class="titulo">Santuarios</div><div id="santuarios"></div></div>
@@ -321,10 +319,10 @@
 
   document.getElementById('mano').innerHTML = [
     carta('Manantial', 'agua', 2, 1, [['roba', '1']], 'usada', 'Maná'),
-    carta('Llama', 'fuego', 3, 1, [['fuego', '+2']], 'accion', 'Acción'),
-    carta('Raíces profundas', 'tierra', 4, 2, [['tierra', '+1'], ['escudo', '⛨']], 'usada', 'Maná'),
     carta('Menor de Fuego', 'fuego', 0, 1, [['fuego', '+1']]),
+    carta('Llama', 'fuego', 3, 1, [['fuego', '+2']], 'accion', 'Acción'),
     carta('Mota de Maná', null, 0, 1, []),
+    carta('Raíces profundas', 'tierra', 4, 2, [['tierra', '+1'], ['escudo', '⛨']], 'usada', 'Maná'),
   ].join('');
 </script>
 </body>

@@ -803,6 +803,21 @@ class Partida {
     this.terminarTurno();
   }
 
+  // --- Guardar y cargar la partida entera (para jugar en red) -------------------------------
+  // Las cartas se guardan por su nombre; el azar continúa con una semilla nueva.
+  exportar() {
+    const fuera = new Set(['v', 'rng', 'st', 'captura', 'accionEnCurso']);
+    const datos = {};
+    for (const [k, x] of Object.entries(this)) if (!fuera.has(k)) datos[k] = x;
+    return JSON.stringify(datos, (k, x) => (x && typeof x === 'object' && typeof x.nombre === 'string' && Array.isArray(x.accion) ? { '@c': x.nombre } : x));
+  }
+
+  importar(texto, semilla) {
+    const porNombre = new Map([...this.v.cartas, ...INICIAL].map((c) => [c.nombre, c]));
+    Object.assign(this, JSON.parse(texto, (k, x) => (x && typeof x === 'object' && x['@c'] ? porNombre.get(x['@c']) : x)));
+    this.rng = rngFrom(semilla);
+    return this;
+  }
 }
 
 module.exports = { Partida, BASE, V01, fuerza, rngFrom };

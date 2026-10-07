@@ -52,3 +52,16 @@ test('MANA: un jugador humano (con jugadas al azar) puede completar la partida',
     assert.ok(p.registro.some((e) => e.tipo === 'vincula'));
   }
 });
+
+test('MANA: exportar e importar una partida a medias la deja igual', () => {
+  const { Partida } = require('../mana/motor');
+  const a = new Partida(3, { seed: 7, registro: true }).iniciar();
+  for (let t = 0; t < 7; t++) { const i = a.comenzarTurno(); a.turnoBot(i); a.terminarTurno(); }
+  a.comenzarTurno();
+  const texto = a.exportar();
+  const b = new Partida(3, { seed: 99, registro: true }).importar(texto, 5);
+  assert.equal(b.exportar(), texto);
+  assert.equal(b.jug[1].mano[0], a.jug[1].mano[0]); // las cartas vuelven a ser las del catálogo
+  while (!b.fin) { const i = b.comenzarTurno(); b.turnoBot(i); b.terminarTurno(); }
+  assert.ok(b.ganadores.length >= 1);
+});

@@ -41,10 +41,22 @@
   .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); border-radius: 14px; padding: 2px 6px; margin: -2px -6px; }
   /* El nombre centrado con la esfera (la letra tiene la línea base alta) */
   .jug .nom, .jug .sello { line-height: 1; padding-top: 4px; }
-  .jug.activo { color: var(--tinta); font-weight: 700; background: #fff; box-shadow: 0 0 0 1.5px var(--tinta); }
+  .jug.activo, .jug.mio { color: var(--tinta); font-weight: 700; }
   /* Sellos: el número dentro de una esfera de piedra del color del jugador */
   .sello { display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); }
   .titulo-inicio { width: 230px; margin: 4px 0 8px; }
+  /* Inicio y sala de partida */
+  .campo, .unirse input { width: 100%; border: 1.5px solid var(--linea); border-radius: 14px; padding: 11px 14px 9px; font: inherit; font-size: 15px;
+    text-align: center; text-transform: uppercase; background: var(--fondo); color: var(--tinta); outline: none; }
+  .campo:focus, .unirse input:focus { border-color: var(--mana); }
+  .detalle { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .boton.ancho { width: 100%; }
+  .unirse { display: grid; grid-template-columns: 1fr 120px; gap: 10px; width: 100%; }
+  .unirse input { letter-spacing: .3em; }
+  .codigo-grande { font-size: 40px; font-weight: 700; letter-spacing: .3em; padding-left: .3em; color: var(--mana); }
+  .plazas { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+  .plaza { border: 1.5px solid var(--linea); border-radius: 12px; padding: 8px 12px 6px; text-align: left; }
+  .plaza.bot { color: var(--suave); border-style: dashed; }
   .boton-reglas { font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 6px 12px 4px; border-radius: 14px; cursor: pointer;
     background: var(--mana); color: #fff; margin-left: -6px; }
   .reglas { text-align: left; font-size: 12px; line-height: 1.5; color: var(--tinta); max-height: 440px; overflow: auto; text-transform: none; padding-right: 6px; }
@@ -115,11 +127,11 @@
   .pila { cursor: pointer; }
   .vacia { color: var(--suave); font-size: 12px; height: 220px; display: flex; align-items: center; }
 
-  .arriba { display: grid; grid-template-columns: 108px 1fr 108px; align-items: center; justify-items: center; width: 364px; margin-top: auto; }
+  .arriba { display: grid; grid-template-columns: 108px 1fr 108px; align-items: start; justify-items: center; width: 364px; margin-top: auto; }
   .pila { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--suave); font-size: 13px; }
-  .dorso { width: 96px; height: 136px; border-radius: 16px; border: 1.5px solid var(--linea); background: #fff;
-    display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: var(--tinta); }
-  .total { width: 116px; height: 116px; border-radius: 50%; background: var(--mana); color: #fff; display: flex; flex-direction: column;
+  .dorso { width: 108px; height: 108px; opacity: .85; border-radius: 50%; background: url(texturas/esfera-gris.webp) center / contain no-repeat; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.4);
+    display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; }
+  .total { width: 108px; height: 108px; opacity: .85; border-radius: 50%; background: url(texturas/esfera-mana.webp) center / contain no-repeat; color: #fff; text-shadow: 0 2px 4px rgba(60,30,90,.5); display: flex; flex-direction: column;
     align-items: center; justify-content: center; font-size: 46px; font-weight: 700; line-height: 1; transition: transform .15s; }
   .total small { font-size: 10px; letter-spacing: .16em; font-weight: 600; margin-top: 6px; padding-left: .16em; }
   .total.latido { transform: scale(1.08); }
@@ -146,8 +158,6 @@
   .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 1px; max-width: 220px; }
   /* Presencia: esferas de piedra del color de cada jugador */
   .puntos i { width: 16px; height: 16px; border-radius: 50%; background: var(--esf) center / contain no-repeat; }
-  .cuad.lider .puntos { gap: 2px; }
-  .cuad.lider .puntos i { width: 21px; height: 21px; }
   .puntos i.prot { box-shadow: 0 0 0 1.5px var(--tinta); }
   .marca { position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%); color: color-mix(in srgb, var(--el) 78%, #000); font-weight: 600;
     font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding-left: .16em; white-space: nowrap; }
@@ -292,7 +302,9 @@
 const { Partida } = require('motor');
 const EL = ['fuego', 'agua', 'tierra', 'aire'];
 const NOMBRE_EL = { fuego: 'Fuego', agua: 'Agua', tierra: 'Tierra', aire: 'Aire' };
-const NOMBRES = ['Tú', 'Ana', 'Pol', 'Marc'];
+// Nombres de los asientos (YO es el asiento de quien mira esta pantalla)
+let NOMBRES = ['Tú', 'Ana', 'Pol', 'Marc'];
+let YO = 0;
 const ROMANO = ['I', 'II', 'III'];
 const $ = (id) => document.getElementById(id);
 
@@ -343,22 +355,22 @@ const pista = (c, coste) => `<div class="pista"><b>${c.nombre}</b>${textoDe(c)}<
 // ---------- Dibujo de la mesa ----------------------------------------------------------------
 function jugador(j) {
   const activo = !p.fin && p.turno && p.turno.i === j.i;
-  return `<span class="jug ${activo ? 'activo' : ''}"><span class="nom">${NOMBRES[j.i]}</span><span class="sello piedra esf-${j.color}">${j.sellos}</span></span>`;
+  return `<span class="jug ${activo ? 'activo' : ''} ${j.i === YO ? 'mio' : ''}"><span class="nom">${NOMBRES[j.i]}</span><span class="sello piedra esf-${j.color}">${j.sellos}</span></span>`;
 }
 
 function pintar() {
-  const yo = p.jug[0];
+  const yo = p.jug[YO];
   $('yo').innerHTML = jugador(yo) + '<span class="boton-reglas" id="ver-reglas">Reglas</span>';
   $('ver-reglas').onclick = verReglas;
-  $('rivales').innerHTML = p.jug.slice(1).map(jugador).join('');
+  $('rivales').innerHTML = p.jug.filter((j) => j.i !== YO).map(jugador).join('');
   $('rivales').style.justifyContent = p.n === 2 ? 'flex-end' : 'space-between';
-  const quien = p.turno && !entreEras ? (p.turno.i === 0 ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
+  const quien = p.turno && !entreEras ? (p.turno.i === YO ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
   $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : `<b>Era ${ROMANO[p.era]}</b> · Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)} de ${p.v.rondas} · ${quien}`;
 
   // Umbral
   const miTurno = esMiTurno();
   $('umbral').innerHTML = p.umbral.map((c, k) => {
-    const coste = p.coste(0, c);
+    const coste = p.coste(YO, c);
     const cara = !miTurno || !p.puedeVincular(k);
     return `<div class="fila-u ${cara ? 'cara' : ''}" data-u="${k}">${ilus(c)}<div><div class="nombre">${c.nombre}</div>${esferas(c, coste)}</div>${pista(c, coste)}</div>`;
   }).join('<div class="linea"></div>');
@@ -407,6 +419,7 @@ function pintar() {
     return `<div class="sant tx-${s}" style="--el:var(--${s})">${cuads}${empate ? `<div class="marca">${empate}</div>` : ''}</div>`;
   }).join('<div class="linea"></div>');
   guia();
+  subirPronto();
 }
 
 // ---------- Guía: qué hacer ahora ------------------------------------------------------------
@@ -421,14 +434,14 @@ const vistos = new Set(); // consejos que solo se dan una vez por partida
 // Elige el mensaje según el momento del turno. Devuelve [texto, elemento al que apunta, lado del mensaje]
 function pasoActual() {
   if (!p || p.fin || !p.turno || entreEras) return null;
-  const yo = p.jug[0];
-  if (p.turno.i !== 0 || ocupado) {
+  const yo = p.jug[YO];
+  if (p.turno.i !== YO || ocupado) {
     if (vistos.has('rivales')) return null;
     return ['rivales', `Ahora juega <b>${NOMBRES[p.turno.i]}</b>. Arriba verás lo que hace cada rival; mira cómo cambian los <b>Santuarios</b>.`, $('santuarios').parentElement, 'izq'];
   }
   const usadas = yo.jugadas.length + p.turno.manaUsadas.length;
   const disp = p.manaDisponible();
-  const masBarato = Math.min(...p.umbral.map((c) => p.coste(0, c)));
+  const masBarato = Math.min(...p.umbral.map((c) => p.coste(YO, c)));
   const puedeComprar = !p.turno.vinculado && p.umbral.some((_, k) => p.puedeVincular(k));
   // Acabas de robar: señala la carta nueva
   if (nuevas.length) {
@@ -437,7 +450,7 @@ function pasoActual() {
     const destino = document.querySelector('#mano .carta.nueva') || $('mano');
     return ['robo' + p.registro.length, `Has robado ${nombres}. Ya está en tu mano, marcada como <b>NUEVA</b>: tócala para usarla este mismo turno.`, destino, 'abajo'];
   }
-  if (p.registro.length && p.registro[p.registro.length - 1].sinCartas && p.registro[p.registro.length - 1].i === 0 && !vistos.has('sincartas' + p.registro.length)) {
+  if (p.registro.length && p.registro[p.registro.length - 1].sinCartas && p.registro[p.registro.length - 1].i === YO && !vistos.has('sincartas' + p.registro.length)) {
     vistos.add('sincartas' + p.registro.length);
     return ['sincartas', 'Tu mazo y tu descarte estaban vacíos: no había cartas que robar.', $('mazo'), 'arriba'];
   }
@@ -507,7 +520,7 @@ function deshacer() {
   avisar(`Deshecho: ${u.texto}`, 2200);
   pintar();
 }
-const esMiTurno = () => p && !p.fin && !ocupado && !eligiendo && p.turno && p.turno.i === 0;
+const esMiTurno = () => p && !p.fin && !ocupado && !eligiendo && p.turno && p.turno.i === YO;
 
 // ---------- Ventanas -------------------------------------------------------------------------
 function abrir(html, botones = [], ancha = false, fija = false) {
@@ -537,7 +550,7 @@ const conObjetivos = (c) => c.accion.some((e) => e.remove || e.moveRival || e.mo
 
 // Carta de la mano: Acción o Maná
 function verCarta(donde, k) {
-  const yo = p.jug[0];
+  const yo = p.jug[YO];
   if (donde === 'mano') {
     const c = yo.mano[k];
     // Cartas sin Acción (Mota de Maná): no hay nada que elegir, se usan como Maná al tocarlas
@@ -585,7 +598,7 @@ function verCarta(donde, k) {
 // Elemental del Umbral: vincular
 function verUmbral(u) {
   const c = p.umbral[u];
-  const coste = p.coste(0, c);
+  const coste = p.coste(YO, c);
   const disp = esMiTurno() ? p.manaDisponible() : 0;
   const falta = coste - disp;
   const saldo = !esMiTurno() ? '<div class="saldo">Espera a tu turno para vincular.</div>'
@@ -615,15 +628,15 @@ function latido() {
 }
 function describir(e) {
   const quien = NOMBRES[e.i];
-  if (e.tipo === 'vincula') return e.i === 0 ? `Vinculas <b>${e.carta}</b>: va a tu descarte` : `${quien} vincula <b>${e.carta}</b>`;
-  if (e.tipo === 'libera') return e.i === 0 ? `Liberas ${e.carta}: sale de la partida` : `${quien} libera ${e.carta}`;
+  if (e.tipo === 'vincula') return e.i === YO ? `Vinculas <b>${e.carta}</b>: va a tu descarte` : `${quien} vincula <b>${e.carta}</b>`;
+  if (e.tipo === 'libera') return e.i === YO ? `Liberas ${e.carta}: sale de la partida` : `${quien} libera ${e.carta}`;
   const partes = (e.cambios || []).map((x) => {
     const t = [];
     if (x.dn) t.push(`${x.dn > 0 ? '+' : '−'}${Math.abs(x.dn)} ${x.k === e.i ? '' : `de ${NOMBRES[x.k]} `}en ${NOMBRE_EL[x.s]}`);
     if (x.dp) t.push(`protege ${x.dp} en ${NOMBRE_EL[x.s]}`);
     return t.join(', ');
   });
-  const yo = e.i === 0;
+  const yo = e.i === YO;
   const lista = (ns) => ns.length > 1 ? ns.slice(0, -1).join(', ') + ' y ' + ns[ns.length - 1] : ns[0];
   const robadas = e.robadas || [];
   // tus cartas se nombran; las de los rivales, solo se cuentan
@@ -670,7 +683,7 @@ function textoRegistro() {
       }
     }
     L.push(`- ${NOMBRES[j.i]}: ${acciones} Acciones, ${puestas} Presencias puestas, ${quitadas} Presencias rivales retiradas o movidas, ` +
-      `${vinc.length} vinculados (${vinc.join(', ') || 'ninguno'}), ${lib.length} liberadas${j.i === 0 ? `, Maná sobrante al terminar turnos: ${sobrante}` : ''}`);
+      `${vinc.length} vinculados (${vinc.join(', ') || 'ninguno'}), ${lib.length} liberadas${j.i === YO ? `, Maná sobrante al terminar turnos: ${sobrante}` : ''}`);
   }
   (p.historial || []).forEach((h, era) => {
     L.push('');
@@ -684,7 +697,7 @@ function textoRegistro() {
     const c = `Era ${ROMANO[e.era]}, ronda ${e.ronda + 1}`;
     if (c !== clave) { L.push(`— ${c}`); clave = c; }
     if (e.tipo === 'fin') {
-      if (e.i === 0) L.push(`  Tú terminas: como Maná ${e.comoMana.join(', ') || 'nada'}; sin usar ${e.sinUsar.join(', ') || 'nada'}; Maná sobrante ${e.manaSobrante}`);
+      if (e.i === YO) L.push(`  Tú terminas: como Maná ${e.comoMana.join(', ') || 'nada'}; sin usar ${e.sinUsar.join(', ') || 'nada'}; Maná sobrante ${e.manaSobrante}`);
       continue;
     }
     L.push('  ' + limpio(describir(e)));
@@ -708,19 +721,19 @@ function copiarRegistro() {
 // Juega una carta como Acción. Los efectos se aplican en orden; si uno pide elegir, se abre una ventana
 async function jugarAccion(k) {
   const desde = p.registro.length;
-  guardar(`jugar ${p.jug[0].mano[k].nombre}`);
+  guardar(`jugar ${p.jug[YO].mano[k].nombre}`);
   revelado = false;
   nuevas = [];
   eligiendo = true;
-  const c = p.empezarAccion(0, k);
+  const c = p.empezarAccion(YO, k);
   pintar();
   for (let n = 0; n < c.accion.length; n++) {
     const e = c.accion[n];
     if (Partida.necesitaEleccion(e)) await resolver(c, e, n);
-    else p.efecto(0, e, true);
+    else p.efecto(YO, e, true);
     pintar();
   }
-  p.terminarAccion(0);
+  p.terminarAccion(YO);
   eligiendo = false;
   cerrar();
   // si has robado o se ha revelado un Elemental nuevo, ya no se puede volver atrás
@@ -732,7 +745,7 @@ async function jugarAccion(k) {
     avisar(describir(e), 4200);
     nuevas.push(...(e.cartasRobadas || []));
     // una carta recuperada del descarte también llega nueva a la mano
-    for (const x of e.notas || []) if (x.tipo === 'recupera') nuevas.push(p.jug[0].mano.find((m) => m.nombre === x.carta));
+    for (const x of e.notas || []) if (x.tipo === 'recupera') nuevas.push(p.jug[YO].mano.find((m) => m.nombre === x.carta));
   }
   pintar();
 }
@@ -755,7 +768,7 @@ function elegir(c, n, titulo, texto, opciones, saltar) {
 const chip = (color, icono) => `<span class="chip" style="background:var(--${color})">${icono ? `<svg><use href="#${icono}"/></svg>` : ''}</span>`;
 const rival = (k) => `<span style="color:var(--${p.jug[k].color})">${NOMBRES[k]}</span>`;
 const presTexto = (s) => p.pres[s].map((x, k) => `${NOMBRES[k]} ${x.n}`).join(' · ');
-const rivalesCon = (s) => p.jug.filter((j) => j.i !== 0 && p.quitables(s, j.i) > 0).map((j) => j.i);
+const rivalesCon = (s) => p.jug.filter((j) => j.i !== YO && p.quitables(s, j.i) > 0).map((j) => j.i);
 const cartaOpcion = (m, extra = '') => `${chip(m.el || 'mana', m.el || '')}<div><b>${m.nombre}</b><small>${textoDe(m) || 'Solo da Maná.'}${extra}</small></div>`;
 
 // Resuelve un efecto que pide elegir
@@ -785,7 +798,7 @@ async function resolver(c, e, n) {
     const ops = rivalesCon(e.s).map((k) => ({ valor: k, html: `${chip(e.s, e.s)}<div><b>Quitar 1 a ${rival(k)} y poner 1 tuya</b><small>${NOMBRE_EL[e.s]}: ${presTexto(e.s)}</small></div>` }));
     if (!ops.length) { avisar(`${c.nombre}: ningún rival tiene Presencia que retirar en ${NOMBRE_EL[e.s]}`); return; }
     const k = await elegir(c, n, `Cambia una Presencia en ${NOMBRE_EL[e.s]}`, 'Retiras 1 Presencia rival y pones 1 tuya en su lugar.', ops, null);
-    p.elegirIntercambio(0, e.s, k);
+    p.elegirIntercambio(YO, e.s, k);
     return;
   }
 
@@ -807,7 +820,7 @@ async function resolver(c, e, n) {
 
   if (e.moveOwnTo) {
     const dest = e.moveOwnTo;
-    const ops = EL.filter((s) => s !== dest && p.quitables(s, 0) > 0)
+    const ops = EL.filter((s) => s !== dest && p.quitables(s, YO) > 0)
       .map((s) => ({ valor: s, html: `${chip(s, s)}<div><b>Mover 1 tuya de ${NOMBRE_EL[s]} a ${NOMBRE_EL[dest]}</b><small>${presTexto(s)}</small></div>` }));
     if (!ops.length) { avisar(`${c.nombre}: no tienes Presencias que mover`); return; }
     const o = await elegir(c, n, `Mueve 1 Presencia tuya a ${NOMBRE_EL[dest]}`, 'Elige de dónde sale. Puedes no moverla.', ops, 'No mover');
@@ -818,28 +831,28 @@ async function resolver(c, e, n) {
   if (e.protect) {
     const veces = e.all ? 1 : e.protect;
     for (let t = 0; t < veces; t++) {
-      const ops = EL.filter((s) => p.pres[s][0].n > p.pres[s][0].prot).map((s) => {
-        const x = p.pres[s][0];
+      const ops = EL.filter((s) => p.pres[s][YO].n > p.pres[s][YO].prot).map((s) => {
+        const x = p.pres[s][YO];
         const cuantas = e.all ? `todas (${x.n - x.prot})` : '1';
         return { valor: s, html: `${chip(s, 'escudo')}<div><b>Proteger ${cuantas} en ${NOMBRE_EL[s]}</b><small>Tienes ${x.n}, protegidas ${x.prot}</small></div>` };
       });
       if (!ops.length) { if (t === 0) avisar(`${c.nombre}: no tienes Presencias sin proteger`); break; }
       const titulo = e.all ? 'Protege todas tus Presencias de un Santuario' : `Protege una Presencia tuya (${t + 1} de ${veces})`;
       const s = await elegir(c, n, titulo, 'Hasta el final de la Era no se podrán retirar ni mover.', ops, null);
-      p.elegirProteger(0, s, !!e.all);
+      p.elegirProteger(YO, s, !!e.all);
       pintar();
     }
     return;
   }
 
-  const yo = p.jug[0];
+  const yo = p.jug[YO];
   if (e.discard || e.handToTop) {
     if (!yo.mano.length) return;
     const ops = yo.mano.map((m, k) => ({ valor: k, html: cartaOpcion(m) }));
     const k = e.discard
       ? await elegir(c, n, 'Descarta 1 carta de tu mano', 'Va a tu descarte.', ops, null)
       : await elegir(c, n, 'Pon 1 carta de tu mano encima de tu mazo', 'La robarás en tu próximo turno.', ops, null);
-    if (e.discard) p.elegirDescartar(0, k); else p.elegirManoEncima(0, k);
+    if (e.discard) p.elegirDescartar(YO, k); else p.elegirManoEncima(YO, k);
     return;
   }
 
@@ -851,16 +864,16 @@ async function resolver(c, e, n) {
     yo.desc.forEach((m, k) => { if (!vistas.has(m.nombre)) { vistas.add(m.nombre); ops.push({ valor: k, html: cartaOpcion(m) }); } });
     if (e.recover) {
       const k = await elegir(c, n, 'Recupera 1 carta de tu descarte', 'Vuelve a tu mano y puedes usarla este turno.', ops, null);
-      p.elegirRecuperar(0, k);
+      p.elegirRecuperar(YO, k);
     } else {
       const k = await elegir(c, n, 'Pon 1 carta de tu descarte encima de tu mazo', 'La robarás en tu próximo turno.', ops, null);
-      p.elegirDescarteEncima(0, k);
+      p.elegirDescarteEncima(YO, k);
     }
     return;
   }
 
   if (e.refresh) {
-    const ops = p.umbral.map((m, u) => ({ valor: u, html: cartaOpcion(m, ` · Coste ${p.coste(0, m)}`) }));
+    const ops = p.umbral.map((m, u) => ({ valor: u, html: cartaOpcion(m, ` · Coste ${p.coste(YO, m)}`) }));
     const u = await elegir(c, n, 'Cambia 1 Elemental del Umbral', 'Se descarta y se revela otro en su lugar (puedes vincularlo este turno).', ops, 'No cambiar');
     if (u !== null) {
       revelado = true;
@@ -870,14 +883,36 @@ async function resolver(c, e, n) {
   }
 }
 
-function nuevaPartida(n) {
-  p = new Partida(n, { seed: Math.floor(Math.random() * 1e9), registro: true }).iniciar();
+// Asientos: [{ nombre, bot, uid }] (en partidas en red, uid del dueño del asiento)
+let asientos = null;
+const NOMBRES_BOT = ['Ana', 'Pol', 'Marc', 'Lía'];
+
+function empezarPartida(lista, semilla) {
+  asientos = lista;
+  NOMBRES = lista.map((a) => a.nombre);
+  p = new Partida(lista.length, { seed: semilla, registro: true }).iniciar();
   vistos.clear();
   ocupado = false;
-  avanzar();
-  const yo = p.jug[0];
+  entreEras = false;
+  p.comenzarTurno();
+  pasos = [];
+  red && subir();
+  bienvenida();
+  continuar();
+}
+
+function nuevaPartida(n, nombre) {
+  red = null;
+  YO = 0;
+  const bots = NOMBRES_BOT.filter((x) => x.toLowerCase() !== (nombre || '').toLowerCase());
+  empezarPartida([{ nombre: nombre || 'Tú', bot: false }, ...bots.slice(0, n - 1).map((x) => ({ nombre: x, bot: true }))],
+    Math.floor(Math.random() * 1e9));
+}
+
+function bienvenida() {
+  const yo = p.jug[YO];
   abrir(`<h2>Eres el Guardián ${yo.color === 'agua' ? 'del Agua' : yo.color === 'aire' ? 'del Aire' : yo.color === 'tierra' ? 'de la Tierra' : 'del Fuego'}</h2>
-    <svg style="width:56px;height:56px;color:var(--${yo.color})"><use href="#${yo.color}"/></svg>
+    <span class="piedra esf-${yo.color}" style="width:64px;height:64px"></span>
     <div class="texto">Tus Presencias son de tu color. Tu mazo lleva un Elemental menor más de tu elemento.</div>
     <div class="texto"><b>Cada turno:</b> toca tus cartas para usarlas como <b>Acción</b> o como <b>Maná</b>, toca un Elemental del <b>Umbral</b> para vincularlo y pulsa <b>Terminar turno</b>.</div>
     <div class="texto">Al final de cada Era, quien tenga más Presencia en cada Santuario gana sus Sellos (1, 2 y 3). Empate en cabeza: nadie.</div>
@@ -886,15 +921,17 @@ function nuevaPartida(n) {
   [{ texto: '¡A jugar!', clase: 'verde' }]);
 }
 
-// Avanza hasta que le toca a la persona o acaba la partida
-function avanzar() {
-  if (p.fin) { pintar(); return finPartida(); }
-  const i = p.comenzarTurno();
-  pasos = [];
+// ¿Esta pantalla mueve al bot del asiento i? (en red, solo quien creó la partida)
+const muevoBot = (i) => asientos[i].bot && (!red || red.anfitrion);
+
+// Sigue la partida desde el turno en curso: espera a la persona o mueve al bot
+function continuar() {
   pintar();
-  if (i === 0) return;
+  if (p.fin) return finPartida();
+  if (entreEras || p.turno.i === YO || !muevoBot(p.turno.i)) return;
   ocupado = true;
   pintar();
+  const i = p.turno.i;
   setTimeout(() => {
     const desde = p.registro.length;
     p.turnoBot(i);
@@ -902,38 +939,38 @@ function avanzar() {
     if (!hechos.length) avisar(`${NOMBRES[i]} no juega Acciones ni vincula`);
     hechos.forEach((e, k) => setTimeout(() => avisar(describir(e), 2200), k * 450 * VEL));
     pintar();
-    setTimeout(() => { ocupado = false; cerrarTurno(); }, (700 + hechos.length * 450) * VEL);
+    setTimeout(() => { ocupado = false; trasTurno(() => p.terminarTurno()); }, (700 + hechos.length * 450) * VEL);
   }, 650 * VEL);
 }
 
-function cerrarTurno() {
+// Cierra el turno en curso (terminar), empieza el siguiente y, si acaba una Era, lo enseña
+function trasTurno(terminar) {
   const antes = p.jug[0].selloEra.length;
-  p.terminarTurno();
+  terminar();
+  if (!p.fin) p.comenzarTurno();
+  pasos = [];
+  nuevas = [];
+  red && subir();
   if (p.jug[0].selloEra.length > antes) return finEra();
-  avanzar();
+  continuar();
 }
 
 $('terminar').onclick = () => {
   if (!esMiTurno()) return;
-  nuevas = [];
-  pasos = [];
-  const antes = p.jug[0].selloEra.length;
-  p.humanoTerminar();
-  if (p.jug[0].selloEra.length > antes) return finEra();
-  avanzar();
+  trasTurno(() => p.humanoTerminar());
 };
 
 $('deshacer').onclick = deshacer;
 $('mazo').parentElement.onclick = () => {
   if (!p || !p.turno) return;
-  const yo = p.jug[0];
+  const yo = p.jug[YO];
   abrir(`<h2>Tu mazo</h2><div class="dorso" style="margin:4px auto">${yo.mazo.length}</div>
     <div class="texto">Son tus cartas boca abajo. <b>No se roba tocándolo:</b> robas 5 automáticamente al terminar tu turno, y más cuando juegas una carta que dice <b>Roba</b>.</div>
     <div class="texto">Cuando se acaba, tu descarte se baraja y forma un mazo nuevo. Así vuelven los Elementales que vinculas.</div>`, [{ texto: 'Entendido', clase: 'lleno' }]);
 };
 $('descarte').parentElement.onclick = () => {
   if (!p || !p.turno) return;
-  const yo = p.jug[0];
+  const yo = p.jug[YO];
   const cuenta = {};
   for (const c of yo.desc) cuenta[c.nombre] = (cuenta[c.nombre] || 0) + 1;
   const lista = Object.entries(cuenta).map(([n, k]) => `${n}${k > 1 ? ' ×' + k : ''}`).join(', ') || 'Está vacío.';
@@ -961,12 +998,12 @@ function finEra() {
   if (p.fin) return finPartida();
   abrir(`<h2>Fin de la Era ${ROMANO[era]}</h2>${tablaPuntuacion()}<div class="texto">Sellos: ${clasificacion()}</div>
     <div class="texto">Los Santuarios se vacían. Tu mazo se queda contigo. Empieza la Era ${ROMANO[p.era]} quien va primero.</div>`,
-  [{ texto: `Empezar la Era ${ROMANO[p.era]}`, clase: 'verde', accion: () => { entreEras = false; avanzar(); } }], true, true);
+  [{ texto: `Empezar la Era ${ROMANO[p.era]}`, clase: 'verde', accion: () => { entreEras = false; continuar(); } }], true, true);
 }
 
 function finPartida() {
   const gana = p.ganadores.map((k) => NOMBRES[k]);
-  const titulo = p.ganadores.length > 1 ? `Victoria compartida: ${gana.join(' y ')}` : p.ganadores[0] === 0 ? '¡Has ganado!' : `Gana ${gana[0]}`;
+  const titulo = p.ganadores.length > 1 ? `Victoria compartida: ${gana.join(' y ')}` : p.ganadores[0] === YO ? '¡Has ganado!' : `Gana ${gana[0]}`;
   abrir(`<h2>${titulo}</h2>${tablaPuntuacion()}<div class="texto">Sellos finales: ${clasificacion()}</div>`,
     [{ texto: 'Ver registro', accion: verRegistro }, { texto: 'Copiar registro', cierra: false, accion: copiarRegistro }, { texto: 'Otra partida', clase: 'verde', accion: inicio }], true, true);
 }
@@ -992,13 +1029,151 @@ function verReglas() {
     </div>`, [{ texto: 'Cerrar', clase: 'lleno' }], true);
 }
 
+// ---------- Inicio: nombre, contra bots o con amigos -------------------------------------------
+const leerNombre = () => { try { return localStorage.getItem('mana-nombre') || ''; } catch (e) { return ''; } };
+const guardarNombre = (n) => { try { localStorage.setItem('mana-nombre', n); } catch (e) { /* sin almacenamiento */ } };
+const limpiarNombre = (n) => n.replace(/[<>&"]/g, '').trim().slice(0, 14);
+const nombreElegido = () => { const n = limpiarNombre($('nombre').value) || 'Tú'; guardarNombre(n); return n; };
+
 function inicio() {
+  if (red && red.quitar) red.quitar();
+  red = null;
   let n = 4;
-  const pintarOpciones = () => [2, 3, 4].map((k) => `<div class="opcion ${k === n ? 'elegida' : ''}" data-n="${k}">${k - 1} ${k === 2 ? 'rival' : 'rivales'}</div>`).join('');
+  let modo = 'bots';
+  const opcionesBots = () => [2, 3, 4].map((k) => `<div class="opcion ${k === n ? 'elegida' : ''}" data-n="${k}">${k - 1} ${k === 2 ? 'bot' : 'bots'}</div>`).join('');
+  const pintarModo = () => {
+    $('modo').innerHTML = ['bots', 'amigos'].map((m) => `<div class="opcion ${m === modo ? 'elegida' : ''}" data-m="${m}">${m === 'bots' ? 'Contra bots' : 'Con amigos'}</div>`).join('');
+    $('detalle').innerHTML = modo === 'bots'
+      ? `<div class="opciones" id="opciones">${opcionesBots()}</div><div class="boton verde ancho" id="empezar-bots">Empezar</div>`
+      : `<div class="boton verde ancho" id="crear">Crear partida</div>
+         <div class="unirse"><input id="codigo" maxlength="4" placeholder="CÓDIGO" autocomplete="off"><div class="boton lleno" id="unirme">Unirme</div></div>
+         <div class="nota" id="aviso-red"></div>`;
+    if (modo === 'bots') {
+      $('opciones').onclick = (e) => { const o = e.target.closest('[data-n]'); if (o) { n = Number(o.dataset.n); $('opciones').innerHTML = opcionesBots(); } };
+      $('empezar-bots').onclick = () => { cerrar(); nuevaPartida(n, nombreElegido()); };
+    } else {
+      $('crear').onclick = () => crearSala(nombreElegido());
+      $('unirme').onclick = () => unirseSala(nombreElegido(), $('codigo').value);
+    }
+  };
   abrir(`<img class="titulo-inicio" src="url(texturas/titulo.webp)" alt="MANA">
-    <div class="opciones" id="opciones">${pintarOpciones()}</div>`,
-  [{ texto: 'Empezar', clase: 'verde', accion: () => nuevaPartida(n) }], false, true);
-  $('opciones').onclick = (e) => { const o = e.target.closest('[data-n]'); if (o) { n = Number(o.dataset.n); $('opciones').innerHTML = pintarOpciones(); } };
+    <input id="nombre" class="campo" maxlength="14" placeholder="TU NOMBRE" autocomplete="off" value="${limpiarNombre(leerNombre())}">
+    <div class="opciones" id="modo"></div><div id="detalle" class="detalle"></div>`, [], false, true);
+  $('modo').onclick = (e) => { const o = e.target.closest('[data-m]'); if (o) { modo = o.dataset.m; pintarModo(); } };
+  pintarModo();
+}
+
+// ---------- Partida con amigos: una base de datos compartida por la página -------------------------
+// partidas/<código>: { estado: 'sala' | 'juego', anfitrion, asientos, snap, version, por }
+// partidas/<código>/sala/<id>: quién se ha unido (cada uno escribe el suyo)
+let red = null;
+async function conectar() {
+  if (!window.claude || !window.claude.use) return null;
+  const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+  if (!db || !user) return null;
+  const uid = await user.id();
+  return uid ? { db, uid } : null;
+}
+const avisoRed = (t) => { if ($('aviso-red')) $('aviso-red').textContent = t; };
+const sinRed = 'No se puede jugar con amigos desde aquí: abre la página en claude.ai con tu cuenta. Tus amigos necesitan acceso de edición a la página.';
+
+async function crearSala(nombre) {
+  avisoRed('Conectando…');
+  const c = await conectar();
+  if (!c) return avisoRed(sinRed);
+  const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const codigo = Array.from({ length: 4 }, () => letras[Math.floor(Math.random() * letras.length)]).join('');
+  red = { ...c, codigo, anfitrion: true, version: 0, ref: c.db.doc('partidas/' + codigo) };
+  try {
+    await red.ref.set({ estado: 'sala', anfitrion: c.uid, version: 0 });
+    await red.ref.collection('sala').doc(c.uid).set({ nombre, uid: c.uid, t: Date.now() });
+  } catch (e) { red = null; return avisoRed('No se ha podido crear la partida (' + (e.code || 'error') + '). ' + sinRed); }
+  let plazas = 4;
+  let gente = [];
+  const pintarSala = () => {
+    const filas = Array.from({ length: plazas }, (_, k) => gente[k] ? `<div class="plaza"><b>${limpiarNombre(gente[k].nombre)}</b>${k === 0 ? ' (tú)' : ''}</div>`
+      : `<div class="plaza bot">${NOMBRES_BOT[k - 1] || 'Bot'} · bot</div>`).join('');
+    $('plazas').innerHTML = filas;
+    $('total-plazas').innerHTML = [2, 3, 4].map((k) => `<div class="opcion ${k === plazas ? 'elegida' : ''}" data-n="${k}">${k} jugadores</div>`).join('');
+  };
+  abrir(`<h2>Partida ${codigo}</h2>
+    <div class="texto">Pasa a tus amigos el <b>enlace de esta página</b> y este código. Lo escriben en «Con amigos» y pulsan «Unirme».</div>
+    <div class="codigo-grande">${codigo}</div>
+    <div class="opciones" id="total-plazas"></div><div class="plazas" id="plazas"></div>
+    <div class="nota">Los huecos que nadie ocupe los juegan bots.</div>`,
+  [{ texto: 'Salir', accion: inicio }, { texto: 'Empezar', clase: 'verde', accion: () => {
+    quitarSala();
+    const lista = Array.from({ length: plazas }, (_, k) => gente[k] ? { nombre: limpiarNombre(gente[k].nombre), bot: false, uid: gente[k].uid }
+      : { nombre: NOMBRES_BOT[k - 1] || 'Bot', bot: true });
+    YO = 0;
+    escuchar();
+    empezarPartida(lista, Math.floor(Math.random() * 1e9));
+  } }], true, true);
+  $('total-plazas').onclick = (e) => { const o = e.target.closest('[data-n]'); if (o) { plazas = Math.max(Number(o.dataset.n), Math.min(gente.length, 4)); pintarSala(); } };
+  const quitarSala = red.ref.collection('sala').orderBy('t').onSnapshot((snap) => {
+    gente = snap.docs.map((d) => d.data()).slice(0, 4);
+    if (gente.length > plazas) plazas = gente.length;
+    if ($('plazas')) pintarSala();
+  }, () => avisar('Se ha perdido la conexión con la sala'));
+  red.quitar = quitarSala;
+  pintarSala();
+}
+
+async function unirseSala(nombre, codigo) {
+  codigo = (codigo || '').toUpperCase().replace(/[^A-Z]/g, '');
+  if (codigo.length !== 4) return avisoRed('Escribe el código de 4 letras que te han pasado.');
+  avisoRed('Conectando…');
+  const c = await conectar();
+  if (!c) return avisoRed(sinRed);
+  const ref = c.db.doc('partidas/' + codigo);
+  const doc = await ref.get().catch(() => null);
+  if (!doc || !doc.exists) return avisoRed('No hay ninguna partida con ese código.');
+  if (doc.data().estado !== 'sala') return avisoRed('Esa partida ya ha empezado.');
+  try { await ref.collection('sala').doc(c.uid).set({ nombre, uid: c.uid, t: Date.now() }); } catch (e) { return avisoRed('No te has podido unir (' + (e.code || 'error') + '). ' + sinRed); }
+  red = { ...c, codigo, anfitrion: false, version: -1, ref };
+  abrir(`<h2>Partida ${codigo}</h2><div class="texto">Estás dentro. Esperando a que empiece quien la creó…</div>`, [{ texto: 'Salir', accion: inicio }], false, true);
+  escuchar();
+}
+
+// Escucha la partida: cada cambio que sube otro jugador se carga aquí
+function escuchar() {
+  if (red.quitarPartida) return;
+  red.quitarPartida = red.ref.onSnapshot((snap) => {
+    const d = snap.exists ? snap.data() : null;
+    if (!d || d.estado !== 'juego' || d.version <= red.version || d.por === red.uid) return;
+    const nuevo = red.version < 0;
+    red.version = d.version;
+    asientos = d.asientos;
+    NOMBRES = asientos.map((a) => a.nombre);
+    YO = asientos.findIndex((a) => a.uid === red.uid);
+    if (YO < 0) { YO = 0; avisar('No tienes asiento en esta partida: solo miras'); }
+    const antes = p && !nuevo ? p.registro.length : 0;
+    const eraAntes = p && !nuevo ? p.jug[0].selloEra.length : 0;
+    p = new Partida(asientos.length, { seed: 1, registro: true }).importar(d.snap, Math.floor(Math.random() * 1e9));
+    pasos = [];
+    nuevas = [];
+    if (nuevo) { vistos.clear(); cerrar(); bienvenida(); }
+    else p.registro.slice(antes).filter((e) => e.i !== YO && e.tipo !== 'fin').forEach((e, k) => setTimeout(() => avisar(describir(e), 2200), k * 450));
+    if (!nuevo && p.jug[0].selloEra.length > eraAntes) return finEra();
+    continuar();
+  }, () => avisar('Se ha perdido la conexión con la partida. Recarga la página.'));
+}
+
+// Sube el estado de la partida (lo hace quien está moviendo)
+let subida = null;
+function subir() {
+  if (!red) return;
+  clearTimeout(subida);
+  red.version++;
+  const datos = { estado: 'juego', snap: p.exportar(), version: red.version, por: red.uid };
+  if (red.anfitrion && red.version === 1) datos.asientos = asientos;
+  red.ref.set({ anfitrion: asientos[0].uid, asientos, ...datos }).catch((e) => avisar('No se ha podido guardar la jugada (' + (e.code || 'error') + ')'));
+}
+// Mientras juegas tu turno, los demás ven tus jugadas poco a poco
+function subirPronto() {
+  if (!red || !p.turno || (p.turno.i !== YO && !muevoBot(p.turno.i))) return;
+  clearTimeout(subida);
+  subida = setTimeout(subir, 900);
 }
 
 // Mesa vacía de fondo mientras se elige

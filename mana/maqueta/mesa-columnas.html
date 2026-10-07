@@ -30,27 +30,37 @@
     border: 1.5px solid currentColor; font-size: 11px; font-weight: 700; }
 
   /* Santuarios: icono en el centro y un cuadrante por Guardián */
-  .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 1fr 300px; gap: 40px; margin-top: 18px; }
-  .principal { display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
-  .fila-sant { display: grid; grid-template-columns: 380px 380px; column-gap: 28px; row-gap: 40px; padding-bottom: 24px; margin-top: 6px; }
-  .fila-sant .sant { width: 380px; height: 124px; }
-  .fila-sant .cuad { flex-direction: row; gap: 10px; }
-  .fila-sant .nucleo { width: 46px; height: 46px; } .fila-sant .nucleo .ico { width: 22px; height: 22px; }
-  .fila-sant .cuad .n { font-size: 18px; } .fila-sant .cuad.lider .n { font-size: 24px; }
-  .fila-sant .puntos i { width: 11px; height: 11px; }
-  .fila-sant .marca { bottom: -24px; }
+.juego { width: 100%; flex: 1; display: grid; grid-template-columns: 280px 1fr 280px; gap: 32px; margin-top: 18px; min-height: 0; }
+  .principal { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 6px 0 2px; }
+  .arriba { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; justify-items: center; width: 100%; }
+  .principal .titulo { margin-bottom: -6px; }
+  .principal .cartas { gap: 14px; }
+  .principal .carta { width: 104px; }
+  .principal .ilus { width: 104px; height: 104px; border-radius: 16px; }
+  .principal .ilus svg { width: 44px; height: 44px; }
+  .principal .esferas { grid-template-columns: 30px 30px 30px; gap: 4px; }
+  .principal .esf { width: 30px; height: 30px; font-size: 12px; }
+  .principal .nombre { font-size: 12px; white-space: nowrap; }
+  .principal .boton { width: 240px; }
 
-  /* Umbral en columna: cartas apaisadas */
+  /* Santuarios apilados a la derecha */
+  .derecha { display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 22px; }
+  .derecha .sant { width: 280px; height: 112px; }
+  .derecha .cuad { flex-direction: row; gap: 9px; }
+  .derecha .cuad .n { font-size: 18px; } .derecha .cuad.lider .n { font-size: 24px; }
+  .derecha .nucleo { width: 40px; height: 40px; } .derecha .nucleo .ico { width: 20px; height: 20px; }
+  .derecha .marca { bottom: -21px; }
+
   .lateral { background: #fff; border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
   .pie { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; }
   .pie .boton { width: 100%; }
   .lateral .titulo { text-align: center; margin-bottom: 2px; }
-  .fila-u { display: grid; grid-template-columns: 56px 1fr; gap: 14px; align-items: center; }
-  .fila-u .ilus { width: 56px; height: 56px; border-radius: 12px; }
-  .fila-u .ilus svg { width: 30px; height: 30px; }
+  .fila-u { display: grid; grid-template-columns: 72px 1fr; gap: 16px; align-items: center; }
+  .fila-u .ilus { width: 72px; height: 72px; border-radius: 14px; }
+  .fila-u .ilus svg { width: 34px; height: 34px; }
   .fila-u .nombre { text-align: left; margin-bottom: 4px; }
-  .fila-u .esferas { justify-content: start; grid-template-columns: 30px 30px 30px; gap: 5px; }
-  .fila-u .esf { width: 30px; height: 30px; font-size: 11px; }
+  .fila-u .esferas { justify-content: start; grid-template-columns: 32px 32px 32px; gap: 5px; }
+  .fila-u .esf { width: 32px; height: 32px; font-size: 12px; }
   .fila-u.cara { opacity: .38; }
   .linea { height: 1px; background: var(--linea); }
   .sant { position: relative; background: color-mix(in srgb, var(--el) 13%, #fff); border-radius: 14px; width: 200px; height: 104px;
@@ -94,7 +104,7 @@
   /* Mano: Mazo y Descarte a los lados, Maná en el eje */
   .mesa { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 36px; }
   .mano { gap: 26px; }
-  .pila { justify-self: center; margin-bottom: 28px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--suave); font-size: 12px; }
+  .pila { justify-self: center; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--suave); font-size: 12px; }
   .pila .dorso { width: 68px; height: 92px; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff;
     display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--tinta); }
   .mano .carta.accion { transform: translateY(-14px); }
@@ -141,24 +151,19 @@
 </div>
 
 <div class="juego">
+<div class="lateral"><div id="umbral" style="display:flex;flex-direction:column;gap:11px"></div>
+  <div class="pie"><div class="boton borde">Vincular</div></div>
+</div>
 <div class="principal">
-<div class="fila-sant" id="santuarios"></div>
-
-<div class="zona mano">
-  <div class="mesa">
+  <div class="arriba">
     <div class="pila"><div class="dorso">7</div>Mazo</div>
-    <div class="cartas" id="mano"></div>
+    <div class="total">3<small>MANÁ</small></div>
     <div class="pila"><div class="dorso">4</div>Descarte</div>
   </div>
+  <div class="zona mano"><div class="titulo">Tu mano</div><div class="cartas" id="mano"></div></div>
+  <div class="boton lleno">Terminar turno</div>
 </div>
-</div>
-<div class="lateral"><div id="umbral" style="display:flex;flex-direction:column;gap:8px"></div>
-  <div class="pie">
-    <div class="total">3<small>MANÁ</small></div>
-    <div class="boton borde">Vincular</div>
-    <div class="boton lleno">Terminar turno</div>
-  </div>
-</div>
+<div class="derecha" id="santuarios"></div>
 </div>
 
 <script>

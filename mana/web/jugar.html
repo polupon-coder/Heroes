@@ -66,7 +66,12 @@
   .panel.col-izq, .panel.col-der { background: url(texturas/columna.webp) center / 100% 100% no-repeat; border-radius: 0; }
   .col-der .titulo { color: #8a7a63; }
   .col-izq .titulo { color: #8a7a63; }
-  .col-izq .linea { background: rgba(255, 251, 244, .45); }
+  .col-izq .linea, .col-der .linea { background: rgba(255, 251, 244, .45); }
+  /* Títulos de Umbral y Santuarios encima del marco, fuera de él */
+  .columna { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .columna > .panel { flex: 1; }
+  .columna > .titulo { padding-top: 16px; }
+  #santuarios .linea { flex: none; margin: 27px 8px 8px; }
   .col-izq .fila-u.cara > :not(.pista) { opacity: .45; }
 
   /* Umbral */
@@ -114,7 +119,7 @@
   .mandos { margin-top: auto; width: 100%; display: grid; grid-template-columns: 200px 200px; justify-content: center; gap: 16px; align-items: center; }
 
   /* Santuarios */
-  #santuarios { flex: 1; display: flex; flex-direction: column; gap: 24px; padding-bottom: 20px; margin: 0 -8px; }
+  #santuarios { flex: 1; display: flex; flex-direction: column; gap: 0; padding-bottom: 22px; margin: 0 -8px; }
   /* Santuarios cuadrados, como las manchas de color */
   .sant { position: relative; background: var(--mancha) center / 100% 100% no-repeat; border-radius: 14px; flex: 1 1 0; min-height: 0; aspect-ratio: 1; align-self: center;
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
@@ -233,7 +238,7 @@
 </div>
 
 <div class="juego">
-  <div class="panel col-izq"><div class="titulo">Umbral</div><div id="umbral"></div></div>
+  <div class="columna"><div class="titulo">Umbral</div><div class="panel col-izq"><div id="umbral"></div></div></div>
   <div class="principal">
     <div class="titulo">Tu mano</div>
     <div id="mano"></div>
@@ -244,7 +249,7 @@
     </div>
     <div class="mandos"><div class="boton borde" id="deshacer">Deshacer</div><div class="boton verde" id="terminar">Terminar turno</div></div>
   </div>
-  <div class="panel col-der"><div class="titulo">Santuarios</div><div id="santuarios"></div></div>
+  <div class="columna"><div class="titulo">Santuarios</div><div class="panel col-der"><div id="santuarios"></div></div></div>
 </div>
 
 <div class="velo" id="velo"><div class="ventana" id="ventana"></div></div>
@@ -371,7 +376,7 @@ function pintar() {
     }).join('');
     const empate = max > 0 && !unico ? ' <span class="emp">· empate</span>' : '';
     return `<div class="sant cruz tx-${s}" style="--el:var(--${s})">${cuads}<div class="marca">${NOMBRE_EL[s]}${empate}</div></div>`;
-  }).join('');
+  }).join('<div class="linea"></div>');
   guia();
 }
 

@@ -34,9 +34,12 @@
   .lado.der { justify-content: space-between; gap: 0; }
   .lado.der .jug { gap: 5px; }
   .centro { text-align: center; }
-  .logo { height: 34px; display: flex; justify-content: center; }
-  .logo img { height: 100%; filter: drop-shadow(0 2px 3px rgba(80, 50, 20, .18)); }
-  .era { color: var(--suave); font-size: 12px; margin-top: 18px; }
+  /* Cabecera: ERA I · título · RONDA 1/5, y debajo de quién es el turno */
+  .logo { height: 48px; margin-top: 10px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 22px; }
+  .logo img { height: 48px; width: auto; filter: drop-shadow(0 2px 3px rgba(80, 50, 20, .18)); }
+  .era-lado { white-space: nowrap; font-size: 13px; font-weight: 700; color: var(--tinta); letter-spacing: .06em; }
+  #era-n { justify-self: end; } #ronda-n { justify-self: start; color: var(--suave); }
+  .era { color: var(--suave); font-size: 12px; margin-top: 8px; min-height: 16px; }
   .era b { color: var(--tinta); font-weight: 600; }
   .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); border-radius: 14px; padding: 2px 6px; margin: -2px -6px; }
   /* El nombre centrado con la esfera (la letra tiene la línea base alta) */
@@ -283,7 +286,7 @@
 <div class="barra">
   <div class="lado izq" id="yo"></div>
   <div class="centro">
-    <div class="logo"><img src="url(texturas/titulo.webp)" alt="MANA"></div>
+    <div class="logo"><span class="era-lado" id="era-n"></span><img src="url(texturas/titulo.webp)" alt="MANA"><span class="era-lado" id="ronda-n"></span></div>
     <div class="era" id="era"></div>
   </div>
   <div class="lado der" id="rivales"></div>
@@ -381,7 +384,9 @@ function pintar() {
   $('rivales').innerHTML = p.jug.filter((j) => j.i !== YO).map(jugador).join('');
   $('rivales').style.justifyContent = p.n === 2 ? 'flex-end' : 'space-between';
   const quien = p.turno && !entreEras ? (p.turno.i === YO ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
-  $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : `<b>Era ${ROMANO[p.era]}</b> · Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)} de ${p.v.rondas} · ${quien}`;
+  $('era-n').textContent = `Era ${ROMANO[p.era]}`;
+  $('ronda-n').textContent = `Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)}/${p.v.rondas}`;
+  $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : quien;
 
   // Umbral
   const miTurno = esMiTurno();

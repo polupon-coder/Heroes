@@ -125,7 +125,7 @@
   /* Santuarios cuadrados, como las manchas de color */
   /* Cada Santuario es una franja de su color entre las líneas blancas */
   .sant { position: relative; background: none; flex: 1 1 0; min-height: 0; width: 100%;
-    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; padding: 6px 10px 24px; }
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; padding: 8px 10px; }
   /* Color del Santuario un poco más tenue (capa aparte para no apagar las bolitas) */
   .sant::before { content: ''; position: absolute; inset: 0; background: var(--mancha) center / 130% 150% no-repeat; opacity: .8; z-index: -1; }
   .sant { isolation: isolate; }
@@ -1343,8 +1343,8 @@ function pintar() {
       const puntos = Array.from({ length: pr.n }, (_, t) => `<i class="${t < pr.prot ? 'prot' : ''}" style="background:var(--${p.jug[k].color})"></i>`).join('');
       return `<div class="cuad ${pr.n === max && unico ? 'lider' : ''}"><div class="puntos">${puntos}</div></div>`;
     }).join('');
-    const empate = max > 0 && !unico ? ' <span class="emp">· empate</span>' : '';
-    return `<div class="sant tx-${s}" style="--el:var(--${s})">${cuads}<div class="marca">${NOMBRE_EL[s]}${empate}</div></div>`;
+    const empate = max > 0 && !unico ? '<span class="emp">empate</span>' : '';
+    return `<div class="sant tx-${s}" style="--el:var(--${s})">${cuads}${empate ? `<div class="marca">${empate}</div>` : ''}</div>`;
   }).join('<div class="linea"></div>');
   guia();
 }

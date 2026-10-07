@@ -125,7 +125,6 @@
   .carta .ilus { width: var(--ancho, 108px); height: 156px; border-radius: 18px; }
   .carta .ilus svg { width: 50px; height: 50px; }
   .carta .nombre { font-size: 12px; line-height: 1.2; text-align: center; height: 2.4em; display: flex; align-items: center; justify-content: center; } /* nombres largos: hasta 2 líneas, esferas alineadas */
-  .carta.accion { transform: translateY(-6px); }
   .carta.accion .ilus { box-shadow: 0 0 0 3px var(--tinta); }
   .carta.usada .ilus { box-shadow: 0 0 0 3px var(--mana); }
   .etq { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; height: 12px; padding-left: .14em; }
@@ -158,6 +157,9 @@
   .boton.lleno { --tono: #ddd2c3; color: #4a3d2c; }
   .boton.lila, .boton-reglas { --tono: #cfc0f6; color: #fff; text-shadow: 0 1px 2px rgba(70, 40, 130, .45); }
   .boton.verde { --tono: #9cc7a5; color: #fff; text-shadow: 0 1px 2px rgba(20, 70, 35, .45); }
+  .boton.parpadea { animation: parpadea 1.1s ease-in-out infinite; }
+  @keyframes parpadea { 50% { filter: brightness(1.12) saturate(1.4); transform: scale(1.04); box-shadow: inset 2px 3px 6px rgba(60, 35, 10, .2), 0 0 0 4px rgba(156, 199, 165, .55); } }
+  @media (prefers-reduced-motion: reduce) { .boton.parpadea { animation: none; box-shadow: 0 0 0 4px rgba(156, 199, 165, .7); } }
   .boton.inactivo { opacity: .28; cursor: not-allowed; }
   /* Deshacer y Terminar turno: mismo tamaño, simétricos respecto al eje central */
   .mandos { margin-top: auto; width: 100%; display: grid; grid-template-columns: 200px 200px; justify-content: center; gap: 16px; align-items: center; }
@@ -342,7 +344,7 @@
   /* Mensajes: la guía en una franja encima de los botones; ventanas al ancho de la pantalla */
   .movil #guia { left: 8px !important; right: 8px; top: 6px !important; bottom: auto; width: auto; font-size: 11.5px; padding: 9px 12px 8px; box-shadow: 0 8px 24px rgba(76, 29, 149, .3); }
   .movil #guia::after { display: none; }
-  .movil #avisos { top: auto; bottom: 64px; width: 92%; flex-direction: column-reverse; }
+  .movil #avisos { top: auto; bottom: 168px; width: 92%; flex-direction: column-reverse; }
   .movil .aviso { font-size: 12px; }
   .movil .ventana, .movil .ventana.ancha { width: calc(100% - 24px); max-width: 420px; padding: 20px 16px 16px; }
   .movil .ventana .botones { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
@@ -1492,6 +1494,8 @@ function pintar() {
   $('descarte').textContent = yo.desc.length;
   $('total').firstChild.textContent = miTurno ? p.manaDisponible() : 0;
   $('terminar').className = 'boton ' + (miTurno ? 'verde' : 'borde inactivo');
+  // Sin cartas en la mano ya no queda nada que jugar: el botón llama la atención
+  $('terminar').classList.toggle('parpadea', miTurno && !p.jug[YO].mano.length);
   // Mientras juega otro, tu panel central se apaga un poco
   document.querySelector('.principal').classList.toggle('en-espera', !p.turno || p.fin || p.turno.i !== YO);
   $('deshacer').className = 'boton borde' + (miTurno && pasos.length ? '' : ' inactivo');

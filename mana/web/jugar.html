@@ -44,6 +44,13 @@
   .jug.activo { color: var(--tinta); font-weight: 700; background: #fff; box-shadow: 0 0 0 1.5px var(--tinta); }
   /* Sellos: el número dentro de una esfera de piedra del color del jugador */
   .sello { display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); }
+  .titulo-inicio { width: 230px; margin: 4px 0 8px; }
+  .boton-reglas { font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 6px 12px 4px; border-radius: 14px; cursor: pointer;
+    background: var(--mana); color: #fff; margin-left: -6px; }
+  .reglas { text-align: left; font-size: 12px; line-height: 1.5; color: var(--tinta); max-height: 440px; overflow: auto; text-transform: none; padding-right: 6px; }
+  .reglas h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--mana); margin: 12px 0 4px; }
+  .reglas h3:first-child { margin-top: 0; }
+  .reglas ul { padding-left: 18px; margin: 0; }
   .registro-btn { color: var(--suave); font-size: 11px; text-decoration: underline; cursor: pointer; margin-left: 6px; }
 
   /* Guía: mensajes flotantes que explican el siguiente paso */
@@ -165,6 +172,10 @@
     display: inline-flex; align-items: center; justify-content: center; gap: 1px; }
   .esf svg { width: 11px; height: 11px; }
   .esf.c { background: var(--coste); }
+  /* Relieve de piedra sobre todas las esferas de las cartas (sirve para cualquier color, también las partidas) */
+  .esf { position: relative; isolation: isolate; }
+  .esf::before { content: ''; position: absolute; inset: 0; border-radius: 50%; z-index: -1; background: url(texturas/esfera-relieve.webp) center / cover; mix-blend-mode: multiply; }
+  .esf { text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
   /* Esferas de piedra: Maná lila; Sellos del color de cada jugador */
   .esf.m { background: var(--mana); }
   .piedra { width: 26px; height: 26px; background: var(--esf) center / contain no-repeat; vertical-align: middle; }
@@ -258,7 +269,7 @@
 <div class="juego">
   <div class="columna"><div class="titulo img"><img src="url(texturas/titulo-umbral.webp)" alt="Umbral"></div><div class="panel col-izq"><div id="umbral"></div></div></div>
   <div class="principal">
-    <div class="titulo">Tu mano</div>
+    <div class="titulo img"><img src="url(texturas/titulo-ofrenda.webp)" alt="Ofrenda"></div>
     <div id="mano"></div>
     <div class="arriba">
       <div class="pila"><div class="dorso" id="mazo">0</div>Mazo</div>
@@ -337,7 +348,8 @@ function jugador(j) {
 
 function pintar() {
   const yo = p.jug[0];
-  $('yo').innerHTML = jugador(yo);
+  $('yo').innerHTML = jugador(yo) + '<span class="boton-reglas" id="ver-reglas">Reglas</span>';
+  $('ver-reglas').onclick = verReglas;
   $('rivales').innerHTML = p.jug.slice(1).map(jugador).join('');
   $('rivales').style.justifyContent = p.n === 2 ? 'flex-end' : 'space-between';
   const quien = p.turno && !entreEras ? (p.turno.i === 0 ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
@@ -959,10 +971,31 @@ function finPartida() {
     [{ texto: 'Ver registro', accion: verRegistro }, { texto: 'Copiar registro', cierra: false, accion: copiarRegistro }, { texto: 'Otra partida', clase: 'verde', accion: inicio }], true, true);
 }
 
+function verReglas() {
+  abrir(`<h2>Reglas</h2><div class="reglas">
+    <h3>Objetivo</h3>Eres un Guardián. Vincula Elementales y pon Presencia en los cuatro Santuarios. Al final de cada Era, quien tiene más Presencia en un Santuario gana sus Sellos: 1 en la Era I, 2 en la II y 3 en la III. Tras 3 Eras gana quien tenga más Sellos.
+    <h3>Tu turno</h3><ul>
+      <li>Juega las cartas de tu mano de una en una. Cada carta se usa <b>como Acción</b> (esfera de color) <b>o como Maná</b> (esfera lila), nunca las dos.</li>
+      <li><b>Vincula</b> 1 Elemental del Umbral pagando su coste (esfera gris). Va a tu descarte y volverá a tu mano más adelante.</li>
+      <li><b>Libera</b> 1 carta inicial jugada este turno pagando 2 Maná: sale de la partida y tu mazo mejora.</li>
+      <li>Al terminar, descartas todo y robas 5. El Maná que no gastes se pierde.</li></ul>
+    <h3>Las cartas</h3><ul>
+      <li>Esferas en orden <b>Coste · Maná · Acción</b>. Las cartas iniciales no tienen coste.</li>
+      <li>Acción de color de un Santuario (+1, +2…): pones Presencias tuyas allí.</li>
+      <li>Fuego retira Presencias rivales, Aire las mueve, Tierra protege las tuyas, Agua juega con las cartas.</li>
+      <li>Una Presencia protegida no se puede retirar ni mover hasta el final de la Era.</li></ul>
+    <h3>Eras y empates</h3><ul>
+      <li>Cada Era dura 5 rondas. Al acabar se puntúa, se vacían los Santuarios y se renueva el Umbral. Tu mazo se conserva.</li>
+      <li>Si dos empatan en cabeza en un Santuario, nadie gana sus Sellos.</li>
+      <li>Empieza cada Era quien tiene más Sellos.</li>
+      <li>Empate final: gana quien consiguió más Sellos en la Era III.</li></ul>
+    </div>`, [{ texto: 'Cerrar', clase: 'lleno' }], true);
+}
+
 function inicio() {
   let n = 4;
   const pintarOpciones = () => [2, 3, 4].map((k) => `<div class="opcion ${k === n ? 'elegida' : ''}" data-n="${k}">${k - 1} ${k === 2 ? 'rival' : 'rivales'}</div>`).join('');
-  abrir(`<h2 style="letter-spacing:.3em">MANA</h2><div class="texto">Guardianes, Elementales y cuatro Santuarios.<br>3 Eras. Gana quien reúna más Sellos.</div>
+  abrir(`<img class="titulo-inicio" src="url(texturas/titulo.webp)" alt="MANA">
     <div class="opciones" id="opciones">${pintarOpciones()}</div>`,
   [{ texto: 'Empezar', clase: 'verde', accion: () => nuevaPartida(n) }], false, true);
   $('opciones').onclick = (e) => { const o = e.target.closest('[data-n]'); if (o) { n = Number(o.dataset.n); $('opciones').innerHTML = pintarOpciones(); } };

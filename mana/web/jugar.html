@@ -452,6 +452,15 @@ function verCarta(donde, k) {
   const yo = p.jug[0];
   if (donde === 'mano') {
     const c = yo.mano[k];
+    // Cartas sin Acción (Mota de Maná): no hay nada que elegir, se usan como Maná al tocarlas
+    if (!c.accion.length && esMiTurno()) {
+      nuevas = [];
+      p.humanoMana(k);
+      avisar(`${c.nombre}: +${c.mana} de Maná`, 1800);
+      latido();
+      pintar();
+      return;
+    }
     const roba = c.accion.some((e) => e.draw);
     const recupera = c.accion.some((e) => e.recover);
     let nota = '';

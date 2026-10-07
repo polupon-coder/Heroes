@@ -12,7 +12,7 @@
     --fondo: #f6f5f1; --tinta: #1d1d1f; --suave: #8a8a8f; --linea: #e4e2dc;
     --coste: #a3a3a8; --mana: #a78bfa;
     --verde: #4f9a5f; --fuego: #d36754; --agua: #5f8fc9; --tierra: #7f9a62; --aire: #e2b53c; --neutro: #4b5563;
-    --t-fuego: #fbe3df; --t-agua: #dfeafd; --t-tierra: #dcf0e3; --t-aire: #faf0d0;
+    --t-fuego: #fbe3df; --t-agua: #dfeafd; --t-tierra: #dcf0e3; --t-aire: #faf0d0; --t-mana: #ece5fd;
   }
   /* Mesa de aspecto claro a propósito (mismo look con el tema claro u oscuro del visor) */
   :root { color-scheme: light; }
@@ -198,20 +198,20 @@
   .piedra { width: 26px; height: 26px; background: var(--esf) center / contain no-repeat; vertical-align: middle; }
   .esf-fuego { --esf: url(texturas/esfera-fuego.webp); } .esf-agua { --esf: url(texturas/esfera-agua.webp); }
   .esf-tierra { --esf: url(texturas/esfera-tierra.webp); } .esf-aire { --esf: url(texturas/esfera-aire.webp); }
-  .esf.doble { gap: 0; }
+  .esf.doble { gap: 1px; padding: 0 3px; }
   .esf.solo-num { font-size: 16px; }
-  .esf.doble > span.solo-num { font-size: 12px; justify-content: center; }
-  .esf.doble > span { width: 50%; display: flex; flex-direction: column; align-items: center; font-size: 9px; line-height: 1; gap: 1px; }
-  .esf.doble svg { width: 8px; height: 8px; }
+  .esf.doble > span.solo-num { font-size: 13px; justify-content: center; }
+  .esf.doble > span { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: 11px; line-height: 1; gap: 0; }
+  .esf.doble svg { width: 11px; height: 11px; }
 
   /* Explicación al pasar el ratón */
-  .pista { display: none; position: absolute; z-index: 50; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
-    width: 210px; background: #f3e9db url(texturas/fondo.webp) center / cover; color: #5b4a35; border-radius: 12px; padding: 10px 13px 9px; font-size: 12px; line-height: 1.4;
+  .pista { display: none; position: absolute; z-index: 50; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    width: 210px; background: var(--tinte, #f3e9db) url(texturas/fondo.webp) center / cover; background-blend-mode: multiply; color: #5b4a35; border-radius: 12px; padding: 10px 13px 9px; font-size: 12px; line-height: 1.4;
     text-align: center; box-shadow: 0 6px 18px rgba(80, 50, 20, .22), inset 0 0 0 1px rgba(255, 255, 255, .6); pointer-events: none; }
   .pista b { display: block; font-size: 12px; margin-bottom: 2px; }
   .pista small { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.18); color: #c4b5fd; font-size: 10px; }
   .carta:hover .pista, .fila-u:hover .pista { display: block; }
-  .fila-u .pista { bottom: auto; top: 50%; left: calc(100% + 14px); transform: translateY(-50%); }
+  .fila-u .pista { top: 50%; left: calc(100% + 14px); transform: translateY(-50%); }
 
   /* Ventanas */
   .velo { position: fixed; inset: 0; z-index: 100; background: rgba(29, 29, 31, .4); display: none; align-items: center; justify-content: center; }
@@ -366,7 +366,7 @@ const ilus = (c) => c.el && imagen(c)
   ? `<div class="ilus con-img"><img src="${IMAGENES[c.nombre]}" alt=""></div>`
   : '<div class="ilus mota"><span></span></div>';
 // Al pasar el ratón: solo qué hace su Acción
-const pista = (c) => `<div class="pista">${textoDe(c) || 'Solo da Maná.'}</div>`;
+const pista = (c) => `<div class="pista" style="--tinte:var(--t-${c.el || 'mana'})">${textoDe(c) || 'Solo da Maná.'}</div>`;
 
 // ---------- Dibujo de la mesa ----------------------------------------------------------------
 function jugador(j) {

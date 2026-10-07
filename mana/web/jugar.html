@@ -55,7 +55,7 @@
   @keyframes aparece { from { opacity: 0; transform: translateY(4px); } }
   @media (prefers-reduced-motion: reduce) { #guia, .aviso { animation: none; } }
 
-  .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 256px 1fr 256px; gap: 24px; margin-top: 18px; min-height: 0; }
+  .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 256px 1fr 256px; gap: 24px; margin-top: 30px; min-height: 0; }
   .titulo { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--suave); padding-left: .16em; text-align: center; }
   .panel { background: rgba(255, 252, 247, .78); border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
   /* Columnas laterales: solo la mancha pintada, sin panel debajo */
@@ -134,6 +134,9 @@
   .ilus.tx { background: linear-gradient(rgba(255, 251, 244, .18), rgba(255, 251, 244, .18)), var(--tex) center / cover; }
   /* Elementales ilustrados: sin fondo, solo la figura */
   .ilus.con-img { background: none; }
+  /* Mota de Maná: una esfera lila, sin fondo */
+  .ilus.mota span { width: 46%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #e9e1ff, var(--mana) 55%, #7c5fd6);
+    box-shadow: 0 6px 14px rgba(124, 95, 214, .35); }
   .ilus.con-img img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 5px rgba(60, 30, 10, .22)); }
   .ilus.tx svg { color: #fff !important; filter: drop-shadow(0 1px 2px rgba(0,0,0,.18)); }
   .esferas { display: grid; grid-template-columns: 32px 32px 32px; gap: 4px; justify-items: center; align-items: center; }
@@ -289,11 +292,14 @@ function accion(partes) {
 const esferas = (c, coste) => `<div class="esferas${c.inicial ? ' sin-coste' : ''}">${c.inicial ? '' : `<span class="esf c">${coste}</span>`}<span class="esf m">${c.mana}</span>${accion(partesDe(c))}</div>`;
 // Ilustraciones de los Elementales (las incrusta construir.js desde web/elementales/)
 const IMAGENES = /*IMAGENES*/{};
-const ilus = (c) => c.el && IMAGENES[c.nombre]
-  ? `<div class="ilus tx tx-${c.el} con-img"><img src="${IMAGENES[c.nombre]}" alt=""></div>`
+// Los Menores (cartas iniciales) usan al Elemental pequeño de su elemento: hacen lo mismo que él (+1)
+const MENOR = { fuego: 'Ascua', agua: 'Gota', tierra: 'Polvo', aire: 'Brisa' };
+const imagen = (c) => IMAGENES[c.nombre] || (c.inicial && c.el && IMAGENES[MENOR[c.el]]);
+const ilus = (c) => c.el && imagen(c)
+  ? `<div class="ilus tx tx-${c.el} con-img"><img src="${imagen(c)}" alt=""></div>`
   : c.el
   ? `<div class="ilus tx tx-${c.el}"><svg style="color:var(--${c.el})"><use href="#${c.el}"/></svg></div>`
-  : '<div class="ilus" style="background:#ede9fe"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="var(--mana)"/></svg></div>';
+  : '<div class="ilus mota"><span></span></div>';
 const pista = (c, coste) => `<div class="pista"><b>${c.nombre}</b>${textoDe(c)}<small>${c.inicial ? 'Carta inicial · ' : `Coste ${coste} · `}Como Maná: ${c.mana}</small></div>`;
 
 // ---------- Dibujo de la mesa ----------------------------------------------------------------

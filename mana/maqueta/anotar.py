@@ -19,7 +19,7 @@ NOTAS = [
     ('.mano .carta.usada .ilus', 'izq', 'Maná', 'Cartas usadas como Maná (marco lila): no hacen su Acción.'),
     ('.mano .carta:nth-child(5) .ilus', 'izq', 'Sin jugar', 'Las cartas que no juegues se descartan al acabar el turno.'),
     ('.principal > .boton', 'izq', 'Terminar turno', 'Descartas todo y robas 5 cartas nuevas.'),
-    ('.derecha .sant:nth-child(1)', 'izq', 'Santuario', 'Un cuadrante por Guardián, en el orden de la cabecera. Número = Presencias; el más grande va primero.'),
+    ('.derecha .sant:nth-child(1)', 'izq', 'Santuario', 'Un cuadrante por Guardián, en el orden de la cabecera. Cada bolita es una Presencia; las más grandes, quien va primero.'),
     ('.derecha .sant:nth-child(2) .marca', 'fuera', 'Empate', 'Empate en cabeza: nadie gana los Sellos de ese Santuario.'),
     ('.derecha .sant:nth-child(3) .cuad:nth-child(3) .puntos', 'fuera', 'Protegida', 'Anillo: Presencia que no se puede retirar ni mover.'),
     ('.derecha .sant:nth-child(4)', 'izq', 'Final de Era', 'En cada Santuario, quien tiene más Presencia gana sus Sellos. Luego se vacía.'),

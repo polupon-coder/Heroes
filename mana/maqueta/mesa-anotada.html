@@ -49,7 +49,6 @@
   .derecha { display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 22px; }
   .derecha .sant { width: 280px; height: 112px; }
   .derecha .cuad { flex-direction: row; gap: 9px; }
-  .derecha .cuad .n { font-size: 18px; } .derecha .cuad.lider .n { font-size: 24px; }
   .derecha .nucleo { width: 40px; height: 40px; } .derecha .nucleo .ico { width: 20px; height: 20px; }
   .derecha .marca { bottom: -21px; }
 
@@ -68,11 +67,10 @@
   .sant { position: relative; background: color-mix(in srgb, var(--el) 13%, #fff); border-radius: 14px; width: 200px; height: 104px;
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
   .cuad { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-  .cuad .n { font-size: 15px; font-weight: 600; line-height: 1; }
-  .cuad .n.cero { color: color-mix(in srgb, var(--el) 30%, transparent); }
-  .cuad.lider .n { font-size: 20px; font-weight: 800; }
-  .puntos { display: flex; gap: 3px; height: 10px; }
-  .puntos i { width: 10px; height: 10px; border-radius: 50%; }
+  .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 74px; } /* filas de 5 */
+  .puntos i { width: 11px; height: 11px; border-radius: 50%; }
+  .cuad.lider .puntos { max-width: 94px; gap: 5px; }
+  .cuad.lider .puntos i { width: 14px; height: 14px; } /* quien va primero: bolitas más grandes */
   .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
   .nucleo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; border-radius: 50%;
     background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -199,7 +197,7 @@
     const cuads = orden.map((k) => {
       const n = ns[k];
       const puntos = Array.from({ length: n }, (_, t) => `<i class="${t < (prot[k] || 0) ? 'prot' : ''}" style="background:var(--${EL[k]})"></i>`).join('');
-      return `<div class="cuad ${n === max && unico ? 'lider' : ''}"><div class="n ${n ? '' : 'cero'}" style="${n ? `color:var(--${EL[k]})` : ''}">${n}</div><div class="puntos">${puntos}</div></div>`;
+      return `<div class="cuad ${n === max && unico ? 'lider' : ''}"><div class="puntos">${puntos}</div></div>`;
     }).join('');
     return `<div class="sant cruz" style="--el:var(--${el})">${cuads}<div class="nucleo">${icono(el, `var(--${el})`)}</div><div class="marca">${nom}${unico ? '' : ' <span class="emp">· empate</span>'}</div></div>`;
   });
@@ -265,7 +263,7 @@
     border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
 </style>
 <script>
-  const NOTAS = [[".lado.izq .jug", "izq", "Tú", "Guardián del Fuego (rojo). El número rodeado son tus Sellos."], [".centro .era b", "antes", "Era y ronda", "Era II, ronda 3 de 5. En esta Era cada Santuario da 2 Sellos."], [".lado.der", "izq", "Rivales", "Ana (Agua), Pol (Tierra) y Marc (Aire), con sus Sellos."], [".lateral", "izq", "Umbral", "Elementales que puedes vincular. Los atenuados cuestan más Maná del que tienes."], ["#umbral .fila-u .esferas", "izq", "Esferas", "Coste (gris) · Maná que da (lila) · Acción, del color del Santuario al que afecta."], ["#umbral > .fila-u:nth-child(4) .esf.a", "der", "Dos efectos", "Esfera partida: Embestida da +1 🔥 y retira 1 Presencia rival."], [".lateral .boton", "izq", "Vincular", "Pagas el Coste con tu Maná y el Elemental va a tu descarte."], [".arriba .pila:first-child .dorso", "izq", "Mazo", "Cartas que te quedan por robar."], [".total", "izq", "Maná del turno", "Suma de las cartas usadas como Maná. Lo que sobra se pierde."], [".arriba .pila:last-child .dorso", "izq", "Descarte", "Cartas usadas. Se barajan cuando se acaba el mazo."], [".mano .carta.accion .ilus", "izq", "Acción", "Carta jugada por su poder (marco negro): Llama pone +2 Presencias en Fuego."], [".mano .carta.usada .ilus", "izq", "Maná", "Cartas usadas como Maná (marco lila): no hacen su Acción."], [".mano .carta:nth-child(5) .ilus", "izq", "Sin jugar", "Las cartas que no juegues se descartan al acabar el turno."], [".principal > .boton", "izq", "Terminar turno", "Descartas todo y robas 5 cartas nuevas."], [".derecha .sant:nth-child(1)", "izq", "Santuario", "Un cuadrante por Guardián, en el orden de la cabecera. Número = Presencias; el más grande va primero."], [".derecha .sant:nth-child(2) .marca", "fuera", "Empate", "Empate en cabeza: nadie gana los Sellos de ese Santuario."], [".derecha .sant:nth-child(3) .cuad:nth-child(3) .puntos", "fuera", "Protegida", "Anillo: Presencia que no se puede retirar ni mover."], [".derecha .sant:nth-child(4)", "izq", "Final de Era", "En cada Santuario, quien tiene más Presencia gana sus Sellos. Luego se vacía."]];
+  const NOTAS = [[".lado.izq .jug", "izq", "Tú", "Guardián del Fuego (rojo). El número rodeado son tus Sellos."], [".centro .era b", "antes", "Era y ronda", "Era II, ronda 3 de 5. En esta Era cada Santuario da 2 Sellos."], [".lado.der", "izq", "Rivales", "Ana (Agua), Pol (Tierra) y Marc (Aire), con sus Sellos."], [".lateral", "izq", "Umbral", "Elementales que puedes vincular. Los atenuados cuestan más Maná del que tienes."], ["#umbral .fila-u .esferas", "izq", "Esferas", "Coste (gris) · Maná que da (lila) · Acción, del color del Santuario al que afecta."], ["#umbral > .fila-u:nth-child(4) .esf.a", "der", "Dos efectos", "Esfera partida: Embestida da +1 🔥 y retira 1 Presencia rival."], [".lateral .boton", "izq", "Vincular", "Pagas el Coste con tu Maná y el Elemental va a tu descarte."], [".arriba .pila:first-child .dorso", "izq", "Mazo", "Cartas que te quedan por robar."], [".total", "izq", "Maná del turno", "Suma de las cartas usadas como Maná. Lo que sobra se pierde."], [".arriba .pila:last-child .dorso", "izq", "Descarte", "Cartas usadas. Se barajan cuando se acaba el mazo."], [".mano .carta.accion .ilus", "izq", "Acción", "Carta jugada por su poder (marco negro): Llama pone +2 Presencias en Fuego."], [".mano .carta.usada .ilus", "izq", "Maná", "Cartas usadas como Maná (marco lila): no hacen su Acción."], [".mano .carta:nth-child(5) .ilus", "izq", "Sin jugar", "Las cartas que no juegues se descartan al acabar el turno."], [".principal > .boton", "izq", "Terminar turno", "Descartas todo y robas 5 cartas nuevas."], [".derecha .sant:nth-child(1)", "izq", "Santuario", "Un cuadrante por Guardián, en el orden de la cabecera. Cada bolita es una Presencia; las más grandes, quien va primero."], [".derecha .sant:nth-child(2) .marca", "fuera", "Empate", "Empate en cabeza: nadie gana los Sellos de ese Santuario."], [".derecha .sant:nth-child(3) .cuad:nth-child(3) .puntos", "fuera", "Protegida", "Anillo: Presencia que no se puede retirar ni mover."], [".derecha .sant:nth-child(4)", "izq", "Final de Era", "En cada Santuario, quien tiene más Presencia gana sus Sellos. Luego se vacía."]];
   const leyenda = document.createElement('div');
   leyenda.className = 'leyenda';
   leyenda.innerHTML = '<h2>Qué es cada cosa</h2>' + NOTAS.map(([, , t, x], k) =>

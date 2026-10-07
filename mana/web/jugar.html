@@ -114,6 +114,7 @@
 
   .boton { text-align: center; padding: 10px 0; border-radius: 22px; font-weight: 600; font-size: 13px; cursor: pointer; border: 1.5px solid var(--tinta); }
   .boton.lleno { background: var(--tinta); color: #fff; }
+  .boton.lila { background: var(--mana); border-color: var(--mana); color: #fff; }
   .boton.verde { background: var(--verde); border-color: var(--verde); color: #fff; }
   .boton.inactivo { opacity: .28; cursor: not-allowed; }
   /* Deshacer y Terminar turno: mismo tamaño, simétricos respecto al eje central */
@@ -124,14 +125,15 @@
   /* Santuarios cuadrados, como las manchas de color */
   /* Cada Santuario es una franja de su color entre las líneas blancas */
   .sant { position: relative; background: none; flex: 1 1 0; min-height: 0; width: 100%;
-    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; padding: 8px 10px; }
+    display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 8px 10px; }
   /* Color del Santuario un poco más tenue (capa aparte para no apagar las bolitas) */
   .sant::before { content: ''; position: absolute; inset: 0; background: var(--mancha) center / 130% 150% no-repeat; opacity: .8; z-index: -1; }
   .sant { isolation: isolate; }
-  .cuad { display: flex; align-items: center; justify-content: center; }
-  .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 50px; }
+  /* Una fila por jugador, centrada; en blanco si no tiene presencia */
+  .cuad { display: flex; align-items: center; justify-content: center; min-height: 12px; }
+  .puntos { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; max-width: 220px; }
   .puntos i { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9); }
-  .cuad.lider .puntos { max-width: 56px; gap: 4px; }
+  .cuad.lider .puntos { gap: 4px; }
   .cuad.lider .puntos i { width: 12px; height: 12px; }
   .puntos i.prot { box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--tinta); }
   .marca { position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%); color: color-mix(in srgb, var(--el) 78%, #000); font-weight: 600;
@@ -381,7 +383,7 @@ function pintar() {
     const max = Math.max(...ns);
     const unico = max > 0 && ns.filter((x) => x === max).length === 1;
     const cuads = [0, 1, 2, 3].map((k) => {
-      if (k >= p.n) return '<div class="cuad"></div>';
+      if (k >= p.n) return '';
       const pr = p.pres[s][k];
       const puntos = Array.from({ length: pr.n }, (_, t) => `<i class="${t < pr.prot ? 'prot' : ''}" style="background:var(--${p.jug[k].color})"></i>`).join('');
       return `<div class="cuad ${pr.n === max && unico ? 'lider' : ''}"><div class="puntos">${puntos}</div></div>`;
@@ -541,8 +543,8 @@ function verCarta(donde, k) {
     if (conObjetivos(c)) nota += '<div class="nota">Al jugarla te preguntaré qué eliges en cada efecto.</div>';
     abrir(cabeceraCarta(c, c.coste) + nota, [
       { texto: 'Cancelar' },
-      { texto: `Maná (+${c.mana})`, clase: 'borde', inactivo: !esMiTurno(), accion: () => { guardar(`${c.nombre} como Maná`); nuevas = []; p.humanoMana(k); latido(); pintar(); } },
-      { texto: 'Acción', clase: 'lleno', inactivo: !esMiTurno() || !c.accion.length, accion: () => jugarAccion(k) },
+      { texto: `Maná (+${c.mana})`, clase: 'lila', inactivo: !esMiTurno(), accion: () => { guardar(`${c.nombre} como Maná`); nuevas = []; p.humanoMana(k); latido(); pintar(); } },
+      { texto: 'Acción', clase: 'verde', inactivo: !esMiTurno() || !c.accion.length, accion: () => jugarAccion(k) },
     ]);
     return;
   }

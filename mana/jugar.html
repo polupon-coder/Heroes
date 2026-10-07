@@ -37,9 +37,11 @@
   /* Cabecera: ERA I · título · RONDA 1/5, y debajo de quién es el turno */
   .logo { height: 48px; margin-top: 10px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 22px; }
   .logo img { height: 48px; width: auto; filter: drop-shadow(0 2px 3px rgba(80, 50, 20, .18)); }
-  .era-lado { white-space: nowrap; font-size: 13px; font-weight: 700; color: var(--tinta); letter-spacing: .06em; }
-  #era-n { justify-self: end; } #ronda-n { justify-self: start; color: var(--suave); }
-  .era { color: var(--suave); font-size: 12px; margin-top: 8px; min-height: 16px; }
+  .era-lado { white-space: nowrap; font-size: 13px; font-weight: 700; color: var(--suave); letter-spacing: .06em; }
+  #era-n { justify-self: end; } #ronda-n { justify-self: start; }
+  .principal { transition: opacity .3s; }
+  .principal.en-espera { opacity: .5; }
+  .era { color: var(--suave); font-size: 12px; margin-top: 6px; }
   .era b { color: var(--tinta); font-weight: 600; }
   .jug { display: flex; align-items: center; gap: 7px; color: var(--suave); border-radius: 14px; padding: 2px 6px; margin: -2px -6px; }
   /* El nombre centrado con la esfera (la letra tiene la línea base alta) */
@@ -1364,7 +1366,7 @@ function pintar() {
   const quien = p.turno && !entreEras ? (p.turno.i === YO ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
   $('era-n').textContent = `Era ${ROMANO[p.era]}`;
   $('ronda-n').textContent = `Ronda ${Math.min(p.rondaEra + 1, p.v.rondas)}/${p.v.rondas}`;
-  $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : quien;
+  $('era').innerHTML = p.fin ? '<b>Partida terminada</b>' : '';
 
   // Umbral
   const miTurno = esMiTurno();
@@ -1398,7 +1400,9 @@ function pintar() {
   $('mazo').textContent = yo.mazo.length;
   $('descarte').textContent = yo.desc.length;
   $('total').firstChild.textContent = miTurno ? p.manaDisponible() : 0;
-  $('terminar').className = 'boton verde' + (miTurno ? '' : ' inactivo');
+  $('terminar').className = 'boton ' + (miTurno ? 'verde' : 'borde inactivo');
+  // Mientras juega otro, tu panel central se apaga un poco
+  document.querySelector('.principal').classList.toggle('en-espera', !p.turno || p.fin || p.turno.i !== YO);
   $('deshacer').className = 'boton borde' + (miTurno && pasos.length ? '' : ' inactivo');
   $('deshacer').title = pasos.length ? `Deshacer: ${pasos[pasos.length - 1].texto}` : 'Nada que deshacer en este turno';
   $('terminar').textContent = miTurno ? 'Terminar turno' : p.fin ? 'Partida terminada' : eligiendo ? 'Elige en la ventana…' : p.turno ? `Juega ${NOMBRES[p.turno.i]}…` : 'Terminar turno';

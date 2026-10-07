@@ -36,6 +36,8 @@ const filas = [
   ['v0.1', V01],
   ['v0.2', {}],
   ['v0.2 con Eras de 4 rondas', { rondas: 4 }],
+  ['v0.2 con mano de 6', { mano: 6, manoPrimero: 6 }],
+  ['v0.2 con mano de 6 y Eras de 4 rondas', { mano: 6, manoPrimero: 6, rondas: 4 }],
 ];
 console.log('| Versión | 2 jugadores | 3 jugadores | 4 jugadores | Segundos por turno (4 j.) |');
 console.log('| --- | ---: | ---: | ---: | ---: |');

@@ -18,6 +18,7 @@ const BASE = {
   liberarEnLugar: false, // true: liberar solo en lugar de vincular
   liberarMax: 1, // cartas iniciales que se liberan cada vez
   botLiberar: 0.08, // (bot) valor de liberar por turno que le queda; puede ser una lista por jugador
+  mano: 5, // cartas que se roban al final de cada turno
   manoPrimero: 5, // cartas de la primera mano del jugador inicial (con 4 se compensa demasiado)
   desorden: 'rival', // quién elige la carta que descarta el rival en Desorden
   afinidad: ['mazo'], // Guardianes de color: lista con 'mazo', 'empate', 'descuento' y/o 'presencia' ([] = solo color, null = sin color)
@@ -89,7 +90,7 @@ class Partida {
       this.jug.push({ i, mazo, mano: [], desc: [], jugadas: [], sellos: 0, selloEra: [], vinculadas: 0, liberadas: 0, gusto: ELEMENTOS[Math.floor(this.rng() * 4)], color: colores ? colores[i] : null });
       if (colores) this.jug[i].gusto = colores[i];
     }
-    this.jug.forEach((j) => this.robar(j, j.i === 0 ? this.v.manoPrimero : 5));
+    this.jug.forEach((j) => this.robar(j, j.i === 0 ? this.v.manoPrimero : this.v.mano));
     this.pila = shuffle(this.v.cartas.flatMap((c) => Array(this.v.copias).fill(c)), this.rng);
     this.umbral = [];
     this.reponer();
@@ -448,7 +449,7 @@ class Partida {
     j.desc.push(...j.jugadas, ...j.mano);
     j.jugadas = [];
     j.mano = [];
-    this.robar(j, 5);
+    this.robar(j, this.v.mano);
   }
 
   puntuar() {

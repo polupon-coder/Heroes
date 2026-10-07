@@ -33,15 +33,17 @@
   /* Santuarios: icono en el centro y un cuadrante por Guardián */
 .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 280px 1fr 280px; gap: 32px; margin-top: 18px; min-height: 0; }
   .principal { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 6px 0 18px; }
-  .arriba { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; justify-items: center; width: 100%; margin-top: auto; margin-bottom: 40px; }
+  .principal > .total { margin-top: auto; margin-bottom: 22px; }
   .principal > .boton { margin-top: auto; }
-  .principal .titulo { margin-bottom: -6px; }
-  .principal .cartas { gap: 14px; }
-  .principal .carta { width: 104px; }
-  .principal .ilus { width: 104px; height: 104px; border-radius: 16px; }
-  .principal .ilus svg { width: 44px; height: 44px; }
-  .principal .esferas { grid-template-columns: 30px 30px 30px; gap: 4px; }
-  .principal .esf { width: 30px; height: 30px; font-size: 12px; }
+  .principal .titulo { margin-bottom: -2px; }
+  /* Mano en dos filas de 3 (con 5 cartas: 3 + 2), Mazo y Descarte a los lados */
+  .fila-mano { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%; }
+  .principal .cartas { width: 412px; flex-wrap: wrap; column-gap: 16px; row-gap: 10px; }
+  .principal .carta { width: 126px; gap: 6px; }
+  .principal .ilus { width: 126px; height: 108px; border-radius: 18px; }
+  .principal .ilus svg { width: 48px; height: 48px; }
+  .principal .esferas { grid-template-columns: 32px 32px 32px; gap: 4px; }
+  .principal .esf { width: 32px; height: 32px; font-size: 12px; }
   .principal .nombre { font-size: 12px; white-space: nowrap; }
   .principal .boton { width: 240px; }
 
@@ -136,11 +138,11 @@
 
   /* Mano: Mazo y Descarte a los lados, Maná en el eje */
   .mesa { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 36px; }
-  .mano { gap: 26px; }
+  .mano { gap: 14px; width: 100%; }
   .pila { justify-self: center; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--suave); font-size: 12px; }
   .pila .dorso { width: 68px; height: 92px; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff;
     display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--tinta); }
-  .mano .carta.accion { transform: translateY(-14px); }
+  .mano .carta.accion { transform: translateY(-6px); }
   .mano .carta.accion .ilus { box-shadow: 0 0 0 3px var(--tinta); }
   .mano .carta.usada .ilus { box-shadow: 0 0 0 3px var(--mana); }
   .etq { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; height: 12px; padding-left: .14em; }
@@ -187,12 +189,14 @@
 <div class="lateral"><div id="umbral"></div>
 </div>
 <div class="principal">
-  <div class="arriba">
-    <div class="pila"><div class="dorso">7</div>Mazo</div>
-    <div class="total"><span id="mana">3</span><small>MANÁ</small></div>
-    <div class="pila"><div class="dorso" id="descarte">4</div>Descarte</div>
+  <div class="total"><span id="mana">3</span><small>MANÁ</small></div>
+  <div class="zona mano"><div class="titulo">Tu mano</div>
+    <div class="fila-mano">
+      <div class="pila"><div class="dorso">7</div>Mazo</div>
+      <div class="cartas" id="mano"></div>
+      <div class="pila"><div class="dorso" id="descarte">4</div>Descarte</div>
+    </div>
   </div>
-  <div class="zona mano"><div class="titulo">Tu mano</div><div class="cartas" id="mano"></div></div>
   <div class="boton terminar">Terminar turno</div>
 </div>
 <div class="derecha"><div class="titulo">Santuarios</div><div id="santuarios"></div></div>
@@ -317,8 +321,8 @@
 
   document.getElementById('mano').innerHTML = [
     carta('Manantial', 'agua', 2, 1, [['roba', '1']], 'usada', 'Maná'),
-    carta('Raíces profundas', 'tierra', 4, 2, [['tierra', '+1'], ['escudo', '⛨']], 'usada', 'Maná'),
     carta('Llama', 'fuego', 3, 1, [['fuego', '+2']], 'accion', 'Acción'),
+    carta('Raíces profundas', 'tierra', 4, 2, [['tierra', '+1'], ['escudo', '⛨']], 'usada', 'Maná'),
     carta('Menor de Fuego', 'fuego', 0, 1, [['fuego', '+1']]),
     carta('Mota de Maná', null, 0, 1, []),
   ].join('');
@@ -341,7 +345,7 @@
     border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
 </style>
 <script>
-  const NOTAS = [[".lado.izq .jug", "izq", "Tú", "Guardián del Fuego (rojo). El número rodeado son tus Sellos."], [".centro .era b", "antes", "Era y ronda", "Era II, ronda 3 de 5. En esta Era cada Santuario da 2 Sellos."], [".lado.der", "izq", "Rivales", "Ana (Agua), Pol (Tierra) y Marc (Aire), con sus Sellos."], [".lateral", "izq", "Umbral", "Elementales que puedes vincular. Los atenuados cuestan más Maná del que tienes."], ["#umbral .fila-u .esferas", "izq", "Esferas", "Coste (gris) · Maná que da (lila) · Acción, del color del Santuario al que afecta."], ["#umbral > .fila-u:nth-child(4) .esf.a", "der", "Dos efectos", "Esfera partida: Embestida da +1 🔥 y retira 1 Presencia rival."], ["#umbral > .fila-u:nth-child(6) .ilus", "izq", "Vincular", "Toca un Elemental: se abre una ventana con lo que hace y el botón Vincular."], [".arriba .pila:first-child .dorso", "izq", "Mazo", "Cartas que te quedan por robar."], [".total", "izq", "Maná del turno", "Suma de las cartas usadas como Maná. Lo que sobra se pierde."], [".arriba .pila:last-child .dorso", "izq", "Descarte", "Cartas usadas. Se barajan cuando se acaba el mazo."], [".mano .carta.accion .ilus", "izq", "Acción", "Carta jugada por su poder (marco negro): Llama pone +2 Presencias en Fuego."], [".mano .carta.usada .ilus", "izq", "Maná", "Cartas usadas como Maná (marco lila): no hacen su Acción."], [".mano .carta:nth-child(5) .ilus", "izq", "Sin jugar", "Las cartas que no juegues se descartan al acabar el turno."], [".principal > .boton", "izq", "Terminar turno", "Descartas todo y robas 5 cartas nuevas."], [".derecha .sant:nth-child(1)", "izq", "Santuario", "Un cuadrante por Guardián, en el orden de la cabecera. Cada bolita es una Presencia; las más grandes, quien va primero."], [".derecha .sant:nth-child(2) .marca", "fuera", "Empate", "Empate en cabeza: nadie gana los Sellos de ese Santuario."], [".derecha .sant:nth-child(3) .cuad:nth-child(3) .puntos", "fuera", "Protegida", "Anillo: Presencia que no se puede retirar ni mover."], [".derecha .sant:nth-child(4)", "izq", "Final de Era", "En cada Santuario, quien tiene más Presencia gana sus Sellos. Luego se vacía."]];
+  const NOTAS = [[".lado.izq .jug", "izq", "Tú", "Guardián del Fuego (rojo). El número rodeado son tus Sellos."], [".centro .era b", "antes", "Era y ronda", "Era II, ronda 3 de 5. En esta Era cada Santuario da 2 Sellos."], [".lado.der", "izq", "Rivales", "Ana (Agua), Pol (Tierra) y Marc (Aire), con sus Sellos."], [".lateral", "izq", "Umbral", "Elementales que puedes vincular. Los atenuados cuestan más Maná del que tienes."], ["#umbral .fila-u .esferas", "izq", "Esferas", "Coste (gris) · Maná que da (lila) · Acción, del color del Santuario al que afecta."], ["#umbral > .fila-u:nth-child(4) .esf.a", "der", "Dos efectos", "Esfera partida: Embestida da +1 🔥 y retira 1 Presencia rival."], ["#umbral > .fila-u:nth-child(6) .ilus", "izq", "Vincular", "Toca un Elemental: se abre una ventana con lo que hace y el botón Vincular."], [".fila-mano .pila:first-child .dorso", "izq", "Mazo", "Cartas que te quedan por robar."], [".total", "izq", "Maná del turno", "Suma de las cartas usadas como Maná. Lo que sobra se pierde."], [".fila-mano .pila:last-child .dorso", "izq", "Descarte", "Cartas usadas. Se barajan cuando se acaba el mazo."], [".mano .carta.accion .ilus", "izq", "Acción", "Carta jugada por su poder (marco negro): Llama pone +2 Presencias en Fuego."], [".mano .carta.usada .ilus", "izq", "Maná", "Cartas usadas como Maná (marco lila): no hacen su Acción."], [".mano .carta:nth-child(5) .ilus", "izq", "Sin jugar", "Las cartas que no juegues se descartan al acabar el turno."], [".principal > .boton", "izq", "Terminar turno", "Descartas todo y robas 5 cartas nuevas."], [".derecha .sant:nth-child(1)", "izq", "Santuario", "Un cuadrante por Guardián, en el orden de la cabecera. Cada bolita es una Presencia; las más grandes, quien va primero."], [".derecha .sant:nth-child(2) .marca", "fuera", "Empate", "Empate en cabeza: nadie gana los Sellos de ese Santuario."], [".derecha .sant:nth-child(3) .cuad:nth-child(3) .puntos", "fuera", "Protegida", "Anillo: Presencia que no se puede retirar ni mover."], [".derecha .sant:nth-child(4)", "izq", "Final de Era", "En cada Santuario, quien tiene más Presencia gana sus Sellos. Luego se vacía."]];
   const leyenda = document.createElement('div');
   leyenda.className = 'leyenda';
   leyenda.innerHTML = '<h2>Qué es cada cosa</h2>' + NOTAS.map(([, , t, x], k) =>

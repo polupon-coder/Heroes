@@ -121,9 +121,28 @@ Propuesta: los jugadores son rojo, azul, verde y amarillo, como los elementos, y
 - Con **solo color**, el Aire gana algo más (31 %) y el Fuego y la Tierra algo menos; con Mazo se iguala bastante, aunque el Aire sigue ligeramente por encima (28 %): a vigilar.
 - Diseño visual: como los jugadores comparten color con los elementos, los marcadores de Presencia llevan el símbolo de su elemento. Así se distinguen también con daltonismo (rojo/verde).
 
+## ¿Mano de 6 cartas?
+
+Propuesta para que las cartas se vean más grandes en pantalla (dos filas de 3). Medido con 400 partidas (`mano: 6` en `motor.js`):
+
+| 4 jugadores | Mano de 5 | Mano de 6 |
+| --- | ---: | ---: |
+| Presencia por jugador y Era | 12,3 | 16,7 |
+| Acciones por turno | 2,5 | 3,3 |
+| Elementales vinculados por jugador | 11,2 | 12,0 |
+| Cartas iniciales liberadas | 4,6 | 6,8 |
+| Victoria compartida | 13 % | 14 % |
+| La Era III cambia el ganador | 67 % | 66 % |
+| Duración estimada (2 / 3 / 4 jugadores) | 30 / 40 / 50 min | 34 / 46 / 57 min |
+
+El equilibrio no cambia (asientos, remontada y empates quedan igual): el juego va más rápido por turno y cada turno es más largo. Con 6 cartas se libera más; con liberar a 3 Manás se vuelve a unas 4 liberaciones. Con mano de 6 y Eras de 4 rondas la partida a 4 se queda en unos 46 minutos.
+
+La mesa ya muestra la mano en dos filas de 3 (con 5 cartas, 3 + 2), así que sirve para las dos opciones.
+
 ## Sigue pendiente
 
 - **Cartas repetidas** entre elementos, incluidas las +1 de coste 2, que casi no aportan.
+- **Mano de 5 o de 6** (ver la sección anterior).
 - **Vigilar en mesa:** Desorden y Renacer (algo fuertes), liberar con coste 2 y la duración a 4 jugadores (cronometrar las primeras partidas).
 - Con 2 jugadores el segundo gana algo más (48 % frente a 44 %): dentro del margen de error, pero a observar.
 

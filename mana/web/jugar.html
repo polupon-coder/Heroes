@@ -36,6 +36,21 @@
     border: 1.5px solid currentColor; font-size: 11px; font-weight: 700; }
   .registro-btn { color: var(--suave); font-size: 11px; text-decoration: underline; cursor: pointer; margin-left: 6px; }
 
+  /* Guía: mensajes flotantes que explican el siguiente paso */
+  body { position: relative; }
+  #guia { position: absolute; z-index: 80; width: 270px; background: var(--mana); color: #fff; border-radius: 14px; padding: 11px 14px 10px;
+    font-size: 12.5px; line-height: 1.45; box-shadow: 0 10px 28px rgba(76, 29, 149, .28); animation: aparece .25s ease-out; }
+  #guia[hidden] { display: none; }
+  #guia b { font-weight: 700; }
+  #guia .apagar { display: block; margin-top: 6px; font-size: 10.5px; opacity: .8; text-decoration: underline; cursor: pointer; }
+  #guia::after { content: ''; position: absolute; border: 8px solid transparent; }
+  #guia.abajo::after { bottom: 100%; left: 50%; margin-left: -8px; border-bottom-color: var(--mana); } /* el mensaje está debajo de lo que señala */
+  #guia.arriba::after { top: 100%; left: 50%; margin-left: -8px; border-top-color: var(--mana); }
+  #guia.der::after { right: 100%; top: 50%; margin-top: -8px; border-right-color: var(--mana); }
+  #guia.izq::after { left: 100%; top: 50%; margin-top: -8px; border-left-color: var(--mana); }
+  @keyframes aparece { from { opacity: 0; transform: translateY(4px); } }
+  @media (prefers-reduced-motion: reduce) { #guia, .aviso { animation: none; } }
+
   .juego { width: 100%; flex: 1; display: grid; grid-template-columns: 256px 1fr 256px; gap: 24px; margin-top: 18px; min-height: 0; }
   .titulo { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--suave); padding-left: .16em; text-align: center; }
   .panel { background: #fff; border-radius: 18px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
@@ -200,6 +215,7 @@
 
 <div class="velo" id="velo"><div class="ventana" id="ventana"></div></div>
 <div id="avisos"></div>
+<div id="guia" hidden></div>
 
 <script>/*ACCIONES*/</script>
 <script>/*MODULOS*/</script>
@@ -216,6 +232,7 @@ const $ = (id) => document.getElementById(id);
 function escalar() {
   const z = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
   document.body.style.zoom = z;
+  if (window.guiaLista) guia(); // al cambiar el tamaño de la ventana, recoloca el mensaje
 }
 window.addEventListener('resize', escalar);
 escalar();
@@ -253,8 +270,10 @@ function jugador(j) {
 
 function pintar() {
   const yo = p.jug[0];
-  $('yo').innerHTML = jugador(yo) + '<span class="registro-btn" id="ver-registro">Registro</span>';
+  $('yo').innerHTML = jugador(yo) + '<span class="registro-btn" id="ver-registro">Registro</span>'
+    + `<span class="registro-btn" id="ayuda">Ayuda: ${ayuda ? 'sí' : 'no'}</span>`;
   $('ver-registro').onclick = verRegistro;
+  $('ayuda').onclick = () => { ponerAyuda(!ayuda); pintar(); };
   $('rivales').innerHTML = p.jug.slice(1).map(jugador).join('');
   $('rivales').style.justifyContent = p.n === 2 ? 'flex-end' : 'space-between';
   const quien = p.turno && !entreEras ? (p.turno.i === 0 ? '<b>Tu turno</b>' : `Turno de <b>${NOMBRES[p.turno.i]}</b>`) : '';
@@ -304,6 +323,80 @@ function pintar() {
     const empate = max > 0 && !unico ? ' <span class="emp">· empate</span>' : '';
     return `<div class="sant cruz" style="--el:var(--${s})">${cuads}<div class="nucleo"><svg class="ico" style="color:var(--${s})"><use href="#${s}"/></svg></div><div class="marca">${NOMBRE_EL[s]}${empate}</div></div>`;
   }).join('');
+  guia();
+}
+
+// ---------- Guía: qué hacer ahora ------------------------------------------------------------
+let ayuda = true;
+try { ayuda = localStorage.getItem('mana-ayuda') !== 'no'; } catch (e) { /* sin almacenamiento: ayuda encendida */ }
+function ponerAyuda(si) {
+  ayuda = si;
+  try { localStorage.setItem('mana-ayuda', si ? 'si' : 'no'); } catch (e) { /* da igual */ }
+}
+const vistos = new Set(); // consejos que solo se dan una vez por partida
+
+// Elige el mensaje según el momento del turno. Devuelve [texto, elemento al que apunta, lado del mensaje]
+function pasoActual() {
+  if (!p || p.fin || !p.turno || entreEras) return null;
+  const yo = p.jug[0];
+  if (p.turno.i !== 0 || ocupado) {
+    if (vistos.has('rivales')) return null;
+    return ['rivales', `Ahora juega <b>${NOMBRES[p.turno.i]}</b>. Arriba verás lo que hace cada rival; mira cómo cambian los <b>Santuarios</b>.`, $('santuarios').parentElement, 'izq'];
+  }
+  const usadas = yo.jugadas.length + p.turno.manaUsadas.length;
+  const disp = p.manaDisponible();
+  const masBarato = Math.min(...p.umbral.map((c) => p.coste(0, c)));
+  const puedeComprar = !p.turno.vinculado && p.umbral.some((_, k) => p.puedeVincular(k));
+  // Primera vez que juegas una Acción: explica los Santuarios
+  if (yo.jugadas.length && !vistos.has('santuarios')) {
+    return ['santuarios', 'Tu Acción ha puesto Presencias de <b>tu color</b> en un Santuario. Al final de cada Era, quien tenga <b>más</b> en cada Santuario gana sus Sellos. Las bolitas grandes marcan quién va primero.', $('santuarios').parentElement, 'izq', true];
+  }
+  // Liberar: se explica una vez cuando es posible
+  const inicialUsada = [...p.turno.manaUsadas, ...yo.jugadas].some((c) => c.inicial);
+  if (inicialUsada && p.puedeLiberar() && p.turno.vinculado && !vistos.has('liberar')) {
+    return ['liberar', 'Truco: toca una <b>carta inicial</b> que ya hayas usado y pulsa <b>Liberar</b> (2 de Maná). Sale de la partida y tu mazo queda con cartas mejores.', $('mano'), 'abajo', true];
+  }
+  if (puedeComprar) {
+    return ['vincular', `Tienes <b>${disp} de Maná</b>. Toca un Elemental del <b>Umbral</b> para vincularlo: irá a tu descarte y lo robarás en próximos turnos. Solo uno por turno.`, $('umbral').parentElement, 'der'];
+  }
+  if (!usadas && yo.mano.length) {
+    return ['mano', 'Es tu turno. Toca una carta de tu mano: puedes jugar su <b>Acción</b> (la esfera de color) o usarla como <b>Maná</b> (la esfera lila) para vincular Elementales. Nunca las dos.', $('mano'), 'abajo'];
+  }
+  if (yo.mano.length && !p.turno.vinculado) {
+    return ['mana', `Para vincular necesitas Maná: el Elemental más barato del Umbral cuesta <b>${masBarato}</b> y tienes <b>${disp}</b>. Usa más cartas como Maná o juega sus Acciones.`, $('total'), 'der'];
+  }
+  if (yo.mano.length) {
+    return ['resto', 'Ya has vinculado. Puedes jugar las cartas que te quedan como <b>Acción</b>; las que no uses se descartan al terminar.', $('mano'), 'abajo'];
+  }
+  return ['terminar', 'Cuando acabes, pulsa <b>Terminar turno</b>. Descartas lo usado y robas 5 cartas nuevas. Después juegan los rivales.', $('terminar'), 'arriba'];
+}
+
+function guia() {
+  const g = $('guia');
+  const paso = ayuda && !$('velo').classList.contains('abierta') ? pasoActual() : null;
+  if (!paso) { g.hidden = true; return; }
+  const [clave, texto, destino, lado, unaVez] = paso;
+  if (unaVez || clave === 'rivales') vistos.add(clave);
+  const nuevo = g.dataset.clave !== clave;
+  g.dataset.clave = clave;
+  g.className = lado;
+  g.innerHTML = `${texto}<span class="apagar" id="apagar-guia">No mostrar más ayudas</span>`;
+  $('apagar-guia').onclick = () => { ponerAyuda(false); pintar(); };
+  g.hidden = false;
+  if (nuevo) { g.style.animation = 'none'; void g.offsetWidth; g.style.animation = ''; }
+  // Coloca el mensaje junto a lo que señala (la página está ampliada con zoom: se divide)
+  const z = parseFloat(document.body.style.zoom) || 1;
+  const caja = document.body.getBoundingClientRect();
+  const r = destino.getBoundingClientRect();
+  const x = (r.left - caja.left) / z, y = (r.top - caja.top) / z, w = r.width / z, h = r.height / z;
+  const gw = g.offsetWidth, gh = g.offsetHeight, m = 12;
+  let left, top;
+  if (lado === 'abajo') { left = x + w / 2 - gw / 2; top = y + h + m; }
+  if (lado === 'arriba') { left = x + w / 2 - gw / 2; top = y - gh - m; }
+  if (lado === 'der') { left = x + w + m; top = y + h / 2 - gh / 2; }
+  if (lado === 'izq') { left = x - gw - m; top = y + h / 2 - gh / 2; }
+  g.style.left = Math.max(8, Math.min(1280 - gw - 8, left)) + 'px';
+  g.style.top = Math.max(8, Math.min(720 - gh - 8, top)) + 'px';
 }
 
 const esMiTurno = () => p && !p.fin && !ocupado && p.turno && p.turno.i === 0;
@@ -324,8 +417,9 @@ function abrir(html, botones = [], ancha = false, fija = false) {
     if (def.accion) def.accion();
   };
   $('velo').classList.add('abierta');
+  guia();
 }
-function cerrar() { $('velo').classList.remove('abierta'); }
+function cerrar() { $('velo').classList.remove('abierta'); guia(); }
 $('velo').addEventListener('click', (e) => { if (e.target === $('velo') && !$('velo').dataset.fija) cerrar(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('velo').dataset.fija) cerrar(); });
 
@@ -425,6 +519,7 @@ function jugarAccion(k) {
 
 function nuevaPartida(n) {
   p = new Partida(n, { seed: Math.floor(Math.random() * 1e9), registro: true }).iniciar();
+  vistos.clear();
   ocupado = false;
   avanzar();
   const yo = p.jug[0];
@@ -432,7 +527,8 @@ function nuevaPartida(n) {
     <svg style="width:56px;height:56px;color:var(--${yo.color})"><use href="#${yo.color}"/></svg>
     <div class="texto">Tus Presencias son de tu color. Tu mazo lleva un Elemental menor más de tu elemento.</div>
     <div class="texto"><b>Cada turno:</b> toca tus cartas para usarlas como <b>Acción</b> o como <b>Maná</b>, toca un Elemental del <b>Umbral</b> para vincularlo y pulsa <b>Terminar turno</b>.</div>
-    <div class="texto">Al final de cada Era, quien tenga más Presencia en cada Santuario gana sus Sellos (1, 2 y 3). Empate en cabeza: nadie.</div>`,
+    <div class="texto">Al final de cada Era, quien tenga más Presencia en cada Santuario gana sus Sellos (1, 2 y 3). Empate en cabeza: nadie.</div>
+    <div class="texto" style="color:var(--mana)">Te iré guiando con mensajes lilas. Puedes apagarlos arriba, en «Ayuda».</div>`,
   [{ texto: '¡A jugar!', clase: 'verde' }]);
 }
 
@@ -513,6 +609,7 @@ function inicio() {
 // Mesa vacía de fondo mientras se elige
 p = new Partida(4, { seed: 1, registro: true }).iniciar();
 p.turno = null;
+window.guiaLista = true;
 pintar();
 inicio();
 </script>

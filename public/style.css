@@ -1600,3 +1600,4 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .col-stage .combat .dice-zone { margin-top: 6px; }
 /* Recompensas una al lado de la otra (también en móvil) */
 .carousel .foe-card .rewards-sum { flex-direction: row !important; flex-wrap: nowrap !important; justify-content: center; gap: 6px; }
+.car-dots { margin: 0 0 6px; }

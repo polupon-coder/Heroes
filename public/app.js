@@ -1345,6 +1345,7 @@ function foesHtml(p, cb, all, controllable) {
   const n = p.offers.length;
   const dots = p.offers.map((m, i) => `<button class="car-dot ${i === k ? 'on' : ''} ${(all[i] || {}).ok && cb.rolls ? 'ok' : ''} ${cb.aim === i ? 'aim' : ''}" data-a="foeGo" data-i="${i}" aria-label="${esc(m.nombre)}"></button>`).join('');
   return `
+  <div class="car-dots">${dots}</div>
   <div class="carousel" data-swipe="foes">
     <button class="car-nav" data-a="foeGo" data-i="${k - 1}" ${k === 0 ? 'disabled' : ''} aria-label="Anterior">‹</button>
     <div class="car-track">
@@ -1353,8 +1354,7 @@ function foesHtml(p, cb, all, controllable) {
       ${foeCard(p, cb, all, controllable, k + 1, 'side right')}
     </div>
     <button class="car-nav" data-a="foeGo" data-i="${k + 1}" ${k === n - 1 ? 'disabled' : ''} aria-label="Siguiente">›</button>
-  </div>
-  <div class="car-dots">${dots}</div>`;
+  </div>`;
 }
 
 // Golpe graduado: con N exigidos, N → 3 daño, N−1 → 2, N−2 → 1.

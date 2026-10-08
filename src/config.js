@@ -94,6 +94,11 @@ function fixedDiceForMana(mana) {
 
 const ROUNDS = Number(process.env.HEROES_RONDAS) || 12; // (la variable solo se usa en pruebas)
 const MAX_ROLLS = 3;
+// Siempre se lanzan 5 esferas; la Fuerza da tiradas extra.
+const DADOS = 5;
+function rollsForFuerza(f) {
+  return f >= 18 ? 4 : 3;
+}
 
 // Regla 21.
 function levelsForRound(round) {
@@ -247,6 +252,8 @@ module.exports = {
   fixedDiceForMana,
   ROUNDS,
   MAX_ROLLS,
+  DADOS,
+  rollsForFuerza,
   levelsForRound,
   maxComboForRound,
   MONSTERS,

@@ -174,32 +174,36 @@ function chance(cb, t, rollsLeft, trials = 160) {
 
 function fight(game, p) {
   const cb = p.combat;
-  if (cb.rolls === 0) {
-    game.act(p.id, 'roll', {});
-    return true;
-  }
   let used;
   let missing;
   if (cb.kind === 'monstruo') {
-    const st = game.targetStatus(cb);
-    const value = (m) => m.level * 2 + (m.variante || 1) * 3 + m.dano;
-    // Si completa alguno, presenta el más valioso.
-    const ok = st.map((x, i) => i).filter((i) => st[i].ok).sort((a, b) => value(p.offers[b]) - value(p.offers[a]));
-    const left = C.MAX_ROLLS - cb.rolls;
-    if (ok.length) {
-      // Si aún quedan tiradas y el otro es mucho mejor y probable, lo intenta (solo si puede volver a este).
-      game.act(p.id, 'present', { index: ok[0] });
+    const value = (m) => [3, 6, 10, 15, 24][m.tier ?? 2];
+    if (cb.rolls === 0) {
+      // Elige el monstruo con mejor esperanza: probabilidad × botín − riesgo × daño.
+      const h = p.hero;
+      let best = 0;
+      let bestScore = -Infinity;
+      cb.targets.forEach((t, i) => {
+        const m = p.offers[i];
+        const pr = chance(cb, t, cb.maxRolls, 200);
+        const w = h.vida <= m.dano + 2 ? 8 : h.vida <= 2 * m.dano ? 3 : 1.2;
+        const sc = pr * value(m) - (1 - pr) * m.dano * w;
+        if (sc > bestScore) { bestScore = sc; best = i; }
+      });
+      game.act(p.id, 'roll', { aim: best });
       return true;
     }
-    // Persigue el objetivo con mejor esperanza: probabilidad × valor.
-    let best = 0;
-    let bestScore = -1;
-    st.forEach((x, i) => {
-      const sc = chance(cb, cb.targets[i], left) * (10 + value(p.offers[i]));
-      if (sc > bestScore) { bestScore = sc; best = i; }
-    });
-    ({ used, missing } = st[best]);
+    const st = game.targetStatus(cb)[cb.aim];
+    if (st.ok) {
+      game.act(p.id, 'present', { index: cb.aim });
+      return true;
+    }
+    ({ used, missing } = st);
   } else {
+    if (cb.rolls === 0) {
+      game.act(p.id, 'roll', {});
+      return true;
+    }
     ({ used, missing } = D.matchDice(cb.dice.map((d) => d.face), cb.combo));
   }
   // Poción de Maná si con ella se completan las esferas que faltan
@@ -210,7 +214,7 @@ function fight(game, p) {
       return true;
     }
   }
-  if (cb.rolls < C.MAX_ROLLS && cb.dice.some((d) => !d.fixed)) {
+  if (cb.rolls < cb.maxRolls && cb.dice.some((d) => !d.fixed)) {
     const hold = cb.dice.map((d, i) => i).filter((i) => used.has(i) || cb.dice[i].fixed);
     const free = cb.dice.map((d, i) => i).filter((i) => !cb.dice[i].fixed && !hold.includes(i));
     if (!free.length) hold.splice(hold.indexOf(cb.dice.findIndex((d) => !d.fixed)), 1);

@@ -491,7 +491,7 @@ function renderLobbyHeroes(p) {
           <div class="pstat"><span>Vida</span><b>${preview.vida}</b></div>
           <div class="pstat"><span>Fuerza</span><b>${preview.fuerza}</b></div>
           <div class="pstat"><span>Maná</span><b>${preview.mana}</b></div>
-          <div class="pstat"><span>Esferas</span><div class="spheres-row">${spheresRow(dicePreview(preview.fuerza), p.color, true, Math.floor(preview.mana / 5))}</div></div>` : `
+          <div class="pstat"><span>Tiradas</span><b>${preview.fuerza >= 18 ? 4 : 3}</b></div>` : `
           <div class="pstat"><span>Vida</span><b>–</b></div>
           <div class="pstat"><span>Fuerza</span><b>–</b></div>
           <div class="pstat"><span>Maná</span><b>–</b></div>
@@ -1213,7 +1213,7 @@ function renderCombat(p, controllable) {
         used.has(i) ? 'success' : '',
         (cb.cursed || []).some((c) => c.index === i) ? 'cursed' : '',
         d.fixed ? 'fixed' : '',
-        controllable && !ui.manaMode && cb.rolls > 0 && cb.rolls < 3 && !ui.held.has(i) && !d.fixed ? 'reroll' : '',
+        controllable && !ui.manaMode && cb.rolls > 0 && cb.rolls < cb.maxRolls && !ui.held.has(i) && !d.fixed ? 'reroll' : '',
         controllable && ui.manaMode && (ui.manaSel === i || ui.manaPick.has(i)) ? 'picking' : '',
       ].join(' ');
       const html = die(faces[i], { cls, shape: d.shape, attrs: controllable ? `data-a="die" data-i="${i}"` : '' });
@@ -1230,20 +1230,20 @@ function renderCombat(p, controllable) {
   else if (cb.status === 'cancelado') result = `<div class="muted center">Combate terminado</div>`;
 
   if (controllable && cb.status === 'activo') {
-    const left = 3 - cb.rolls;
+    const left = cb.maxRolls - cb.rolls;
     const rerollN = cb.dice.filter((d, i) => !d.fixed && !ui.held.has(i)).length;
     const manaPot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');
     controls = `<div class="controls">
       <div class="row">
-        ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
+        ${cb.rolls === 0 ? (cb.kind === 'monstruo' && p.offers ? `<button class="btn primary" data-a="roll" data-aim="${foeIndex(p, cb)}">Atacar a ${esc(p.offers[foeIndex(p, cb)].nombre)}</button>` : '<button class="btn primary" data-a="roll">Atacar</button>') : ''}
         ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
       ${cb.kind === 'duelo' && S.tournament ? (() => { const m = S.tournament.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id)); return m ? duelCurseHtml(S.tournament, m) : ''; })() : ''}
-      <div class="rolls-count" title="Tiradas">${cb.rolls}/3</div>
+      <div class="rolls-count" title="Tiradas">${cb.rolls}/${cb.maxRolls}</div>
       ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">${duelBtnText(p, duelDamage(cb, faces))}</button></div>` : ''}
-      ${cb.rolls >= 3 && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
+      ${cb.rolls >= cb.maxRolls && cb.kind !== 'duelo' && !(cb.aim != null && (all[cb.aim] || {}).ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
   }
 
   let foe = '';
@@ -1257,7 +1257,7 @@ function renderCombat(p, controllable) {
   return `
   <div class="combat">
     ${monster ? foesHtml(p, cb, all, controllable) : cb.kind === 'duelo' ? `<div class="duel-target">${comboHtml(cb.combo, false)}</div>` : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
-    ${controllable || cb.kind === 'duelo' ? '' : `<div class="rolls-count">${cb.rolls}/3</div>`}
+    ${controllable || cb.kind === 'duelo' ? '' : `<div class="rolls-count">${cb.rolls}/${cb.maxRolls}</div>`}
     ${monster || cb.kind === 'duelo' ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
     <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
         ${result}
@@ -1286,27 +1286,51 @@ function rewardEffect(it) {
 }
 
 // Los dos monstruos de la ronda, cada uno con lo que pide y su botón para derrotarlo.
-function foesHtml(p, cb, all, controllable) {
+// Cinco monstruos en carrusel: uno en el centro y sus vecinos apagados a los lados.
+const TIER_NAME = ['Trío + 1', 'Póker', 'Full', 'Póker + 1', 'Pleno'];
+function foeIndex(p, cb) {
+  const n = p.offers.length;
+  if (ui.foeKey !== cb.label + S.round) { ui.foeKey = cb.label + S.round; ui.foeIdx = cb.aim != null ? cb.aim : Math.min(2, n - 1); }
+  ui.foeIdx = Math.max(0, Math.min(n - 1, ui.foeIdx));
+  return ui.foeIdx;
+}
+function foeCard(p, cb, all, controllable, i, pos) {
+  const m = p.offers[i];
+  if (!m) return `<div class="foe-card ghost ${pos}"></div>`;
   const done = cb.status !== 'activo';
-  return `<div class="foes">${p.offers.map((m, i) => {
-    const st = all[i] || { missing: m.combo.length, ok: false };
-    const chosen = done && cb.chosen === i;
-    const faded = done && cb.status === 'victoria' && cb.chosen !== i;
-    const can = controllable && !done && cb.rolls > 0 && st.ok;
-    const state = done
-      ? (chosen ? '<div class="need ok">Derrotado</div>' : '')
-      : cb.rolls === 0 ? '' : st.ok ? '' : `<div class="need">Te faltan ${st.missing}</div>`;
-    return `
-    <div class="foe-card ${st.ok && !done ? 'ready' : ''} ${chosen ? 'chosen' : ''} ${faded ? 'faded' : ''}">
+  const st = all[i] || { missing: m.combo.length, ok: false };
+  const isAim = cb.aim === i;
+  const chosen = done && cb.chosen === i;
+  const can = controllable && !done && cb.rolls > 0 && st.ok && isAim;
+  const state = done
+    ? (chosen ? '<div class="need ok">Derrotado</div>' : '')
+    : cb.rolls === 0 ? '' : !isAim ? (st.ok ? '<div class="need muted">Completo</div>' : '') : st.ok ? '' : `<div class="need">Te faltan ${st.missing}</div>`;
+  return `
+    <div class="foe-card ${pos} ${st.ok && !done && cb.rolls ? 'ready' : ''} ${isAim ? 'aim' : ''} ${chosen ? 'chosen' : ''}" ${pos !== 'center' ? `data-a="foeGo" data-i="${i}"` : ''}>
+      <div class="foe-tier t${i}">${TIER_NAME[m.tier ?? i] || ''}${isAim ? ' · tu objetivo' : ''}</div>
       <div class="foe-art">${monsterArt(m, 'duel-art')}</div>
       <div class="foe-title">${esc(m.nombre)} <span class="muted small">${esc(m.tamano || '')}</span></div>
-      <div class="foe-level">Nivel ${m.level}</div>
-      <div class="foe-dmg" title="Vida que pierdes si no lo derrotas">−${m.dano}</div>
-      ${comboHtml(m.combo, false, m.tipo)}
-      <div class="foe-slot">${state}${can ? `<button class="btn primary defeat-btn" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}</div>
-      <div class="rewards-sum">${m.rewards.map((it) => `<span>${shortName(it)}</span>`).join('')}</div>
+      <div class="foe-dmg" title="Vida que pierdes si fallas">−${m.dano}</div>
+      ${pos === 'center' ? comboHtml(m.combo, false, m.tipo) : ''}
+      ${pos === 'center' ? `<div class="foe-slot">${state}${can ? `<button class="btn primary defeat-btn" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}</div>
+      <div class="rewards-sum">${m.rewards.map((it) => `<span>${shortName(it)}</span>`).join('')}</div>` : ''}
     </div>`;
-  }).join('<div class="foes-or">o</div>')}</div>`;
+}
+function foesHtml(p, cb, all, controllable) {
+  const k = foeIndex(p, cb);
+  const n = p.offers.length;
+  const dots = p.offers.map((m, i) => `<button class="car-dot ${i === k ? 'on' : ''} ${(all[i] || {}).ok && cb.rolls ? 'ok' : ''} ${cb.aim === i ? 'aim' : ''}" data-a="foeGo" data-i="${i}" aria-label="${esc(m.nombre)}"></button>`).join('');
+  return `
+  <div class="carousel" data-swipe="foes">
+    <button class="car-nav" data-a="foeGo" data-i="${k - 1}" ${k === 0 ? 'disabled' : ''} aria-label="Anterior">‹</button>
+    <div class="car-track">
+      ${foeCard(p, cb, all, controllable, k - 1, 'side left')}
+      ${foeCard(p, cb, all, controllable, k, 'center')}
+      ${foeCard(p, cb, all, controllable, k + 1, 'side right')}
+    </div>
+    <button class="car-nav" data-a="foeGo" data-i="${k + 1}" ${k === n - 1 ? 'disabled' : ''} aria-label="Siguiente">›</button>
+  </div>
+  <div class="car-dots">${dots}</div>`;
 }
 
 // Golpe graduado: con N exigidos, N → 3 daño, N−1 → 2, N−2 → 1.
@@ -1569,7 +1593,7 @@ document.addEventListener('click', (e) => {
       if (ui.manaMode) {
         if (ui.manaPick.has(i)) { ui.manaPick.delete(i); ui.manaSel = null; }
         else if (ui.manaPick.size < me().hero.fijables) ui.manaSel = i;
-      } else if (cb.rolls < 3) {
+      } else if (cb.rolls < cb.maxRolls) {
         ui.held.has(i) ? ui.held.delete(i) : ui.held.add(i);
       }
       render();
@@ -1578,7 +1602,8 @@ document.addEventListener('click', (e) => {
     case 'pick':
       if (ui.manaSel !== null) { ui.manaPick.set(ui.manaSel, d.f); ui.manaSel = null; render(); }
       break;
-    case 'roll': Sounds.play('dados'); act('roll', { hold: [...ui.held] }); break;
+    case 'roll': Sounds.play('dados'); act('roll', d.aim != null ? { hold: [...ui.held], aim: Number(d.aim) } : { hold: [...ui.held] }); break;
+    case 'foeGo': if (!el.disabled) { ui.foeIdx = Number(d.i); render(); } break;
     case 'manaMode': ui.manaMode = true; ui.manaPick = new Map(); ui.manaSel = null; render(); break;
     case 'manaCancel': ui.manaMode = false; ui.manaPick = new Map(); ui.manaSel = null; render(); break;
     case 'manaOk':
@@ -1618,3 +1643,17 @@ document.addEventListener('click', (e) => {
     default: break;
   }
 });
+
+// Carrusel de monstruos: deslizar con el dedo para pasar al siguiente.
+(() => {
+  let x0 = null;
+  document.addEventListener('touchstart', (e) => { x0 = e.target.closest('.carousel') ? e.touches[0].clientX : null; }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) < 40) return;
+    ui.foeIdx = (ui.foeIdx || 0) + (dx < 0 ? 1 : -1);
+    render();
+  }, { passive: true });
+})();

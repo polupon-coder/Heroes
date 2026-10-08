@@ -158,8 +158,12 @@ class Game {
     return Math.max(0, p.hero.base.mana + I.equipmentMana(p.hero.inv) - p.hero.manaDebt);
   }
 
-  diceCount(p) {
-    return C.diceForFuerza(this.effFuerza(p));
+  diceCount() {
+    return C.DADOS;
+  }
+
+  maxRolls(p) {
+    return C.rollsForFuerza(this.effFuerza(p));
   }
 
   combatMana(p) {
@@ -281,34 +285,46 @@ class Game {
     }
   }
 
+  // Cinco monstruos por ronda, de pequeño a grande. Todos se juegan con las
+  // mismas 5 esferas: derrotas el más grande que completes.
   makeOffers(p) {
     this._invHint = p && p.hero ? p.hero.inv : null;
-    const offers = this.rollOffers();
-    // Nunca se ofrecen monstruos a los que el héroe no pueda enfrentarse:
-    // primero se prueba un tamaño menor y, si no basta, un nivel más bajo.
-    // Lo que piden depende de la ronda (no de tus esferas): quien sube rápido
-    // de Fuerza va sobrado al principio.
-    const dice = p ? this.diceCount(p) : 5;
-    const cap = Math.min(dice, C.maxComboForRound(this.round));
-    const fixed = offers.map((m) => (m.combo.length <= cap ? m : this.affordableOffer(cap, m.level, m.variante)));
-    // Siempre hay una opción con margen: pide al menos una esfera menos de las que tienes.
-    if (dice >= 4 && !fixed.some((m) => m.combo.length < dice)) {
-      fixed[0] = this.affordableOffer(dice - 1, fixed[0].level, fixed[0].variante);
-      // Ir sobre seguro rinde menos: la mitad de monedas y recompensas de un nivel menos.
-      fixed[0].margen = true;
-      const lv = Math.min(12, Math.max(1, fixed[0].level + C.VARIANTS[fixed[0].variante].recompensa - 1));
-      fixed[0].rewards = [this.reward(lv, this._invHint), this.reward(lv, this._invHint)];
-    }
-    // Si los dos han quedado iguales, el segundo baja un nivel para dar a elegir.
-    if (fixed[0].level === fixed[1].level && fixed[0].variante === fixed[1].variante && fixed[1].level > 1) {
-      fixed[1] = this.affordableOffer(dice, fixed[1].level - 1, 3);
-    }
-    // Normalmente uno pide colores y el otro formas.
-    if (fixed[0].tipo === fixed[1].tipo && this.rng() < 0.75) {
-      const o = fixed[1];
-      fixed[1] = this.makeOffer(o.level, o.variante, o.tipo === 'color' ? 'forma' : 'color');
-    }
-    return fixed.sort((a, b) => a.level - b.level);
+    const r = Math.min(12, this.round);
+    let lo = Math.max(1, Math.min(8, r - 2));
+    const levels = [0, 1, 2, 3, 4].map((k) => lo + k);
+    const FACES = ['rojo', 'azul', 'verde', 'amarillo'];
+    const pick = () => FACES[Math.floor(this.rng() * 4)];
+    const others = (c, n) => { const out = []; while (out.length < n) { const x = pick(); if (x !== c) out.push(x); } return out; };
+    const combos = [
+      () => { const a = pick(); return [a, a, a, ...others(a, 1)]; },             // trío + 1   (~90 %)
+      () => { const a = pick(); return [a, a, a, a]; },                           // póker      (~80 %)
+      () => { const a = pick(); const b = others(a, 1)[0]; return [a, a, a, b, b]; }, // full    (~70 %)
+      () => { const a = pick(); return [a, a, a, a, ...others(a, 1)]; },          // póker + 1  (~55 %)
+      () => { const a = pick(); return [a, a, a, a, a]; },                        // pleno      (~35 %)
+    ];
+    const variantes = [1, 1, 2, 2, 3];
+    const order = ['rojo', 'azul', 'verde', 'amarillo', 'circulo', 'cuadrado', 'rombo', 'triangulo'];
+    return levels.map((level, k) => {
+      const m = C.MONSTERS[level];
+      const v = C.VARIANTS[variantes[k]];
+      const tipo = this.rng() < 0.5 ? 'color' : 'forma';
+      let combo = combos[k]();
+      if (tipo === 'forma') combo = combo.map((c) => C.COLOR_TO_SHAPE[c]);
+      combo.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+      const rewardLevel = Math.min(12, r + k - 1);
+      return {
+        tipo,
+        level,
+        tier: k,
+        nombre: m.nombre,
+        imagen: m.imagen,
+        variante: variantes[k],
+        tamano: v.nombre,
+        combo,
+        dano: [2, 3, 4, 5, 6][k] + Math.floor((r - 1) / 4),
+        rewards: [this.reward(Math.max(1, rewardLevel), this._invHint), this.reward(Math.max(1, rewardLevel), this._invHint)],
+      };
+    });
   }
 
   // El monstruo más fuerte (nivel y tamaño) que el héroe puede afrontar, sin pasar del máximo de la ronda.
@@ -388,6 +404,7 @@ class Game {
       targets,
       combo: targets[0].combo,
       diceCount: this.diceCount(p),
+      maxRolls: this.maxRolls(p),
       dice: [],
       rolls: 0,
       manaUsed: false,
@@ -445,9 +462,16 @@ class Game {
     cb.manaUsed = true;
   }
 
-  roll(p, hold) {
+  roll(p, hold, aim) {
     const cb = this.activeCombat(p);
-    if (cb.rolls >= C.MAX_ROLLS) fail('Ya has hecho las 3 tiradas');
+    if (cb.rolls >= cb.maxRolls) fail(`Ya has hecho las ${cb.maxRolls} tiradas`);
+    // Contra monstruos, al atacar eliges a cuál vas: queda fijado para todo el combate.
+    if (cb.kind === 'monstruo' && cb.rolls === 0) {
+      const i = Number(aim);
+      if (!Number.isInteger(i) || !p.offers[i]) fail('Elige a qué monstruo atacas');
+      cb.aim = i;
+      cb.label = `${p.offers[i].nombre} ${p.offers[i].tamano.toLowerCase()}`;
+    }
     let newIdx;
     if (cb.rolls === 0) {
       newIdx = cb.dice.map((d, i) => (d.fixed ? -1 : i)).filter((i) => i >= 0);
@@ -528,11 +552,11 @@ class Game {
 
   canStillAct(p) {
     const cb = p.combat;
-    if (cb.rolls < C.MAX_ROLLS && cb.dice.some((d) => !d.fixed)) return true;
-    if (cb.kind === 'monstruo' && this.targetStatus(cb).some((x) => x.ok)) return true; // falta presentarla
+    if (cb.rolls < cb.maxRolls && cb.dice.some((d) => !d.fixed)) return true;
+    if (cb.kind === 'monstruo' && cb.aim != null && this.targetStatus(cb)[cb.aim].ok) return true; // falta presentarla
     if (cb.kind !== 'monstruo') return false;
     // Sin tiradas: solo una poción de Maná que añada comodines suficientes puede salvarle.
-    const missing = this.bestTarget(cb).missing;
+    const missing = cb.aim != null ? this.targetStatus(cb)[cb.aim].missing : this.bestTarget(cb).missing;
     const potential = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos]
       .filter((it) => it.efecto === 'mana')
       .reduce((s, it) => s + it.valor, 0);
@@ -557,6 +581,7 @@ class Game {
     const st = this.targetStatus(cb)[Number(index)];
     if (!st) fail('Monstruo no válido');
     if (!st.ok) fail('Tus esferas no completan lo que pide este monstruo');
+    if (cb.aim != null && cb.aim !== Number(index)) fail('Solo puedes derrotar al monstruo al que atacas');
     p.monster = p.offers[Number(index)];
     cb.label = `${p.monster.nombre} ${p.monster.tamano.toLowerCase()}`;
     cb.chosen = Number(index);
@@ -574,12 +599,12 @@ class Game {
   }
 
   endMonsterCombat(p, won) {
-    if (!p.monster) p.monster = [...p.offers].sort((a, b) => a.dano - b.dano)[0];
+    if (!p.monster) p.monster = p.combat.aim != null ? p.offers[p.combat.aim] : [...p.offers].sort((a, b) => a.dano - b.dano)[0];
     const m = p.monster;
     if (won) {
       p.hero.victorias += 1;
-      const coins = C.coinsFor(m.level, m.variante, p.combat.rolls);
-      p.coinsPending = { n: m.margen ? Math.max(1, Math.round(coins / 2)) : coins, rolls: p.combat.rolls };
+      const coins = [1, 3, 5, 8, 14][m.tier ?? 2] + Math.max(0, p.combat.maxRolls - p.combat.rolls);
+      p.coinsPending = { n: coins, rolls: p.combat.rolls };
       p.stage = 'recompensa';
       p.rewards = m.rewards;
       this.say(`🗡 ${p.name} derrota a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`);
@@ -1211,8 +1236,8 @@ const ACTIONS = {
   present(p, { index }) {
     this.present(p, index);
   },
-  roll(p, { hold }) {
-    this.roll(p, hold);
+  roll(p, { hold, aim }) {
+    this.roll(p, hold, aim);
   },
   mana(p, { assign }) {
     this.useMana(p, assign);
@@ -1220,7 +1245,7 @@ const ACTIONS = {
   concede(p) {
     const cb = this.activeCombat(p);
     if (cb.rolls < 1) fail('Primero haz la primera tirada');
-    if (cb.kind === 'monstruo' && cb.rolls < C.MAX_ROLLS) fail('Aún te quedan tiradas');
+    if (cb.kind === 'monstruo' && cb.rolls < cb.maxRolls) fail('Aún te quedan tiradas');
     this.endCombat(p, false);
   },
   chooseReward(p, { index }) {

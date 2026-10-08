@@ -1598,3 +1598,5 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .carousel .foe-card.center .dice { margin: 4px 0; }
 .car-dots { margin: 2px 0; }
 .col-stage .combat .dice-zone { margin-top: 6px; }
+/* Recompensas una al lado de la otra (también en móvil) */
+.carousel .foe-card .rewards-sum { flex-direction: row !important; flex-wrap: nowrap !important; justify-content: center; gap: 6px; }

@@ -103,6 +103,25 @@ class Game {
     this.say(`${p.name} sale de la partida.`);
   }
 
+  // ¿Tiene este jugador algo que hacer ahora? (para el juego en un mismo dispositivo)
+  needsAction(id) {
+    const p = this.players.find((x) => x.id === id);
+    if (!p || p.bot) return false;
+    if (p.hero && p.hero.pending && p.hero.pending.length) return true;
+    if (this.phase === 'lobby') return this.lobbyStage === 'heroes' && !p.ready;
+    if (this.phase === 'combat') return p.stage !== 'hecho';
+    if (this.phase === 'prep') return !p.ready;
+    if (this.phase === 'torneo') {
+      const t = this.tournament;
+      if (!t) return false;
+      if (t.stage === 'eleccion') return t.ranking && t.ranking[0] === p.id;
+      if (t.stage === 'botin') return !!t.loot && t.loot.winner === p.id;
+      const m = t.matches.find((x) => x.started && !x.winner);
+      return !!m && m.attacker === p.id && !!p.combat && p.combat.status === 'activo';
+    }
+    return false;
+  }
+
   get hostId() {
     const h = this.players.find((p) => !p.bot);
     return h ? h.id : null;
@@ -830,6 +849,7 @@ class Game {
         id: p.id,
         name: p.name,
         bot: p.bot,
+        local: !!p.local,
         connected: p.connected,
         color: p.color,
         raza: p.raza,

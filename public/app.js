@@ -333,7 +333,7 @@ function render() {
   $('homeModal').classList.add('hidden');
   document.body.classList.remove('at-home');
   $('app').classList.remove('hidden');
-  setHtml($('roomInfo'), `<span class="room-name">Sala ${esc(S.code)}</span><button class="exit-btn" data-a="exit" title="Salir de la sala" aria-label="Salir de la sala">×</button>`);
+  setHtml($('roomInfo'), `${S.local && mp ? `<span class="local-who" title="Juega ahora en este dispositivo">${esc(mp.name)}</span>` : ''}<span class="room-name">Sala ${esc(S.code)}</span><button class="exit-btn" data-a="exit" title="Salir de la sala" aria-label="Salir de la sala">×</button>`);
   Sounds.setMusic(S.phase === 'lobby' || S.phase === 'torneo' || S.phase === 'fin');
   playEventSounds();
   $('status').textContent = statusText();
@@ -432,7 +432,8 @@ function renderLobbyRivals(p) {
     const x = S.players[i];
     const img = `<img class="seat-art" src="img/heroes/${deco[i]}.webp" alt="">`;
     if (x) {
-      const role = x.id === S.me ? 'Tú' : x.id === S.host ? 'Anfitrión' : x.bot ? 'Rival' : x.connected ? 'Amigo' : 'Desconectado';
+      const here = (S.local || []).some((l) => l.id === x.id);
+      const role = x.id === S.me ? 'Tú' : here ? 'En este dispositivo' : x.id === S.host ? 'Anfitrión' : x.bot ? 'Rival' : x.connected ? 'Amigo' : 'Desconectado';
       seats.push(`
         <div class="seat-card taken">
           ${img}
@@ -446,7 +447,7 @@ function renderLobbyRivals(p) {
           ${img}
           <div class="seat-name"><i>Asiento libre</i></div>
           <div class="seat-role">Esperando a un amigo…</div>
-          ${host ? '<button class="btn small" data-a="addBot">Poner un bot</button>' : '<span class="seat-gap"></span>'}
+          <div class="seat-btns">${host ? '<button class="btn small" data-a="addBot">Poner un bot</button>' : ''}<button class="btn small" data-a="addLocal">Jugador aquí</button></div>
         </div>`);
     }
   }
@@ -840,6 +841,9 @@ const RULES = {
     <section><div class="rule-ill"><img src="img/objetos/pergamino-2.webp" alt=""><span class="lbl">1-2 ✔<br>3-5 ✘<br>6 –</span></div><h4>Robar</h4><p>Con Pergamino de Robo, seguro. Sin él tiras un dado: <b>1–2</b> robas · <b>3–5</b> pierdes tu Maná en el próximo combate · <b>6</b> nada.</p></section>
     <section><div class="rule-ill"><img src="img/ui/calavera.webp" alt=""></div><h4>Maleficio</h4><p>Gasta 5 de Maná: en su próximo combate, al rival se le anula una esfera acertada: sale con la calavera, no cuenta y tiene que relanzarla (verás cuál, con la calavera).
       Cada héroe recibe como mucho uno por ronda.</p></section>`],
+  sala: ['Sala', `
+    <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">+</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Jugar en el mismo dispositivo</h4><p>En la sala, <b>Jugador aquí</b> añade a otro jugador que juega en tu mismo ordenador o móvil.
+      Se juega por turnos: cuando te toca a ti aparece <b>«Turno de…»</b> y te pasan el dispositivo. Se puede mezclar con amigos conectados desde otros dispositivos y con bots.</p></section>`],
   torneo: ['Torneo', `
     <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. Las semifinales se sortean;
       se juega un duelo detrás de otro. Puedes lanzar a tu rival un <b>maleficio</b> (5 Maná) para cada uno de sus ataques: en tu turno o mientras él ataca.
@@ -1356,6 +1360,27 @@ function duelCurseHtml(t, m) {
   return `<div class="duel-curse"><button class="btn curse-btn" data-a="duelCursePick" data-t="${target}">Maldecir</button></div>`;
 }
 
+// Juego en un mismo dispositivo: cuando al jugador activo no le toca nada y a
+// otro de este dispositivo sí, se le pasa la pantalla.
+function nextLocalTurn() {
+  if (!S || !S.local || S.phase === 'fin') return null;
+  const mine = S.local.find((l) => l.id === S.me);
+  if (mine && mine.needs) return null;
+  return S.local.find((l) => l.needs && l.id !== S.me) || null;
+}
+function renderHandoff() {
+  const n = nextLocalTurn();
+  if (!n) return '';
+  const x = byId(n.id);
+  return `
+    <div class="card outcome handoff">
+      <div class="outcome-title">Turno de ${esc(n.name)}</div>
+      ${x && x.raza ? heroPortrait(x, 'duelist') : ''}
+      <p class="center muted">Pásale el dispositivo a <b>${esc(n.name)}</b>.</p>
+      <div class="row center-row"><button class="btn primary" data-a="setActive" data-id="${n.id}">Soy ${esc(n.name)}, empezar</button></div>
+    </div>`;
+}
+
 // Ventana flotante: cuántas calaveras lanzar (5 de Maná cada una).
 function renderDuelCursePick() {
   const t = S && S.tournament;
@@ -1438,6 +1463,8 @@ function modalHtml() {
     if (S && !ui.seenMatches) ui.seenMatches = new Set((S.tournament ? S.tournament.matches : []).filter((x) => x.winner).map((x) => x.id));
     const o = S && renderOutcome();
     if (o) return o;
+    const hand = renderHandoff();
+    if (hand) return hand;
     const tp = S && renderTradePopup();
     if (tp) return tp;
     const pw = S && renderPrepWin();
@@ -1470,6 +1497,18 @@ document.addEventListener('click', (e) => {
     case 'closeDetail': ui.detail = null; renderModal(); break;
     case 'kick': act('kick', { playerId: d.id }); break;
     case 'addBot': act('addBot'); break;
+    case 'addLocal': {
+      const used = new Set(S.players.map((x) => x.name));
+      const def = ['Jugador 2', 'Jugador 3', 'Jugador 4'].find((n) => !used.has(n)) || 'Jugador';
+      const name = (window.prompt('Nombre del jugador que juega en este dispositivo', def) || '').trim();
+      if (name) socket.emit('addLocal', { name }, (res) => { if (res && !res.ok) toast(res.error); });
+      break;
+    }
+    case 'setActive':
+      Object.assign(ui, { detail: null, prepWin: null, duelCursePick: null, rewardsView: null, curse: { target: null, amount: 5 }, theft: null });
+      ui.held = new Set(); ui.manaMode = false; ui.manaPick = new Map(); ui.manaSel = null;
+      socket.emit('setActive', { playerId: d.id });
+      break;
     case 'pvpHits': act('setSettings', { pvpHits: Number(d.n) }); break;
     case 'start': act('start'); break;
     case 'lobbyStage': act('lobbyStage', { stage: d.s }); break;

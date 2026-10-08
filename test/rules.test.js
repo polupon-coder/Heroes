@@ -391,3 +391,19 @@ test('poción de Maná fuera del combate: se guarda para el próximo', () => {
   assert.strictEqual(g.combatMana(a), m0 + 4);
   assert.strictEqual(a.hero.manaNext, 0);
 });
+
+test('mismo dispositivo: needsAction indica a quién le toca', () => {
+  const g = new Game('T', { rng: () => 0.5 });
+  const a = g.addPlayer('A');
+  const b = g.addPlayer('B');
+  g.lobbyStage = 'heroes';
+  assert.ok(g.needsAction(a.id) && g.needsAction(b.id));
+  for (const p of [a, b]) g.act(p.id, 'setHero', { raza: 'humano', clase: 'mago' });
+  g.act(a.id, 'lobbyReady', { value: true });
+  assert.ok(!g.needsAction(a.id) && g.needsAction(b.id));
+  g.act(b.id, 'lobbyReady', { value: true });
+  assert.strictEqual(g.phase, 'prep');
+  assert.ok(g.needsAction(a.id));
+  g.act(a.id, 'ready');
+  assert.ok(!g.needsAction(a.id) && g.needsAction(b.id));
+});

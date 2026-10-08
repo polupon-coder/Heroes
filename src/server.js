@@ -51,7 +51,8 @@ app.get('/api/datos', (req, res) => {
 });
 app.get('/healthz', (req, res) => res.send('ok'));
 
-// code -> { game, tokens: Map(token -> playerId), sockets: Map(playerId -> Set(socket)), botTimer, touched }
+// code -> { game, tokens: Map(token -> playerId), local: Map(token -> [playerId]) (jugadores
+// extra del mismo dispositivo), sockets: Map(playerId -> Set(socket)), botTimer, touched }
 const rooms = new Map();
 
 function newCode() {
@@ -63,13 +64,22 @@ function newCode() {
   return code;
 }
 
+function sendState(room, s) {
+  const g = room.game;
+  const mine = [...(s.data.players || [])].filter((id) => g.players.some((p) => p.id === id));
+  if (!mine.length) return;
+  if (!mine.includes(s.data.playerId)) s.data.playerId = mine[0];
+  const view = g.view(s.data.playerId);
+  // Jugadores de este mismo dispositivo y si les toca hacer algo.
+  view.local = mine.length > 1 ? mine.map((id) => ({ id, name: g.player(id).name, needs: g.needsAction(id) })) : null;
+  s.emit('state', view);
+}
+
 function broadcast(room) {
   room.touched = Date.now();
-  for (const [pid, set] of room.sockets) {
-    if (!room.game.players.some((p) => p.id === pid)) continue;
-    const view = room.game.view(pid);
-    for (const s of set) s.emit('state', view);
-  }
+  const all = new Set();
+  for (const set of room.sockets.values()) for (const s of set) all.add(s);
+  for (const s of all) sendState(room, s);
   scheduleBots(room);
 }
 
@@ -93,14 +103,19 @@ function scheduleBots(room) {
   }, g.phase === 'torneo' ? BOT_DELAY_MS * 2.5 : BOT_DELAY_MS);
 }
 
-function attach(room, socket, playerId) {
-  if (!room.sockets.has(playerId)) room.sockets.set(playerId, new Set());
-  room.sockets.get(playerId).add(socket);
+function attach(room, socket, playerId, token) {
+  const ids = [playerId, ...((token && room.local.get(token)) || [])];
+  socket.data.players = new Set(ids);
+  socket.data.token = token;
   socket.data.room = room.game.code;
   socket.data.playerId = playerId;
   socket.join(room.game.code);
-  const p = room.game.players.find((x) => x.id === playerId);
-  if (p) p.connected = true;
+  for (const id of ids) {
+    if (!room.sockets.has(id)) room.sockets.set(id, new Set());
+    room.sockets.get(id).add(socket);
+    const p = room.game.players.find((x) => x.id === id);
+    if (p) p.connected = true;
+  }
 }
 
 io.on('connection', (socket) => {
@@ -109,12 +124,12 @@ io.on('connection', (socket) => {
   socket.on('create', ({ name } = {}, cb) => {
     const code = newCode();
     const game = new Game(code);
-    const room = { game, tokens: new Map(), sockets: new Map(), botTimer: null, touched: Date.now() };
+    const room = { game, tokens: new Map(), local: new Map(), sockets: new Map(), botTimer: null, touched: Date.now() };
     rooms.set(code, room);
     const p = game.addPlayer(name);
     const token = crypto.randomUUID();
     room.tokens.set(token, p.id);
-    attach(room, socket, p.id);
+    attach(room, socket, p.id, token);
     reply(cb, { ok: true, code, token });
     broadcast(room);
   });
@@ -134,7 +149,7 @@ io.on('connection', (socket) => {
         return reply(cb, { ok: false, error: e.message });
       }
     }
-    attach(room, socket, pid);
+    attach(room, socket, pid, token);
     reply(cb, { ok: true, code: room.game.code, token });
     broadcast(room);
   });
@@ -149,14 +164,49 @@ io.on('connection', (socket) => {
       if (!(e instanceof GameError)) console.error(e);
       reply(cb, { ok: false, error: e instanceof GameError ? e.message : 'Error interno' });
     }
-    // Si alguien fue expulsado, cerrar sus conexiones.
+    // Si alguien fue expulsado, cerrar sus conexiones (salvo que controlen a otro jugador).
     for (const [pid, set] of room.sockets) {
       if (!room.game.players.some((p) => p.id === pid)) {
-        for (const s of set) s.emit('kicked');
+        for (const s of set) {
+          s.data.players.delete(pid);
+          if (s.data.players.size === 0) s.emit('kicked');
+        }
         room.sockets.delete(pid);
+        for (const [tok, list] of room.local) room.local.set(tok, list.filter((x) => x !== pid));
       }
     }
     broadcast(room);
+  });
+
+  // Otro jugador en este mismo dispositivo (se juega por turnos pasándose la pantalla).
+  socket.on('addLocal', ({ name } = {}, cb) => {
+    const room = rooms.get(socket.data.room);
+    if (!room || !socket.data.token) return reply(cb, { ok: false, error: 'No estás en ninguna sala' });
+    try {
+      const p = room.game.addPlayer(name);
+      p.local = true;
+      const list = room.local.get(socket.data.token) || [];
+      list.push(p.id);
+      room.local.set(socket.data.token, list);
+      // Todas las conexiones de este dispositivo controlan al nuevo jugador.
+      const primary = room.tokens.get(socket.data.token);
+      for (const s of room.sockets.get(primary) || []) {
+        s.data.players.add(p.id);
+        if (!room.sockets.has(p.id)) room.sockets.set(p.id, new Set());
+        room.sockets.get(p.id).add(s);
+      }
+      reply(cb, { ok: true });
+    } catch (e) {
+      reply(cb, { ok: false, error: e.message });
+    }
+    broadcast(room);
+  });
+
+  socket.on('setActive', ({ playerId } = {}) => {
+    const room = rooms.get(socket.data.room);
+    if (!room || !socket.data.players || !socket.data.players.has(playerId)) return;
+    socket.data.playerId = playerId;
+    sendState(room, socket);
   });
 
   socket.on('chat', ({ text } = {}) => {
@@ -171,11 +221,12 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
-    const set = room.sockets.get(socket.data.playerId);
-    if (set) {
+    for (const id of socket.data.players || []) {
+      const set = room.sockets.get(id);
+      if (!set) continue;
       set.delete(socket);
       if (set.size === 0) {
-        const p = room.game.players.find((x) => x.id === socket.data.playerId);
+        const p = room.game.players.find((x) => x.id === id);
         if (p) p.connected = false;
       }
     }

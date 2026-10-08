@@ -126,6 +126,7 @@ function botStep(game, p) {
     return false;
   }
 
+  if (game.phase === 'torneo' && game.tournament.stage === 'batalla') return battle(game, p);
   if (game.phase === 'torneo') {
     const t = game.tournament;
     if (t.stage === 'eleccion' && t.ranking[0] === p.id) {
@@ -150,6 +151,42 @@ function botStep(game, p) {
     if (m && m.attacker === p.id && p.combat && p.combat.status === 'activo') return fight(game, p);
   }
   return false;
+}
+
+// Batalla final: elige víctima (el más débil al que puede hacer daño), guarda
+// las esferas de su color y del propio (escudo) y relanza el resto.
+function battle(game, p) {
+  const t = game.tournament;
+  if (!t.alive.includes(p.id)) return false;
+  const cb = p.combat;
+  const rivals = t.alive.filter((id) => id !== p.id).map((id) => game.player(id));
+  if (!cb || cb.status !== 'activo' || !rivals.length) return false;
+  // A veces maldice al rival más peligroso antes de tirar.
+  if (cb.rolls === 0 && !p.battleCursed && game.availableMana(p) >= C.MANA_PER_CURSE + 5 && game.rng() < 0.4) {
+    const target = [...rivals].sort((a, b) => b.hero.vida - a.hero.vida)[0];
+    try { game.act(p.id, 'duelCurse', { amount: C.MANA_PER_CURSE, targetId: target.id }); return true; } catch (e) { p.battleCursed = true; }
+  }
+  if (cb.rolls === 0) {
+    game.act(p.id, 'roll', {});
+    return true;
+  }
+  const faces = cb.dice.map((d) => d.face);
+  const count = (c) => faces.filter((f) => f === c || f === 'multicolor').length;
+  // Víctima: más daño posible; a igualdad, la de menos Vida.
+  const victim = [...rivals].sort((a, b) => count(b.color) - count(a.color) || a.hero.vida - b.hero.vida)[0];
+  const n = count(victim.color);
+  if (n >= 5 || cb.rolls >= cb.maxRolls) {
+    game.act(p.id, 'strike', { targetId: victim.id });
+    return true;
+  }
+  const hold = cb.dice.map((d, i) => i).filter((i) => cb.dice[i].fixed || faces[i] === victim.color || faces[i] === 'multicolor' || (faces[i] === p.color && game.rng() < 0.5));
+  const free = cb.dice.map((d, i) => i).filter((i) => !hold.includes(i));
+  if (!free.length) {
+    game.act(p.id, 'strike', { targetId: victim.id });
+    return true;
+  }
+  game.act(p.id, 'roll', { hold });
+  return true;
 }
 
 // Probabilidad (simulada) de completar un objetivo con las tiradas que quedan,

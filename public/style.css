@@ -1601,3 +1601,28 @@ button.trade-tile:not([data-a]) { cursor: default; }
 /* Recompensas una al lado de la otra (también en móvil) */
 .carousel .foe-card .rewards-sum { flex-direction: row !important; flex-wrap: nowrap !important; justify-content: center; gap: 6px; }
 .car-dots { margin: 0 0 6px; }
+
+/* Prueba: Batalla final */
+.battle-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.bf { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 130px; }
+.bf b { font-family: var(--title); }
+.bf .portrait.duelist { width: 96px !important; height: 128px !important; }
+.bf.down { opacity: .35; filter: grayscale(1); }
+.bf.me b { color: var(--rubric); }
+.bf .duel-lifebar { width: 100%; }
+.battle-strike { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 6px; }
+.strike-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.strike-btns .btn { display: inline-flex; align-items: center; gap: 6px; }
+.battle-res .br-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0; flex-wrap: wrap; }
+.battle-res .bad { color: var(--rubric); font-family: var(--title); font-weight: 700; }
+.br-life.down { color: var(--rubric); }
+.curse-pick .dc-row { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 6px 0; }
+.curse-pick .dc-who { font-family: var(--title); color: #6b3fa0; display: flex; align-items: center; gap: 6px; }
+@media (max-width: 760px) {
+  .battle-row { gap: 6px; }
+  .bf { width: 84px; }
+  .bf .portrait.duelist { width: 64px !important; height: 86px !important; }
+  .bf b { font-size: .8rem; }
+  .strike-btns .btn { font-size: .85rem; padding: 6px 10px; }
+}
+.col-rivals:empty { display: none !important; }

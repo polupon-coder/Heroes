@@ -114,6 +114,7 @@ class Game {
     if (this.phase === 'torneo') {
       const t = this.tournament;
       if (!t) return false;
+      if (t.stage === 'batalla') return t.alive.includes(p.id) && !!p.combat && p.combat.status === 'activo';
       if (t.stage === 'eleccion') return t.ranking && t.ranking[0] === p.id;
       if (t.stage === 'botin') return !!t.loot && t.loot.winner === p.id;
       const m = t.matches.find((x) => x.started && !x.winner);
@@ -311,7 +312,9 @@ class Game {
       let combo = combos[k]();
       if (tipo === 'forma') combo = combo.map((c) => C.COLOR_TO_SHAPE[c]);
       combo.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-      const rewardLevel = Math.min(12, r + k - 1);
+      // Premios según el tamaño: objetos de grado I (pequeños), II (medianos), III (grande).
+      const bump = Math.floor((r - 1) / 4);
+      const rewardLevel = Math.min(12, [1, 2, 4, 6, 9][k] + bump);
       return {
         tipo,
         level,
@@ -322,7 +325,9 @@ class Game {
         tamano: v.nombre,
         combo,
         dano: [2, 3, 4, 5, 6][k] + Math.floor((r - 1) / 4),
-        rewards: [this.reward(Math.max(1, rewardLevel), this._invHint), this.reward(Math.max(1, rewardLevel), this._invHint)],
+        rewards: k === 4
+          ? [I.makeEquipment(this.rng, rewardLevel, () => this.nextId(), this._invHint), I.makeEquipment(this.rng, rewardLevel, () => this.nextId(), this._invHint)]
+          : [this.reward(rewardLevel, this._invHint), this.reward(rewardLevel, this._invHint)],
       };
     });
   }
@@ -492,7 +497,14 @@ class Game {
     cb.cursed = [];
     while (cb.cursesLeft > 0) {
       const succ = new Set();
-      for (const t of cb.targets) {
+      if (cb.kind === 'batalla') {
+        // En la batalla, el maleficio anula una de las esferas nuevas del color que más tienes.
+        const cnt = {};
+        for (const d of cb.dice) if (d.face && d.face !== 'maldita') cnt[d.face] = (cnt[d.face] || 0) + 1;
+        const top = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+        for (const i of newIdx) if (cb.dice[i].face === top || cb.dice[i].face === 'multicolor') succ.add(i);
+      }
+      for (const t of cb.kind === 'batalla' ? [] : cb.targets) {
         for (const i of D.successfulNewDice(D.valuesOf(cb.dice, t.tipo), newIdx, t.combo, D.WILD[t.tipo])) succ.add(i);
       }
       if (succ.size === 0) break;
@@ -537,6 +549,10 @@ class Game {
 
   activeCombat(p) {
     if (!p.combat || p.combat.status !== 'activo') fail('No estás en combate');
+    if (this.phase === 'torneo' && this.tournament && this.tournament.stage === 'batalla') {
+      if (!p.combat || p.combat.kind !== 'batalla' || p.combat.status !== 'activo') fail('No estás en combate');
+      return p.combat;
+    }
     if (this.phase === 'torneo') {
       const m = this.matchOf(p);
       if (!m || m.attacker !== p.id) fail('No es tu turno');
@@ -560,6 +576,7 @@ class Game {
 
   afterCombatStep(p) {
     const cb = p.combat;
+    if (cb.kind === 'batalla') return;
     if (cb.kind !== 'monstruo' && D.isSatisfied(cb.dice.map((d) => d.face), cb.combo)) {
       this.endCombat(p, true);
     } else if (!this.canStillAct(p)) {
@@ -596,7 +613,7 @@ class Game {
     const m = p.monster;
     if (won) {
       p.hero.victorias += 1;
-      const coins = [1, 3, 5, 8, 14][m.tier ?? 2] + Math.max(0, p.combat.maxRolls - p.combat.rolls);
+      const coins = [2, 4, 7, 10, 16][m.tier ?? 2] + Math.floor((Math.min(12, this.round) - 1) / 4) + Math.max(0, p.combat.maxRolls - p.combat.rolls);
       p.coinsPending = { n: coins, rolls: p.combat.rolls };
       p.stage = 'recompensa';
       p.rewards = m.rewards;
@@ -612,46 +629,92 @@ class Game {
 
   // ---------------------------------------------------------------- Torneo
 
+  // Batalla final: todos contra todos. Cada ronda todos tiran a la vez y, al
+  // acabar, cada uno elige a quién golpea. Esferas del color de la víctima
+  // (y comodines): 3 → 1 de daño, 4 → 2, 5 → 3. Cada esfera de tu propio
+  // color quita 1 del daño que recibes esa ronda. Gana el último en pie.
   startTournament() {
-    // Todos llegan al Torneo con la Vida completa.
     for (const p of this.players) {
       p.hero.pending = [];
       p.hero.vida = p.hero.base.vida;
     }
-    const ranking = [...this.players]
-      .map((p) => ({ p, s: this.tourneyScore(p), v: p.hero.vida, r: this.rng() }))
-      .sort((a, b) => b.s - a.s || b.v - a.v || a.r - b.r)
-      .map((x) => x.p.id);
-    this.tournament = { ranking, matches: [], stage: null, champion: null };
+    this.tournament = { stage: 'batalla', round: 0, alive: this.players.map((p) => p.id), last: null, matches: [], champion: null };
     this.phase = 'torneo';
-    this.say(
-      `🏆 ¡Comienza el Torneo! Clasificación (Fuerza + Maná): ${ranking
-        .map((id, i) => `${i + 1}. ${this.player(id).name} (${this.tourneyScore(this.player(id))})`)
-        .join(', ')}`
-    );
-    const n = ranking.length;
-    if (n === 1) {
-      this.finish(ranking[0]);
-    } else if (n === 2) {
-      this.startFinal(ranking[0], ranking[1]);
-    } else if (n === 3) {
-      this.tournament.bye = ranking[0];
-      this.say(`${this.player(ranking[0]).name} pasa directamente a la final por ser primero.`);
-      this.tournament.stage = 'semis';
-      this.startAttack(this.addMatch('Semifinal', ranking[1], ranking[2]));
-    } else {
-      // Los emparejamientos de las semifinales se sortean.
-      const order = [...ranking];
-      for (let i = order.length - 1; i > 0; i--) {
-        const j = Math.floor(this.rng() * (i + 1));
-        [order[i], order[j]] = [order[j], order[i]];
-      }
-      this.tournament.stage = 'semis';
-      this.say('Se sortean las semifinales.');
-      const m1 = this.addMatch('Semifinal 1', order[0], order[1]);
-      this.addMatch('Semifinal 2', order[2], order[3]);
-      this.startAttack(m1);
+    this.say('⚔ ¡Comienza la Batalla final! Todos contra todos: el último en pie gana.');
+    this.startBattleRound();
+  }
+
+  startBattleRound() {
+    const t = this.tournament;
+    t.round += 1;
+    t.strikes = {};
+    this.say(`— Batalla, ronda ${t.round} —`);
+    for (const id of t.alive) {
+      const p = this.player(id);
+      p.battleCursed = false;
+      p.combat = null;
+      // El Maná gastado en maleficios la ronda anterior falta en esta.
+      p.hero.manaDebt = p.hero.debtNext || 0;
+      p.hero.debtNext = 0;
+      this.newCombat(p, { kind: 'batalla', combo: [], label: 'Batalla final' });
     }
+  }
+
+  battleHits(attacker, target) {
+    const n = attacker.combat.dice.filter((d) => d.face === target.color || d.face === 'multicolor').length;
+    return Math.max(0, Math.min(3, n - 2));
+  }
+
+  battleShield(p) {
+    return p.combat.dice.filter((d) => d.face === p.color).length;
+  }
+
+  strike(p, targetId) {
+    const t = this.tournament;
+    if (this.phase !== 'torneo' || !t || t.stage !== 'batalla') fail('No hay batalla');
+    const cb = p.combat;
+    if (!cb || cb.kind !== 'batalla' || cb.status !== 'activo') fail('Ya has atacado esta ronda');
+    if (cb.rolls < 1) fail('Primero lanza las esferas');
+    if (!t.alive.includes(targetId) || targetId === p.id) fail('Elige a un rival en pie');
+    t.strikes[p.id] = targetId;
+    cb.status = 'hecho';
+    if (t.alive.every((id) => t.strikes[id])) this.resolveBattleRound();
+  }
+
+  resolveBattleRound() {
+    const t = this.tournament;
+    const before = Object.fromEntries(t.alive.map((id) => [id, this.player(id).hero.vida]));
+    const incoming = {};
+    const hits = [];
+    for (const id of t.alive) {
+      const a = this.player(id);
+      const v = this.player(t.strikes[id]);
+      const dmg = this.battleHits(a, v);
+      hits.push({ by: id, to: v.id, dmg, faces: a.combat.dice.map((d) => ({ face: d.face, shape: d.shape })) });
+      incoming[v.id] = (incoming[v.id] || 0) + dmg;
+    }
+    const shields = {};
+    for (const id of t.alive) {
+      const p = this.player(id);
+      const raw = incoming[id] || 0;
+      const shield = Math.min(raw, this.battleShield(p));
+      shields[id] = shield;
+      p.hero.vida = Math.max(0, p.hero.vida - (raw - shield));
+    }
+    for (const h of hits) this.say(`⚔ ${this.player(h.by).name} golpea a ${this.player(h.to).name}: ${h.dmg ? `−${h.dmg}` : 'falla'}.`);
+    for (const id of t.alive) if (shields[id]) this.say(`🛡 ${this.player(id).name} para ${shields[id]} de daño con su color.`);
+    t.last = { round: t.round, hits, shields, vida: Object.fromEntries(t.alive.map((id) => [id, this.player(id).hero.vida])) };
+    const standing = t.alive.filter((id) => this.player(id).hero.vida > 0);
+    for (const id of t.alive) if (!standing.includes(id)) this.say(`💀 ${this.player(id).name} cae en la Batalla final.`);
+    for (const id of t.alive) this.player(id).combat = null;
+    if (standing.length === 1) return this.finish(standing[0]);
+    if (standing.length === 0) {
+      // Caen todos a la vez: gana quien tenía más Vida antes del golpe.
+      const best = [...t.alive].sort((a, b) => before[b] - before[a] || this.tourneyScore(this.player(b)) - this.tourneyScore(this.player(a)))[0];
+      return this.finish(best);
+    }
+    t.alive = standing;
+    this.startBattleRound();
   }
 
   chooseRival(p, rivalId) {
@@ -879,6 +942,7 @@ class Game {
         offeredThisRound: !!p.offeredThisRound,
         boughtThisRound: !!p.boughtThisRound,
         duelCurseAt: p.duelCurseAt ?? null,
+        battleCursed: !!p.battleCursed,
         shop: p.id === forId ? p.shop || [] : undefined,
         stage: p.stage,
         offers: p.offers,
@@ -1268,26 +1332,26 @@ const ACTIONS = {
   // una vez por cada ataque de este: durante su propio turno (afecta al
   // siguiente ataque del rival) o mientras el rival ataca (le afecta ya si aún
   // no ha tirado). El Maná gastado no estará en su propio ataque.
-  duelCurse(p, { amount }) {
+  duelCurse(p, { amount, targetId }) {
     const t = this.tournament;
-    if (this.phase !== 'torneo' || !t) fail('Solo en el torneo');
-    const m = t.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id));
-    if (!m) fail('No estás jugando ahora');
-    const rival = this.player(m.a === p.id ? m.b : m.a);
-    const target = m.attacker === rival.id ? m.turns : m.turns + 1;
-    if (p.duelCurseAt === target) fail('Ya has lanzado un maleficio para este ataque');
+    if (this.phase !== 'torneo' || !t || t.stage !== 'batalla') fail('Solo en la Batalla final');
+    if (!t.alive.includes(p.id)) fail('Ya has caído');
+    if (p.battleCursed) fail('Ya has lanzado un maleficio esta ronda');
+    const rival = this.player(targetId);
+    if (rival === p || !t.alive.includes(rival.id)) fail('Elige a un rival en pie');
     const amt = Number(amount);
     if (!Number.isInteger(amt) || amt < C.MANA_PER_CURSE || amt % C.MANA_PER_CURSE !== 0) fail(`El Maná se usa en bloques de ${C.MANA_PER_CURSE}`);
     if (amt > this.availableMana(p)) fail('No tienes tanto Maná disponible');
     const n = amt / C.MANA_PER_CURSE;
     p.hero.manaDebt += amt;
-    // Lanzado en tu propio ataque: también te falta en el siguiente.
-    if (m.attacker === p.id) p.hero.debtNext = (p.hero.debtNext || 0) + amt;
-    p.duelCurseAt = target;
-    // Si el rival está atacando y aún no ha lanzado, le afecta ya; si no, en su próximo ataque.
-    if (m.attacker === rival.id && rival.combat && rival.combat.status === 'activo' && rival.combat.rolls === 0) rival.combat.cursesLeft += n;
+    p.hero.debtNext = (p.hero.debtNext || 0) + amt;
+    p.battleCursed = true;
+    if (rival.combat && rival.combat.status === 'activo' && rival.combat.rolls === 0) rival.combat.cursesLeft += n;
     else rival.hero.curses += n;
     this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${rival.name}: se le anulará(n) ${n} esfera(s) acertada(s).`);
+  },
+  strike(p, { targetId }) {
+    this.strike(p, targetId);
   },
   takeLoot(p, { itemId }) {
     this.takeLoot(p, itemId);

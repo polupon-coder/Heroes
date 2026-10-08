@@ -182,6 +182,7 @@ function isMyTurnCombat() {
   if (!p || !p.combat || p.combat.status !== 'activo') return false;
   if (S.phase === 'combat') return p.stage === 'combate';
   if (S.phase === 'torneo') {
+    if (S.tournament.stage === 'batalla') return true;
     return (S.tournament.matches || []).some((m) => !m.winner && m.attacker === p.id);
   }
   return false;
@@ -633,13 +634,16 @@ function useBtn(it) {
 
 function opponentOf(p) {
   if (S.phase === 'combat') {
-    if (!p.monster && p.stage === 'combate' && p.offers && p.offers.length) {
-      return { art: p.offers.map((m) => monsterArt(m, 'foe two')).join(''), name: p.offers.map((m) => m.nombre).join(' o ') };
-    }
+    if (!p.monster && p.stage === 'combate') return { txt: 'tirando…' };
     if (p.monster) {
       const res = p.combat && p.combat.status === 'victoria' ? 'win' : p.combat && p.combat.status === 'derrota' ? 'lose' : '';
       return { art: monsterArt(p.monster, 'foe'), name: p.monster.nombre, res };
     }
+  }
+  if (S.phase === 'torneo' && S.tournament && S.tournament.stage === 'batalla') {
+    const t = S.tournament;
+    if (!t.alive.includes(p.id)) return { txt: 'caído', out: true };
+    return { txt: p.combat && p.combat.status === 'activo' ? 'tirando…' : 'listo' };
   }
   if (S.phase === 'torneo' && S.tournament) {
     const m = S.tournament.matches.find((x) => !x.winner && (x.a === p.id || x.b === p.id));
@@ -657,6 +661,8 @@ function opponentOf(p) {
 }
 
 function renderArena() {
+  // En la Batalla final todos se ven en el centro: aquí no hace falta repetirlos.
+  if (S.phase === 'torneo' && S.tournament && S.tournament.stage === 'batalla') return '';
   return `<h3 class="col-title">Rivales</h3>` + others().map((p) => {
     const h = p.hero;
     const pct = Math.max(0, Math.min(100, (h.vida / h.base.vida) * 100));
@@ -689,9 +695,31 @@ function holdOutcome() {
   setTimeout(() => { if (S) renderModal(); }, 1850);
 }
 
+function battleResultHtml() {
+  const t = S.tournament;
+  if (!t || t.stage !== 'batalla' || !t.last || ui.battleSeen === t.last.round) return '';
+  if (ui.battleSeen == null && t.round > 1 && !ui.battlePrimed) { ui.battlePrimed = true; ui.battleSeen = t.last.round; return ''; }
+  ui.battlePrimed = true;
+  const rows = t.last.hits.map((h) => {
+    const a = byId(h.by); const v = byId(h.to);
+    return `<div class="br-row"><b>${esc(a.name)}</b> → <b>${esc(v.name)}</b> <span class="dice">${h.faces.map((f) => die(f.face, { sm: true, shape: f.shape })).join('')}</span> <span class="${h.dmg ? 'bad' : 'muted'}">${h.dmg ? `−${h.dmg}` : 'falla'}</span></div>`;
+  }).join('');
+  const shields = Object.entries(t.last.shields || {}).filter(([, n]) => n).map(([id, n]) => `<div class="br-row">🛡 <b>${esc(byId(id).name)}</b> para ${n}</div>`).join('');
+  const vidas = Object.entries(t.last.vida).map(([id, v]) => `<span class="br-life ${v <= 0 ? 'down' : ''}">${esc(byId(id).name)} ${v <= 0 ? 'cae' : v}</span>`).join(' · ');
+  return `
+    <div class="card outcome battle-res">
+      <div class="outcome-title">Ronda ${t.last.round}</div>
+      ${rows}${shields}
+      <p class="center small">${vidas}</p>
+      <div class="row center-row"><button class="btn primary" data-a="closeBattle">Continuar</button></div>
+    </div>`;
+}
+
 function renderOutcome() {
   const p = me();
   if (!p || !p.hero) return '';
+  const br = S.phase === 'torneo' ? battleResultHtml() : '';
+  if (br) return br;
   // Aviso: alguien te ha lanzado un maleficio.
   if (ui.curseAlert) {
     const who = ui.curseAlert.split(' gasta ')[0];
@@ -853,13 +881,12 @@ const RULES = {
   sala: ['Sala', `
     <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">+</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Jugar en el mismo dispositivo</h4><p>En la sala, <b>Jugador aquí</b> añade a otro jugador que juega en tu mismo ordenador o móvil.
       Se juega por turnos: cuando te toca a ti aparece <b>«Turno de…»</b> y te pasan el dispositivo. Se puede mezclar con amigos conectados desde otros dispositivos y con bots.</p></section>`],
-  torneo: ['Torneo', `
-    <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Semifinales y final</h4><p>Todos empiezan con la Vida completa. Las semifinales se sortean;
-      se juega un duelo detrás de otro. Puedes lanzar a tu rival un <b>maleficio</b> (5 Maná) para cada uno de sus ataques: en tu turno o mientras él ataca.
-      Antes de la final hay una ronda para comprar, comerciar (no con tu rival de la final), y robar o lanzar maleficios (solo a tu rival de la final).</p></section>
-    <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ 1 daño</span></div><h4>Golpear</h4><p>Saca esferas del <b>color del rival</b>: 3 → 1 de daño, 4 → 2, 5 → 3. Se ataca por turnos hasta que uno cae.</p></section>
-    <section><div class="rule-ill"><img src="img/objetos/yelmo-3.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Premios</h4><p>Quien gana una semifinal elige <b>un objeto</b> del vencido y se lleva sus <b>monedas</b> y un premio.
-      Los finalistas recuperan la Vida antes de la final.</p></section>`],
+  torneo: ['Batalla final', `
+    <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/enano-guerrero.webp" alt=""></div><h4>Todos contra todos</h4><p>Tras la aventura, todos empiezan con la Vida completa y luchan a la vez. Cada ronda todos tiran sus 5 esferas y, al acabar, cada uno elige a quién golpea. Gana el último en pie.</p></section>
+    <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ −1</span></div><h4>Golpear</h4><p>Cuentan las esferas del <b>color de tu víctima</b> (y los comodines): 3 → 1 de daño, 4 → 2, 5 → 3.</p></section>
+    <section><div class="rule-ill"><span class="sphere big azul"></span><span class="lbl">🛡 −1</span></div><h4>Escudo</h4><p>Cada esfera de <b>tu propio color</b> te quita 1 del daño que recibes esa ronda.</p></section>
+    <section><div class="rule-ill"><img src="img/ui/calavera.webp" alt=""></div><h4>Maldecir</h4><p>Una vez por ronda puedes maldecir a un rival: cada calavera (5 Maná) le anula una esfera acertada.</p></section>`],
+
 };
 
 function renderRules() {
@@ -1203,8 +1230,14 @@ function syncCombatUi() {
     ui.manaSel = null;
     // Las esferas que ya sirven salen marcadas para conservarlas.
     if (cb) {
-      const { used } = bestTarget(cb);
-      cb.dice.forEach((d, i) => { if (d.fixed || (cb.rolls > 0 && used.has(i))) ui.held.add(i); });
+      const { used, all } = bestTarget(cb);
+      // Tras cada tirada, el carrusel se pone en el monstruo más grande que ya completas.
+      if (cb.kind === 'monstruo' && cb.rolls > 0) {
+        const done = all.map((x, i) => (x.ok ? i : -1)).filter((i) => i >= 0);
+        if (done.length) { ui.foeKey = cb.label + S.round; ui.foeIdx = Math.max(...done); }
+      }
+      // En la batalla se conservan todas: tú tocas las que quieres relanzar.
+      cb.dice.forEach((d, i) => { if (d.fixed || (cb.rolls > 0 && (cb.kind === 'batalla' || used.has(i)))) ui.held.add(i); });
     }
   }
 }
@@ -1251,12 +1284,14 @@ function renderCombat(p, controllable) {
         ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
         ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
+      ${cb.kind === 'batalla' ? battleStrikeHtml(p, cb) : ''}
+      ${cb.kind === 'batalla' && !p.battleCursed && p.hero.manaDisponible >= 5 ? '<div class="duel-curse"><button class="btn curse-btn" data-a="duelCursePick" data-t="b">Maldecir</button></div>' : ''}
       ${cb.kind === 'duelo' && S.tournament ? (() => { const m = S.tournament.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id)); return m ? duelCurseHtml(S.tournament, m) : ''; })() : ''}
       <div class="rolls-count" title="Tiradas">${cb.rolls}/${cb.maxRolls}</div>
       ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">${duelBtnText(p, duelDamage(cb, faces))}</button></div>` : ''}
-      ${cb.rolls >= cb.maxRolls && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
+      ${cb.rolls >= cb.maxRolls && cb.kind === 'monstruo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
   }
 
   let foe = '';
@@ -1269,9 +1304,9 @@ function renderCombat(p, controllable) {
   }
   return `
   <div class="combat">
-    ${monster ? foesHtml(p, cb, all, controllable) : cb.kind === 'duelo' ? `<div class="duel-target">${comboHtml(cb.combo, false)}</div>` : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
-    ${controllable || cb.kind === 'duelo' ? '' : `<div class="rolls-count">${cb.rolls}/${cb.maxRolls}</div>`}
-    ${monster || cb.kind === 'duelo' ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
+    ${monster ? foesHtml(p, cb, all, controllable) : cb.kind === 'batalla' ? '' : cb.kind === 'duelo' ? `<div class="duel-target">${comboHtml(cb.combo, false)}</div>` : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
+    ${controllable || cb.kind === 'duelo' || cb.kind === 'batalla' ? '' : `<div class="rolls-count">${cb.rolls}/${cb.maxRolls}</div>`}
+    ${monster || cb.kind === 'duelo' || cb.kind === 'batalla' ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
     <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
         ${result}
     ${controls}
@@ -1364,8 +1399,50 @@ function duelDamage(cb, faces) {
   return Math.max(0, 3 - (hits - n));
 }
 
+function renderBattle() {
+  const t = S.tournament;
+  const p = me();
+  const alive = t.alive.includes(S.me);
+  const fighters = S.players.map((x) => {
+    const pct = Math.max(0, Math.min(100, (x.hero.vida / x.hero.base.vida) * 100));
+    const down = !t.alive.includes(x.id);
+    const st = down ? 'caído' : x.combat && x.combat.status === 'activo' ? 'tirando…' : 'listo';
+    return `<div class="bf ${down ? 'down' : ''} ${x.id === S.me ? 'me' : ''}">
+      ${heroPortrait(x, 'duelist')}
+      <b>${esc(x.name)}</b><span class="sphere ${x.color}"></span>
+      <div class="life duel-lifebar"><i style="width:${pct}%"></i><span>${x.hero.vida} / ${x.hero.base.vida}</span></div>
+      <small class="muted">${st}</small>
+    </div>`;
+  }).join('');
+  let mine = '';
+  if (alive && p.combat && p.combat.status === 'activo') mine = renderCombat(p, true);
+  else if (alive) mine = '<p class="center muted">Esperando a que los demás terminen de tirar…</p>';
+  else mine = '<p class="center muted">Has caído. Mira cómo acaba la batalla.</p>';
+  return `
+    <div class="card duel-card battle-card">
+      <h2 class="duel-title">Batalla final · ronda ${t.round}</h2>
+      <div class="battle-row">${fighters}</div>
+      ${mine}
+    </div>`;
+}
+
+// Tras tirar en la batalla: a quién golpeas (daño según las esferas de su color) y tu escudo.
+function battleStrikeHtml(p, cb) {
+  if (!cb.rolls) return '';
+  const t = S.tournament;
+  const n = (c) => cb.dice.filter((d) => d.face === c || d.face === 'multicolor').length;
+  const shield = cb.dice.filter((d) => d.face === p.color).length;
+  const btns = t.alive.filter((id) => id !== S.me).map((id) => {
+    const r = byId(id);
+    const dmg = Math.max(0, Math.min(3, n(r.color) - 2));
+    return `<button class="btn ${dmg ? 'primary' : ''}" data-a="strike" data-id="${id}"><span class="sphere ${r.color}"></span> Golpear a ${esc(r.name)} · ${dmg ? `−${dmg}` : 'sin daño'}</button>`;
+  }).join('');
+  return `<div class="battle-strike"><div class="muted small center">3 esferas de su color → −1 · 4 → −2 · 5 → −3. Tu escudo: <b>${shield}</b> <span class="sphere ${p.color}"></span></div><div class="strike-btns">${btns}</div></div>`;
+}
+
 function renderTournament() {
   const t = S.tournament;
+  if (t.stage === 'batalla') return renderBattle();
   if (t.stage === 'eleccion') {
     if (t.ranking[0] === S.me) {
       return `<div class="card duel-card"><h2>Elige rival para tu semifinal</h2><div class="row rival-pick">
@@ -1430,8 +1507,30 @@ function renderHandoff() {
 }
 
 // Ventana flotante: cuántas calaveras lanzar (5 de Maná cada una).
+function renderBattleCursePick() {
+  const t = S.tournament;
+  const p = me();
+  const max = Math.floor(p.hero.manaDisponible / 5);
+  if (max < 1 || p.battleCursed) { ui.duelCursePick = null; return ''; }
+  const skull = '<img src="img/ui/calavera.webp" alt="">';
+  const rows = t.alive.filter((id) => id !== S.me).map((id) => {
+    const r = byId(id);
+    const opts = [];
+    for (let n = 1; n <= max; n++) opts.push(`<button class="btn dc-opt" data-a="battleCurse" data-id="${id}" data-n="${n * 5}"><span class="dc-skulls">${skull.repeat(n)}</span><small>${n * 5} Maná</small></button>`);
+    return `<div class="dc-row"><div class="dc-who"><span class="sphere ${r.color}"></span> ${esc(r.name)}</div><div class="dc-opts">${opts.join('')}</div></div>`;
+  }).join('');
+  return `
+    <div class="card outcome curse-pick">
+      <button class="modal-close" data-a="duelCursePick" data-t="" aria-label="Cerrar" title="Cerrar">×</button>
+      <div class="outcome-title">Maldecir</div>
+      <p class="center muted">Cada calavera anula una esfera acertada de su próxima tirada.</p>
+      ${rows}
+    </div>`;
+}
+
 function renderDuelCursePick() {
   const t = S && S.tournament;
+  if (t && t.stage === 'batalla') return renderBattleCursePick();
   const m = t && t.matches.find((x) => x.started && !x.winner && (x.a === S.me || x.b === S.me));
   const p = me();
   if (!m || S.phase !== 'torneo') { ui.duelCursePick = null; return ''; }
@@ -1588,7 +1687,10 @@ document.addEventListener('click', (e) => {
     case 'buy': act('buy', { itemId: d.id }); ui.prepWin = null; render(); break;
     case 'loot': act('takeLoot', { itemId: d.id }); break;
     case 'duelCurse': ui.duelCursePick = null; renderModal(); act('duelCurse', { amount: Number(d.n) }); break;
-    case 'duelCursePick': ui.duelCursePick = d.t === '' ? null : Number(d.t); renderModal(); break;
+    case 'duelCursePick': ui.duelCursePick = d.t === '' ? null : d.t === 'b' ? 'b' : Number(d.t); renderModal(); break;
+    case 'battleCurse': ui.duelCursePick = null; renderModal(); act('duelCurse', { amount: Number(d.n), targetId: d.id }); break;
+    case 'strike': act('strike', { targetId: d.id }); break;
+    case 'closeBattle': ui.battleSeen = S.tournament.last.round; renderModal(); break;
     case 'nextDuel': clearTimeout(ui.duelTimer); ui.duelTimer = null; ui.duelQueue.shift(); renderModal(); break;
     case 'closeCoins': ui.coinsMsg = null; renderModal(); break;
     case 'closePrep': ui.prepWin = null; ui.theft = null; render(); break;

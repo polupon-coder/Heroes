@@ -1576,3 +1576,13 @@ button.trade-tile:not([data-a]) { cursor: default; }
 }
 .controls [data-a=roll] { width: auto !important; min-width: 170px; padding-left: 18px; padding-right: 18px; }
 .carousel .foe-card.side .foe-tier { font-size: .62rem; }
+/* Laterales alineados con la figura central (mismo eje y misma altura de pies) */
+.car-track { align-items: start; }
+.carousel .foe-card.side { transform: none; }
+.carousel .foe-card.side .foe-art { height: 200px; display: flex; align-items: flex-end; justify-content: center; }
+.carousel .foe-card.center .foe-art { height: 200px; display: flex; align-items: flex-end; justify-content: center; }
+.carousel .foe-card.side .duel-art { height: 150px !important; }
+@media (max-width: 760px) {
+  .carousel .foe-card.side .foe-art, .carousel .foe-card.center .foe-art { height: 150px; }
+  .carousel .foe-card.side .duel-art { height: 100px !important; }
+}

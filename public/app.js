@@ -1248,7 +1248,7 @@ function renderCombat(p, controllable) {
     const manaPot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');
     controls = `<div class="controls">
       <div class="row">
-        ${cb.rolls === 0 ? (cb.kind === 'monstruo' && p.offers ? `<button class="btn primary" data-a="roll" data-aim="${foeIndex(p, cb)}">Atacar a ${esc(p.offers[foeIndex(p, cb)].nombre)}</button>` : '<button class="btn primary" data-a="roll">Atacar</button>') : ''}
+        ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
         ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
       ${cb.kind === 'duelo' && S.tournament ? (() => { const m = S.tournament.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id)); return m ? duelCurseHtml(S.tournament, m) : ''; })() : ''}
@@ -1256,7 +1256,7 @@ function renderCombat(p, controllable) {
       ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">${duelBtnText(p, duelDamage(cb, faces))}</button></div>` : ''}
-      ${cb.rolls >= cb.maxRolls && cb.kind !== 'duelo' && !(cb.aim != null && (all[cb.aim] || {}).ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
+      ${cb.rolls >= cb.maxRolls && cb.kind !== 'duelo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
   }
 
   let foe = '';
@@ -1314,13 +1314,14 @@ function foeCard(p, cb, all, controllable, i, pos) {
   const st = all[i] || { missing: m.combo.length, ok: false };
   const isAim = cb.aim === i;
   const chosen = done && cb.chosen === i;
-  const can = controllable && !done && cb.rolls > 0 && st.ok && isAim;
+  const can = controllable && !done && cb.rolls > 0 && st.ok;
   const state = done
     ? (chosen ? '<div class="need ok">Derrotado</div>' : '')
-    : cb.rolls === 0 ? '' : !isAim ? (st.ok ? '<div class="need muted">Completo</div>' : '') : st.ok ? '' : `<div class="need">Te faltan ${st.missing}</div>`;
+    : '';
   return `
     <div class="foe-card ${pos} ${st.ok && !done && cb.rolls ? 'ready' : ''} ${isAim ? 'aim' : ''} ${chosen ? 'chosen' : ''}" ${pos !== 'center' ? `data-a="foeGo" data-i="${i}"` : ''}>
-      <div class="foe-tier t${i}">${TIER_NAME[m.tier ?? i] || ''}${isAim ? ' · tu objetivo' : ''}</div>
+      ${pos !== 'center' && st.ok && cb.rolls && !done ? '<div class="side-ok">¡Puedes derrotarlo!</div>' : ''}
+      <div class="foe-tier t${i}">${TIER_NAME[m.tier ?? i] || ''}</div>
       <div class="foe-art">${monsterArt(m, 'duel-art')}</div>
       <div class="foe-title">${esc(m.nombre)} <span class="muted small">${esc(m.tamano || '')}</span></div>
       <div class="foe-dmg" title="Vida que pierdes si fallas">−${m.dano}</div>

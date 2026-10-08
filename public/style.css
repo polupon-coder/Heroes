@@ -1589,3 +1589,12 @@ button.trade-tile:not([data-a]) { cursor: default; }
 /* Lo que pide el monstruo del centro: conseguido iluminado, lo que falta apagado */
 .carousel .foe-card.center .die.target.got { filter: drop-shadow(0 0 6px rgba(120, 200, 90, .95)) drop-shadow(0 0 2px rgba(79, 122, 58, .9)); opacity: 1; }
 .carousel .foe-card.center .die.target.miss { opacity: .35; filter: grayscale(.6); }
+.carousel .foe-card.side.ready { opacity: .85; filter: none; }
+.side-ok { font-family: var(--title); font-size: .65rem; color: #4f7a3a; font-weight: 700; }
+/* Carrusel compacto: sin hueco fijo ni textos de «te faltan» */
+.carousel .foe-slot { min-height: 0; }
+.carousel .foe-card .foe-slot:empty { display: none; }
+.carousel .foe-card .rewards-sum { margin-top: 4px; }
+.carousel .foe-card.center .dice { margin: 4px 0; }
+.car-dots { margin: 2px 0; }
+.col-stage .combat .dice-zone { margin-top: 6px; }

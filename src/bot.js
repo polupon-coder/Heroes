@@ -179,26 +179,26 @@ function fight(game, p) {
   if (cb.kind === 'monstruo') {
     const value = (m) => [3, 6, 10, 15, 24][m.tier ?? 2];
     if (cb.rolls === 0) {
-      // Elige el monstruo con mejor esperanza: probabilidad × botín − riesgo × daño.
-      const h = p.hero;
-      let best = 0;
-      let bestScore = -Infinity;
-      cb.targets.forEach((t, i) => {
-        const m = p.offers[i];
-        const pr = chance(cb, t, cb.maxRolls, 200);
-        const w = h.vida <= m.dano + 2 ? 8 : h.vida <= 2 * m.dano ? 3 : 1.2;
-        const sc = pr * value(m) - (1 - pr) * m.dano * w;
-        if (sc > bestScore) { bestScore = sc; best = i; }
-      });
-      game.act(p.id, 'roll', { aim: best });
+      game.act(p.id, 'roll', {});
       return true;
     }
-    const st = game.targetStatus(cb)[cb.aim];
-    if (st.ok) {
-      game.act(p.id, 'present', { index: cb.aim });
+    const st = game.targetStatus(cb);
+    const left = cb.maxRolls - cb.rolls;
+    const ok = st.map((x, i) => i).filter((i) => st[i].ok).sort((a, b) => value(p.offers[b]) - value(p.offers[a]));
+    // Persigue el objetivo con mejor esperanza: probabilidad × valor.
+    let best = -1;
+    let bestScore = -1;
+    if (left > 0) st.forEach((x, i) => {
+      const sc = chance(cb, cb.targets[i], left) * value(p.offers[i]);
+      if (sc > bestScore) { bestScore = sc; best = i; }
+    });
+    const cur = ok.length ? value(p.offers[ok[0]]) : 0;
+    if (ok.length && (best < 0 || bestScore <= cur * 1.15 || st[best].ok)) {
+      game.act(p.id, 'present', { index: ok[0] });
       return true;
     }
-    ({ used, missing } = st);
+    if (best < 0) best = st.reduce((bi, x, i) => (x.missing < st[bi].missing ? i : bi), 0);
+    ({ used, missing } = st[best]);
   } else {
     if (cb.rolls === 0) {
       game.act(p.id, 'roll', {});

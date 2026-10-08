@@ -465,13 +465,7 @@ class Game {
   roll(p, hold, aim) {
     const cb = this.activeCombat(p);
     if (cb.rolls >= cb.maxRolls) fail(`Ya has hecho las ${cb.maxRolls} tiradas`);
-    // Contra monstruos, al atacar eliges a cuál vas: queda fijado para todo el combate.
-    if (cb.kind === 'monstruo' && cb.rolls === 0) {
-      const i = Number(aim);
-      if (!Number.isInteger(i) || !p.offers[i]) fail('Elige a qué monstruo atacas');
-      cb.aim = i;
-      cb.label = `${p.offers[i].nombre} ${p.offers[i].tamano.toLowerCase()}`;
-    }
+    void aim; // ya no se fija objetivo: puedes derrotar a cualquiera que completes
     let newIdx;
     if (cb.rolls === 0) {
       newIdx = cb.dice.map((d, i) => (d.fixed ? -1 : i)).filter((i) => i >= 0);
@@ -553,10 +547,10 @@ class Game {
   canStillAct(p) {
     const cb = p.combat;
     if (cb.rolls < cb.maxRolls && cb.dice.some((d) => !d.fixed)) return true;
-    if (cb.kind === 'monstruo' && cb.aim != null && this.targetStatus(cb)[cb.aim].ok) return true; // falta presentarla
+    if (cb.kind === 'monstruo' && this.targetStatus(cb).some((x) => x.ok)) return true; // falta presentarla
     if (cb.kind !== 'monstruo') return false;
     // Sin tiradas: solo una poción de Maná que añada comodines suficientes puede salvarle.
-    const missing = cb.aim != null ? this.targetStatus(cb)[cb.aim].missing : this.bestTarget(cb).missing;
+    const missing = this.bestTarget(cb).missing;
     const potential = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos]
       .filter((it) => it.efecto === 'mana')
       .reduce((s, it) => s + it.valor, 0);
@@ -581,7 +575,6 @@ class Game {
     const st = this.targetStatus(cb)[Number(index)];
     if (!st) fail('Monstruo no válido');
     if (!st.ok) fail('Tus esferas no completan lo que pide este monstruo');
-    if (cb.aim != null && cb.aim !== Number(index)) fail('Solo puedes derrotar al monstruo al que atacas');
     p.monster = p.offers[Number(index)];
     cb.label = `${p.monster.nombre} ${p.monster.tamano.toLowerCase()}`;
     cb.chosen = Number(index);

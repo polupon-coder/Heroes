@@ -294,7 +294,7 @@ class Game {
     const levels = [0, 1, 2, 3, 4].map((k) => lo + k);
     const FACES = ['rojo', 'azul', 'verde', 'amarillo'];
     const pick = () => FACES[Math.floor(this.rng() * 4)];
-    const others = (c, n) => { const out = []; while (out.length < n) { const x = pick(); if (x !== c) out.push(x); } return out; };
+    const others = (c, n) => { const rest = FACES.filter((x) => x !== c); return Array.from({ length: n }, () => rest[Math.floor(this.rng() * rest.length)]); };
     const combos = [
       () => { const a = pick(); return [a, a, a, ...others(a, 1)]; },             // trío + 1   (~90 %)
       () => { const a = pick(); return [a, a, a, a]; },                           // póker      (~80 %)

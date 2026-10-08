@@ -1586,3 +1586,6 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .carousel .foe-card.side .foe-art, .carousel .foe-card.center .foe-art { height: 150px; }
   .carousel .foe-card.side .duel-art { height: 100px !important; }
 }
+/* Lo que pide el monstruo del centro: conseguido iluminado, lo que falta apagado */
+.carousel .foe-card.center .die.target.got { filter: drop-shadow(0 0 6px rgba(120, 200, 90, .95)) drop-shadow(0 0 2px rgba(79, 122, 58, .9)); opacity: 1; }
+.carousel .foe-card.center .die.target.miss { opacity: .35; filter: grayscale(.6); }

@@ -113,6 +113,15 @@ function matchDice(faces, combo, wild = 'multicolor') {
   return { used, missing };
 }
 
+// Qué piezas de lo que pide un monstruo ya cubren tus esferas (para iluminarlas).
+function comboCovered(combo, vals, wild) {
+  const have = {};
+  let wilds = 0;
+  for (const v of vals) { if (!v) continue; if (v === wild) wilds++; else have[v] = (have[v] || 0) + 1; }
+  const out = combo.map((c) => { if (have[c] > 0) { have[c]--; return true; } return false; });
+  return out.map((ok) => { if (ok) return true; if (wilds > 0) { wilds--; return 'wild'; } return false; });
+}
+
 // Cómo van las esferas frente a cada monstruo del combate.
 function targetMatch(cb, t, faces) {
   const vals = t.tipo === 'forma' ? cb.dice.map((d) => d.shape) : (faces || cb.dice.map((d) => d.face));
@@ -1205,7 +1214,11 @@ function renderCombat(p, controllable) {
   const mine = p.id === S.me;
   const faces = cb.dice.map((d, i) => (mine && ui.manaPick.has(i) ? ui.manaPick.get(i) : d.face));
   const monster = cb.kind === 'monstruo' && cb.targets && p.offers;
-  const { used, all } = bestTarget(cb, faces);
+  const bt = bestTarget(cb, faces);
+  const all = bt.all;
+  // Contra monstruos, se iluminan las esferas que sirven al monstruo del centro del carrusel.
+  const centerIdx = cb.kind === 'monstruo' && p.offers ? foeIndex(p, cb) : null;
+  const used = centerIdx != null && all[centerIdx] ? all[centerIdx].used : bt.used;
   const fijables = mine ? p.hero.fijables : null;
   const diceHtml = cb.dice.length
     ? cb.dice.map((d, i) => {
@@ -1311,10 +1324,21 @@ function foeCard(p, cb, all, controllable, i, pos) {
       <div class="foe-art">${monsterArt(m, 'duel-art')}</div>
       <div class="foe-title">${esc(m.nombre)} <span class="muted small">${esc(m.tamano || '')}</span></div>
       <div class="foe-dmg" title="Vida que pierdes si fallas">−${m.dano}</div>
-      ${pos === 'center' ? comboHtml(m.combo, false, m.tipo) : ''}
+      ${pos === 'center' ? coveredComboHtml(p, cb, m, i) : ''}
       ${pos === 'center' ? `<div class="foe-slot">${state}${can ? `<button class="btn primary defeat-btn" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}</div>
       <div class="rewards-sum">${m.rewards.map((it) => `<span>${shortName(it)}</span>`).join('')}</div>` : ''}
     </div>`;
+}
+function coveredComboHtml(p, cb, m, i) {
+  if (!cb.rolls) return comboHtml(m.combo, false, m.tipo);
+  const t = cb.targets[i];
+  const key = t.tipo === 'forma' ? 'shape' : 'face';
+  const vals = cb.dice.map((d) => d[key]);
+  const cov = comboCovered(m.combo, vals, t.tipo === 'forma' ? 'espiral' : 'multicolor');
+  return `<div class="dice ${m.combo.length >= 5 ? 'five' : ''}">${m.combo.map((c, k) => {
+    const cls = `target ${cov[k] ? 'got' : 'miss'}`;
+    return m.tipo === 'forma' ? die(null, { cls, shape: c }) : die(c, { cls });
+  }).join('')}</div>`;
 }
 function foesHtml(p, cb, all, controllable) {
   const k = foeIndex(p, cb);

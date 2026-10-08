@@ -1545,3 +1545,5 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .modal .card.outcome.handoff .portrait.duelist { width: 150px; height: 200px; }
 @media (max-width: 760px) { .modal:has(.handoff) { align-items: center; } }
 .modal:has(.handoff) { background: rgba(40, 26, 14, .82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.modal .card.outcome.handoff { align-items: center !important; text-align: center; }
+.modal .card.outcome.handoff .portrait.duelist { display: block; margin: 0 auto !important; align-self: center; }

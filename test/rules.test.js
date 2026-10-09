@@ -331,6 +331,8 @@ test('cinco monstruos por ronda, de pequeño a grande, y se derrota a cualquiera
 test('la Fuerza da tiradas: 4 con Fuerza 18 o más', () => {
   assert.strictEqual(C.rollsForFuerza(17), 3);
   assert.strictEqual(C.rollsForFuerza(18), 4);
+  assert.strictEqual(C.rollsForFuerza(28), 5);
+  assert.deepStrictEqual([14, 19, 20, 29, 30].map(C.fuerzaDamageBonus), [0, 0, 1, 1, 2]);
 });
 
 test('batalla final: todos contra todos, daño por color y escudo con el propio', () => {

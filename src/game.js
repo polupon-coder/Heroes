@@ -663,7 +663,8 @@ class Game {
 
   battleHits(attacker, target) {
     const n = attacker.combat.dice.filter((d) => d.face === target.color || d.face === 'multicolor').length;
-    return Math.max(0, Math.min(3, n - 2));
+    const base = Math.max(0, Math.min(3, n - 2));
+    return base ? base + C.fuerzaDamageBonus(this.effFuerza(attacker)) : 0;
   }
 
   battleShield(p) {

@@ -97,7 +97,13 @@ const MAX_ROLLS = 3;
 // Siempre se lanzan 5 esferas; la Fuerza da tiradas extra.
 const DADOS = 5;
 function rollsForFuerza(f) {
-  return f >= 18 ? 4 : 3;
+  if (f >= 28) return 5;
+  if (f >= 18) return 4;
+  return 3;
+}
+// Batalla final: +1 de daño por cada 10 de Fuerza por encima de 10 (solo si el golpe ya hace daño).
+function fuerzaDamageBonus(f) {
+  return Math.max(0, Math.floor((f - 10) / 10));
 }
 
 // Regla 21.
@@ -254,6 +260,7 @@ module.exports = {
   MAX_ROLLS,
   DADOS,
   rollsForFuerza,
+  fuerzaDamageBonus,
   levelsForRound,
   maxComboForRound,
   MONSTERS,

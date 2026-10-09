@@ -501,7 +501,7 @@ function renderLobbyHeroes(p) {
           <div class="pstat"><span>Vida</span><b>${preview.vida}</b></div>
           <div class="pstat"><span>Fuerza</span><b>${preview.fuerza}</b></div>
           <div class="pstat"><span>Maná</span><b>${preview.mana}</b></div>
-          <div class="pstat"><span>Tiradas</span><b>${preview.fuerza >= 18 ? 4 : 3}</b></div>` : `
+          <div class="pstat"><span>Tiradas</span><b>${preview.fuerza >= 28 ? 5 : preview.fuerza >= 18 ? 4 : 3}</b></div>` : `
           <div class="pstat"><span>Vida</span><b>–</b></div>
           <div class="pstat"><span>Fuerza</span><b>–</b></div>
           <div class="pstat"><span>Maná</span><b>–</b></div>
@@ -539,7 +539,8 @@ function dicePreview(f) {
 function nextDiceHint(f) {
   const steps = [6, 11, 16, 21];
   const n = steps.find((s) => s > f);
-  return f >= 18 ? "4 tiradas por combate" : `${18 - f} de Fuerza más para una 4.ª tirada`;
+  if (f >= 28) return '5 tiradas por combate';
+  return f >= 18 ? `4 tiradas · ${28 - f} de Fuerza más para la 5.ª` : `${18 - f} de Fuerza más para una 4.ª tirada`;
 }
 
 // ---------- Hoja del héroe
@@ -856,7 +857,7 @@ const RULES = {
       <p>Tu héroe es una <b>Raza</b> y una <b>Clase</b>. Algunas parejas son <b class="ok">naturales</b> (+1 Fuerza y +1 Maná)
       y otras <b class="bad">raras</b> (−1 Vida): se indica al elegir.</p></section>
     <section><div class="rule-ill"><div class="life rl"><i style="width:70%"></i><span>10 / 14</span></div></div><h4>Vida</h4><p>Lo que aguantas. No se recupera sola: solo con pociones y pergaminos de curación.</p></section>
-    <section><div class="rule-ill"><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="lbl">Fuerza 18<br>= 4 tiradas</span></div><h4>Fuerza</h4><p>Siempre lanzas <b>5 esferas</b>. La Fuerza da tiradas: <b>3</b> normalmente y <b>4</b> con Fuerza 18 o más.</p></section>
+    <section><div class="rule-ill"><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="lbl">Fuerza 18<br>= 4 tiradas</span></div><h4>Fuerza</h4><p>Siempre lanzas <b>5 esferas</b>. La Fuerza da tiradas: <b>3</b>, <b>4</b> con Fuerza 18 y <b>5</b> con Fuerza 28. En la Batalla final, además, cada 10 de Fuerza por encima de 10 suma <b>+1 de daño</b> a tus golpes.</p></section>
     <section><div class="rule-ill"><img src="img/formas/espiral-multicolor.webp" alt=""><span class="lbl">5 Maná<br>= 1 comodín</span></div><h4>Maná</h4><p>Cada <b>5</b> de Maná convierte una esfera en <b>comodín</b> (multicolor con espiral), fijada desde el inicio del combate.</p></section>
     <section><div class="rule-ill"><img src="img/objetos/yelmo-1.webp" alt=""><img src="img/objetos/espada-2.webp" alt=""><img src="img/objetos/tunica-1.webp" alt=""></div><h4>Equipo</h4><p>Yelmo, armadura, túnica, botas y dos manos (un arma a dos manos ocupa las dos; como mucho un escudo).
       El equipo suma <b>Fuerza</b>; la <b>túnica</b> suma <b>Maná</b>. Hasta 3 pociones y 3 pergaminos.</p></section>
@@ -886,7 +887,7 @@ const RULES = {
       Se juega por turnos: cuando te toca a ti aparece <b>«Turno de…»</b> y te pasan el dispositivo. Se puede mezclar con amigos conectados desde otros dispositivos y con bots.</p></section>`],
   torneo: ['Batalla final', `
     <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/enano-guerrero.webp" alt=""></div><h4>Todos contra todos</h4><p>Tras la aventura, todos empiezan con la Vida completa y luchan a la vez. Cada ronda todos tiran sus 5 esferas y, al acabar, cada uno elige a quién golpea. Gana el último en pie.</p></section>
-    <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ −1</span></div><h4>Golpear</h4><p>Cuentan las esferas del <b>color de tu víctima</b> (y los comodines): 3 → 1 de daño, 4 → 2, 5 → 3.</p></section>
+    <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ −1</span></div><h4>Golpear</h4><p>Cuentan las esferas del <b>color de tu víctima</b> (y los comodines): 3 → 1 de daño, 4 → 2, 5 → 3. Tu Fuerza suma: +1 con Fuerza 20, +2 con 30…</p></section>
     <section><div class="rule-ill"><span class="sphere big azul"></span><span class="lbl">🛡 −1</span></div><h4>Escudo</h4><p>Cada esfera de <b>tu propio color</b> te quita 1 del daño que recibes esa ronda.</p></section>
     <section><div class="rule-ill"><img src="img/ui/calavera.webp" alt=""></div><h4>Maldecir</h4><p>Una vez por ronda puedes maldecir a un rival: cada calavera (5 Maná) le anula una esfera acertada.</p></section>`],
 
@@ -1439,7 +1440,7 @@ function rivalCard(r, cb, pos, i) {
   const pct = Math.max(0, Math.min(100, (r.hero.vida / r.hero.base.vida) * 100));
   const center = pos === 'center';
   const n = cb && cb.rolls ? cb.dice.filter((d) => d.face === r.color || d.face === 'multicolor').length : 0;
-  const dmg = Math.max(0, Math.min(3, n - 2));
+  const dmg = battleDamage(n);
   const want = Array.from({ length: 5 }, (_, k) => die(r.color, { cls: `target ${cb && cb.rolls ? (k < n ? 'got' : 'miss') : ''}` })).join('');
   const st = r.combat && r.combat.status === 'activo' ? 'tirando…' : 'listo';
   return `
@@ -1453,6 +1454,12 @@ function rivalCard(r, cb, pos, i) {
       ${cb && cb.rolls && cb.status === 'activo' ? `<div class="foe-slot"><button class="btn ${dmg ? 'primary defeat-btn' : ''}" data-a="strike" data-id="${r.id}">${dmg ? `Golpear a ${esc(r.name)} · −${dmg}` : `Golpear a ${esc(r.name)} · sin daño`}</button></div>` : ''}` : ''}
     </div>`;
 }
+// Daño de tu golpe en la batalla: 3/4/5 esferas de su color → 1/2/3, más el extra por Fuerza.
+function battleDamage(n) {
+  const base = Math.max(0, Math.min(3, n - 2));
+  const f = (me() && me().hero && me().hero.fuerza) || 0;
+  return base ? base + Math.max(0, Math.floor((f - 10) / 10)) : 0;
+}
 function renderBattle() {
   const t = S.tournament;
   const p = me();
@@ -1460,7 +1467,7 @@ function renderBattle() {
   const rivals = battleRivals();
   const cb = alive && p.combat && p.combat.status === 'activo' ? p.combat : null;
   const k = rivalIndex(rivals.length);
-  const hits = (r) => (cb && cb.rolls ? Math.max(0, Math.min(3, cb.dice.filter((d) => d.face === r.color || d.face === 'multicolor').length - 2)) : 0);
+  const hits = (r) => (cb && cb.rolls ? battleDamage(cb.dice.filter((d) => d.face === r.color || d.face === 'multicolor').length) : 0);
   const dots = rivals.map((r, i) => `<button class="car-dot ${i === k ? 'on' : ''} ${hits(r) ? 'ok' : ''}" data-a="foeGo" data-i="${i}" aria-label="${esc(r.name)}"></button>`).join('');
   const car = `
     <div class="car-dots">${dots}</div>

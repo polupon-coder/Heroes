@@ -1218,6 +1218,24 @@ function renderRound() {
   return body;
 }
 
+// Propuesta de qué relanzar según el monstruo (o rival) del centro: se conservan
+// las esferas que le sirven y se marcan para relanzar las demás.
+function suggestHold() {
+  const p = me();
+  const cb = p && p.combat;
+  if (!cb || cb.status !== 'activo' || !cb.rolls) return;
+  let keep = new Set();
+  if (cb.kind === 'monstruo' && p.offers) {
+    const st = bestTarget(cb).all[ui.foeIdx || 0];
+    keep = st ? st.used : new Set();
+  } else if (cb.kind === 'batalla' && S.tournament) {
+    const r = battleRivals()[ui.foeIdx || 0];
+    if (r) cb.dice.forEach((d, i) => { if (d.face === r.color || d.face === 'multicolor') keep.add(i); });
+  } else return;
+  ui.held = new Set();
+  cb.dice.forEach((d, i) => { if (d.fixed || keep.has(i)) ui.held.add(i); });
+}
+
 function syncCombatUi() {
   const p = me();
   const cb = p && p.combat;
@@ -1236,8 +1254,10 @@ function syncCombatUi() {
         const done = all.map((x, i) => (x.ok ? i : -1)).filter((i) => i >= 0);
         if (done.length) { ui.foeKey = cb.label + S.round; ui.foeIdx = Math.max(...done); }
       }
-      // En la batalla se conservan todas: tú tocas las que quieres relanzar.
-      cb.dice.forEach((d, i) => { if (d.fixed || (cb.rolls > 0 && (cb.kind === 'batalla' || used.has(i)))) ui.held.add(i); });
+      cb.dice.forEach((d, i) => { if (d.fixed || (cb.rolls > 0 && used.has(i))) ui.held.add(i); });
+      if (cb.kind === 'monstruo' && p.offers) foeIndex(p, cb);
+      if (cb.kind === 'batalla' && S.tournament) rivalIndex(battleRivals().length);
+      if (cb.rolls > 0 && (cb.kind === 'monstruo' || cb.kind === 'batalla')) suggestHold();
     }
   }
 }
@@ -1756,7 +1776,7 @@ document.addEventListener('click', (e) => {
       if (ui.manaSel !== null) { ui.manaPick.set(ui.manaSel, d.f); ui.manaSel = null; render(); }
       break;
     case 'roll': Sounds.play('dados'); act('roll', d.aim != null ? { hold: [...ui.held], aim: Number(d.aim) } : { hold: [...ui.held] }); break;
-    case 'foeGo': if (!el.disabled) { ui.foeIdx = Number(d.i); render(); } break;
+    case 'foeGo': if (!el.disabled) { ui.foeIdx = Number(d.i); suggestHold(); render(); } break;
     case 'manaMode': ui.manaMode = true; ui.manaPick = new Map(); ui.manaSel = null; render(); break;
     case 'manaCancel': ui.manaMode = false; ui.manaPick = new Map(); ui.manaSel = null; render(); break;
     case 'manaOk':
@@ -1807,6 +1827,9 @@ document.addEventListener('click', (e) => {
     x0 = null;
     if (Math.abs(dx) < 40) return;
     ui.foeIdx = (ui.foeIdx || 0) + (dx < 0 ? 1 : -1);
+    if (S && S.tournament && S.tournament.stage === 'batalla') rivalIndex(battleRivals().length);
+    else if (me() && me().offers && me().combat) foeIndex(me(), me().combat);
+    suggestHold();
     render();
   }, { passive: true });
 })();

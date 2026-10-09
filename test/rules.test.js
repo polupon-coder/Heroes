@@ -78,30 +78,6 @@ test('comercio entre combates', () => {
   assert.strictEqual(g.trades.length, 0);
 });
 
-test('golpe graduado del torneo', () => {
-  assert.deepStrictEqual([0, 2, 3, 4, 5, 6].map((n) => C.pvpDamage(n, 5)), [0, 0, 1, 2, 3, 3]);
-  assert.deepStrictEqual([1, 2, 3, 4].map((n) => C.pvpDamage(n, 4)), [0, 1, 2, 3]);
-  assert.strictEqual(C.pvpMinResults(5), 3);
-
-  // Un héroe con 3 dados que solo saca 3 resultados hace 1 de daño.
-  const g = new Game('T', { rng: () => F.multicolor });
-  const a = g.addPlayer('A');
-  const b = g.addPlayer('B');
-  g.act(a.id, 'setHero', { raza: 'humano', clase: 'guerrero' }); // Fuerza 12: 3 dados
-  g.act(b.id, 'setHero', { raza: 'humano', clase: 'guerrero' });
-  for (const pl of g.players) pl.ready = true;
-  g.act(a.id, 'start');
-  g.round = 13;
-  g.act(a.id, 'ready');
-  g.act(b.id, 'ready');
-  const m = g.tournament.matches[0];
-  const att = g.player(m.attacker);
-  const def = g.player(m.attacker === a.id ? b.id : a.id);
-  g.act(att.id, 'roll', {});
-  g.act(att.id, 'concede');
-  assert.strictEqual(def.hero.vida, def.hero.base.vida - 1);
-  assert.strictEqual(m.attacker, def.id);
-});
 
 test('tamaños de monstruo: más colores, más daño y mejores recompensas', () => {
   assert.deepStrictEqual(C.variantCombo(['rojo', 'azul'], 1), ['rojo', 'azul']);
@@ -117,21 +93,6 @@ test('tamaños de monstruo: más colores, más daño y mejores recompensas', () 
 
 
 
-test('nunca se ofrecen monstruos inasequibles y la partida empieza sola', () => {
-  const g = new Game('T');
-  const a = g.addPlayer('A');
-  g.act(a.id, 'setHero', { raza: 'gnomo', clase: 'mago' }); // 2 esferas
-  g.act(a.id, 'lobbyReady');
-  assert.strictEqual(g.phase, 'prep');
-  for (let r = 1; r <= 12; r++) {
-    g.round = r;
-    for (let k = 0; k < 30; k++) {
-      const offers = g.makeOffers(a);
-      assert.strictEqual(offers.length, 2);
-      assert.ok(offers.every((m) => m.combo.length <= g.diceCount(a)), `ronda ${r}`);
-    }
-  }
-});
 
 // Lanza hasta que el combate termine.
 function fightOut(g, p) {
@@ -181,46 +142,7 @@ test('maleficios: uno recibido por ronda; comercio: uno por ronda', () => {
   assert.throws(() => g.act(b.id, 'offerTrade', { give: ['z'] }), /comerciado/);
 });
 
-test('duelo del torneo: golpe completo con 5 esferas del color rival', () => {
-  const g = new Game('T', { rng: () => F.multicolor });
-  const a = g.addPlayer('A');
-  const b = g.addPlayer('B');
-  for (const p of [a, b]) g.act(p.id, 'setHero', { raza: 'durgan', clase: 'barbaro' });
-  for (const pl of g.players) pl.ready = true;
-  g.act(a.id, 'start');
-  for (const p of [a, b]) p.hero.inv.armadura = { id: p.id + 'arm', tipo: 'equipo', slot: 'armadura', bonus: 20, nombre: 'Coraza' };
-  g.round = 13;
-  g.act(a.id, 'ready');
-  g.act(b.id, 'ready');
-  const m = g.tournament.matches[0];
-  let guard = 0;
-  while (g.phase === 'torneo' && guard++ < 50) {
-    const att = g.player(m.attacker);
-    assert.strictEqual(att.combat.combo.length, 5);
-    g.act(att.id, 'roll', {});
-  }
-  assert.strictEqual(g.phase, 'fin');
-  const w = g.player(g.winner);
-  assert.strictEqual(w.hero.vida, w.hero.base.vida - Math.floor((w.hero.base.vida - 1) / 3) * 3);
-});
 
-test('dos monstruos a la vez: colores o formas, y se presenta contra uno', () => {
-  const { g, p } = soloGame(() => F.amarillo, 'elfo', 'mago'); // cada 5 de Maná, un comodín
-  assert.strictEqual(p.stage, 'combate');
-  assert.strictEqual(p.combat.targets.length, 2);
-  for (const m of p.offers) assert.ok(['color', 'forma'].includes(m.tipo));
-  const whites = p.combat.dice.filter((d) => d.fixed && d.face === 'multicolor' && d.shape === 'espiral').length;
-  assert.strictEqual(whites, Math.min(Math.floor(p.hero.base.mana / 5), p.combat.diceCount));
-  // Fuerza: un monstruo de formas fácil que se completa con comodines
-  p.offers[0] = { ...p.offers[0], tipo: 'forma', combo: ['rombo'] };
-  p.combat.targets[0] = { tipo: 'forma', combo: ['rombo'] };
-  p.combat.targets[1] = { tipo: 'color', combo: ['rojo', 'rojo', 'rojo', 'rojo'] };
-  g.act(p.id, 'roll', {});
-  assert.throws(() => g.act(p.id, 'present', { index: 1 }), /no completan/);
-  g.act(p.id, 'present', { index: 0 });
-  assert.strictEqual(p.stage, 'recompensa');
-  assert.strictEqual(p.monster, p.offers[0]);
-});
 
 test('maleficio: anula una esfera acertada y obliga a relanzarla', () => {
   const { g, p } = soloGame(seq([0.5]), 'durgan', 'guerrero');
@@ -287,34 +209,6 @@ test('robo con tirada: 1-2 roba, 3-5 pierde el Maná, uno por ronda', () => {
   assert.strictEqual(nada.g.availableMana(nada.a), nada.a.hero.base.mana);
 });
 
-test('torneo: maleficio al rival en cada uno de sus ataques', () => {
-  const g = new Game('T', { rng: () => 0.5 });
-  const a = g.addPlayer('A');
-  const b = g.addPlayer('B');
-  for (const p of [a, b]) g.act(p.id, 'setHero', { raza: 'humano', clase: 'mago' });
-  for (const pl of g.players) pl.ready = true;
-  g.act(a.id, 'start');
-  for (const p of [a, b]) p.hero.inv.armadura = { id: p.id + 'arm', tipo: 'equipo', slot: 'armadura', bonus: 20, nombre: 'Coraza' };
-  g.round = 13;
-  g.act(a.id, 'ready');
-  g.act(b.id, 'ready');
-  const m = g.tournament.matches.find((x) => !x.winner);
-  assert.strictEqual(g.tournament.stage, 'final');
-  const att = g.player(m.attacker);
-  const def = g.player(m.attacker === a.id ? b.id : a.id);
-  // Mientras ataca el rival: le afecta ya; solo uno por ataque.
-  g.act(def.id, 'duelCurse', { amount: 5 });
-  assert.strictEqual(att.combat.cursesLeft, 1);
-  assert.throws(() => g.act(def.id, 'duelCurse', { amount: 5 }), /este ataque/);
-  // En tu propio turno: afecta al siguiente ataque del rival.
-  const debt = att.hero.manaDebt;
-  g.act(att.id, 'duelCurse', { amount: 5 });
-  assert.strictEqual(def.hero.curses, 1);
-  // El Maná gastado en tu turno también falta en tu siguiente ataque.
-  g.endCombat(att, false);
-  assert.strictEqual(att.hero.manaDebt, 5);
-  assert.throws(() => g.act(att.id, 'duelCurse', { amount: 5 }), /este ataque/);
-});
 
 test('antes de la final: maleficio y robo solo al rival; sin comercio con él', () => {
   const g = new Game('T', { rng: () => 0.5 });
@@ -349,18 +243,6 @@ test('armas afines: +1 de Fuerza solo para su clase', () => {
   if (arco.forma && C.ARMA_AFIN[arco.forma]) assert.match(arco.nombre, /^(Espada|Maza|Arco|Hacha|Báculo|Cayado|Escudo) \+\d+$/);
 });
 
-test('monstruos: tope de esferas por ronda y siempre una opción con margen', () => {
-  const g = new Game('T', { rng: Math.random });
-  for (const [round, dice, max] of [[2, 5, 3], [5, 5, 4], [9, 5, 5], [9, 4, 4]]) {
-    g.round = round;
-    g.diceCount = () => dice;
-    for (let i = 0; i < 200; i++) {
-      const offers = g.makeOffers({ hero: { inv: null } });
-      assert.ok(offers.every((m) => m.combo.length <= max));
-      assert.ok(offers.some((m) => m.combo.length < dice));
-    }
-  }
-});
 
 test('solo un escudo: el segundo compite con el primero', () => {
   const inv = I.emptyInventory();
@@ -406,4 +288,88 @@ test('mismo dispositivo: needsAction indica a quién le toca', () => {
   assert.ok(g.needsAction(a.id));
   g.act(a.id, 'ready');
   assert.ok(!g.needsAction(a.id) && g.needsAction(b.id));
+});
+
+function battleGame() {
+  const g = new Game('T', { rng: Math.random });
+  const ps = ['A', 'B', 'C'].map((n) => g.addPlayer(n));
+  for (const p of ps) g.act(p.id, 'setHero', { raza: 'humano', clase: 'guerrero' });
+  for (const pl of g.players) pl.ready = true;
+  g.act(ps[0].id, 'start');
+  g.round = 13;
+  for (const p of ps) g.act(p.id, 'ready');
+  return { g, ps };
+}
+const setFaces = (p, faces) => { p.combat.rolls = 1; p.combat.dice = faces.map((f) => ({ face: f, shape: 'circulo', held: false, fixed: false })); };
+
+test('cinco monstruos por ronda, de pequeño a grande, y se derrota a cualquiera completado', () => {
+  const g = new Game('T', { rng: Math.random });
+  const a = g.addPlayer('A');
+  g.act(a.id, 'setHero', { raza: 'humano', clase: 'mago' });
+  for (const pl of g.players) pl.ready = true;
+  g.act(a.id, 'start');
+  g.act(a.id, 'ready');
+  assert.strictEqual(g.phase, 'combat');
+  assert.deepStrictEqual(a.offers.map((m) => m.combo.length), [4, 4, 5, 5, 5]);
+  assert.deepStrictEqual(a.offers.map((m) => m.tier), [0, 1, 2, 3, 4]);
+  assert.strictEqual(a.combat.dice.length, 5);
+  assert.strictEqual(a.combat.maxRolls, 3);
+  // Las esferas completan el primero: se puede derrotar ese, no otro.
+  g.act(a.id, 'roll', {});
+  const m0 = a.offers[0];
+  const key = m0.tipo === 'forma' ? 'shape' : 'face';
+  a.combat.dice = m0.combo.concat([m0.combo[0]]).map((v) => ({ face: key === 'face' ? v : 'rojo', shape: key === 'shape' ? v : 'circulo', held: false, fixed: false }));
+  assert.throws(() => g.act(a.id, 'present', { index: 4 }), /no completan/);
+  g.act(a.id, 'present', { index: 0 });
+  assert.strictEqual(a.stage, 'recompensa');
+});
+
+test('la Fuerza da tiradas: 4 con Fuerza 18 o más', () => {
+  assert.strictEqual(C.rollsForFuerza(17), 3);
+  assert.strictEqual(C.rollsForFuerza(18), 4);
+});
+
+test('batalla final: todos contra todos, daño por color y escudo con el propio', () => {
+  const { g, ps } = battleGame();
+  const [a, b, c] = ps;
+  assert.strictEqual(g.tournament.stage, 'batalla');
+  assert.ok(ps.every((p) => p.combat && p.combat.kind === 'batalla'));
+  // A golpea a B con 4 esferas de su color (−2); B se cubre con 1 de su color.
+  setFaces(a, [b.color, b.color, b.color, 'multicolor', a.color]);
+  setFaces(b, [b.color, c.color, c.color, 'verde', 'verde'].map((f) => f));
+  setFaces(c, [a.color, a.color, 'verde', 'verde', 'verde']);
+  const vb = b.hero.vida;
+  const va = a.hero.vida;
+  g.act(a.id, 'strike', { targetId: b.id });
+  assert.throws(() => g.act(a.id, 'strike', { targetId: c.id }), /Ya has atacado/);
+  g.act(b.id, 'strike', { targetId: c.id });
+  g.act(c.id, 'strike', { targetId: a.id });
+  assert.strictEqual(b.hero.vida, vb - 1); // 2 de daño − 1 de escudo
+  assert.strictEqual(a.hero.vida, va); // C solo saca 2 de su color: sin daño
+  assert.strictEqual(g.tournament.round, 2);
+});
+
+test('batalla final: un maleficio por ronda y gana el último en pie', () => {
+  const { g, ps } = battleGame();
+  const [a, b, c] = ps;
+  a.hero.base.mana = 10;
+  g.act(a.id, 'duelCurse', { amount: 5, targetId: b.id });
+  assert.strictEqual(b.combat.cursesLeft, 1);
+  assert.throws(() => g.act(a.id, 'duelCurse', { amount: 5, targetId: c.id }), /esta ronda/);
+  b.hero.vida = 1;
+  c.hero.vida = 1;
+  setFaces(a, [b.color, b.color, b.color, b.color, b.color]);
+  setFaces(b, ['x', 'x', 'x', 'x', 'x']);
+  setFaces(c, [b.color, b.color, b.color, 'x', 'x']);
+  g.act(a.id, 'strike', { targetId: b.id });
+  g.act(b.id, 'strike', { targetId: c.id });
+  g.act(c.id, 'strike', { targetId: b.id });
+  assert.ok(!g.tournament.alive.includes(b.id));
+  c.hero.vida = 1;
+  setFaces(a, [c.color, c.color, c.color, 'x', 'x']);
+  setFaces(c, ['x', 'x', 'x', 'x', 'x']);
+  g.act(a.id, 'strike', { targetId: c.id });
+  g.act(c.id, 'strike', { targetId: a.id });
+  assert.strictEqual(g.phase, 'fin');
+  assert.strictEqual(g.winner, a.id);
 });

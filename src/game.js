@@ -613,7 +613,8 @@ class Game {
     const m = p.monster;
     if (won) {
       p.hero.victorias += 1;
-      const coins = [2, 4, 7, 10, 16][m.tier ?? 2] + Math.floor((Math.min(12, this.round) - 1) / 4) + Math.max(0, p.combat.maxRolls - p.combat.rolls);
+      // Monedas según el tamaño del monstruo; +1 si te sobra alguna tirada.
+      const coins = [1, 2, 3, 5, 8][m.tier ?? 2] + (p.combat.rolls < p.combat.maxRolls ? 1 : 0);
       p.coinsPending = { n: coins, rolls: p.combat.rolls };
       p.stage = 'recompensa';
       p.rewards = m.rewards;

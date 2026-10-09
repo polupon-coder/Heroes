@@ -96,11 +96,11 @@ function fixedDiceForMana(mana) {
 
 const ROUNDS = Number(process.env.HEROES_RONDAS) || 12; // (la variable solo se usa en pruebas)
 const MAX_ROLLS = 3;
-// Siempre se lanzan 5 esferas. Empiezas con 2 tiradas y la Fuerza da más:
-// 3 con Fuerza 18, 4 con 24 y 5 con 30.
+// Siempre se lanzan 5 esferas. Empiezas con 3 tiradas y la Fuerza da más:
+// 4 con Fuerza 22 y 5 con 30.
 const DADOS = 5;
-const TIRADAS_BASE = 2;
-const TIRADAS_FUERZA = [18, 24, 30];
+const TIRADAS_BASE = 3;
+const TIRADAS_FUERZA = [22, 30];
 function rollsForFuerza(f) {
   return TIRADAS_BASE + TIRADAS_FUERZA.filter((t) => f >= t).length;
 }
@@ -108,12 +108,12 @@ function rollsForFuerza(f) {
 // hasta el monstruo pequeño pide más. Ver makeOffers en game.js.
 const ESCALERAS = [
   { hasta: 4, combos: ['trio1', 'poker', 'full', 'poker1', 'pleno'] },
-  { hasta: 8, combos: ['poker', 'full', 'poker1', 'poker1', 'pleno'] },
-  { hasta: 99, combos: ['full', 'poker1', 'poker1', 'pleno', 'pleno'] },
+  { hasta: 8, combos: ['full', 'poker1', 'poker1', 'pleno', 'pleno'] },
+  { hasta: 99, combos: ['poker1', 'poker1', 'pleno', 'pleno', 'pleno'] },
 ];
 // Batalla final: tiradas fijas para todos (la Fuerza suma daño) y daño según
 // cuántas esferas del color de la víctima (índice = esferas).
-const BATALLA_TIRADAS = 2;
+const BATALLA_TIRADAS = 3;
 const BATALLA_DANO = [0, 0, 0, 2, 4, 6];
 // Batalla final: +1 de daño con Fuerza 22, +2 con 30 y +3 con 38 (solo si el golpe ya hace daño).
 const GOLPE_FUERZA = [22, 30, 38];

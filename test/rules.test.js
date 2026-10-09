@@ -329,8 +329,8 @@ test('cinco monstruos por ronda, de pequeño a grande, y se derrota a cualquiera
   assert.strictEqual(a.stage, 'recompensa');
 });
 
-test('la Fuerza da tiradas: 2, 3 con Fuerza 18, 4 con 24 y 5 con 30', () => {
-  assert.deepStrictEqual([17, 18, 23, 24, 29, 30, 50].map(C.rollsForFuerza), [2, 3, 3, 4, 4, 5, 5]);
+test('la Fuerza da tiradas: 3, 4 con Fuerza 22 y 5 con 30', () => {
+  assert.deepStrictEqual([10, 21, 22, 29, 30, 50].map(C.rollsForFuerza), [3, 3, 4, 4, 5, 5]);
   assert.deepStrictEqual([21, 22, 29, 30, 37, 38].map(C.fuerzaDamageBonus), [0, 1, 1, 2, 2, 3]);
 });
 

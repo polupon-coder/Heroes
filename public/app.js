@@ -334,8 +334,25 @@ function setHtml(el, html) {
   return true;
 }
 
+// Avisa cuando la Fuerza cruza un escalón: una tirada más o +1 de golpe en la Batalla final.
+function trackFuerza() {
+  const p = me();
+  if (!p || !p.hero || S.phase === 'lobby') { ui.lastFuerza = null; return; }
+  const f = p.hero.fuerza;
+  const prev = ui.lastFuerza;
+  ui.lastFuerza = f;
+  if (prev == null || f <= prev || ui.lastFuerzaId !== p.id) { ui.lastFuerzaId = p.id; return; }
+  const rolls = (x) => (x >= 28 ? 5 : x >= 18 ? 4 : 3);
+  const bonus = (x) => Math.max(0, Math.floor((x - 10) / 10));
+  const msgs = [];
+  if (rolls(f) > rolls(prev)) msgs.push(`¡Una tirada más! Ahora tienes ${rolls(f)} tiradas`);
+  if (bonus(f) > bonus(prev)) msgs.push(`¡Golpe +${bonus(f)} en la Batalla final!`);
+  if (msgs.length) { toast(`💪 ${msgs.join(' · ')}`); Sounds.play('celebracion'); }
+}
+
 function render() {
   if (!S) return;
+  trackFuerza();
   trackDuel();
   const mp = me();
   if (mp && mp.monster) ui.lastMonster = mp.monster;

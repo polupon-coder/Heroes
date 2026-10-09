@@ -1651,3 +1651,4 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .battle-res .br-row .portrait.sm { width: 36px; height: 48px; }
 .modal .card.outcome.battle-res { min-height: 0 !important; height: auto !important; max-height: none !important; justify-content: center !important; gap: 6px; padding: 26px 18px !important; }
 @media (max-width: 760px) { .modal:has(.battle-res) { align-items: center; } }
+.rolls-left { color: var(--muted); font-size: 1rem; }

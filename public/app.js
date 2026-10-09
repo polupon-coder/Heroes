@@ -579,7 +579,7 @@ function renderSheet() {
     ${heroPortrait(p, 'xl')}
     <div class="me-name">${esc(p.name)}${S.phase === 'prep' && p.ready ? ' <span class="check">✔</span>' : ''}</div>
     <div class="spheres-row mine" title="${nextDiceHint(h.fuerza)}">${spheresRow(h.dados, p.color, true, h.fijables, h.curses || 0)}</div>
-    <div class="life"><i style="width:${pct}%"></i><span>${h.vida} / ${h.base.vida}</span></div>
+    <div class="life"><i style="width:${pct}%"></i><span>${h.vida}</span></div>
     <div class="me-sub">${raceName(p)} · ${className(p)}</div>
   </div>
   <div class="glyphs three">
@@ -681,7 +681,7 @@ function renderArena() {
         <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
         <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables, h.curses || 0)}</div>
         <div class="life thin"><i style="width:${pct}%"></i></div>
-        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida}/${h.base.vida} · ${h.monedas ?? 0} monedas</div>
+        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida} · ${h.monedas ?? 0} monedas</div>
       </div>
     </div>`;
   }).join('');
@@ -769,7 +769,7 @@ function renderOutcome() {
         <div class="duel-pop-pair">${heroPortrait(by, 'duelist')}<span class="faceoff-vs">→</span>${heroPortrait(to, 'duelist')}</div>
         <div class="dice">${a.faces.map((f) => die(f.face, { shape: f.shape })).join('')}</div>
         <p class="center big-text">${a.dmg ? `¡Golpe! ${mine ? esc(to.name) : 'Pierdes'} −${a.dmg} Vida` : (mine ? 'Has fallado el ataque' : `${esc(by.name)} falla su ataque`)}</p>
-        <div class="duel-life"><span>${esc(to.name)}</span><div class="life"><i style="width:${pct}%"></i><span>${a.vida} / ${a.max}</span></div></div>
+        <div class="duel-life"><span>${esc(to.name)}</span><div class="life"><i style="width:${pct}%"></i><span>${a.vida}</span></div></div>
         <div class="row center-row"><button class="btn primary" data-a="nextDuel">Continuar</button></div>
       </div>`;
   }
@@ -1311,7 +1311,7 @@ function renderCombat(p, controllable) {
         ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
         ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
-      <div class="rolls-left">Tirada <b>${cb.rolls}</b> de ${cb.maxRolls}${left > 0 && cb.rolls > 0 ? ` · te quedan ${left}` : left === 0 ? ' · sin tiradas' : ''}</div>
+      <div class="rolls-left">${cb.rolls}/${cb.maxRolls}</div>
       ${cb.kind === 'batalla' && !p.battleCursed && p.hero.manaDisponible >= 5 ? '<div class="duel-curse"><button class="btn curse-btn" data-a="duelCursePick" data-t="b">Maldecir</button></div>' : ''}
       ${cb.kind === 'duelo' && S.tournament ? (() => { const m = S.tournament.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id)); return m ? duelCurseHtml(S.tournament, m) : ''; })() : ''}
       ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
@@ -1447,7 +1447,7 @@ function rivalCard(r, cb, pos, i) {
       ${!center && dmg ? `<div class="side-ok">−${dmg}</div>` : ''}
       <div class="foe-art">${heroPortrait(r, 'duel-art')}</div>
       <div class="foe-title">${esc(r.name)} <span class="sphere ${r.color}"></span></div>
-      <div class="life duel-lifebar"><i style="width:${pct}%"></i><span>${r.hero.vida} / ${r.hero.base.vida}</span></div>
+      <div class="life duel-lifebar"><i style="width:${pct}%"></i><span>${r.hero.vida}</span></div>
       ${center ? `<div class="dice">${want}</div>
       <div class="muted small">${st}</div>
       ${cb && cb.rolls && cb.status === 'activo' ? `<div class="foe-slot"><button class="btn ${dmg ? 'primary defeat-btn' : ''}" data-a="strike" data-id="${r.id}">${dmg ? `Golpear a ${esc(r.name)} · −${dmg}` : `Golpear a ${esc(r.name)} · sin daño`}</button></div>` : ''}` : ''}
@@ -1511,7 +1511,7 @@ function renderTournament() {
   const b = byId(m.b);
   const att = byId(m.attacker);
   const fighter = (x) => `<div class="fighter big ${m.attacker === x.id ? 'attacking' : ''}">${heroPortrait(x, 'duelist')}<b>${esc(x.name)}</b>
-    <div class="life duel-lifebar"><i style="width:${Math.max(0, Math.min(100, (x.hero.vida / x.hero.base.vida) * 100))}%"></i><span>${x.hero.vida} / ${x.hero.base.vida}</span></div></div>`;
+    <div class="life duel-lifebar"><i style="width:${Math.max(0, Math.min(100, (x.hero.vida / x.hero.base.vida) * 100))}%"></i><span>${x.hero.vida}</span></div></div>`;
   return `
     <div class="card duel-card">
       <h2 class="duel-title">${esc(m.label)}</h2>

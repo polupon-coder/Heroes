@@ -18,15 +18,15 @@ const BASE_STATS = { vida: 10, mana: 5, fuerza: 10 };
 const MIN_FUERZA_INICIAL = 10;
 
 // Razas y clases equilibradas con simulaciones de partidas entre bots (cada una
-// gana entre el 21 % y el 30 % de las partidas de 4). Sin valores negativos: la
+// gana entre el 21 % y el 30 % de las partidas de 4). Cada raza reparte 5 puntos. Sin valores negativos: la
 // Fuerza y el Maná tienen mínimos. Todos empiezan con al menos 5 de Maná.
 const RACES = {
-  humano: { nombre: 'Humano', vida: 2, mana: 1, fuerza: 1 },
+  humano: { nombre: 'Humano', vida: 2, mana: 2, fuerza: 1 },
   elfo: { nombre: 'Elfo', vida: 2, mana: 2, fuerza: 1 },
-  enano: { nombre: 'Enano', vida: 2, mana: 1, fuerza: 1 },
+  enano: { nombre: 'Enano', vida: 2, mana: 1, fuerza: 2 },
   gnomo: { nombre: 'Gnomo', vida: 2, mana: 2, fuerza: 1 },
   silvano: { nombre: 'Silvano', vida: 2, mana: 2, fuerza: 1 },
-  durgan: { nombre: 'Durgan', vida: 3, mana: 0, fuerza: 1 },
+  durgan: { nombre: 'Durgan', vida: 3, mana: 1, fuerza: 1 },
   faunar: { nombre: 'Faunar', vida: 2, mana: 1, fuerza: 2 },
 };
 
@@ -71,8 +71,8 @@ const CLASSES = {
   ladron: { nombre: 'Ladrón', vida: 2, mana: 2, fuerza: 2 },
   druida: { nombre: 'Druida', vida: 2, mana: 2, fuerza: 2 },
   explorador: { nombre: 'Explorador', vida: 2, mana: 2, fuerza: 2 },
-  clerigo: { nombre: 'Clérigo', vida: 2, mana: 0, fuerza: 3 },
-  barbaro: { nombre: 'Bárbaro', vida: 3, mana: 0, fuerza: 2 },
+  clerigo: { nombre: 'Clérigo', vida: 2, mana: 1, fuerza: 3 },
+  barbaro: { nombre: 'Bárbaro', vida: 3, mana: 1, fuerza: 2 },
 };
 
 const MIN_MANA_INICIAL = 5;
@@ -97,13 +97,24 @@ function fixedDiceForMana(mana) {
 const ROUNDS = Number(process.env.HEROES_RONDAS) || 12; // (la variable solo se usa en pruebas)
 const MAX_ROLLS = 3;
 // Siempre se lanzan 5 esferas. Empiezas con 2 tiradas y la Fuerza da más:
-// 3 con Fuerza 18, 4 con 26 y 5 con 34.
+// 3 con Fuerza 18, 4 con 24 y 5 con 30.
 const DADOS = 5;
 const TIRADAS_BASE = 2;
-const TIRADAS_FUERZA = [18, 26, 34];
+const TIRADAS_FUERZA = [18, 24, 30];
 function rollsForFuerza(f) {
   return TIRADAS_BASE + TIRADAS_FUERZA.filter((t) => f >= t).length;
 }
+// Combinaciones de los 5 monstruos (de pequeño a grande) según la ronda: al final
+// hasta el monstruo pequeño pide más. Ver makeOffers en game.js.
+const ESCALERAS = [
+  { hasta: 4, combos: ['trio1', 'poker', 'full', 'poker1', 'pleno'] },
+  { hasta: 8, combos: ['poker', 'full', 'poker1', 'poker1', 'pleno'] },
+  { hasta: 99, combos: ['full', 'poker1', 'poker1', 'pleno', 'pleno'] },
+];
+// Batalla final: tiradas fijas para todos (la Fuerza suma daño) y daño según
+// cuántas esferas del color de la víctima (índice = esferas).
+const BATALLA_TIRADAS = 2;
+const BATALLA_DANO = [0, 0, 0, 2, 4, 6];
 // Batalla final: +1 de daño con Fuerza 22, +2 con 30 y +3 con 38 (solo si el golpe ya hace daño).
 const GOLPE_FUERZA = [22, 30, 38];
 function fuerzaDamageBonus(f) {
@@ -242,6 +253,9 @@ function pvpMinResults(hits) {
 // (luego Fuerza+Maná).
 
 module.exports = {
+  ESCALERAS,
+  BATALLA_TIRADAS,
+  BATALLA_DANO,
   COMODIN_PROB,
   COLORS,
   FACES,

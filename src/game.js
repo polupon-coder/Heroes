@@ -302,13 +302,19 @@ class Game {
     const FACES = ['rojo', 'azul', 'verde', 'amarillo'];
     const pick = () => FACES[Math.floor(this.rng() * 4)];
     const others = (c, n) => { const rest = FACES.filter((x) => x !== c); return Array.from({ length: n }, () => rest[Math.floor(this.rng() * rest.length)]); };
-    const combos = [
-      () => { const a = pick(); return [a, a, a, ...others(a, 1)]; },             // trío + 1   (~90 %)
-      () => { const a = pick(); return [a, a, a, a]; },                           // póker      (~80 %)
-      () => { const a = pick(); const b = others(a, 1)[0]; return [a, a, a, b, b]; }, // full    (~70 %)
-      () => { const a = pick(); return [a, a, a, a, ...others(a, 1)]; },          // póker + 1  (~55 %)
-      () => { const a = pick(); return [a, a, a, a, a]; },                        // pleno      (~35 %)
-    ];
+    const two = (a) => { const rest = FACES.filter((x) => x !== a); const i = Math.floor(this.rng() * 3); return [rest[i], rest[(i + 1 + Math.floor(this.rng() * 2)) % 3]]; };
+    const C5 = {
+      trio1: () => { const a = pick(); return [a, a, a, ...others(a, 1)]; },
+      trio11: () => { const a = pick(); return [a, a, a, ...two(a)]; },
+      dobles1: () => { const a = pick(); const [b, c] = two(a); return [a, a, b, b, c]; },
+      poker: () => { const a = pick(); return [a, a, a, a]; },
+      full: () => { const a = pick(); const b = others(a, 1)[0]; return [a, a, a, b, b]; },
+      poker1: () => { const a = pick(); return [a, a, a, a, ...others(a, 1)]; },
+      pleno: () => { const a = pick(); return [a, a, a, a, a]; },
+    };
+    // La dificultad crece con la ronda: al final hasta el monstruo pequeño pide más.
+    const ladder = C.ESCALERAS.find((e) => r <= e.hasta).combos;
+    const combos = ladder.map((k) => C5[k]);
     const variantes = [1, 1, 2, 2, 3];
     const order = ['rojo', 'azul', 'verde', 'amarillo', 'circulo', 'cuadrado', 'rombo', 'triangulo'];
     return levels.map((level, k) => {
@@ -415,7 +421,7 @@ class Game {
       targets,
       combo: targets[0].combo,
       diceCount: this.diceCount(p),
-      maxRolls: this.maxRolls(p),
+      maxRolls: kind === 'batalla' && C.BATALLA_TIRADAS ? C.BATALLA_TIRADAS : this.maxRolls(p),
       dice: [],
       rolls: 0,
       manaUsed: false,
@@ -622,7 +628,7 @@ class Game {
       // Cada monstruo grande derrotado es un trofeo: +1 de Vida en la Batalla final.
       if (m.tier === 4) p.hero.trofeos = (p.hero.trofeos || 0) + 1;
       // Monedas solo según el monstruo (no según las tiradas que hayas usado).
-      const coins = [1, 2, 4, 6, 9][m.tier ?? 2];
+      const coins = [1, 3, 5, 8, 12][m.tier ?? 2];
       p.coinsPending = { n: coins, rolls: p.combat.rolls };
       p.stage = 'recompensa';
       p.rewards = m.rewards;
@@ -640,13 +646,14 @@ class Game {
 
   // Batalla final: todos contra todos. Cada ronda todos tiran a la vez y, al
   // acabar, cada uno elige a quién golpea. Esferas del color de la víctima
-  // (y comodines): 2 → 1 de daño, 3 → 2, 4 o más → 3. Cada esfera de tu propio
+  // (y comodines): 3 → 2 de daño, 4 → 4, 5 → 6 (C.BATALLA_DANO). Cada esfera de tu propio
   // color quita 1 del daño que recibes esa ronda. Gana el último en pie.
   startTournament() {
     this.phase = 'torneo';
     for (const p of this.players) {
       p.hero.pending = [];
-      p.hero.vida = this.maxVida(p);
+      // La Vida de la aventura se lleva a la batalla, más 1 por trofeo.
+      p.hero.vida += p.hero.trofeos || 0;
     }
     this.tournament = { stage: 'batalla', round: 0, alive: this.players.map((p) => p.id), last: null, matches: [], champion: null };
     this.phase = 'torneo';
@@ -672,7 +679,7 @@ class Game {
 
   battleHits(attacker, target) {
     const n = attacker.combat.dice.filter((d) => d.face === target.color || d.face === 'multicolor').length;
-    const base = Math.max(0, Math.min(3, n - 1));
+    const base = C.BATALLA_DANO[Math.min(5, n)];
     return base ? base + C.fuerzaDamageBonus(this.effFuerza(attacker)) : 0;
   }
 
@@ -1039,8 +1046,6 @@ function useConsumable(game, p, data) {
     if (!inCombat && game.phase !== 'prep' && game.phase !== 'combat') fail('Ahora no puedes curarte');
     if (game.phase === 'torneo' && !myDuel) fail('En el torneo solo puedes curarte en tu turno');
     if (p.hero.vida >= game.maxVida(p)) fail('Ya tienes la Vida al máximo');
-    // Antes del Torneo y antes de la final todos recuperan la Vida: curarse ahí sería tirar la poción.
-    if (game.phase === 'prep' && (game.round > C.ROUNDS || game.pendingFinal)) fail('Vas a recuperar toda la Vida antes de luchar: guarda la curación');
     const healed = game.heal(p, it.valor);
     I.removeItem(p.hero.inv, it.id);
     game.say(`💚 ${p.name} usa ${it.nombre} y recupera ${healed} de Vida.`);

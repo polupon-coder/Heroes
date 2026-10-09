@@ -105,7 +105,7 @@ function fightOut(g, p) {
 
 test('estadísticas iniciales: Maná mínimo 5 y Fuerza mínima 10', () => {
   // Humano Guerrero es combinación natural: +1 Fuerza y +1 Maná.
-  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 14, mana: 8, fuerza: 15 });
+  assert.deepStrictEqual(baseStats('humano', 'guerrero'), { vida: 14, mana: 9, fuerza: 15 });
   // Durgan Mago es una combinación rara: −1 Vida.
   assert.strictEqual(baseStats('durgan', 'mago').vida, 14);
   // Nadie empieza con más de 2 comodines.
@@ -329,8 +329,8 @@ test('cinco monstruos por ronda, de pequeño a grande, y se derrota a cualquiera
   assert.strictEqual(a.stage, 'recompensa');
 });
 
-test('la Fuerza da tiradas: 2, 3 con Fuerza 18, 4 con 26 y 5 con 34', () => {
-  assert.deepStrictEqual([17, 18, 25, 26, 33, 34, 50].map(C.rollsForFuerza), [2, 3, 3, 4, 4, 5, 5]);
+test('la Fuerza da tiradas: 2, 3 con Fuerza 18, 4 con 24 y 5 con 30', () => {
+  assert.deepStrictEqual([17, 18, 23, 24, 29, 30, 50].map(C.rollsForFuerza), [2, 3, 3, 4, 4, 5, 5]);
   assert.deepStrictEqual([21, 22, 29, 30, 37, 38].map(C.fuerzaDamageBonus), [0, 1, 1, 2, 2, 3]);
 });
 
@@ -339,7 +339,7 @@ test('batalla final: todos contra todos, daño por color y escudo con el propio'
   const [a, b, c] = ps;
   assert.strictEqual(g.tournament.stage, 'batalla');
   assert.ok(ps.every((p) => p.combat && p.combat.kind === 'batalla'));
-  // A golpea a B con 4 esferas de su color (−3); B se cubre con 1 de su color.
+  // A golpea a B con 4 esferas de su color (−4); B se cubre con 1 de su color.
   setFaces(a, [b.color, b.color, b.color, 'multicolor', a.color]);
   setFaces(b, [b.color, c.color, c.color, 'verde', 'verde'].map((f) => f));
   setFaces(c, [a.color, a.color, 'verde', 'verde', 'verde']);
@@ -349,8 +349,9 @@ test('batalla final: todos contra todos, daño por color y escudo con el propio'
   assert.throws(() => g.act(a.id, 'strike', { targetId: c.id }), /Ya has atacado/);
   g.act(b.id, 'strike', { targetId: c.id });
   g.act(c.id, 'strike', { targetId: a.id });
-  assert.strictEqual(b.hero.vida, vb - 2); // 3 de daño − 1 de escudo
-  assert.strictEqual(a.hero.vida, va); // C saca 2 de su color (−1), pero A se cubre con 1
+  assert.strictEqual(b.hero.vida, vb - 3); // 4 de daño − 1 de escudo
+  assert.strictEqual(a.hero.vida, va); // C solo saca 2 de su color: sin daño
+  assert.ok(ps.every((p) => !p.combat || p.combat.maxRolls === C.BATALLA_TIRADAS));
   assert.strictEqual(g.tournament.round, 2);
 });
 
@@ -393,7 +394,17 @@ test('cada monstruo grande derrotado es un trofeo: +1 de Vida en la Batalla fina
   a.monster = a.offers[3];
   g.endMonsterCombat(a, true);
   assert.strictEqual(a.hero.trofeos, 1);
+  a.hero.vida = 5;
   g.startTournament();
-  assert.strictEqual(a.hero.vida, a.hero.base.vida + 1);
+  assert.strictEqual(a.hero.vida, 6); // la Vida de la aventura, más 1 por el trofeo
   assert.strictEqual(ps[1].hero.vida, ps[1].hero.base.vida);
+});
+
+test('en las últimas rondas hasta el monstruo pequeño pide más', () => {
+  const g = new Game('T', { rng: Math.random });
+  g.round = 10;
+  const offers = g.makeOffers(null);
+  assert.deepStrictEqual(offers.map((m) => m.combo.length), [5, 5, 5, 5, 5]);
+  g.round = 1;
+  assert.deepStrictEqual(g.makeOffers(null).map((m) => m.combo.length), [4, 4, 5, 5, 5]);
 });

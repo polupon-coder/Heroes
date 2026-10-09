@@ -146,7 +146,7 @@ function botStep(game, p) {
       }
     }
     const heal0 = [...h.inv.pociones, ...h.inv.pergaminos].filter((it) => it.efecto === 'curacion').sort((a, b) => a.valor - b.valor)[0];
-    if (heal0 && game.round <= C.ROUNDS && !game.pendingFinal && (h.base.vida - h.vida >= heal0.valor || h.vida <= 4)) {
+    if (heal0 && (h.base.vida - h.vida >= heal0.valor || h.vida <= 4)) {
       const heal = heal0;
       if (heal) {
         game.act(p.id, 'useItem', { itemId: heal.id });
@@ -229,6 +229,10 @@ function battle(game, p) {
   if (cb.rolls === 0 && !p.battleCursed && game.availableMana(p) >= C.MANA_PER_CURSE + 5 && game.rng() < 0.4) {
     const target = [...rivals].sort((a, b) => b.hero.vida - a.hero.vida)[0];
     try { game.act(p.id, 'duelCurse', { amount: C.MANA_PER_CURSE, targetId: target.id }); return true; } catch (e) { p.battleCursed = true; }
+  }
+  const heal = cb.rolls === 0 && [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'curacion' && game.maxVida(p) - p.hero.vida >= it.valor);
+  if (heal) {
+    try { game.act(p.id, 'useItem', { itemId: heal.id }); return true; } catch (e) { /* sigue */ }
   }
   if (cb.rolls === 0) {
     game.act(p.id, 'roll', {});

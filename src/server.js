@@ -44,6 +44,7 @@ app.get('/api/datos', (req, res) => {
     tiradasBase: C.TIRADAS_BASE,
     tiradasFuerza: C.TIRADAS_FUERZA,
     golpeFuerza: C.GOLPE_FUERZA,
+    batallaDano: C.BATALLA_DANO,
     maxMana: C.MAX_MANA_INICIAL,
     monstruos: C.MONSTERS,
     colores: C.COLORS,

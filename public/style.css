@@ -1652,3 +1652,5 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .modal .card.outcome.battle-res { min-height: 0 !important; height: auto !important; max-height: none !important; justify-content: center !important; gap: 6px; padding: 26px 18px !important; }
 @media (max-width: 760px) { .modal:has(.battle-res) { align-items: center; } }
 .rolls-left { color: var(--muted); font-size: 1rem; }
+.modal .card.outcome.fuerza-pop { min-height: 0 !important; height: auto !important; max-height: none !important; justify-content: center !important; gap: 10px; padding: 30px 22px !important; max-width: 420px; }
+@media (max-width: 760px) { .modal:has(.fuerza-pop) { align-items: center; } }

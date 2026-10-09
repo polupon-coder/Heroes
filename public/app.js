@@ -345,9 +345,9 @@ function trackFuerza() {
   const rolls = (x) => (x >= 28 ? 5 : x >= 18 ? 4 : 3);
   const bonus = (x) => Math.max(0, Math.floor((x - 10) / 10));
   const msgs = [];
-  if (rolls(f) > rolls(prev)) msgs.push(`¡Una tirada más! Ahora tienes ${rolls(f)} tiradas`);
-  if (bonus(f) > bonus(prev)) msgs.push(`¡Golpe +${bonus(f)} en la Batalla final!`);
-  if (msgs.length) { toast(`💪 ${msgs.join(' · ')}`); Sounds.play('celebracion'); }
+  if (rolls(f) > rolls(prev)) msgs.push(`Ganas una tirada más: ahora tienes <b>${rolls(f)} tiradas</b>.`);
+  if (bonus(f) > bonus(prev)) msgs.push(`Tus golpes en la Batalla final hacen <b>+${bonus(f)}</b> de daño.`);
+  if (msgs.length) { ui.fuerzaMsg = { f, msgs }; Sounds.play('celebracion'); }
 }
 
 function render() {
@@ -741,6 +741,15 @@ function renderOutcome() {
   if (!p || !p.hero) return '';
   const br = S.phase === 'torneo' ? battleResultHtml() : '';
   if (br) return br;
+  // Aviso de Fuerza: ventana de pergamino con lo que has ganado.
+  if (ui.fuerzaMsg) {
+    return `
+      <div class="card outcome fuerza-pop">
+        <div class="outcome-title">Fuerza ${ui.fuerzaMsg.f}</div>
+        ${ui.fuerzaMsg.msgs.map((m) => `<p class="center big-text">${m}</p>`).join('')}
+        <div class="row center-row"><button class="btn primary" data-a="closeFuerza">Continuar</button></div>
+      </div>`;
+  }
   // Aviso: alguien te ha lanzado un maleficio.
   if (ui.curseAlert) {
     const who = ui.curseAlert.split(' gasta ')[0];
@@ -953,7 +962,7 @@ function playEventSounds() {
   const lost = texts.find((t) => /^🩸/.test(t) && t.startsWith(`🩸 ${name} no consigue`));
   if (lost) { ui.defeat = { text: lost, monster: meP.monster || ui.lastMonster, fell: mine(/^💀/) }; holdOutcome(); }
   const healTxt = texts.find((t) => t.startsWith(`💚 ${name} usa `));
-  if (healTxt) { const n = (healTxt.match(/recupera (\d+)/) || [])[1]; toast(`💚 Recuperas ${n} de Vida`); Sounds.play('fe'); }
+  if (healTxt) { const n = (healTxt.match(/recupera (\d+)/) || [])[1]; toast(`Recuperas ${n} de Vida`); Sounds.play('fe'); }
   const coinsTxt = texts.find((t) => t.startsWith(`💰 ${name} gana `));
   if (coinsTxt) ui.coinsMsg = coinsTxt.replace(/^💰 /, '').replace(`${name} gana`, 'Has ganado');
   const stole = texts.find((t) => /^(🦝|🪤|🎲) /.test(t) && t.includes(`${name} saca`));
@@ -1762,6 +1771,7 @@ document.addEventListener('click', (e) => {
     case 'duelCursePick': ui.duelCursePick = d.t === '' ? null : d.t === 'b' ? 'b' : Number(d.t); renderModal(); break;
     case 'battleCurse': ui.duelCursePick = null; renderModal(); act('duelCurse', { amount: Number(d.n), targetId: d.id }); break;
     case 'strike': act('strike', { targetId: d.id }); break;
+    case 'closeFuerza': ui.fuerzaMsg = null; renderModal(); break;
     case 'closeBattle': ui.battleSeen = S.tournament.last.round; renderModal(); break;
     case 'nextDuel': clearTimeout(ui.duelTimer); ui.duelTimer = null; ui.duelQueue.shift(); renderModal(); break;
     case 'closeCoins': ui.coinsMsg = null; renderModal(); break;

@@ -613,8 +613,8 @@ class Game {
     const m = p.monster;
     if (won) {
       p.hero.victorias += 1;
-      // Monedas según el tamaño del monstruo; +1 si te sobra alguna tirada.
-      const coins = [1, 2, 3, 5, 8][m.tier ?? 2] + (p.combat.rolls < p.combat.maxRolls ? 1 : 0);
+      // Monedas solo según el monstruo (no según las tiradas que hayas usado).
+      const coins = [1, 2, 4, 6, 9][m.tier ?? 2];
       p.coinsPending = { n: coins, rolls: p.combat.rolls };
       p.stage = 'recompensa';
       p.rewards = m.rewards;
@@ -1316,7 +1316,7 @@ const ACTIONS = {
       const c = p.coinsPending;
       p.coinsPending = null;
       p.hero.monedas += c.n;
-      this.say(`💰 ${p.name} gana ${c.n} monedas por vencer en ${c.rolls} tirada${c.rolls > 1 ? 's' : ''}.`);
+      this.say(`💰 ${p.name} gana ${c.n} monedas.`);
     }
     // Si no cabe, la elección queda abierta: se puede deshacer y escoger la otra.
     if (p.hero.pending.length) {

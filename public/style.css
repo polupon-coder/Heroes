@@ -1654,3 +1654,4 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .rolls-left { color: var(--muted); font-size: 1rem; }
 .modal .card.outcome.fuerza-pop { min-height: 0 !important; height: auto !important; max-height: none !important; justify-content: center !important; gap: 10px; padding: 30px 22px !important; max-width: 420px; }
 @media (max-width: 760px) { .modal:has(.fuerza-pop) { align-items: center; } }
+.fuerza-pop .fz-lines p { margin: 2px 0; text-align: center; white-space: nowrap; font-size: 1.05rem; }

@@ -345,8 +345,8 @@ function trackFuerza() {
   const rolls = (x) => (x >= 28 ? 5 : x >= 18 ? 4 : 3);
   const bonus = (x) => Math.max(0, Math.floor((x - 10) / 10));
   const msgs = [];
-  if (rolls(f) > rolls(prev)) msgs.push(`Ganas una tirada más: ahora tienes <b>${rolls(f)} tiradas</b>.`);
-  if (bonus(f) > bonus(prev)) msgs.push(`Tus golpes en la Batalla final hacen <b>+${bonus(f)}</b> de daño.`);
+  if (rolls(f) > rolls(prev)) msgs.push('Ganas una tirada más.', `Ahora tienes <b>${rolls(f)} tiradas</b>.`);
+  if (bonus(f) > bonus(prev)) msgs.push(`Tus golpes hacen <b>+${bonus(f)}</b> de daño.`, 'Solo en la Batalla final.');
   if (msgs.length) { ui.fuerzaMsg = { f, msgs }; Sounds.play('celebracion'); }
 }
 
@@ -746,7 +746,7 @@ function renderOutcome() {
     return `
       <div class="card outcome fuerza-pop">
         <div class="outcome-title">Fuerza ${ui.fuerzaMsg.f}</div>
-        ${ui.fuerzaMsg.msgs.map((m) => `<p class="center big-text">${m}</p>`).join('')}
+        <div class="fz-lines">${ui.fuerzaMsg.msgs.map((m) => `<p>${m}</p>`).join('')}</div>
         <div class="row center-row"><button class="btn primary" data-a="closeFuerza">Continuar</button></div>
       </div>`;
   }

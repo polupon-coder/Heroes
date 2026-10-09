@@ -42,6 +42,11 @@ function saveSession(s) {
 }
 
 let toastTimer;
+// Texto en frases cortas, cada una en su línea (punto y aparte).
+function lines(...xs) {
+  return `<div class="lines">${xs.filter(Boolean).map((x) => `<p>${x}</p>`).join('')}</div>`;
+}
+
 function toast(msg) {
   const t = $('toast');
   t.textContent = msg;
@@ -758,8 +763,7 @@ function renderOutcome() {
       <div class="card outcome curse-alert">
         <div class="curse-sign"><img src="img/ui/calavera.webp" alt=""></div>
         <div class="outcome-title">Maleficio</div>
-        <p class="center"><b>${esc(who)}</b> te ha lanzado un maleficio.</p>
-        <p class="center">En tu próximo combate se anulará(n) ${n} esfera(s) acertada(s) de tu tirada: saldrán con la calavera y tendrás que relanzarla(s).</p>
+        ${lines(`<b>${esc(who)}</b> te ha lanzado un maleficio.`, n > 1 ? `Se te anularán ${n} esferas acertadas.` : 'Se te anulará una esfera acertada.', 'Saldrá con la calavera.', 'Tendrás que relanzarla.')}
         <div class="row center-row"><button class="btn primary" data-a="closeCurse">Entendido</button></div>
       </div>`;
   }
@@ -777,7 +781,7 @@ function renderOutcome() {
     return `
       <div class="card outcome prep-win">
         <div class="outcome-title">Botín</div>
-        <p class="center">Has vencido a ${esc(loser.name)}. Elige uno de sus objetos:</p>
+        ${lines(`Has vencido a ${esc(loser.name)}.`, 'Elige uno de sus objetos.')}
         <div class="trade-grid">${allItems(loser.hero).map((it) => tradeTile(it, { attrs: `data-a="loot" data-id="${it.id}"` })).join('')}</div>
       </div>`;
   }
@@ -804,7 +808,7 @@ function renderOutcome() {
     return `
       <div class="card outcome">
         <div class="outcome-title">${ui.stealResult.ok ? '¡Robado!' : 'Robo'}</div>
-        <p class="center">${esc(ui.stealResult.text)}</p>
+        ${lines(...ui.stealResult.text.replace(/\.$/, '').split(/:\s*| y (?=roba|pierde)/).map((x, i) => esc(x.charAt(0).toUpperCase() + x.slice(1) + '.')))}
         <div class="row center-row"><button class="btn primary" data-a="closeSteal">Continuar</button></div>
       </div>`;
   }
@@ -818,7 +822,7 @@ function renderOutcome() {
       <div class="card outcome win">
         <div class="outcome-title">¡Victoria!</div>
         ${monsterArt(p.monster, 'outcome-art')}
-        <p class="center">Has derrotado a ${esc(p.monster.nombre)} ${esc((p.monster.tamano || '').toLowerCase())}. Elige tu recompensa:</p>
+        ${lines(`Has derrotado a ${esc(p.monster.nombre)} ${esc((p.monster.tamano || '').toLowerCase())}.`, 'Elige tu recompensa.')}
         <div class="reward-pick">${p.rewards.map((it, i) => `
           <button class="reward-choice" data-a="reward" data-i="${i}">
             <span class="big-item">${itemIcon(it)}</span>
@@ -833,8 +837,8 @@ function renderOutcome() {
       <div class="card outcome lose">
         <div class="outcome-title">Derrota</div>
         ${m ? monsterArt(m, 'outcome-art') : ''}
-        <p class="center">${esc(ui.defeat.text.replace(/^🩸 /, ''))}</p>
-        ${ui.defeat.fell ? '<p class="center warn">Has caído a 0 Vida: pierdes todos tus objetos y recuperas la Vida inicial.</p>' : ''}
+        ${(() => { const dn = (ui.defeat.text.match(/quita (\d+)/) || [])[1]; return lines('No derrotas a ningún monstruo.', m && dn ? `${esc(m.nombre)} te quita ${dn} de Vida.` : ''); })()}
+        ${ui.defeat.fell ? `<div class="warn">${lines('Has caído a 0 Vida.', 'Pierdes todos tus objetos.', 'Recuperas la Vida inicial.')}</div>` : ''}
         <div class="row center-row"><button class="btn primary" data-a="closeDefeat">Continuar</button></div>
       </div>`;
   }
@@ -1092,8 +1096,7 @@ function renderTheft() {
   const picked = target && t.itemId && allItems(target.hero).find((it) => it.id === t.itemId);
   return `
     <h3>Robar</h3>
-    <p class="muted small center">Con un Pergamino de Robo te lo llevas seguro. Sin él, tiras un dado:
-    1-2 lo robas · 3-5 te pillan y pierdes tu Maná en el próximo combate · 6 no pasa nada.</p>
+    <div class="muted small">${lines('Con Pergamino de Robo, te lo llevas seguro.', 'Sin él, tiras un dado.', '1-2: lo robas.', '3-5: pierdes tu Maná en el próximo combate.', '6: no pasa nada.')}</div>
     <div class="row">${prepTargets().map((o) => `<button class="btn small ${t.targetId === o.id ? 'selected' : ''}" data-a="theftTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
     ${target ? (allItems(target.hero).length ? `<div class="steal-items">${allItems(target.hero).map((it) => `
       <button class="steal-item ${t.itemId === it.id ? 'selected' : ''}" data-a="theftItem" data-id="${it.id}">
@@ -1122,7 +1125,7 @@ function renderMagic() {
   return `
     <h3>Maleficio</h3>
     ${amounts.length && targets.length ? `
-      ${finalFoeId() ? '' : '<p class="muted small center">Elige a quién. Cada rival solo puede recibir un maleficio por ronda.</p>'}
+      ${finalFoeId() ? '' : `<div class="muted small">${lines('Elige a quién.', 'Un maleficio por rival y ronda.')}</div>`}
       <div class="row curse-targets">${prepTargets().map((o) => o.cursedThisRound
         ? `<button class="btn small" disabled title="Ya tiene un maleficio esta ronda">${esc(o.name)} <small>(ya tiene uno)</small></button>`
         : `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
@@ -1181,7 +1184,7 @@ function renderTrade() {
       <div class="trade-block">
         <h4>¿Qué ofreces?</h4>
         ${items.length ? `<div class="trade-grid">${items.map((it) => tradeTile(it, { selected: ui.trade.give.has(it.id), attrs: `data-a="tgive" data-id="${it.id}"` })).join('')}</div>` : '<p class="muted center">No tienes objetos para ofrecer.</p>'}
-        <p class="muted small center">${finalFoeId() ? `Antes de la final no puedes comerciar con ${esc(byId(finalFoeId()).name)}.` : 'Los demás verán tu oferta y te dirán qué te dan a cambio. Solo puedes hacer una oferta por ronda.'}</p>
+        <p class="muted small center">${finalFoeId() ? `Antes de la final no puedes comerciar con ${esc(byId(finalFoeId()).name)}.` : 'Los demás verán tu oferta.</p><p>Te dirán qué te dan a cambio.</p><p>Una oferta por ronda.'}</p>
       </div>
       <div class="row"><button class="btn primary" data-a="offer" ${ui.trade.give.size ? '' : 'disabled'}>Ofrecer</button></div>`;
   const others = unansweredTrades();
@@ -1604,7 +1607,7 @@ function renderBattleCursePick() {
     <div class="card outcome curse-pick">
       <button class="modal-close" data-a="duelCursePick" data-t="" aria-label="Cerrar" title="Cerrar">×</button>
       <div class="outcome-title">Maldecir</div>
-      <p class="center muted">Cada calavera anula una esfera acertada de su próxima tirada.</p>
+      <div class="muted">${lines('Cada calavera anula una esfera.', 'Solo en su próxima tirada.')}</div>
       ${rows}
     </div>`;
 }
@@ -1704,7 +1707,7 @@ function modalHtml() {
       <div class="big-item center">${itemIcon(pend.item)}</div>
       <h2>${itemName(pend.item)}</h2>
       <p class="muted center">${itemDesc(pend.item)}</p>
-      <p class="center">No tienes espacio libre para este objeto. ¿Qué haces?</p>
+      ${lines('No tienes sitio para este objeto.', '¿Qué haces?')}
       <div class="opts">${pend.options.map((o) => `<button class="btn ${o.torpe ? 'torpe' : 'primary'}" data-a="pending" data-c="${o.id}">${esc(o.label)}</button>`).join('')}</div>
       ${pend.fromReward ? '<div class="row"><button class="link-btn" data-a="undoReward">Deshacer y volver a elegir recompensa</button></div>' : ''}
     </div>`;

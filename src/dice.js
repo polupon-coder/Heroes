@@ -1,13 +1,19 @@
 'use strict';
 
-const { FACES, SHAPES } = require('./config');
+const { FACES, SHAPES, COMODIN_PROB } = require('./config');
 
-// Cada dado da a la vez un color y una forma.
+// Cada dado da a la vez un color y una forma. El comodín (multicolor / espiral)
+// sale con probabilidad C.COMODIN_PROB; el resto se reparte entre los 4 colores.
+function pickFace(rng, list) {
+  const r = rng();
+  if (r >= 1 - COMODIN_PROB) return list[4];
+  return list[Math.min(3, Math.floor((r / (1 - COMODIN_PROB)) * 4))];
+}
 function rollFace(rng) {
-  return FACES[Math.floor(rng() * FACES.length)];
+  return pickFace(rng, FACES);
 }
 function rollShape(rng) {
-  return SHAPES[Math.floor(rng() * SHAPES.length)];
+  return pickFace(rng, SHAPES);
 }
 
 // Comodín de cada tipo de desafío: multicolor para colores, espiral para formas.

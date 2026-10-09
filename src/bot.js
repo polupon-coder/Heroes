@@ -35,9 +35,21 @@ function gainOf(game, p, it) {
     const dw = C.fixedDiceForMana(m + g) - C.fixedDiceForMana(m);
     return dw * 4 + g * 0.3;
   }
-  const dd = C.diceForFuerza(f + g) - C.diceForFuerza(f);
-  return dd * 4 + (C.diceForFuerza(f) >= 5 ? 0.05 : 0.4) * g;
+  const dd = C.rollsForFuerza(f + g) - C.rollsForFuerza(f);
+  const db = C.fuerzaDamageBonus(f + g) - C.fuerzaDamageBonus(f);
+  return dd * 4 + db * 2 + 0.4 * g;
 }
+
+// Lo que vale un objeto para el bot: lo que pierde al darlo o lo que gana al recibirlo.
+function worth(game, p, it, owned) {
+  if (!it) return 0;
+  if (it.tipo !== 'equipo') {
+    if (it.efecto === 'curacion') return p.hero.base.vida - p.hero.vida >= 3 ? 3 : 1.5;
+    return it.efecto === 'robo' ? 2.5 : 2;
+  }
+  return owned ? I.effBonus(it, p.clase) : Math.max(0, slotGain(p.hero, it, p.clase));
+}
+const sum = (xs) => xs.reduce((a, b) => a + b, 0);
 
 // Jugador automático muy sencillo. Hace como mucho una acción por llamada
 // y devuelve true si ha actuado.
@@ -69,13 +81,60 @@ function botStep(game, p) {
     if (offer) {
       p.botSeen.add(offer.id);
       const owner = game.player(offer.from);
-      const val = (it) => (it ? it.bonus || it.valor || 1 : 0);
-      const gain = offer.give.reduce((s, id) => s + val(I.findItem(owner.hero.inv, id)), 0);
-      const mine = [...I.equippedItems(h.inv), ...h.inv.pociones, ...h.inv.pergaminos].sort((a, b) => val(a) - val(b))[0];
-      if (mine && val(mine) < gain) {
+      const gain = sum(offer.give.map((id) => worth(game, p, I.findItem(owner.hero.inv, id), false)));
+      const mine = I.allItems(h.inv).sort((a, b) => worth(game, p, a, true) - worth(game, p, b, true))[0];
+      if (mine && worth(game, p, mine, true) < gain) {
         game.act(p.id, 'counterTrade', { tradeId: offer.id, give: [mine.id] });
         return true;
       }
+    }
+    // Sus propias ofertas: acepta la mejor respuesta si sale ganando; si no, la rechaza.
+    const own = game.trades.find((t) => t.status === 'abierta' && t.from === p.id && t.counters.some((c) => c.status === 'pendiente'));
+    if (own) {
+      const cost = sum(own.give.map((id) => worth(game, p, I.findItem(h.inv, id), true)));
+      const scored = own.counters.filter((c) => c.status === 'pendiente').map((c) => {
+        const other = game.player(c.by);
+        return { c, v: sum(c.give.map((id) => worth(game, p, I.findItem(other.hero.inv, id), false))) };
+      }).sort((a, b) => b.v - a.v);
+      const best = scored[0];
+      try {
+        game.act(p.id, 'answerTrade', { tradeId: own.id, counterId: best.c.id, accept: best.v > cost });
+      } catch (e) {
+        best.c.status = 'rechazada';
+      }
+      return true;
+    }
+    // A veces ofrece lo que menos le sirve.
+    if (!p._triedTrade && !p.offeredThisRound && !p.tradedThisRound && game.round <= C.ROUNDS) {
+      p._triedTrade = true;
+      const spare = I.allItems(h.inv).sort((a, b) => worth(game, p, a, true) - worth(game, p, b, true))[0];
+      if (spare && worth(game, p, spare, true) <= 2 && game.rng() < 0.1) {
+        game.act(p.id, 'offerTrade', { give: [spare.id] });
+        return true;
+      }
+    }
+    // Robo: con Pergamino de Robo, siempre que haya algo que valga la pena; sin él, a veces.
+    if (!p._triedSteal && !p.stoleThisRound && game.round >= 2 && game.round <= C.ROUNDS) {
+      p._triedSteal = true;
+      let best = null;
+      for (const t of game.players) {
+        if (t === p) continue;
+        for (const it of I.allItems(t.hero.inv)) {
+          const g = worth(game, p, it, false);
+          if (!best || g > best.g) best = { t, it, g };
+        }
+      }
+      const scroll = h.inv.pergaminos.find((it) => it.efecto === 'robo');
+      try {
+        if (best && scroll && best.g >= 1) {
+          game.act(p.id, 'useItem', { itemId: scroll.id, targetId: best.t.id, targetItemId: best.it.id });
+          return true;
+        }
+        if (best && best.g >= 2 && game.rng() < 0.1) {
+          game.act(p.id, 'stealRoll', { targetId: best.t.id, targetItemId: best.it.id });
+          return true;
+        }
+      } catch (e) { /* objetivo no válido: lo intenta otra ronda */ }
     }
     // Tienda: compra la mejora de equipo que más le aporte (una por ronda).
     if (!p.boughtThisRound && p.shop && p.shop.length) {
@@ -97,7 +156,7 @@ function botStep(game, p) {
     // A partir de la ronda 5, a veces lanza un maleficio al rival más fuerte.
     if (!p.ready && !p._triedCurse && game.round >= 3 && game.round <= C.ROUNDS && game.availableMana(p) >= C.MANA_PER_CURSE) {
       p._triedCurse = true;
-      if (game.rng() < 0.7) {
+      if (game.rng() < 0.35) {
         // Prefiere a los jugadores humanos que van mejor.
         const targets = game.players.filter((x) => x !== p && !x.cursedThisRound)
           .sort((x, y) => (y.bot ? 0 : 5) - (x.bot ? 0 : 5) + game.tourneyScore(y) - game.tourneyScore(x));
@@ -107,8 +166,13 @@ function botStep(game, p) {
         }
       }
     }
+    // Espera un poco a que respondan a su oferta antes de darse por listo.
+    if (!p.ready && game.trades.some((t) => t.status === 'abierta' && t.from === p.id) && (p._waitTrade = (p._waitTrade || 0) + 1) <= 4) return false;
     if (!p.ready) {
+      p._waitTrade = 0;
       p._triedCurse = false;
+      p._triedTrade = false;
+      p._triedSteal = false;
       game.act(p.id, 'ready', { value: true });
       return true;
     }
@@ -194,7 +258,7 @@ function battle(game, p) {
 function chance(cb, t, rollsLeft, trials = 160) {
   const wild = D.WILD[t.tipo];
   const key = t.tipo === 'forma' ? 'shape' : 'face';
-  const roll = () => (t.tipo === 'forma' ? C.SHAPES : C.FACES)[Math.floor(Math.random() * (t.tipo === 'forma' ? C.SHAPES.length : C.FACES.length))];
+  const roll = () => (t.tipo === 'forma' ? D.rollShape(Math.random) : D.rollFace(Math.random));
   let ok = 0;
   for (let k = 0; k < trials; k++) {
     let vals = cb.dice.map((d) => d[key]);

@@ -347,8 +347,8 @@ function trackFuerza() {
   const prev = ui.lastFuerza;
   ui.lastFuerza = f;
   if (prev == null || f <= prev || ui.lastFuerzaId !== p.id) { ui.lastFuerzaId = p.id; return; }
-  const rolls = (x) => (x >= 28 ? 5 : x >= 18 ? 4 : 3);
-  const bonus = (x) => Math.max(0, Math.floor((x - 10) / 10));
+  const rolls = tiradasDe;
+  const bonus = golpeDe;
   const msgs = [];
   if (rolls(f) > rolls(prev)) msgs.push('Ganas una tirada más.', `Ahora tienes <b>${rolls(f)} tiradas</b>.`);
   if (bonus(f) > bonus(prev)) msgs.push(`Tus golpes hacen <b>+${bonus(f)}</b> de daño.`, 'Solo en la Batalla final.');
@@ -523,7 +523,7 @@ function renderLobbyHeroes(p) {
           <div class="pstat"><span>Vida</span><b>${preview.vida}</b></div>
           <div class="pstat"><span>Fuerza</span><b>${preview.fuerza}</b></div>
           <div class="pstat"><span>Maná</span><b>${preview.mana}</b></div>
-          <div class="pstat"><span>Tiradas</span><b>${preview.fuerza >= 28 ? 5 : preview.fuerza >= 18 ? 4 : 3}</b></div>` : `
+          <div class="pstat"><span>Tiradas</span><b>${tiradasDe(preview.fuerza)}</b></div>` : `
           <div class="pstat"><span>Vida</span><b>–</b></div>
           <div class="pstat"><span>Fuerza</span><b>–</b></div>
           <div class="pstat"><span>Maná</span><b>–</b></div>
@@ -558,11 +558,18 @@ function dicePreview(f) {
   return 1;
 }
 
+// Escalones de Fuerza (vienen del servidor): tiradas por combate y golpe en la Batalla final.
+function tiradasDe(f) {
+  return ((DATA && DATA.tiradasBase) || 2) + ((DATA && DATA.tiradasFuerza) || []).filter((t) => f >= t).length;
+}
+function golpeDe(f) {
+  return ((DATA && DATA.golpeFuerza) || []).filter((t) => f >= t).length;
+}
+
 function nextDiceHint(f) {
-  const steps = [6, 11, 16, 21];
-  const n = steps.find((s) => s > f);
-  if (f >= 28) return '5 tiradas por combate';
-  return f >= 18 ? `4 tiradas · ${28 - f} de Fuerza más para la 5.ª` : `${18 - f} de Fuerza más para una 4.ª tirada`;
+  const n = tiradasDe(f);
+  const next = ((DATA && DATA.tiradasFuerza) || []).find((t) => t > f);
+  return next ? `${n} tiradas · ${next - f} de Fuerza más para la ${n + 1}.ª` : `${n} tiradas por combate`;
 }
 
 // ---------- Hoja del héroe
@@ -590,7 +597,7 @@ function renderSheet() {
   const p = me();
   if (!p || !p.hero) return '';
   const h = p.hero;
-  const pct = Math.max(0, Math.min(100, (h.vida / h.base.vida) * 100));
+  const pct = Math.max(0, Math.min(100, (h.vida / (h.vidaMax || h.base.vida)) * 100));
   const inv = h.inv;
   const hands = inv.manos;
   const handTiles = hands.length === 0
@@ -616,7 +623,7 @@ function renderSheet() {
     ${slots3(inv.pociones, 'Poción')}
     ${slots3(inv.pergaminos, 'Pergamino')}
   </div>
-  <p class="muted small center">${h.victorias} victorias · ${h.caidas} caídas</p>`;
+  <p class="muted small center">${h.victorias} victorias · ${h.trofeos || 0} trofeos · ${h.caidas} caídas</p>`;
 }
 
 // Detalle de un objeto (al tocarlo en tu hoja).
@@ -646,7 +653,7 @@ function useBtn(it) {
   let ok = false;
   if (it.efecto === 'mana') ok = myCombat || S.phase === 'prep' || S.phase === 'combat' || S.phase === 'torneo';
   const fullSoon = S.phase === 'prep' && (S.round > S.rounds || (S.tournament && S.tournament.stage === 'prefinal'));
-  if (it.efecto === 'curacion') ok = h.vida < h.base.vida && !fullSoon && (S.phase === 'prep' || S.phase === 'combat' || (S.phase === 'torneo' && myCombat));
+  if (it.efecto === 'curacion') ok = h.vida < (h.vidaMax || h.base.vida) && !fullSoon && (S.phase === 'prep' || S.phase === 'combat' || (S.phase === 'torneo' && myCombat));
   if (it.efecto === 'robo') ok = S.phase === 'prep';
   if (!ok) return '';
   const label = it.efecto === 'mana' && !myCombat ? 'Beber para el próximo combate' : 'Usar';
@@ -688,7 +695,7 @@ function renderArena() {
   if (S.phase === 'torneo' && S.tournament && S.tournament.stage === 'batalla') return '';
   return `<h3 class="col-title">Rivales</h3>` + others().map((p) => {
     const h = p.hero;
-    const pct = Math.max(0, Math.min(100, (h.vida / h.base.vida) * 100));
+    const pct = Math.max(0, Math.min(100, (h.vida / (h.vidaMax || h.base.vida)) * 100));
     const o = opponentOf(p);
     const ready = S.phase === 'prep' && p.ready;
     return `
@@ -822,7 +829,7 @@ function renderOutcome() {
       <div class="card outcome win">
         <div class="outcome-title">¡Victoria!</div>
         ${monsterArt(p.monster, 'outcome-art')}
-        ${lines(`Has derrotado a ${esc(p.monster.nombre)} ${esc((p.monster.tamano || '').toLowerCase())}.`, 'Elige tu recompensa.')}
+        ${lines(`Has derrotado a ${esc(p.monster.nombre)} ${esc((p.monster.tamano || '').toLowerCase())}.`, p.monster.tier === 4 ? 'Ganas un trofeo.' : '', p.monster.tier === 4 ? '+1 de Vida en la Batalla final.' : '', 'Elige tu recompensa.')}
         <div class="reward-pick">${p.rewards.map((it, i) => `
           <button class="reward-choice" data-a="reward" data-i="${i}">
             <span class="big-item">${itemIcon(it)}</span>
@@ -887,7 +894,7 @@ const RULES = {
       <p>Tu héroe es una <b>Raza</b> y una <b>Clase</b>. Algunas parejas son <b class="ok">naturales</b> (+1 Fuerza y +1 Maná)
       y otras <b class="bad">raras</b> (−1 Vida): se indica al elegir.</p></section>
     <section><div class="rule-ill"><div class="life rl"><i style="width:70%"></i><span>10 / 14</span></div></div><h4>Vida</h4><p>Lo que aguantas. No se recupera sola: solo con pociones y pergaminos de curación.</p></section>
-    <section><div class="rule-ill"><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="lbl">Fuerza 18<br>= 4 tiradas</span></div><h4>Fuerza</h4><p>Siempre lanzas <b>5 esferas</b>. La Fuerza da tiradas: <b>3</b>, <b>4</b> con Fuerza 18 y <b>5</b> con Fuerza 28. En la Batalla final, además, cada 10 de Fuerza por encima de 10 suma <b>+1 de daño</b> a tus golpes.</p></section>
+    <section><div class="rule-ill"><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="lbl">Fuerza 18<br>= 3 tiradas</span></div><h4>Fuerza</h4><p>Siempre lanzas <b>5 esferas</b>. La Fuerza da tiradas: <b>2</b>, <b>3</b> con Fuerza 18, <b>4</b> con 26 y <b>5</b> con 34. En la Batalla final, además, suma daño a tus golpes: <b>+1</b> con Fuerza 22, <b>+2</b> con 30 y <b>+3</b> con 38.</p></section>
     <section><div class="rule-ill"><img src="img/formas/espiral-multicolor.webp" alt=""><span class="lbl">5 Maná<br>= 1 comodín</span></div><h4>Maná</h4><p>Cada <b>5</b> de Maná convierte una esfera en <b>comodín</b> (multicolor con espiral), fijada desde el inicio del combate.</p></section>
     <section><div class="rule-ill"><img src="img/objetos/yelmo-1.webp" alt=""><img src="img/objetos/espada-2.webp" alt=""><img src="img/objetos/tunica-1.webp" alt=""></div><h4>Equipo</h4><p>Yelmo, armadura, túnica, botas y dos manos (un arma a dos manos ocupa las dos; como mucho un escudo).
       El equipo suma <b>Fuerza</b>; la <b>túnica</b> suma <b>Maná</b>. Hasta 3 pociones y 3 pergaminos.</p></section>
@@ -896,8 +903,8 @@ const RULES = {
   aventura: ['Aventura', `
     <section><div class="rule-ill"><img class="tall s1" src="img/monstruos/diablillo-1.webp" alt=""><img class="tall" src="img/monstruos/orco-2.webp" alt=""><img class="tall s3" src="img/monstruos/dragon-3.webp" alt=""></div><h4>12 rondas, 5 monstruos</h4><p>En cada ronda aparecen <b>5 monstruos</b>, de pequeño a grande. Los ves en un carrusel: el del centro y sus vecinos a los lados (desliza o usa las flechas).</p></section>
     <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="plus">…</span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span></div><h4>De pequeño a grande</h4><p>Cada uno pide algo más difícil: desde tres iguales y una distinta hasta cinco iguales. Cuanto más grande, más daño hace y mejores son sus monedas y objetos.</p></section>
-      Piden como mucho <b>3</b> esferas en las rondas 1–3, <b>4</b> en las 4–7 y <b>5</b> desde la 8; si tienes 4 o más, uno de los dos te deja siempre al menos una de margen, pero rinde menos (la mitad de monedas y peores recompensas).</p></section>
     <section><div class="rule-ill"><img src="img/objetos/espada-1.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Si ganas</h4><p>Eliges 1 de 2 recompensas y ganas <b>monedas</b>: cuanto más grande el monstruo, más monedas y mejores objetos.</p></section>
+    <section><div class="rule-ill"><img class="tall" src="img/monstruos/dragon-3.webp" alt=""><span class="lbl">+1 Vida</span></div><h4>Trofeos</h4><p>Cada <b>monstruo grande</b> que derrotes es un trofeo. Cada trofeo te da <b>+1 de Vida</b> en la Batalla final.</p></section>
     <section><div class="rule-ill"><span class="big-dmg">−4</span><span class="lbl">Vida</span></div><h4>Si pierdes</h4><p>Pierdes la Vida que marca el monstruo. Si caes a 0 pierdes <b>todos tus objetos y monedas</b> y recuperas la Vida inicial.</p></section>`],
   combate: ['Combate', `
     <section><div class="rule-ill"><img src="img/formas/circulo-rojo.webp" alt=""><img src="img/formas/cuadrado-azul.webp" alt=""><img src="img/formas/rombo-verde.webp" alt=""><img src="img/formas/triangulo-amarillo.webp" alt=""><img src="img/formas/espiral-multicolor.webp" alt=""></div><h4>Esferas</h4><p>Cada esfera tiene un <b>color</b> (rojo, azul, verde, amarillo o <b>multicolor</b> = comodín)
@@ -916,8 +923,8 @@ const RULES = {
     <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">+</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Jugar en el mismo dispositivo</h4><p>En la sala, <b>Jugador aquí</b> añade a otro jugador que juega en tu mismo ordenador o móvil.
       Se juega por turnos: cuando te toca a ti aparece <b>«Turno de…»</b> y te pasan el dispositivo. Se puede mezclar con amigos conectados desde otros dispositivos y con bots.</p></section>`],
   torneo: ['Batalla final', `
-    <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/enano-guerrero.webp" alt=""></div><h4>Todos contra todos</h4><p>Tras la aventura, todos empiezan con la Vida completa y luchan a la vez. Cada ronda todos tiran sus 5 esferas y, al acabar, cada uno elige a quién golpea. Gana el último en pie.</p></section>
-    <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ −1</span></div><h4>Golpear</h4><p>Cuentan las esferas del <b>color de tu víctima</b> (y los comodines): 3 → 1 de daño, 4 → 2, 5 → 3. Tu Fuerza suma: +1 con Fuerza 20, +2 con 30…</p></section>
+    <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/enano-guerrero.webp" alt=""></div><h4>Todos contra todos</h4><p>Tras la aventura, todos empiezan con la Vida completa, más 1 por cada trofeo, y luchan a la vez. Cada ronda todos tiran sus 5 esferas y, al acabar, cada uno elige a quién golpea. Gana el último en pie.</p></section>
+    <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ −1</span></div><h4>Golpear</h4><p>Cuentan las esferas del <b>color de tu víctima</b> (y los comodines): 2 → 1 de daño, 3 → 2, 4 o más → 3. Tu Fuerza suma: +1 con Fuerza 22, +2 con 30, +3 con 38.</p></section>
     <section><div class="rule-ill"><span class="sphere big azul"></span><span class="lbl">🛡 −1</span></div><h4>Escudo</h4><p>Cada esfera de <b>tu propio color</b> te quita 1 del daño que recibes esa ronda.</p></section>
     <section><div class="rule-ill"><img src="img/ui/calavera.webp" alt=""></div><h4>Maldecir</h4><p>Una vez por ronda puedes maldecir a un rival: cada calavera (5 Maná) le anula una esfera acertada.</p></section>`],
 
@@ -1466,7 +1473,7 @@ function rivalIndex(n) {
 }
 function rivalCard(r, cb, pos, i) {
   if (!r) return '<div class="foe-card ghost ' + pos + '"></div>';
-  const pct = Math.max(0, Math.min(100, (r.hero.vida / r.hero.base.vida) * 100));
+  const pct = Math.max(0, Math.min(100, (r.hero.vida / (r.hero.vidaMax || r.hero.base.vida)) * 100));
   const center = pos === 'center';
   const n = cb && cb.rolls ? cb.dice.filter((d) => d.face === r.color || d.face === 'multicolor').length : 0;
   const dmg = battleDamage(n);
@@ -1483,11 +1490,11 @@ function rivalCard(r, cb, pos, i) {
       ${cb && cb.rolls && cb.status === 'activo' ? `<div class="foe-slot"><button class="btn ${dmg ? 'primary defeat-btn' : ''}" data-a="strike" data-id="${r.id}">${dmg ? `Golpear a ${esc(r.name)} · −${dmg}` : `Golpear a ${esc(r.name)} · sin daño`}</button></div>` : ''}` : ''}
     </div>`;
 }
-// Daño de tu golpe en la batalla: 3/4/5 esferas de su color → 1/2/3, más el extra por Fuerza.
+// Daño de tu golpe en la batalla: 2/3/4 esferas de su color → 1/2/3, más el extra por Fuerza.
 function battleDamage(n) {
-  const base = Math.max(0, Math.min(3, n - 2));
+  const base = Math.max(0, Math.min(3, n - 1));
   const f = (me() && me().hero && me().hero.fuerza) || 0;
-  return base ? base + Math.max(0, Math.floor((f - 10) / 10)) : 0;
+  return base ? base + golpeDe(f) : 0;
 }
 function renderBattle() {
   const t = S.tournament;
@@ -1547,7 +1554,7 @@ function renderTournament() {
   const b = byId(m.b);
   const att = byId(m.attacker);
   const fighter = (x) => `<div class="fighter big ${m.attacker === x.id ? 'attacking' : ''}">${heroPortrait(x, 'duelist')}<b>${esc(x.name)}</b>
-    <div class="life duel-lifebar"><i style="width:${Math.max(0, Math.min(100, (x.hero.vida / x.hero.base.vida) * 100))}%"></i><span>${x.hero.vida}</span></div></div>`;
+    <div class="life duel-lifebar"><i style="width:${Math.max(0, Math.min(100, (x.hero.vida / (x.hero.vidaMax || x.hero.base.vida)) * 100))}%"></i><span>${x.hero.vida}</span></div></div>`;
   return `
     <div class="card duel-card">
       <h2 class="duel-title">${esc(m.label)}</h2>

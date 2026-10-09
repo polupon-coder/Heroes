@@ -6,6 +6,8 @@ const COLORS = ['rojo', 'azul', 'verde', 'amarillo'];
 const FACES = ['rojo', 'azul', 'verde', 'amarillo', 'multicolor'];
 // Cada dado da también una forma: espiral = comodín.
 const SHAPES = ['circulo', 'cuadrado', 'rombo', 'triangulo', 'espiral'];
+// Probabilidad de que una esfera salga comodín (multicolor o espiral).
+const COMODIN_PROB = 1 / 9;
 const FORMAS = ['circulo', 'cuadrado', 'rombo', 'triangulo'];
 // Cada monstruo puede pedir su combinación en colores o en formas (misma dificultad).
 const COLOR_TO_SHAPE = { rojo: 'circulo', azul: 'cuadrado', verde: 'rombo', amarillo: 'triangulo' };
@@ -15,17 +17,17 @@ const BASE_STATS = { vida: 10, mana: 5, fuerza: 10 };
 // Ningún héroe empieza con menos Fuerza que esto (después de Raza y Clase).
 const MIN_FUERZA_INICIAL = 10;
 
-// Razas y clases equilibradas: cada raza reparte 3 puntos y cada clase 5, sin
-// valores negativos (la Fuerza y el Maná tienen mínimos, así que un negativo
-// sería un punto perdido). Todos empiezan con al menos 5 de Maná.
+// Razas y clases equilibradas con simulaciones de partidas entre bots (cada una
+// gana entre el 21 % y el 30 % de las partidas de 4). Sin valores negativos: la
+// Fuerza y el Maná tienen mínimos. Todos empiezan con al menos 5 de Maná.
 const RACES = {
-  humano: { nombre: 'Humano', vida: 2, mana: 1, fuerza: 0 },
-  elfo: { nombre: 'Elfo', vida: 2, mana: 2, fuerza: 0 },
+  humano: { nombre: 'Humano', vida: 2, mana: 1, fuerza: 1 },
+  elfo: { nombre: 'Elfo', vida: 2, mana: 2, fuerza: 1 },
   enano: { nombre: 'Enano', vida: 2, mana: 1, fuerza: 1 },
-  gnomo: { nombre: 'Gnomo', vida: 2, mana: 2, fuerza: 0 },
-  silvano: { nombre: 'Silvano', vida: 2, mana: 1, fuerza: 0 },
-  durgan: { nombre: 'Durgan', vida: 2, mana: 0, fuerza: 1 },
-  faunar: { nombre: 'Faunar', vida: 2, mana: 0, fuerza: 2 },
+  gnomo: { nombre: 'Gnomo', vida: 2, mana: 2, fuerza: 1 },
+  silvano: { nombre: 'Silvano', vida: 2, mana: 2, fuerza: 1 },
+  durgan: { nombre: 'Durgan', vida: 3, mana: 0, fuerza: 1 },
+  faunar: { nombre: 'Faunar', vida: 2, mana: 1, fuerza: 2 },
 };
 
 // Afinidad entre raza y clase: las combinaciones naturales reciben un pequeño
@@ -64,13 +66,13 @@ function afinidad(raza, clase) {
 }
 
 const CLASSES = {
-  guerrero: { nombre: 'Guerrero', vida: 2, mana: 2, fuerza: 3 },
-  mago: { nombre: 'Mago', vida: 2, mana: 1, fuerza: 0 },
-  ladron: { nombre: 'Ladrón', vida: 2, mana: 1, fuerza: 2 },
+  guerrero: { nombre: 'Guerrero', vida: 2, mana: 1, fuerza: 3 },
+  mago: { nombre: 'Mago', vida: 2, mana: 3, fuerza: 2 },
+  ladron: { nombre: 'Ladrón', vida: 2, mana: 2, fuerza: 2 },
   druida: { nombre: 'Druida', vida: 2, mana: 2, fuerza: 2 },
-  explorador: { nombre: 'Explorador', vida: 2, mana: 1, fuerza: 2 },
+  explorador: { nombre: 'Explorador', vida: 2, mana: 2, fuerza: 2 },
   clerigo: { nombre: 'Clérigo', vida: 2, mana: 0, fuerza: 3 },
-  barbaro: { nombre: 'Bárbaro', vida: 2, mana: 1, fuerza: 2 },
+  barbaro: { nombre: 'Bárbaro', vida: 3, mana: 0, fuerza: 2 },
 };
 
 const MIN_MANA_INICIAL = 5;
@@ -94,16 +96,18 @@ function fixedDiceForMana(mana) {
 
 const ROUNDS = Number(process.env.HEROES_RONDAS) || 12; // (la variable solo se usa en pruebas)
 const MAX_ROLLS = 3;
-// Siempre se lanzan 5 esferas; la Fuerza da tiradas extra.
+// Siempre se lanzan 5 esferas. Empiezas con 2 tiradas y la Fuerza da más:
+// 3 con Fuerza 18, 4 con 26 y 5 con 34.
 const DADOS = 5;
+const TIRADAS_BASE = 2;
+const TIRADAS_FUERZA = [18, 26, 34];
 function rollsForFuerza(f) {
-  if (f >= 28) return 5;
-  if (f >= 18) return 4;
-  return 3;
+  return TIRADAS_BASE + TIRADAS_FUERZA.filter((t) => f >= t).length;
 }
-// Batalla final: +1 de daño por cada 10 de Fuerza por encima de 10 (solo si el golpe ya hace daño).
+// Batalla final: +1 de daño con Fuerza 22, +2 con 30 y +3 con 38 (solo si el golpe ya hace daño).
+const GOLPE_FUERZA = [22, 30, 38];
 function fuerzaDamageBonus(f) {
-  return Math.max(0, Math.floor((f - 10) / 10));
+  return GOLPE_FUERZA.filter((t) => f >= t).length;
 }
 
 // Regla 21.
@@ -238,6 +242,7 @@ function pvpMinResults(hits) {
 // (luego Fuerza+Maná).
 
 module.exports = {
+  COMODIN_PROB,
   COLORS,
   FACES,
   SHAPES,
@@ -260,6 +265,9 @@ module.exports = {
   MAX_ROLLS,
   DADOS,
   rollsForFuerza,
+  TIRADAS_BASE,
+  TIRADAS_FUERZA,
+  GOLPE_FUERZA,
   fuerzaDamageBonus,
   levelsForRound,
   maxComboForRound,

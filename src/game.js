@@ -151,6 +151,11 @@ class Game {
     if (foe && t.id !== foe) fail(`Antes de la final solo puedes ${what} a ${this.player(foe).name}`);
   }
 
+  // Vida máxima: en la Batalla final cada trofeo suma 1.
+  maxVida(p) {
+    return p.hero.base.vida + (this.phase === 'torneo' ? p.hero.trofeos || 0 : 0);
+  }
+
   effFuerza(p) {
     return p.hero.base.fuerza + I.equipmentFuerza(p.hero.inv, p.clase);
   }
@@ -187,6 +192,7 @@ class Game {
       pending: [],
       caidas: 0,
       victorias: 0,
+      trofeos: 0,
       monedas: C.MONEDAS_INICIALES,
     };
   }
@@ -203,7 +209,7 @@ class Game {
 
   heal(p, amount) {
     const before = p.hero.vida;
-    p.hero.vida = Math.min(p.hero.base.vida, p.hero.vida + amount);
+    p.hero.vida = Math.min(this.maxVida(p), p.hero.vida + amount);
     return p.hero.vida - before;
   }
 
@@ -613,6 +619,8 @@ class Game {
     const m = p.monster;
     if (won) {
       p.hero.victorias += 1;
+      // Cada monstruo grande derrotado es un trofeo: +1 de Vida en la Batalla final.
+      if (m.tier === 4) p.hero.trofeos = (p.hero.trofeos || 0) + 1;
       // Monedas solo según el monstruo (no según las tiradas que hayas usado).
       const coins = [1, 2, 4, 6, 9][m.tier ?? 2];
       p.coinsPending = { n: coins, rolls: p.combat.rolls };
@@ -632,12 +640,13 @@ class Game {
 
   // Batalla final: todos contra todos. Cada ronda todos tiran a la vez y, al
   // acabar, cada uno elige a quién golpea. Esferas del color de la víctima
-  // (y comodines): 3 → 1 de daño, 4 → 2, 5 → 3. Cada esfera de tu propio
+  // (y comodines): 2 → 1 de daño, 3 → 2, 4 o más → 3. Cada esfera de tu propio
   // color quita 1 del daño que recibes esa ronda. Gana el último en pie.
   startTournament() {
+    this.phase = 'torneo';
     for (const p of this.players) {
       p.hero.pending = [];
-      p.hero.vida = p.hero.base.vida;
+      p.hero.vida = this.maxVida(p);
     }
     this.tournament = { stage: 'batalla', round: 0, alive: this.players.map((p) => p.id), last: null, matches: [], champion: null };
     this.phase = 'torneo';
@@ -663,7 +672,7 @@ class Game {
 
   battleHits(attacker, target) {
     const n = attacker.combat.dice.filter((d) => d.face === target.color || d.face === 'multicolor').length;
-    const base = Math.max(0, Math.min(3, n - 2));
+    const base = Math.max(0, Math.min(3, n - 1));
     return base ? base + C.fuerzaDamageBonus(this.effFuerza(attacker)) : 0;
   }
 
@@ -966,6 +975,8 @@ class Game {
           pending: p.id === forId ? h.pending : h.pending.map(() => ({})),
           caidas: h.caidas,
           victorias: h.victorias,
+          trofeos: h.trofeos || 0,
+          vidaMax: this.maxVida(p),
           monedas: h.monedas,
           puntuacion: this.tourneyScore(p),
         },
@@ -1027,7 +1038,7 @@ function useConsumable(game, p, data) {
   if (it.efecto === 'curacion') {
     if (!inCombat && game.phase !== 'prep' && game.phase !== 'combat') fail('Ahora no puedes curarte');
     if (game.phase === 'torneo' && !myDuel) fail('En el torneo solo puedes curarte en tu turno');
-    if (p.hero.vida >= p.hero.base.vida) fail('Ya tienes la Vida al máximo');
+    if (p.hero.vida >= game.maxVida(p)) fail('Ya tienes la Vida al máximo');
     // Antes del Torneo y antes de la final todos recuperan la Vida: curarse ahí sería tirar la poción.
     if (game.phase === 'prep' && (game.round > C.ROUNDS || game.pendingFinal)) fail('Vas a recuperar toda la Vida antes de luchar: guarda la curación');
     const healed = game.heal(p, it.valor);

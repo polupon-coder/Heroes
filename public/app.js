@@ -1251,7 +1251,11 @@ function renderCombat(p, controllable) {
   const all = bt.all;
   // Contra monstruos, se iluminan las esferas que sirven al monstruo del centro del carrusel.
   const centerIdx = cb.kind === 'monstruo' && p.offers ? foeIndex(p, cb) : null;
-  const used = centerIdx != null && all[centerIdx] ? all[centerIdx].used : bt.used;
+  let used = centerIdx != null && all[centerIdx] ? all[centerIdx].used : bt.used;
+  if (cb.kind === 'batalla' && S.tournament) {
+    const r = battleRivals()[ui.foeIdx || 0];
+    used = new Set(r ? cb.dice.map((d, i) => (d.face === r.color || d.face === 'multicolor' ? i : -1)).filter((i) => i >= 0) : []);
+  }
   const fijables = mine ? p.hero.fijables : null;
   const diceHtml = cb.dice.length
     ? cb.dice.map((d, i) => {
@@ -1399,45 +1403,68 @@ function duelDamage(cb, faces) {
   return Math.max(0, 3 - (hits - n));
 }
 
+// Batalla final: los rivales en carrusel, como los monstruos. En el centro, el
+// rival al que apuntas: lo que pide (5 esferas de su color) y el daño que le haces.
+function battleRivals() {
+  const t = S.tournament;
+  return t.alive.filter((id) => id !== S.me).map(byId);
+}
+function rivalIndex(n) {
+  ui.foeIdx = Math.max(0, Math.min(n - 1, ui.foeIdx || 0));
+  return ui.foeIdx;
+}
+function rivalCard(r, cb, pos, i) {
+  if (!r) return '<div class="foe-card ghost ' + pos + '"></div>';
+  const pct = Math.max(0, Math.min(100, (r.hero.vida / r.hero.base.vida) * 100));
+  const center = pos === 'center';
+  const n = cb && cb.rolls ? cb.dice.filter((d) => d.face === r.color || d.face === 'multicolor').length : 0;
+  const dmg = Math.max(0, Math.min(3, n - 2));
+  const want = Array.from({ length: 5 }, (_, k) => die(r.color, { cls: `target ${cb && cb.rolls ? (k < n ? 'got' : 'miss') : ''}` })).join('');
+  const st = r.combat && r.combat.status === 'activo' ? 'tirando…' : 'listo';
+  return `
+    <div class="foe-card ${pos} ${dmg && center ? 'ready' : ''}" ${!center ? `data-a="foeGo" data-i="${i}"` : ''}>
+      ${!center && dmg ? `<div class="side-ok">−${dmg}</div>` : ''}
+      <div class="foe-art">${heroPortrait(r, 'duel-art')}</div>
+      <div class="foe-title">${esc(r.name)} <span class="sphere ${r.color}"></span></div>
+      <div class="life duel-lifebar"><i style="width:${pct}%"></i><span>${r.hero.vida} / ${r.hero.base.vida}</span></div>
+      ${center ? `<div class="dice">${want}</div>
+      <div class="muted small">${st}</div>
+      ${cb && cb.rolls && cb.status === 'activo' ? `<div class="foe-slot"><button class="btn ${dmg ? 'primary defeat-btn' : ''}" data-a="strike" data-id="${r.id}">${dmg ? `Golpear a ${esc(r.name)} · −${dmg}` : `Golpear a ${esc(r.name)} · sin daño`}</button></div>` : ''}` : ''}
+    </div>`;
+}
 function renderBattle() {
   const t = S.tournament;
   const p = me();
   const alive = t.alive.includes(S.me);
-  const fighters = S.players.map((x) => {
-    const pct = Math.max(0, Math.min(100, (x.hero.vida / x.hero.base.vida) * 100));
-    const down = !t.alive.includes(x.id);
-    const st = down ? 'caído' : x.combat && x.combat.status === 'activo' ? 'tirando…' : 'listo';
-    return `<div class="bf ${down ? 'down' : ''} ${x.id === S.me ? 'me' : ''}">
-      ${heroPortrait(x, 'duelist')}
-      <b>${esc(x.name)}</b><span class="sphere ${x.color}"></span>
-      <div class="life duel-lifebar"><i style="width:${pct}%"></i><span>${x.hero.vida} / ${x.hero.base.vida}</span></div>
-      <small class="muted">${st}</small>
+  const rivals = battleRivals();
+  const cb = alive && p.combat && p.combat.status === 'activo' ? p.combat : null;
+  const k = rivalIndex(rivals.length);
+  const hits = (r) => (cb && cb.rolls ? Math.max(0, Math.min(3, cb.dice.filter((d) => d.face === r.color || d.face === 'multicolor').length - 2)) : 0);
+  const dots = rivals.map((r, i) => `<button class="car-dot ${i === k ? 'on' : ''} ${hits(r) ? 'ok' : ''}" data-a="foeGo" data-i="${i}" aria-label="${esc(r.name)}"></button>`).join('');
+  const car = `
+    <div class="car-dots">${dots}</div>
+    <div class="carousel" data-swipe="foes">
+      <button class="car-nav" data-a="foeGo" data-i="${k - 1}" ${k === 0 ? 'disabled' : ''} aria-label="Anterior">‹</button>
+      <div class="car-track">${rivalCard(rivals[k - 1], cb, 'side left', k - 1)}${rivalCard(rivals[k], cb, 'center', k)}${rivalCard(rivals[k + 1], cb, 'side right', k + 1)}</div>
+      <button class="car-nav" data-a="foeGo" data-i="${k + 1}" ${k >= rivals.length - 1 ? 'disabled' : ''} aria-label="Siguiente">›</button>
     </div>`;
-  }).join('');
   let mine = '';
-  if (alive && p.combat && p.combat.status === 'activo') mine = renderCombat(p, true);
+  if (cb) mine = renderCombat(p, true);
   else if (alive) mine = '<p class="center muted">Esperando a que los demás terminen de tirar…</p>';
   else mine = '<p class="center muted">Has caído. Mira cómo acaba la batalla.</p>';
   return `
     <div class="card duel-card battle-card">
       <h2 class="duel-title">Batalla final · ronda ${t.round}</h2>
-      <div class="battle-row">${fighters}</div>
+      ${car}
       ${mine}
     </div>`;
 }
 
-// Tras tirar en la batalla: a quién golpeas (daño según las esferas de su color) y tu escudo.
+// Bajo tus esferas: tu escudo (esferas de tu color).
 function battleStrikeHtml(p, cb) {
   if (!cb.rolls) return '';
-  const t = S.tournament;
-  const n = (c) => cb.dice.filter((d) => d.face === c || d.face === 'multicolor').length;
   const shield = cb.dice.filter((d) => d.face === p.color).length;
-  const btns = t.alive.filter((id) => id !== S.me).map((id) => {
-    const r = byId(id);
-    const dmg = Math.max(0, Math.min(3, n(r.color) - 2));
-    return `<button class="btn ${dmg ? 'primary' : ''}" data-a="strike" data-id="${id}"><span class="sphere ${r.color}"></span> Golpear a ${esc(r.name)} · ${dmg ? `−${dmg}` : 'sin daño'}</button>`;
-  }).join('');
-  return `<div class="battle-strike"><div class="muted small center">3 esferas de su color → −1 · 4 → −2 · 5 → −3. Tu escudo: <b>${shield}</b> <span class="sphere ${p.color}"></span></div><div class="strike-btns">${btns}</div></div>`;
+  return `<div class="battle-strike muted small center">Tu escudo: <b>${shield}</b> <span class="sphere ${p.color}"></span> · 3 de su color → −1 · 4 → −2 · 5 → −3</div>`;
 }
 
 function renderTournament() {

@@ -1626,3 +1626,16 @@ button.trade-tile:not([data-a]) { cursor: default; }
   .strike-btns .btn { font-size: .85rem; padding: 6px 10px; }
 }
 .col-rivals:empty { display: none !important; }
+.battle-card .foe-card .portrait.duel-art { width: auto !important; height: 200px !important; max-width: 100%; object-fit: contain; }
+.battle-card .foe-card.side .portrait.duel-art { height: 150px !important; }
+.battle-card .foe-card .duel-lifebar { width: 80%; margin: 4px auto; }
+.battle-card .foe-card.center .die.target.got { filter: drop-shadow(0 0 6px rgba(120, 200, 90, .95)); }
+.battle-card .foe-card.center .die.target.miss { opacity: .35; filter: grayscale(.6); }
+@media (max-width: 760px) {
+  .battle-card .foe-card .portrait.duel-art { height: 150px !important; }
+  .battle-card .foe-card.side .portrait.duel-art { height: 100px !important; }
+}
+/* Batalla: sin columna de rivales, el centro ocupa su sitio */
+.table3:has(.col-rivals:empty) { grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) !important; }
+.battle-strike { display: block !important; text-align: center; }
+.battle-strike .sphere { vertical-align: middle; }

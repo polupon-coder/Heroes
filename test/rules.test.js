@@ -318,7 +318,11 @@ test('cinco monstruos por ronda, de pequeño a grande, y se derrota a cualquiera
   g.act(a.id, 'roll', {});
   const m0 = a.offers[0];
   const key = m0.tipo === 'forma' ? 'shape' : 'face';
-  a.combat.dice = m0.combo.concat([m0.combo[0]]).map((v) => ({ face: key === 'face' ? v : 'rojo', shape: key === 'shape' ? v : 'circulo', held: false, fixed: false }));
+  // La otra propiedad (forma o color) se reparte para no completar nada sin querer.
+  const otherFaces = ['rojo', 'azul', 'verde', 'amarillo', 'rojo'];
+  const otherShapes = ['circulo', 'cuadrado', 'rombo', 'triangulo', 'circulo'];
+  const used = m0.combo.concat([m0.combo[0] === m0.combo[3] ? m0.combo[0] : m0.combo[3]]);
+  a.combat.dice = used.map((v, i) => ({ face: key === 'face' ? v : otherFaces[i], shape: key === 'shape' ? v : otherShapes[i], held: false, fixed: false }));
   assert.throws(() => g.act(a.id, 'present', { index: 4 }), /no completan/);
   g.act(a.id, 'present', { index: 0 });
   assert.strictEqual(a.stage, 'recompensa');

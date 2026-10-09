@@ -700,17 +700,20 @@ function battleResultHtml() {
   if (!t || t.stage !== 'batalla' || !t.last || ui.battleSeen === t.last.round) return '';
   if (ui.battleSeen == null && t.round > 1 && !ui.battlePrimed) { ui.battlePrimed = true; ui.battleSeen = t.last.round; return ''; }
   ui.battlePrimed = true;
-  const rows = t.last.hits.map((h) => {
-    const a = byId(h.by); const v = byId(h.to);
-    return `<div class="br-row"><b>${esc(a.name)}</b> → <b>${esc(v.name)}</b> <span class="dice">${h.faces.map((f) => die(f.face, { sm: true, shape: f.shape })).join('')}</span> <span class="${h.dmg ? 'bad' : 'muted'}">${h.dmg ? `−${h.dmg}` : 'falla'}</span></div>`;
+  // Solo la consecuencia: cuánta Vida pierde cada uno y quién cae.
+  const lost = {};
+  for (const h of t.last.hits) lost[h.to] = (lost[h.to] || 0) + h.dmg;
+  for (const [id, n] of Object.entries(t.last.shields || {})) lost[id] = (lost[id] || 0) - n;
+  const rows = Object.entries(t.last.vida).map(([id, v]) => {
+    const x = byId(id);
+    const n = Math.max(0, lost[id] || 0);
+    const txt = v <= 0 ? '<b class="bad">cae</b>' : n ? `<b class="bad">−${n}</b> · le quedan ${v}` : '<span class="muted">sin daño</span>';
+    return `<div class="br-row">${heroPortrait(x, 'sm')}<b>${id === S.me ? 'Tú' : esc(x.name)}</b> ${txt}</div>`;
   }).join('');
-  const shields = Object.entries(t.last.shields || {}).filter(([, n]) => n).map(([id, n]) => `<div class="br-row">🛡 <b>${esc(byId(id).name)}</b> para ${n}</div>`).join('');
-  const vidas = Object.entries(t.last.vida).map(([id, v]) => `<span class="br-life ${v <= 0 ? 'down' : ''}">${esc(byId(id).name)} ${v <= 0 ? 'cae' : v}</span>`).join(' · ');
   return `
     <div class="card outcome battle-res">
       <div class="outcome-title">Ronda ${t.last.round}</div>
-      ${rows}${shields}
-      <p class="center small">${vidas}</p>
+      ${rows}
       <div class="row center-row"><button class="btn primary" data-a="closeBattle">Continuar</button></div>
     </div>`;
 }
@@ -1308,10 +1311,9 @@ function renderCombat(p, controllable) {
         ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
         ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
       </div>
-      ${cb.kind === 'batalla' ? battleStrikeHtml(p, cb) : ''}
+      <div class="rolls-left">Tirada <b>${cb.rolls}</b> de ${cb.maxRolls}${left > 0 && cb.rolls > 0 ? ` · te quedan ${left}` : left === 0 ? ' · sin tiradas' : ''}</div>
       ${cb.kind === 'batalla' && !p.battleCursed && p.hero.manaDisponible >= 5 ? '<div class="duel-curse"><button class="btn curse-btn" data-a="duelCursePick" data-t="b">Maldecir</button></div>' : ''}
       ${cb.kind === 'duelo' && S.tournament ? (() => { const m = S.tournament.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id)); return m ? duelCurseHtml(S.tournament, m) : ''; })() : ''}
-      <div class="rolls-count" title="Tiradas">${cb.rolls}/${cb.maxRolls}</div>
       ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
       ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">${duelBtnText(p, duelDamage(cb, faces))}</button></div>` : ''}

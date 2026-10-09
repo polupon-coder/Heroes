@@ -1639,3 +1639,15 @@ button.trade-tile:not([data-a]) { cursor: default; }
 .table3:has(.col-rivals:empty) { grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) !important; }
 .battle-strike { display: block !important; text-align: center; }
 .battle-strike .sphere { vertical-align: middle; }
+/* Botón de derrotar/golpear en una línea si cabe */
+.carousel .foe-slot .btn { white-space: nowrap; width: auto; max-width: none; padding-left: 16px; padding-right: 16px; }
+@media (max-width: 760px) { .carousel .foe-slot .btn { font-size: .85rem; padding-left: 10px; padding-right: 10px; } }
+.carousel .foe-card.center { overflow: visible; }
+/* Recordatorio de tiradas, justo bajo el botón */
+.rolls-left { text-align: center; font-family: var(--title); color: var(--ink-soft); font-size: .95rem; margin: 4px 0; }
+.rolls-left b { color: var(--rubric); }
+/* Resumen de ronda sencillo */
+.battle-res .br-row { justify-content: flex-start; gap: 10px; font-size: 1.05rem; max-width: 300px; margin: 6px auto; }
+.battle-res .br-row .portrait.sm { width: 36px; height: 48px; }
+.modal .card.outcome.battle-res { min-height: 0 !important; height: auto !important; max-height: none !important; justify-content: center !important; gap: 6px; padding: 26px 18px !important; }
+@media (max-width: 760px) { .modal:has(.battle-res) { align-items: center; } }

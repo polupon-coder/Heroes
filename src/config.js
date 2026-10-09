@@ -111,6 +111,10 @@ const ESCALERAS = [
   { hasta: 8, combos: ['full', 'poker1', 'poker1', 'pleno', 'pleno'] },
   { hasta: 99, combos: ['poker1', 'poker1', 'pleno', 'pleno', 'pleno'] },
 ];
+// Daño de cada monstruo (de pequeño a grande) si no derrotas a ninguno; sube 1
+// cada DANO_RONDAS rondas. Al perder te ataca el que menos daño hace.
+const DANO_MONSTRUO = [4, 5, 6, 7, 8];
+const DANO_RONDAS = 3;
 // Batalla final: tiradas fijas para todos (la Fuerza suma daño) y daño según
 // cuántas esferas del color de la víctima (índice = esferas).
 const BATALLA_TIRADAS = 3;
@@ -253,6 +257,8 @@ function pvpMinResults(hits) {
 // (luego Fuerza+Maná).
 
 module.exports = {
+  DANO_MONSTRUO,
+  DANO_RONDAS,
   ESCALERAS,
   BATALLA_TIRADAS,
   BATALLA_DANO,

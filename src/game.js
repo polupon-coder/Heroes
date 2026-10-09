@@ -336,7 +336,7 @@ class Game {
         variante: variantes[k],
         tamano: v.nombre,
         combo,
-        dano: [2, 3, 4, 5, 6][k] + Math.floor((r - 1) / 4),
+        dano: C.DANO_MONSTRUO[k] + Math.floor((r - 1) / C.DANO_RONDAS),
         rewards: k === 4
           ? [I.makeEquipment(this.rng, rewardLevel, () => this.nextId(), this._invHint), I.makeEquipment(this.rng, rewardLevel, () => this.nextId(), this._invHint)]
           : [this.reward(rewardLevel, this._invHint), this.reward(rewardLevel, this._invHint)],

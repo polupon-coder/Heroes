@@ -1379,7 +1379,6 @@ function foeCard(p, cb, all, controllable, i, pos) {
     : '';
   return `
     <div class="foe-card ${pos} ${st.ok && !done && cb.rolls ? 'ready' : ''} ${isAim ? 'aim' : ''} ${chosen ? 'chosen' : ''}" ${pos !== 'center' ? `data-a="foeGo" data-i="${i}"` : ''}>
-      ${pos !== 'center' && st.ok && cb.rolls && !done ? '<div class="side-ok">¡Puedes derrotarlo!</div>' : ''}
       <div class="foe-art">${monsterArt(m, 'duel-art')}</div>
       <div class="foe-title">${esc(m.nombre)} <span class="muted small">${esc(m.tamano || '')}</span></div>
       <div class="foe-dmg" title="Vida que pierdes si fallas">−${m.dano}</div>

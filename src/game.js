@@ -11,6 +11,9 @@ function fail(msg) {
 }
 
 const COLOR_LABEL = { rojo: 'Rojo', azul: 'Azul', verde: 'Verde', amarillo: 'Amarillo' };
+const ORIGEN_EN = { comercio: 'trade', compra: 'purchase', recompensa: 'reward', robo: 'theft' };
+const N = (it) => I.nameEn(it);
+const MN = (m) => `${(m.tamanoEn || '').toLowerCase()} ${m.nombreEn || m.nombre}`.trim();
 
 function baseStats(raza, clase) {
   const r = C.RACES[raza];
@@ -50,8 +53,9 @@ class Game {
     return `o${this._id}`;
   }
 
-  say(text) {
-    this.log.push({ n: this.log.length, text });
+  // Crónica: cada mensaje en español y, si se da, en inglés.
+  say(text, en) {
+    this.log.push({ n: this.log.length, text, en });
     if (this.log.length > 300) this.log.splice(0, this.log.length - 300);
   }
 
@@ -92,7 +96,7 @@ class Game {
       p.ready = true;
     }
     this.players.push(p);
-    this.say(`${p.name} se une a la partida.`);
+    this.say(`${p.name} se une a la partida.`, `${p.name} joins the game.`);
     return p;
   }
 
@@ -100,7 +104,7 @@ class Game {
     if (this.phase !== 'lobby') fail('La partida ya ha empezado');
     const p = this.player(id);
     this.players = this.players.filter((x) => x !== p);
-    this.say(`${p.name} sale de la partida.`);
+    this.say(`${p.name} sale de la partida.`, `${p.name} leaves the game.`);
   }
 
   // ¿Tiene este jugador algo que hacer ahora? (para el juego en un mismo dispositivo)
@@ -201,9 +205,9 @@ class Game {
     const conflicts = I.tryPlace(p.hero.inv, item);
     if (conflicts) {
       p.hero.pending.push({ item, options: I.conflictOptions(p.hero.inv, item, conflicts) });
-      this.say(`${p.name} recibe ${item.nombre} (${origin}), pero debe decidir dónde guardarlo.`);
+      this.say(`${p.name} recibe ${item.nombre} (${origin}), pero debe decidir dónde guardarlo.`, `${p.name} receives ${N(item)} (${ORIGEN_EN[origin] || origin}) but must decide where to keep it.`);
     } else {
-      this.say(`${p.name} obtiene ${item.nombre} (${origin}).`);
+      this.say(`${p.name} obtiene ${item.nombre} (${origin}).`, `${p.name} gets ${N(item)} (${ORIGEN_EN[origin] || origin}).`);
     }
   }
 
@@ -222,7 +226,8 @@ class Game {
     p.hero.caidas += 1;
     this.dropTradesOf(p.id);
     this.say(
-      `💀 ${p.name} cae a 0 Vida: pierde todos sus objetos y sus monedas, y recupera su Vida inicial.`
+      `💀 ${p.name} cae a 0 Vida: pierde todos sus objetos y sus monedas, y recupera su Vida inicial.`,
+      `💀 ${p.name} falls to 0 Life: loses all items and coins, and recovers starting Life.`
     );
   }
 
@@ -237,7 +242,7 @@ class Game {
     }
     for (const p of this.players) this.createHero(p);
     this.round = 1;
-    this.say('⚔️ ¡Comienza la aventura! Preparad a vuestros héroes para la ronda 1.');
+    this.say('⚔️ ¡Comienza la aventura! Preparad a vuestros héroes para la ronda 1.', '⚔️ The adventure begins! Prepare your heroes for round 1.');
     this.startPrep();
   }
 
@@ -278,7 +283,7 @@ class Game {
       return;
     }
     this.phase = 'combat';
-    this.say(`— Ronda ${this.round} de ${C.ROUNDS} —`);
+    this.say(`— Ronda ${this.round} de ${C.ROUNDS} —`, `— Round ${this.round} of ${C.ROUNDS} —`);
     for (const p of this.players) {
       p.ready = false;
       p.stage = 'combate';
@@ -332,9 +337,12 @@ class Game {
         level,
         tier: k,
         nombre: m.nombre,
+        nombreEn: m.nombreEn,
         imagen: m.imagen,
         variante: variantes[k],
         tamano: v.nombre,
+      tamanoEn: v.nombreEn,
+        tamanoEn: v.nombreEn,
         combo,
         dano: C.DANO_MONSTRUO[k] + Math.floor((r - 1) / C.DANO_RONDAS),
         rewards: k === 4
@@ -404,9 +412,9 @@ class Game {
     if (!this.players.every((p) => p.stage === 'hecho')) return;
     this.round += 1;
     if (this.round > C.ROUNDS) {
-      this.say('🏁 Fin de la aventura. Última preparación antes del Torneo.');
+      this.say('🏁 Fin de la aventura. Última preparación antes del Torneo.', '🏁 End of the adventure. Last preparations before the Tournament.');
     } else {
-      this.say(`Entre combates: preparad la ronda ${this.round}.`);
+      this.say(`Entre combates: preparad la ronda ${this.round}.`, `Between fights: prepare round ${this.round}.`);
     }
     this.startPrep();
   }
@@ -632,10 +640,10 @@ class Game {
       p.coinsPending = { n: coins, rolls: p.combat.rolls };
       p.stage = 'recompensa';
       p.rewards = m.rewards;
-      this.say(`🗡 ${p.name} derrota a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`);
+      this.say(`🗡 ${p.name} derrota a ${m.nombre} ${m.tamano.toLowerCase()} (nivel ${m.level}).`, `🗡 ${p.name} defeats a ${MN(m)} (level ${m.level}).`);
     } else {
       p.hero.vida -= m.dano;
-      this.say(`🩸 ${p.name} no consigue derrotar a ningún monstruo: ${m.nombre} le quita ${m.dano} de Vida.`);
+      this.say(`🩸 ${p.name} no consigue derrotar a ningún monstruo: ${m.nombre} le quita ${m.dano} de Vida.`, `🩸 ${p.name} defeats no monster: the ${m.nombreEn || m.nombre} deals ${m.dano} damage.`);
       if (p.hero.vida <= 0) this.knockout(p);
       p.stage = 'hecho';
       this.checkRoundDone();
@@ -657,7 +665,7 @@ class Game {
     }
     this.tournament = { stage: 'batalla', round: 0, alive: this.players.map((p) => p.id), last: null, matches: [], champion: null };
     this.phase = 'torneo';
-    this.say('⚔ ¡Comienza la Batalla final! Todos contra todos: el último en pie gana.');
+    this.say('⚔ ¡Comienza la Batalla final! Todos contra todos: el último en pie gana.', '⚔ The Final Battle begins! All against all: the last one standing wins.');
     this.startBattleRound();
   }
 
@@ -665,7 +673,7 @@ class Game {
     const t = this.tournament;
     t.round += 1;
     t.strikes = {};
-    this.say(`— Batalla, ronda ${t.round} —`);
+    this.say(`— Batalla, ronda ${t.round} —`, `— Battle, round ${t.round} —`);
     for (const id of t.alive) {
       const p = this.player(id);
       p.battleCursed = false;
@@ -719,11 +727,11 @@ class Game {
       shields[id] = shield;
       p.hero.vida = Math.max(0, p.hero.vida - (raw - shield));
     }
-    for (const h of hits) this.say(`⚔ ${this.player(h.by).name} golpea a ${this.player(h.to).name}: ${h.dmg ? `−${h.dmg}` : 'falla'}.`);
-    for (const id of t.alive) if (shields[id]) this.say(`🛡 ${this.player(id).name} para ${shields[id]} de daño con su color.`);
+    for (const h of hits) this.say(`⚔ ${this.player(h.by).name} golpea a ${this.player(h.to).name}: ${h.dmg ? `−${h.dmg}` : 'falla'}.`, `⚔ ${this.player(h.by).name} strikes ${this.player(h.to).name}: ${h.dmg ? `−${h.dmg}` : 'miss'}.`);
+    for (const id of t.alive) if (shields[id]) this.say(`🛡 ${this.player(id).name} para ${shields[id]} de daño con su color.`, `🛡 ${this.player(id).name} blocks ${shields[id]} damage with their color.`);
     t.last = { round: t.round, hits, shields, vida: Object.fromEntries(t.alive.map((id) => [id, this.player(id).hero.vida])) };
     const standing = t.alive.filter((id) => this.player(id).hero.vida > 0);
-    for (const id of t.alive) if (!standing.includes(id)) this.say(`💀 ${this.player(id).name} cae en la Batalla final.`);
+    for (const id of t.alive) if (!standing.includes(id)) this.say(`💀 ${this.player(id).name} cae en la Batalla final.`, `💀 ${this.player(id).name} falls in the Final Battle.`);
     for (const id of t.alive) this.player(id).combat = null;
     if (standing.length === 1) return this.finish(standing[0]);
     if (standing.length === 0) {
@@ -901,7 +909,7 @@ class Game {
     this.phase = 'fin';
     this.winner = id;
     this.tournament.champion = id;
-    this.say(`🏆 ¡${this.player(id).name} GANA LA PARTIDA!`);
+    this.say(`🏆 ¡${this.player(id).name} GANA LA PARTIDA!`, `🏆 ${this.player(id).name} WINS THE GAME!`);
   }
 
   // ---------------------------------------------------------------- Vista
@@ -1031,13 +1039,13 @@ function useConsumable(game, p, data) {
       if (game.phase !== 'prep' && game.phase !== 'torneo' && game.phase !== 'combat') fail('Ahora no puedes usarla');
       p.hero.manaNext = (p.hero.manaNext || 0) + it.valor;
       I.removeItem(p.hero.inv, it.id);
-      game.say(`${p.name} usa ${it.nombre}: +${it.valor} de Maná en su próximo combate.`);
+      game.say(`${p.name} usa ${it.nombre}: +${it.valor} de Maná en su próximo combate.`, `${p.name} uses ${N(it)}: +${it.valor} Mana in their next fight.`);
       return;
     }
     p.combat.manaBonus += it.valor;
     p.combat.events.push(`${it.nombre}: Maná ${game.combatMana(p)} en este combate`);
     I.removeItem(p.hero.inv, it.id);
-    game.say(`${p.name} usa ${it.nombre}.`);
+    game.say(`${p.name} usa ${it.nombre}.`, `${p.name} uses ${N(it)}.`);
     game.applyWhites(p);
     game.afterCombatStep(p);
     return;
@@ -1048,7 +1056,7 @@ function useConsumable(game, p, data) {
     if (p.hero.vida >= game.maxVida(p)) fail('Ya tienes la Vida al máximo');
     const healed = game.heal(p, it.valor);
     I.removeItem(p.hero.inv, it.id);
-    game.say(`💚 ${p.name} usa ${it.nombre} y recupera ${healed} de Vida.`);
+    game.say(`💚 ${p.name} usa ${it.nombre} y recupera ${healed} de Vida.`, `💚 ${p.name} uses ${N(it)} and recovers ${healed} Life.`);
     if (inCombat) p.combat.events.push(`💚 Recupera ${healed} de Vida`);
     return;
   }
@@ -1062,7 +1070,7 @@ function useConsumable(game, p, data) {
     I.removeItem(p.hero.inv, it.id);
     I.removeItem(target.hero.inv, stolen.id);
     game.dropTradesOf(target.id);
-    game.say(`🦝 ${p.name} usa ${it.nombre} y roba ${stolen.nombre} a ${target.name}.`);
+    game.say(`🦝 ${p.name} usa ${it.nombre} y roba ${stolen.nombre} a ${target.name}.`, `🦝 ${p.name} uses ${N(it)} and steals ${N(stolen)} from ${target.name}.`);
     game.receiveItem(p, stolen, 'robo');
     return;
   }
@@ -1157,7 +1165,7 @@ const ACTIONS = {
     p.hero.manaDebt += amt;
     t.hero.curses += n;
     t.cursedThisRound = true;
-    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${t.name}: se le anulará(n) ${n} esfera(s) acertada(s).`);
+    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${t.name}: se le anulará(n) ${n} esfera(s) acertada(s).`, `${p.name} spends ${amt} Mana to curse ${t.name}: ${n} matching sphere(s) will be cancelled.`);
   },
   // Tienda: una compra por ronda.
   buy(p, { itemId }) {
@@ -1171,7 +1179,7 @@ const ACTIONS = {
     p.boughtThisRound = true;
     const item = { ...it };
     delete item.precio;
-    this.say(`🛒 ${p.name} compra ${item.nombre} por ${it.precio} monedas.`);
+    this.say(`🛒 ${p.name} compra ${item.nombre} por ${it.precio} monedas.`, `🛒 ${p.name} buys ${N(item)} for ${it.precio} coins.`);
     this.receiveItem(p, item, 'compra');
   },
   // Robo sin pergamino: tirada de 1d6. 1-2 roba el objeto, 3-5 pierde su Maná
@@ -1189,20 +1197,20 @@ const ACTIONS = {
     if (d <= 2) {
       I.removeItem(t.hero.inv, it.id);
       this.dropTradesOf(t.id);
-      this.say(`🦝 ${p.name} saca un ${d} y roba ${it.nombre} a ${t.name}.`);
+      this.say(`🦝 ${p.name} saca un ${d} y roba ${it.nombre} a ${t.name}.`, `🦝 ${p.name} rolls a ${d} and steals ${N(it)} from ${t.name}.`);
       this.receiveItem(p, it, 'robo');
     } else if (d <= 5) {
       p.hero.manaDebt = 999;
-      this.say(`🪤 ${p.name} saca un ${d} intentando robar a ${t.name}: le pillan y pierde su Maná en el próximo combate.`);
+      this.say(`🪤 ${p.name} saca un ${d} intentando robar a ${t.name}: le pillan y pierde su Maná en el próximo combate.`, `🪤 ${p.name} rolls a ${d} trying to steal from ${t.name}: caught, and loses their Mana in the next fight.`);
     } else {
-      this.say(`🎲 ${p.name} saca un 6 intentando robar a ${t.name}: no pasa nada.`);
+      this.say(`🎲 ${p.name} saca un 6 intentando robar a ${t.name}: no pasa nada.`, `🎲 ${p.name} rolls a 6 trying to steal from ${t.name}: nothing happens.`);
     }
   },
   discard(p, { itemId }) {
     if (this.phase !== 'prep' && this.phase !== 'combat') fail('Ahora no puedes descartar objetos');
     const it = I.removeItem(p.hero.inv, itemId);
     if (!it) fail('No tienes ese objeto');
-    this.say(`${p.name} descarta ${it.nombre}.`);
+    this.say(`${p.name} descarta ${it.nombre}.`, `${p.name} discards ${N(it)}.`);
   },
   undoReward(p) {
     const pend = p.hero.pending[0];
@@ -1224,7 +1232,7 @@ const ACTIONS = {
     const conflicts = I.tryPlace(p.hero.inv, pend.item);
     p.hero.pending.shift();
     if (!conflicts) {
-      this.say(`${p.name} guarda ${pend.item.nombre}.`);
+      this.say(`${p.name} guarda ${pend.item.nombre}.`, `${p.name} keeps ${N(pend.item)}.`);
       finishReward();
       return;
     }
@@ -1234,7 +1242,7 @@ const ACTIONS = {
       fail('La situación ha cambiado, vuelve a elegir');
     }
     const { discarded } = I.resolveConflict(p.hero.inv, pend.item, choice);
-    this.say(`${p.name} se queda con ${choice === 'descartar' ? 'su equipo' : pend.item.nombre} y descarta ${discarded.map((d) => d.nombre).join(', ')}.`);
+    this.say(`${p.name} se queda con ${choice === 'descartar' ? 'su equipo' : pend.item.nombre} y descarta ${discarded.map((d) => d.nombre).join(', ')}.`, `${p.name} keeps ${choice === 'descartar' ? 'their gear' : N(pend.item)} and discards ${discarded.map(N).join(', ')}.`);
     finishReward();
   },
   useItem(p, data) {
@@ -1252,7 +1260,7 @@ const ACTIONS = {
     this.trades.push(t);
     p.offeredThisRound = true;
     const names = give.map((id) => I.findItem(p.hero.inv, id).nombre).join(', ');
-    this.say(`🤝 ${p.name} ofrece ${names}. ¿Qué le das a cambio?`);
+    this.say(`🤝 ${p.name} ofrece ${names}. ¿Qué le das a cambio?`, `🤝 ${p.name} offers ${give.map((id) => N(I.findItem(p.hero.inv, id))).join(', ')}. What will you give in return?`);
   },
   counterTrade(p, { tradeId, give = [] }) {
     requirePrep(this);
@@ -1265,7 +1273,7 @@ const ACTIONS = {
     if (!give.length) fail('Elige qué ofreces a cambio');
     for (const id of give) if (!I.findItem(p.hero.inv, id)) fail('No tienes ese objeto');
     t.counters.push({ id: this.nextId(), by: p.id, give: [...give], status: 'pendiente' });
-    this.say(`🤝 ${p.name} responde a la oferta de ${this.player(t.from).name}.`);
+    this.say(`🤝 ${p.name} responde a la oferta de ${this.player(t.from).name}.`, `🤝 ${p.name} answers ${this.player(t.from).name}'s offer.`);
   },
   answerTrade(p, { tradeId, counterId, accept }) {
     requirePrep(this);
@@ -1277,7 +1285,7 @@ const ACTIONS = {
     const other = this.player(c.by);
     if (!accept) {
       c.status = 'rechazada';
-      this.say(`${p.name} rechaza lo que le ofrece ${other.name}.`);
+      this.say(`${p.name} rechaza lo que le ofrece ${other.name}.`, `${p.name} turns down ${other.name}'s offer.`);
       return;
     }
     if (other.tradedThisRound) fail(`${other.name} ya ha comerciado esta ronda`);
@@ -1294,7 +1302,7 @@ const ACTIONS = {
     t.status = 'cerrada';
     p.tradedThisRound = true;
     other.tradedThisRound = true;
-    this.say(`🤝 ${p.name} y ${other.name} cierran un intercambio.`);
+    this.say(`🤝 ${p.name} y ${other.name} cierran un intercambio.`, `🤝 ${p.name} and ${other.name} make a trade.`);
     for (const it of theirs) this.receiveItem(p, it, 'comercio');
     for (const it of mine) this.receiveItem(other, it, 'comercio');
     this.cleanTrades();
@@ -1303,7 +1311,7 @@ const ACTIONS = {
     const t = this.trades.find((x) => x.id === tradeId && x.status === 'abierta');
     if (!t || t.from !== p.id) fail('Esa oferta no es tuya');
     t.status = 'cerrada';
-    this.say(`${p.name} retira su oferta.`);
+    this.say(`${p.name} retira su oferta.`, `${p.name} withdraws their offer.`);
     this.cleanTrades();
   },
 
@@ -1333,7 +1341,7 @@ const ACTIONS = {
       const c = p.coinsPending;
       p.coinsPending = null;
       p.hero.monedas += c.n;
-      this.say(`💰 ${p.name} gana ${c.n} monedas.`);
+      this.say(`💰 ${p.name} gana ${c.n} monedas.`, `💰 ${p.name} earns ${c.n} coins.`);
     }
     // Si no cabe, la elección queda abierta: se puede deshacer y escoger la otra.
     if (p.hero.pending.length) {
@@ -1366,7 +1374,7 @@ const ACTIONS = {
     p.battleCursed = true;
     if (rival.combat && rival.combat.status === 'activo' && rival.combat.rolls === 0) rival.combat.cursesLeft += n;
     else rival.hero.curses += n;
-    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${rival.name}: se le anulará(n) ${n} esfera(s) acertada(s).`);
+    this.say(`${p.name} gasta ${amt} de Maná y lanza un maleficio a ${rival.name}: se le anulará(n) ${n} esfera(s) acertada(s).`, `${p.name} spends ${amt} Mana to curse ${rival.name}: ${n} matching sphere(s) will be cancelled.`);
   },
   strike(p, { targetId }) {
     this.strike(p, targetId);

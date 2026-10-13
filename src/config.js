@@ -21,13 +21,13 @@ const MIN_FUERZA_INICIAL = 10;
 // gana entre el 21 % y el 30 % de las partidas de 4). Cada raza reparte 5 puntos. Sin valores negativos: la
 // Fuerza y el Maná tienen mínimos. Todos empiezan con al menos 5 de Maná.
 const RACES = {
-  humano: { nombre: 'Humano', vida: 2, mana: 2, fuerza: 1 },
-  elfo: { nombre: 'Elfo', vida: 2, mana: 2, fuerza: 1 },
-  enano: { nombre: 'Enano', vida: 2, mana: 1, fuerza: 2 },
-  gnomo: { nombre: 'Gnomo', vida: 2, mana: 2, fuerza: 1 },
-  silvano: { nombre: 'Silvano', vida: 2, mana: 2, fuerza: 1 },
-  durgan: { nombre: 'Durgan', vida: 3, mana: 1, fuerza: 1 },
-  faunar: { nombre: 'Faunar', vida: 2, mana: 1, fuerza: 2 },
+  humano: { nombre: 'Humano', nombreEn: 'Human', vida: 2, mana: 2, fuerza: 1 },
+  elfo: { nombre: 'Elfo', nombreEn: 'Elf', vida: 2, mana: 2, fuerza: 1 },
+  enano: { nombre: 'Enano', nombreEn: 'Dwarf', vida: 2, mana: 1, fuerza: 2 },
+  gnomo: { nombre: 'Gnomo', nombreEn: 'Gnome', vida: 2, mana: 2, fuerza: 1 },
+  silvano: { nombre: 'Silvano', nombreEn: 'Sylvan', vida: 2, mana: 2, fuerza: 1 },
+  durgan: { nombre: 'Durgan', nombreEn: 'Durgan', vida: 3, mana: 1, fuerza: 1 },
+  faunar: { nombre: 'Faunar', nombreEn: 'Faunar', vida: 2, mana: 1, fuerza: 2 },
 };
 
 // Afinidad entre raza y clase: las combinaciones naturales reciben un pequeño
@@ -66,13 +66,13 @@ function afinidad(raza, clase) {
 }
 
 const CLASSES = {
-  guerrero: { nombre: 'Guerrero', vida: 2, mana: 1, fuerza: 3 },
-  mago: { nombre: 'Mago', vida: 2, mana: 3, fuerza: 2 },
-  ladron: { nombre: 'Ladrón', vida: 2, mana: 2, fuerza: 2 },
-  druida: { nombre: 'Druida', vida: 2, mana: 2, fuerza: 2 },
-  explorador: { nombre: 'Explorador', vida: 2, mana: 2, fuerza: 2 },
-  clerigo: { nombre: 'Clérigo', vida: 2, mana: 1, fuerza: 3 },
-  barbaro: { nombre: 'Bárbaro', vida: 3, mana: 1, fuerza: 2 },
+  guerrero: { nombre: 'Guerrero', nombreEn: 'Warrior', vida: 2, mana: 1, fuerza: 3 },
+  mago: { nombre: 'Mago', nombreEn: 'Mage', vida: 2, mana: 3, fuerza: 2 },
+  ladron: { nombre: 'Ladrón', nombreEn: 'Thief', vida: 2, mana: 2, fuerza: 2 },
+  druida: { nombre: 'Druida', nombreEn: 'Druid', vida: 2, mana: 2, fuerza: 2 },
+  explorador: { nombre: 'Explorador', nombreEn: 'Ranger', vida: 2, mana: 2, fuerza: 2 },
+  clerigo: { nombre: 'Clérigo', nombreEn: 'Cleric', vida: 2, mana: 1, fuerza: 3 },
+  barbaro: { nombre: 'Bárbaro', nombreEn: 'Barbarian', vida: 3, mana: 1, fuerza: 2 },
 };
 
 const MIN_MANA_INICIAL = 5;
@@ -143,27 +143,27 @@ function maxComboForRound(round) {
 // ilustraciones. Las combinaciones van ligadas al nivel (equilibradas para
 // héroes con Fuerza inicial 10).
 const MONSTERS = {
-  1: { nombre: 'Diablillo', imagen: 'diablillo', combo: ['rojo', 'azul'] },
-  2: { nombre: 'Goblin', imagen: 'goblin', combo: ['rojo', 'rojo'] },
-  3: { nombre: 'Necrófago', imagen: 'necrofago', combo: ['azul', 'verde', 'verde'] },
-  4: { nombre: 'Orco', imagen: 'orco', combo: ['rojo', 'rojo', 'rojo'] },
-  5: { nombre: 'Súcubo', imagen: 'sucubo', combo: ['azul', 'azul', 'amarillo'] },
-  6: { nombre: 'Espectro', imagen: 'espectro', combo: ['verde', 'verde', 'verde', 'amarillo'] },
-  7: { nombre: 'Mago Oscuro', imagen: 'magooscuro', combo: ['rojo', 'rojo', 'verde', 'verde'] },
-  8: { nombre: 'Minotauro', imagen: 'minotauro', combo: ['azul', 'azul', 'azul', 'amarillo'] },
-  9: { nombre: 'Ogro', imagen: 'ogro', combo: ['verde', 'verde', 'amarillo', 'amarillo'] },
-  10: { nombre: 'Trol', imagen: 'trol', combo: ['rojo', 'azul', 'verde', 'amarillo'] },
-  11: { nombre: 'Basilisco', imagen: 'basilisco', combo: ['rojo', 'rojo', 'azul', 'verde', 'amarillo'] },
-  12: { nombre: 'Dragón', imagen: 'dragon', combo: ['rojo', 'azul', 'verde', 'amarillo', 'amarillo'] },
+  1: { nombre: 'Diablillo', nombreEn: 'Imp', imagen: 'diablillo', combo: ['rojo', 'azul'] },
+  2: { nombre: 'Goblin', nombreEn: 'Goblin', imagen: 'goblin', combo: ['rojo', 'rojo'] },
+  3: { nombre: 'Necrófago', nombreEn: 'Ghoul', imagen: 'necrofago', combo: ['azul', 'verde', 'verde'] },
+  4: { nombre: 'Orco', nombreEn: 'Orc', imagen: 'orco', combo: ['rojo', 'rojo', 'rojo'] },
+  5: { nombre: 'Súcubo', nombreEn: 'Succubus', imagen: 'sucubo', combo: ['azul', 'azul', 'amarillo'] },
+  6: { nombre: 'Espectro', nombreEn: 'Wraith', imagen: 'espectro', combo: ['verde', 'verde', 'verde', 'amarillo'] },
+  7: { nombre: 'Mago Oscuro', nombreEn: 'Dark Mage', imagen: 'magooscuro', combo: ['rojo', 'rojo', 'verde', 'verde'] },
+  8: { nombre: 'Minotauro', nombreEn: 'Minotaur', imagen: 'minotauro', combo: ['azul', 'azul', 'azul', 'amarillo'] },
+  9: { nombre: 'Ogro', nombreEn: 'Ogre', imagen: 'ogro', combo: ['verde', 'verde', 'amarillo', 'amarillo'] },
+  10: { nombre: 'Trol', nombreEn: 'Troll', imagen: 'trol', combo: ['rojo', 'azul', 'verde', 'amarillo'] },
+  11: { nombre: 'Basilisco', nombreEn: 'Basilisk', imagen: 'basilisco', combo: ['rojo', 'rojo', 'azul', 'verde', 'amarillo'] },
+  12: { nombre: 'Dragón', nombreEn: 'Dragon', imagen: 'dragon', combo: ['rojo', 'azul', 'verde', 'amarillo', 'amarillo'] },
 };
 
 // Cada monstruo aparece en 3 tamaños (las 3 figuras de su lámina). Cuanto más
 // grande, más colores exige, más daño hace y mejores son sus recompensas
 // (se generan como si el monstruo fuera `recompensa` niveles más alto).
 const VARIANTS = {
-  1: { nombre: 'Pequeño', peso: 0.05, endurecer: false, extraColores: 0, dano: 0, recompensa: 0 },
-  2: { nombre: 'Mediano', peso: 0.3, endurecer: true, extraColores: 1, dano: 1, recompensa: 2 },
-  3: { nombre: 'Grande', peso: 0.65, endurecer: true, extraColores: 2, dano: 2, recompensa: 4 },
+  1: { nombre: 'Pequeño', nombreEn: 'Small', peso: 0.05, endurecer: false, extraColores: 0, dano: 0, recompensa: 0 },
+  2: { nombre: 'Mediano', nombreEn: 'Medium', peso: 0.3, endurecer: true, extraColores: 1, dano: 1, recompensa: 2 },
+  3: { nombre: 'Grande', nombreEn: 'Large', peso: 0.65, endurecer: true, extraColores: 2, dano: 2, recompensa: 4 },
 };
 const MAX_COMBO = 5;
 

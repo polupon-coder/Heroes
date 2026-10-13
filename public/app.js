@@ -5,6 +5,89 @@ const socket = io();
 const $ = (id) => document.getElementById(id);
 const SESSION_KEY = 'heroes.session';
 
+// Idioma: español o inglés (se recuerda en el navegador; por defecto, el del navegador).
+let LANG = (() => { try { return localStorage.getItem('heroes.lang'); } catch { return null; } })()
+  || (/^es\b/i.test(navigator.language || '') ? 'es' : 'en');
+function L(es, en) { return LANG === 'en' ? en : es; }
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem('heroes.lang', l); } catch { /* sin almacenamiento */ }
+  applyStaticTexts();
+  if (S) render();
+  else if (!$('homeModal').classList.contains('hidden')) renderHomeActions();
+}
+
+// Errores del servidor (en español) traducidos al inglés.
+const ERR_EN = {
+  'Acción desconocida': 'Unknown action', 'Ahora no puedes curarte': 'You cannot heal now', 'Ahora no puedes descartar objetos': 'You cannot discard items now',
+  'Ahora no puedes usarla': 'You cannot use it now', 'Algún objeto ya no está disponible': 'An item is no longer available', 'Aún te quedan tiradas': 'You still have rolls left',
+  'Clase no válida': 'Invalid class', 'Color no válido': 'Invalid color', 'Dado no válido': 'Invalid die', 'Efecto desconocido': 'Unknown effect',
+  'El botín no es tuyo': 'The loot is not yours', 'Elige Raza y Clase primero': 'Choose Race and Class first', 'Elige a un rival en pie': 'Choose a rival still standing',
+  'Elige qué dados fijar': 'Choose which dice to fix', 'Elige qué ofreces a cambio': 'Choose what you offer in return', 'Elige qué ofreces': 'Choose what you offer',
+  'En el torneo solo puedes curarte en tu turno': 'In the tournament you can only heal on your turn', 'Es tu propia oferta': 'It is your own offer',
+  'Esa oferta no es tuya': 'That offer is not yours', 'Esa oferta ya no existe': 'That offer no longer exists', 'Esa respuesta ya no existe': 'That answer no longer exists',
+  'Ese dado ya está fijado': 'That die is already fixed', 'Ese objeto ya no está a la venta': 'That item is no longer for sale', 'Ese objeto ya no existe': 'That item no longer exists',
+  'Jugador desconocido': 'Unknown player', 'La partida ya ha empezado': 'The game has already started', 'La sala está llena (4 jugadores)': 'The room is full (4 players)',
+  'La situación ha cambiado, vuelve a elegir': 'Things have changed, choose again', 'Monstruo no válido': 'Invalid monster', 'No es momento de elegir rival': 'It is not time to choose a rival',
+  'No es tu turno': 'It is not your turn', 'No estás en combate': 'You are not in a fight', 'No hay batalla': 'There is no battle', 'No hay botín que repartir': 'There is no loot',
+  'No hay jugadores': 'There are no players', 'No hay nada pendiente': 'Nothing pending', 'No hay nada que deshacer': 'Nothing to undo', 'No hay recompensa que elegir': 'No reward to choose',
+  'No puedes comerciar con tu rival de la final': 'You cannot trade with your rival in the final', 'No puedes expulsarte': 'You cannot remove yourself',
+  'No puedes maldecirte a ti mismo': 'You cannot curse yourself', 'No puedes robarte a ti mismo': 'You cannot steal from yourself', 'No tienes ese consumible': 'You do not have that item',
+  'No tienes ese objeto': 'You do not have that item', 'No tienes monedas suficientes': 'Not enough coins', 'No tienes tanto Maná disponible': 'You do not have that much Mana available',
+  'Opción no válida': 'Invalid option', 'Paso no válido': 'Invalid step', 'Primero decide qué hacer con el objeto pendiente': 'First decide what to do with the pending item',
+  'Primero haz la primera tirada': 'Make the first roll first', 'Primero lanza las esferas': 'Throw the spheres first', 'Raza no válida': 'Invalid race', 'Recompensa no válida': 'Invalid reward',
+  'Rival no válido': 'Invalid rival', 'Selecciona al menos un dado para volver a tirar': 'Select at least one die to reroll', 'Solo contra monstruos': 'Only against monsters',
+  'Solo el anfitrión decide cuándo seguir': 'Only the host decides when to continue', 'Solo el anfitrión puede añadir bots': 'Only the host can add bots',
+  'Solo el anfitrión puede cambiar las opciones': 'Only the host can change the options', 'Solo el anfitrión puede empezar': 'Only the host can start',
+  'Solo el anfitrión puede expulsar': 'Only the host can remove players', 'Solo el primer clasificado elige rival': 'Only the leader chooses a rival', 'Solo en la Batalla final': 'Only in the Final Battle',
+  'Solo puedes hacer esto entre combates': 'You can only do this between fights', 'Todavía no ha habido combates': 'There have been no fights yet',
+  'Tu Maná no es suficiente para fijar dados (mínimo 5)': 'Not enough Mana to fix dice (minimum 5)', 'Tus esferas no completan lo que pide este monstruo': 'Your spheres do not complete what this monster asks for',
+  'Valor no válido': 'Invalid value', 'Ya has atacado esta ronda': 'You already struck this round', 'Ya has caído': 'You have already fallen', 'Ya has comerciado esta ronda': 'You already traded this round',
+  'Ya has comprado esta ronda': 'You already bought this round', 'Ya has hecho tu oferta de esta ronda': 'You already made your offer this round',
+  'Ya has intentado robar esta ronda': 'You already tried to steal this round', 'Ya has lanzado un maleficio esta ronda': 'You already cast a curse this round',
+  'Ya has respondido a esta oferta': 'You already answered this offer', 'Ya has usado el Maná en este combate': 'You already used your Mana in this fight',
+  'Ya tienes la Vida al máximo': 'Your Life is already full', 'No existe ninguna sala con ese código': 'There is no room with that code', 'No estás en ninguna sala': 'You are not in a room',
+  'Error interno': 'Internal error',
+};
+const ERR_EN_RE = [
+  [/^(.+) ya ha comerciado esta ronda$/, '$1 already traded this round'],
+  [/^(.+) todavía no está listo$/, '$1 is not ready yet'],
+  [/^(.+) todavía no ha elegido Raza y Clase$/, '$1 has not chosen Race and Class yet'],
+  [/^(.+) ya ha recibido un maleficio esta ronda$/, '$1 has already been cursed this round'],
+  [/^El Maná se usa en bloques de (\d+)$/, 'Mana is spent in blocks of $1'],
+  [/^Solo puedes fijar (\d+) dado\(s\)$/, 'You can only fix $1 die(s)'],
+  [/^Ya has hecho las (\d+) tiradas$/, 'You have already made all $1 rolls'],
+];
+function trError(msg) {
+  if (LANG !== 'en' || !msg) return msg;
+  if (ERR_EN[msg]) return ERR_EN[msg];
+  for (const [re, en] of ERR_EN_RE) if (re.test(msg)) return msg.replace(re, en);
+  return msg;
+}
+
+// Textos fijos de la página (index.html) en el idioma elegido.
+function applyStaticTexts() {
+  document.documentElement.lang = LANG;
+  document.title = L('HÉROES', 'HEROES');
+  const brand = document.querySelector('.topbar .brand'); if (brand) brand.textContent = L('Héroes', 'Heroes');
+  const set = (id, prop, es, en) => { const el = $(id); if (el) el[prop] = L(es, en); };
+  set('rulesBtn', 'textContent', 'Reglas', 'Rules');
+  set('nameInput', 'placeholder', 'Tu nombre', 'Your name');
+  set('chatInput', 'placeholder', 'Escribe al grupo…', 'Write to the group…');
+  set('journalBtn', 'title', 'Crónica y chat', 'Chronicle and chat');
+  set('playBtn', 'title', 'Jugar', 'Play');
+  const pb = $('playBtn'); if (pb) { pb.setAttribute('aria-label', L('Jugar', 'Play')); pb.textContent = L('Jugar', 'Play'); }
+  const credit = document.querySelector('.home-credit'); if (credit) credit.textContent = L('Un juego de Pol Lupon', 'A game by Pol Lupon');
+  const jh = document.querySelector('.journal-head h3'); if (jh) jh.textContent = L('Crónica', 'Chronicle');
+  const send = document.querySelector('#chatForm button'); if (send) send.textContent = L('Enviar', 'Send');
+  const lb = $('langBtn');
+  if (lb) {
+    lb.innerHTML = `<span class="${LANG === 'es' ? 'on' : ''}">ES</span><span class="${LANG === 'en' ? 'on' : ''}">EN</span>`;
+    lb.title = L('Change language: English', 'Cambiar idioma: español');
+  }
+  if (typeof paintSound === 'function') try { paintSound(); } catch { /* aún no listo */ }
+}
+
 let S = null; // último estado recibido del servidor
 let DATA = null; // tablas de razas/clases
 const ui = {
@@ -24,8 +107,10 @@ const ui = {
   curse: { target: null, amount: 5 },
 };
 
-const FACE_LABEL = { rojo: 'Rojo', azul: 'Azul', verde: 'Verde', amarillo: 'Amarillo', multicolor: 'Multicolor (comodín)' };
-const COLOR_LABEL = { rojo: 'Rojo', azul: 'Azul', verde: 'Verde', amarillo: 'Amarillo' };
+const FACE_LABEL_ES = { rojo: 'Rojo', azul: 'Azul', verde: 'Verde', amarillo: 'Amarillo', multicolor: 'Multicolor (comodín)' };
+const FACE_LABEL_EN = { rojo: 'Red', azul: 'Blue', verde: 'Green', amarillo: 'Yellow', multicolor: 'Multicolor (wild)' };
+const FACE_LABEL = new Proxy({}, { get: (_, k) => (LANG === 'en' ? FACE_LABEL_EN : FACE_LABEL_ES)[k] });
+const COLOR_LABEL = new Proxy({}, { get: (_, k) => (k === 'multicolor' ? undefined : FACE_LABEL[k]) });
 const FACES = ['rojo', 'azul', 'verde', 'amarillo', 'multicolor'];
 
 // ------------------------------------------------------------ utilidades
@@ -49,7 +134,7 @@ function lines(...xs) {
 
 function toast(msg) {
   const t = $('toast');
-  t.textContent = msg;
+  t.textContent = trError(msg);
   t.classList.remove('hidden');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.add('hidden'), 3500);
@@ -65,17 +150,22 @@ function me() { return S && S.players.find((p) => p.id === S.me); }
 function byId(id) { return S.players.find((p) => p.id === id); }
 function others() { return S.players.filter((p) => p.id !== S.me); }
 function chip(color) { return `<span class="chip ${color}" title="${COLOR_LABEL[color] || ''}"></span>`; }
-function raceName(p) { return p.raza && DATA ? DATA.razas[p.raza].nombre : '¿Raza?'; }
-function className(p) { return p.clase && DATA ? DATA.clases[p.clase].nombre : '¿Clase?'; }
+function nameOf(o) { return o ? (LANG === 'en' && o.nombreEn) || o.nombre : ''; }
+function raceName(p) { return p.raza && DATA ? nameOf(DATA.razas[p.raza]) : L('¿Raza?', 'Race?'); }
+function className(p) { return p.clase && DATA ? nameOf(DATA.clases[p.clase]) : L('¿Clase?', 'Class?'); }
+// Nombre del monstruo y su tamaño en el idioma elegido.
+function monsterName(m) { return m ? (LANG === 'en' && m.nombreEn) || m.nombre : ''; }
+function sizeName(m) { return m ? (LANG === 'en' && m.tamanoEn) || m.tamano || '' : ''; }
+function monsterFull(m) { return LANG === 'en' ? `${sizeName(m).toLowerCase()} ${monsterName(m)}`.trim() : `${monsterName(m)} ${sizeName(m).toLowerCase()}`.trim(); }
 
 // Retrato del héroe (Raza + Clase). Si aún no hay ilustración, un marco vacío.
 function portrait(raza, clase, size = 'md', _color = null, extra = '') {
   const key = raza && clase ? `${raza}-${clase}` : null;
   const has = key && DATA && (DATA.retratos || []).includes(key);
-  const alt = raza && clase && DATA ? `${DATA.razas[raza].nombre} ${DATA.clases[clase].nombre}` : 'Héroe';
+  const alt = raza && clase && DATA ? `${nameOf(DATA.razas[raza])} ${nameOf(DATA.clases[clase])}` : L('Héroe', 'Hero');
   const src = `img/heroes/${key}.webp`;
   if (has) return `<img class="portrait ${size}" src="${src}" alt="${esc(alt)}" ${extra}>`;
-  return `<div class="portrait ${size} missing" ${extra}>${raza && clase ? 'Retrato pendiente' : '?'}</div>`;
+  return `<div class="portrait ${size} missing" ${extra}>${raza && clase ? L('Retrato pendiente', 'Portrait pending') : '?'}</div>`;
 }
 function heroPortrait(p, size = 'md') { return portrait(p.raza, p.clase, size, p.color); }
 
@@ -84,17 +174,19 @@ function monsterArt(m, cls = 'monster-art') {
   if (!m || !m.imagen || !DATA) return '';
   const key = `${m.imagen}-${m.variante || 1}`;
   if (!(DATA.ilustracionesMonstruos || []).includes(key)) return '';
-  return `<img class="${cls}" src="img/monstruos/${key}.webp" alt="${esc(m.nombre)}" loading="lazy">`;
+  return `<img class="${cls}" src="img/monstruos/${key}.webp" alt="${esc(monsterName(m))}" loading="lazy">`;
 }
 
-const SHAPE_LABEL = { circulo: 'Círculo', cuadrado: 'Cuadrado', rombo: 'Rombo', triangulo: 'Triángulo', espiral: 'Espiral (comodín)' };
+const SHAPE_LABEL_ES = { circulo: 'Círculo', cuadrado: 'Cuadrado', rombo: 'Rombo', triangulo: 'Triángulo', espiral: 'Espiral (comodín)' };
+const SHAPE_LABEL_EN = { circulo: 'Circle', cuadrado: 'Square', rombo: 'Diamond', triangulo: 'Triangle', espiral: 'Spiral (wild)' };
+const SHAPE_LABEL = new Proxy({}, { get: (_, k) => (LANG === 'en' ? SHAPE_LABEL_EN : SHAPE_LABEL_ES)[k] });
 const WILD = { color: 'multicolor', forma: 'espiral' };
 
 // Una esfera: figura de su forma rellena de su color (img/formas). Sin color = solo
 // el contorno de la forma (lo que pide un monstruo de formas). Sin forma = esfera de color.
 function die(face, { cls = '', attrs = '', sm = false, shape = null } = {}) {
   // Esfera anulada por un maleficio: solo la calavera.
-  if (face === 'maldita') return `<div class="die piece maldita ${sm ? 'sm' : ''} ${cls}" ${attrs} title="Maleficio: esta esfera no cuenta, relánzala"><img src="img/ui/calavera.webp" alt="Maleficio" draggable="false"></div>`;
+  if (face === 'maldita') return `<div class="die piece maldita ${sm ? 'sm' : ''} ${cls}" ${attrs} title="${L('Maleficio: esta esfera no cuenta, relánzala', 'Curse: this sphere does not count, reroll it')}"><img src="img/ui/calavera.webp" alt="${L('Maleficio', 'Curse')}" draggable="false"></div>`;
   const title = [FACE_LABEL[face], SHAPE_LABEL[shape]].filter(Boolean).join(' · ');
   if (shape) {
     const src = `img/formas/${shape}-${face || 'tinta'}.webp`;
@@ -157,23 +249,37 @@ function afBonus(it) {
   return it && it.afin && p && it.afin.includes(p.clase) ? 1 : 0;
 }
 function afPlus(it) { return afBonus(it) ? ' <span class="af">+1</span>' : ''; }
-function itemName(it) { return esc(it.nombre) + afPlus(it); }
+const EQ_ES = { espada: 'Espada', maza: 'Maza', arco: 'Arco', hacha: 'Hacha', baculo: 'Báculo', cayado: 'Cayado', escudo: 'Escudo', yelmo: 'Yelmo', cota: 'Armadura', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' };
+const EQ_EN = { espada: 'Sword', maza: 'Mace', arco: 'Bow', hacha: 'Axe', baculo: 'Staff', cayado: 'Crook', escudo: 'Shield', yelmo: 'Helmet', cota: 'Armor', armadura: 'Armor', tunica: 'Robe', botas: 'Boots' };
+// Nombre del objeto en el idioma elegido (en inglés se calcula a partir de sus datos).
+function itemLabel(it) {
+  if (!it) return '';
+  if (LANG !== 'en') return it.nombre;
+  if (it.tipo === 'equipo') return `${EQ_EN[it.forma] || EQ_EN[it.slot] || 'Item'} +${it.bonus}`;
+  const base = it.tipo === 'pocion' ? 'Potion' : 'Scroll';
+  if (it.efecto === 'mana') return `${base} of Mana +${it.valor}`;
+  if (it.efecto === 'curacion') return `${base} of Healing +${it.valor}`;
+  if (it.efecto === 'robo') return `${base} of Theft`;
+  return it.nombre;
+}
+function itemName(it) { return esc(itemLabel(it)) + afPlus(it); }
 function shortName(it) {
-  const n = { espada: 'Espada', maza: 'Maza', arco: 'Arco', hacha: 'Hacha', baculo: 'Báculo', cayado: 'Cayado', escudo: 'Escudo', yelmo: 'Yelmo', cota: 'Armadura', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' }[it.forma || it.slot];
+  const n = (LANG === 'en' ? EQ_EN : EQ_ES)[it.forma || it.slot];
   return n ? `${n} +${it.bonus}${afPlus(it)}` : esc(rewardEffect(it));
 }
 
 function itemDesc(it) {
   if (it.tipo === 'equipo') {
-    const slot = { arma: 'Arma · ocupa 1 mano', dosManos: 'Arma · ocupa las 2 manos', escudo: 'Escudo · ocupa 1 mano', yelmo: 'Yelmo', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' }[it.slot];
-    let d = `${slot} · +${it.bonus} ${it.slot === 'tunica' ? 'Maná' : 'Fuerza'}`;
-    if (afBonus(it)) d += ` <span class="af">+1</span> · afín a ${esc(className(me()))}`;
-    else if (it.afin && DATA) d += `<br>Afín a: ${it.afin.map((k) => DATA.clases[k].nombre).join(', ')}`;
+    const slot = L({ arma: 'Arma · ocupa 1 mano', dosManos: 'Arma · ocupa las 2 manos', escudo: 'Escudo · ocupa 1 mano', yelmo: 'Yelmo', armadura: 'Armadura', tunica: 'Túnica', botas: 'Botas' },
+      { arma: 'Weapon · one hand', dosManos: 'Weapon · both hands', escudo: 'Shield · one hand', yelmo: 'Helmet', armadura: 'Armor', tunica: 'Robe', botas: 'Boots' })[it.slot];
+    let d = `${slot} · +${it.bonus} ${it.slot === 'tunica' ? L('Maná', 'Mana') : L('Fuerza', 'Strength')}`;
+    if (afBonus(it)) d += ` <span class="af">+1</span> · ${L('afín a', 'suits')} ${esc(className(me()))}`;
+    else if (it.afin && DATA) d += `<br>${L('Afín a', 'Suits')}: ${it.afin.map((k) => nameOf(DATA.clases[k])).join(', ')}`;
     return d;
   }
-  if (it.efecto === 'mana') return `+${it.valor} Maná durante un combate`;
-  if (it.efecto === 'curacion') return `Recupera ${it.valor} de Vida`;
-  if (it.efecto === 'robo') return 'Roba 1 objeto a otro jugador (entre combates)';
+  if (it.efecto === 'mana') return L(`+${it.valor} Maná durante un combate`, `+${it.valor} Mana for one fight`);
+  if (it.efecto === 'curacion') return L(`Recupera ${it.valor} de Vida`, `Recovers ${it.valor} Life`);
+  if (it.efecto === 'robo') return L('Roba 1 objeto a otro jugador (entre combates)', 'Steal 1 item from another player (between fights)');
   return '';
 }
 
@@ -206,7 +312,7 @@ socket.on('connect', () => {
   }
 });
 
-socket.on('disconnect', () => { $('status').textContent = 'Reconectando…'; });
+socket.on('disconnect', () => { $('status').textContent = L('Reconectando…', 'Reconnecting…'); });
 
 socket.on('state', (state) => {
   S = state;
@@ -216,7 +322,7 @@ socket.on('state', (state) => {
 socket.on('kicked', () => {
   saveSession(null);
   S = null;
-  toast('Te han expulsado de la sala');
+  toast(L('Te han expulsado de la sala', 'You have been removed from the room'));
   showHome();
 });
 
@@ -253,14 +359,14 @@ function renderHomeActions() {
   const inv = invitedCode();
   let html;
   if (inv) {
-    html = `<button class="seal" data-h="join">Entrar en<br>la sala ${esc(inv)}</button>`;
+    html = `<button class="seal" data-h="join">${L(`Entrar en<br>la sala ${esc(inv)}`, `Join<br>room ${esc(inv)}`)}</button>`;
   } else if (homeJoining) {
-    html = `<input id="codeInput" class="ink-input code-input" maxlength="4" placeholder="Código" aria-label="Código de la sala">
-      <button class="seal" data-h="join">Entrar</button>
-      <button class="link-btn" data-h="back">volver</button>`;
+    html = `<input id="codeInput" class="ink-input code-input" maxlength="4" placeholder="${L('Código', 'Code')}" aria-label="${L('Código de la sala', 'Room code')}">
+      <button class="seal" data-h="join">${L('Entrar', 'Join')}</button>
+      <button class="link-btn" data-h="back">${L('volver', 'back')}</button>`;
   } else {
-    html = `<button class="seal" data-h="create">Crear<br>partida</button>
-      <button class="seal" data-h="joining">Unirse</button>`;
+    html = `<button class="seal" data-h="create">${L('Crear<br>partida', 'New<br>game')}</button>
+      <button class="seal" data-h="joining">${L('Unirse', 'Join')}</button>`;
   }
   $('homeActions').innerHTML = html;
   if (homeJoining && $('codeInput')) $('codeInput').focus();
@@ -277,7 +383,7 @@ $('homeClose').onclick = () => $('homeModal').classList.add('hidden');
 $('homeModal').onclick = (e) => { if (e.target === $('homeModal')) $('homeModal').classList.add('hidden'); };
 
 function enter(res) {
-  if (!res.ok) { $('homeError').textContent = res.error; return; }
+  if (!res.ok) { $('homeError').textContent = trError(res.error); return; }
   saveSession({ code: res.code, token: res.token });
   history.replaceState(null, '', `?sala=${res.code}`);
   $('homeModal').classList.add('hidden');
@@ -297,11 +403,11 @@ $('homeActions').addEventListener('click', (e) => {
   if (h === 'joining') { homeJoining = true; renderHomeActions(); return; }
   if (h === 'back') { homeJoining = false; renderHomeActions(); return; }
   const name = getName();
-  if (!name) { $('homeError').textContent = 'Escribe tu nombre'; $('nameInput').focus(); return; }
+  if (!name) { $('homeError').textContent = L('Escribe tu nombre', 'Enter your name'); $('nameInput').focus(); return; }
   if (h === 'create') socket.emit('create', { name }, enter);
   if (h === 'join') {
     const code = invitedCode() || ($('codeInput') ? $('codeInput').value.trim().toUpperCase() : '');
-    if (!code) { $('homeError').textContent = 'Escribe el código de la sala'; return; }
+    if (!code) { $('homeError').textContent = L('Escribe el código de la sala', 'Enter the room code'); return; }
     socket.emit('join', { code, name }, enter);
   }
 });
@@ -350,8 +456,8 @@ function trackFuerza() {
   const rolls = tiradasDe;
   const bonus = golpeDe;
   const msgs = [];
-  if (rolls(f) > rolls(prev)) msgs.push('Ganas una tirada más.', `Ahora tienes <b>${rolls(f)} tiradas</b>.`);
-  if (bonus(f) > bonus(prev)) msgs.push(`Tus golpes hacen <b>+${bonus(f)}</b> de daño.`, 'Solo en la Batalla final.');
+  if (rolls(f) > rolls(prev)) msgs.push(L('Ganas una tirada más.', 'You gain one more roll.'), L(`Ahora tienes <b>${rolls(f)} tiradas</b>.`, `You now have <b>${rolls(f)} rolls</b>.`));
+  if (bonus(f) > bonus(prev)) msgs.push(L(`Tus golpes hacen <b>+${bonus(f)}</b> de daño.`, `Your strikes deal <b>+${bonus(f)}</b> damage.`), L('Solo en la Batalla final.', 'Only in the Final Battle.'));
   if (msgs.length) { ui.fuerzaMsg = { f, msgs }; Sounds.play('celebracion'); }
 }
 
@@ -365,7 +471,7 @@ function render() {
   $('homeModal').classList.add('hidden');
   document.body.classList.remove('at-home');
   $('app').classList.remove('hidden');
-  setHtml($('roomInfo'), `${S.local && mp ? `<span class="local-who" title="Juega ahora en este dispositivo">${esc(mp.name)}</span>` : ''}<span class="room-name">Sala ${esc(S.code)}</span><button class="exit-btn" data-a="exit" title="Salir de la sala" aria-label="Salir de la sala">×</button>`);
+  setHtml($('roomInfo'), `${S.local && mp ? `<span class="local-who" title="${L('Juega ahora en este dispositivo', 'Playing now on this device')}">${esc(mp.name)}</span>` : ''}<span class="room-name">${L('Sala', 'Room')} ${esc(S.code)}</span><button class="exit-btn" data-a="exit" title="${L('Salir de la sala', 'Leave the room')}" aria-label="${L('Salir de la sala', 'Leave the room')}">×</button>`);
   Sounds.setMusic(S.phase === 'lobby' || S.phase === 'torneo' || S.phase === 'fin');
   playEventSounds();
   $('status').textContent = statusText();
@@ -384,7 +490,7 @@ function render() {
   }
   $('journalBtn').classList.remove('hidden');
   const log = $('log');
-  if (setHtml(log, S.log.map((l) => `<div>${esc(l.text)}</div>`).join(''))) log.scrollTop = log.scrollHeight;
+  if (setHtml(log, S.log.map((l) => `<div>${esc((LANG === 'en' && l.en) || l.text)}</div>`).join(''))) log.scrollTop = log.scrollHeight;
   detectNewItems();
   renderModal();
   fitParchments();
@@ -409,11 +515,11 @@ new MutationObserver(() => requestAnimationFrame(fitParchments)).observe(documen
 
 function statusText() {
   switch (S.phase) {
-    case 'lobby': return 'Preparando la partida';
-    case 'prep': return S.tournament && S.tournament.stage === 'prefinal' ? 'Fase 2 · Torneo · Antes de la final' : S.round > S.rounds ? 'Preparación para el Torneo' : `Fase 1 · Entre combates · Próxima ronda ${S.round}/${S.rounds}`;
-    case 'combat': return `Fase 1 · Aventura · Ronda ${S.round}/${S.rounds}`;
-    case 'torneo': return 'Fase 2 · Torneo';
-    case 'fin': return 'Partida terminada';
+    case 'lobby': return L('Preparando la partida', 'Setting up the game');
+    case 'prep': return S.tournament && S.tournament.stage === 'prefinal' ? L('Fase 2 · Torneo · Antes de la final', 'Phase 2 · Tournament · Before the final') : S.round > S.rounds ? L('Preparación para el Torneo', 'Preparing for the Tournament') : L(`Fase 1 · Entre combates · Próxima ronda ${S.round}/${S.rounds}`, `Phase 1 · Between fights · Next round ${S.round}/${S.rounds}`);
+    case 'combat': return L(`Fase 1 · Aventura · Ronda ${S.round}/${S.rounds}`, `Phase 1 · Adventure · Round ${S.round}/${S.rounds}`);
+    case 'torneo': return L('Fase 2 · Torneo', 'Phase 2 · Tournament');
+    case 'fin': return L('Partida terminada', 'Game over');
     default: return '';
   }
 }
@@ -444,12 +550,12 @@ function afinidadDe(raza, clase) {
 
 function mods(x) {
   const f = (n) => (n > 0 ? `+${n}` : `${n}`);
-  return `V${f(x.vida)} · M${f(x.mana)} · F${f(x.fuerza)}`;
+  return L(`V${f(x.vida)} · M${f(x.mana)} · F${f(x.fuerza)}`, `L${f(x.vida)} · M${f(x.mana)} · S${f(x.fuerza)}`);
 }
 
 function renderLobby() {
   const p = me();
-  if (!p || !DATA) return '<div class="card">Cargando…</div>';
+  if (!p || !DATA) return `<div class="card">${L('Cargando…', 'Loading…')}</div>`;
   return S.lobbyStage === 'heroes' ? renderLobbyHeroes(p) : renderLobbyRivals(p);
 }
 
@@ -465,35 +571,35 @@ function renderLobbyRivals(p) {
     const img = `<img class="seat-art" src="img/heroes/${deco[i]}.webp" alt="">`;
     if (x) {
       const here = (S.local || []).some((l) => l.id === x.id);
-      const role = x.id === S.me ? 'Tú' : here ? 'En este dispositivo' : x.id === S.host ? 'Anfitrión' : x.bot ? 'Rival' : x.connected ? 'Amigo' : 'Desconectado';
+      const role = x.id === S.me ? L('Tú', 'You') : here ? L('En este dispositivo', 'On this device') : x.id === S.host ? L('Anfitrión', 'Host') : x.bot ? L('Rival', 'Rival') : x.connected ? L('Amigo', 'Friend') : L('Desconectado', 'Disconnected');
       seats.push(`
         <div class="seat-card taken">
           ${img}
           <div class="seat-name">${esc(x.name)}</div>
           <div class="seat-role">${role}</div>
-          ${host && x.id !== S.me ? `<button class="link-btn" data-a="kick" data-id="${x.id}">Quitar</button>` : '<span class="seat-gap"></span>'}
+          ${host && x.id !== S.me ? `<button class="link-btn" data-a="kick" data-id="${x.id}">${L('Quitar', 'Remove')}</button>` : '<span class="seat-gap"></span>'}
         </div>`);
     } else {
       seats.push(`
         <div class="seat-card empty">
           ${img}
-          <div class="seat-name"><i>Asiento libre</i></div>
-          <div class="seat-role">Esperando a un amigo…</div>
-          <div class="seat-btns">${host ? '<button class="btn small" data-a="addBot">Poner un bot</button>' : ''}<button class="btn small" data-a="addLocal">Jugador aquí</button></div>
+          <div class="seat-name"><i>${L('Asiento libre', 'Free seat')}</i></div>
+          <div class="seat-role">${L('Esperando a un amigo…', 'Waiting for a friend…')}</div>
+          <div class="seat-btns">${host ? `<button class="btn small" data-a="addBot">${L('Poner un bot', 'Add a bot')}</button>` : ''}<button class="btn small" data-a="addLocal">${L('Jugador aquí', 'Player here')}</button></div>
         </div>`);
     }
   }
   return `
   <div class="lobby-step room card">
     <div class="room-head">
-      <div class="room-label">Sala</div>
+      <div class="room-label">${L('Sala', 'Room')}</div>
       <div class="room-big-code">${esc(S.code)}</div>
-      <div class="row center-row"><button class="btn" data-a="copy" data-text="${esc(link)}">Invitar</button></div>
+      <div class="row center-row"><button class="btn" data-a="copy" data-text="${esc(link)}">${L('Invitar', 'Invite')}</button></div>
     </div>
     <div class="seat-grid">${seats.join('')}</div>
     ${host ? `
-      <div class="row center-row"><button class="seal" data-a="lobbyStage" data-s="heroes">Elegir<br>héroes</button></div>`
-    : '<p class="center muted">El anfitrión está preparando la mesa…</p>'}
+      <div class="row center-row"><button class="seal" data-a="lobbyStage" data-s="heroes">${L('Elegir<br>héroes', 'Choose<br>heroes')}</button></div>`
+    : `<p class="center muted">${L('El anfitrión está preparando la mesa…', 'The host is setting the table…')}</p>`}
   </div>`;
 }
 
@@ -506,42 +612,42 @@ function renderLobbyHeroes(p) {
     <div class="mini-hero">
       ${x.raza ? portrait(x.raza, x.clase || 'guerrero', 'other', x.color) : '<div class="portrait other missing">?</div>'}
       <div class="mini-name"><b>${esc(x.name)}</b> ${x.ready ? '<span class="check">✔</span>' : ''}</div>
-      <div class="muted small">${x.raza ? raceName(x) : 'eligiendo…'}${x.clase ? ` · ${className(x)}` : ''}</div>
+      <div class="muted small">${x.raza ? raceName(x) : L('eligiendo…', 'choosing…')}${x.clase ? ` · ${className(x)}` : ''}</div>
     </div>`).join('');
   return `
   <div class="lobby-heroes v2 card">
     <div class="pick-top">
       <div class="pick-side"></div>
       <div class="pick-center">
-        ${p.raza ? portrait(p.raza, showClass, 'pick', p.color) : '<div class="portrait pick missing">Elige una raza</div>'}
+        ${p.raza ? portrait(p.raza, showClass, 'pick', p.color) : `<div class="portrait pick missing">${L('Elige una raza', 'Choose a race')}</div>`}
         <div class="pick-name">${p.raza ? esc(raceName(p)) : ''}${p.clase ? ` · ${esc(className(p))}` : ''}</div>
-        <div class="afinidad ${preview && preview.af ? preview.af : ''}">${preview && preview.af ? (preview.af === 'natural' ? 'Combinación natural' : 'Combinación rara') : '&nbsp;'}</div>
+        <div class="afinidad ${preview && preview.af ? preview.af : ''}">${preview && preview.af ? (preview.af === 'natural' ? L('Combinación natural', 'Natural match') : L('Combinación rara', 'Odd match')) : '&nbsp;'}</div>
       </div>
       <div class="pick-right">
       <div class="pick-stats">
         ${preview ? `
-          <div class="pstat"><span>Vida</span><b>${preview.vida}</b></div>
-          <div class="pstat"><span>Fuerza</span><b>${preview.fuerza}</b></div>
-          <div class="pstat"><span>Maná</span><b>${preview.mana}</b></div>
-          <div class="pstat"><span>Tiradas</span><b>${tiradasDe(preview.fuerza)}</b></div>` : `
-          <div class="pstat"><span>Vida</span><b>–</b></div>
-          <div class="pstat"><span>Fuerza</span><b>–</b></div>
-          <div class="pstat"><span>Maná</span><b>–</b></div>
-          <div class="pstat"><span>Esferas</span><div class="spheres-row">${spheresRow(3, p.color, true, 0)}</div></div>`}
+          <div class="pstat"><span>${L('Vida', 'Life')}</span><b>${preview.vida}</b></div>
+          <div class="pstat"><span>${L('Fuerza', 'Strength')}</span><b>${preview.fuerza}</b></div>
+          <div class="pstat"><span>${L('Maná', 'Mana')}</span><b>${preview.mana}</b></div>
+          <div class="pstat"><span>${L('Tiradas', 'Rolls')}</span><b>${tiradasDe(preview.fuerza)}</b></div>` : `
+          <div class="pstat"><span>${L('Vida', 'Life')}</span><b>–</b></div>
+          <div class="pstat"><span>${L('Fuerza', 'Strength')}</span><b>–</b></div>
+          <div class="pstat"><span>${L('Maná', 'Mana')}</span><b>–</b></div>
+          <div class="pstat"><span>${L('Esferas', 'Spheres')}</span><div class="spheres-row">${spheresRow(3, p.color, true, 0)}</div></div>`}
       </div>
       <div class="ready-side">
         ${p.ready
-          ? '<button class="seal green" data-a="lobbyReady" data-v="0">Listo ✔</button>'
-          : `<button class="seal" data-a="lobbyReady" data-v="1" ${p.raza && p.clase ? '' : 'disabled'}>¡Listo!</button>`}
+          ? `<button class="seal green" data-a="lobbyReady" data-v="0">${L('Listo', 'Ready')} ✔</button>`
+          : `<button class="seal" data-a="lobbyReady" data-v="1" ${p.raza && p.clase ? '' : 'disabled'}>${L('¡Listo!', 'Ready!')}</button>`}
       </div>
       </div>
     </div>
     <div class="pick-choices">
       <div class="choice-grid row7">
-        ${Object.entries(DATA.razas).map(([k, r]) => `<button class="btn choice ${p.raza === k ? 'selected' : ''}" data-a="raza" data-k="${k}">${r.nombre}<span class="mods">${mods(r)}</span></button>`).join('')}
+        ${Object.entries(DATA.razas).map(([k, r]) => `<button class="btn choice ${p.raza === k ? 'selected' : ''}" data-a="raza" data-k="${k}">${nameOf(r)}<span class="mods">${mods(r)}</span></button>`).join('')}
       </div>
       <div class="choice-grid row7">
-        ${Object.entries(DATA.clases).map(([k, c]) => `<button class="btn choice ${p.clase === k ? 'selected' : ''}" data-a="clase" data-k="${k}">${c.nombre}<span class="mods">${mods(c)}</span></button>`).join('')}
+        ${Object.entries(DATA.clases).map(([k, c]) => `<button class="btn choice ${p.clase === k ? 'selected' : ''}" data-a="clase" data-k="${k}">${nameOf(c)}<span class="mods">${mods(c)}</span></button>`).join('')}
       </div>
     </div>
     <div class="pick-bottom">
@@ -569,7 +675,7 @@ function golpeDe(f) {
 function nextDiceHint(f) {
   const n = tiradasDe(f);
   const next = ((DATA && DATA.tiradasFuerza) || []).find((t) => t > f);
-  return next ? `${n} tiradas · ${next - f} de Fuerza más para la ${n + 1}.ª` : `${n} tiradas por combate`;
+  return next ? L(`${n} tiradas · ${next - f} de Fuerza más para la ${n + 1}.ª`, `${n} rolls · ${next - f} more Strength for roll ${n + 1}`) : L(`${n} tiradas por combate`, `${n} rolls per fight`);
 }
 
 // ---------- Hoja del héroe
@@ -581,16 +687,17 @@ function spheresRow(n, color, big = false, whites = 0, cursed = 0) {
   const w = Math.min(n, whites);
   return Array.from({ length: n }, (_, i) => {
     const c = cursed > 0 && i >= n - cursed;
-    return `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'multicolor' : 'gris'} ${c ? 'cursed' : ''}" ${c ? 'title="Maleficio: en tu próximo combate se anulará una esfera acertada y tendrás que relanzarla"' : ''}></span>`;
+    return `<span class="sphere ${big ? 'big' : ''} ${i < w ? 'multicolor' : 'gris'} ${c ? 'cursed' : ''}" ${c ? `title="${L('Maleficio: en tu próximo combate se anulará una esfera acertada y tendrás que relanzarla', 'Curse: in your next fight a matching sphere will be cancelled and you will have to reroll it')}"` : ''}></span>`;
   }).join('');
 }
 
 function itemTile(it, label) {
   if (!it) {
     const ghost = { Yelmo: 'yelmo', Armadura: 'cota', 'Túnica': 'tunica', Botas: 'botas', Mano: 'espada', 'Poción': 'pocion', Pergamino: 'pergamino' }[label];
-    return `<div class="tile empty" title="${label || ''}"><span class="ring">${ghost ? `<img class="ghost" src="img/objetos/${ghost}-1.webp" alt="">` : ''}<i>${label}</i></span></div>`;
+    const shown = LANG === 'en' ? ({ Yelmo: 'Helmet', Armadura: 'Armor', 'Túnica': 'Robe', Botas: 'Boots', Mano: 'Hand', 'Poción': 'Potion', Pergamino: 'Scroll' }[label] || label) : label;
+    return `<div class="tile empty" title="${shown || ''}"><span class="ring">${ghost ? `<img class="ghost" src="img/objetos/${ghost}-1.webp" alt="">` : ''}<i>${shown}</i></span></div>`;
   }
-  return `<button class="tile" data-a="item" data-id="${it.id}" title="${esc(it.nombre)}"><span class="ring">${itemIcon(it)}</span><span>${itemName(it)}</span></button>`;
+  return `<button class="tile" data-a="item" data-id="${it.id}" title="${esc(itemLabel(it))}"><span class="ring">${itemIcon(it)}</span><span>${itemName(it)}</span></button>`;
 }
 
 function renderSheet() {
@@ -602,7 +709,7 @@ function renderSheet() {
   const hands = inv.manos;
   const handTiles = hands.length === 0
     ? [itemTile(null, 'Mano'), itemTile(null, 'Mano')]
-    : hands[0].slot === 'dosManos' ? [itemTile(hands[0]), `<div class="tile empty taken"><span class="ring"><i>2 manos</i></span></div>`] : [itemTile(hands[0]), itemTile(hands[1], 'Mano')];
+    : hands[0].slot === 'dosManos' ? [itemTile(hands[0]), `<div class="tile empty taken"><span class="ring"><i>${L('2 manos', '2 hands')}</i></span></div>`] : [itemTile(hands[0]), itemTile(hands[1], 'Mano')];
   const slots3 = (list, label) => [0, 1, 2].map((i) => itemTile(list[i], label)).join('');
   return `
   <div class="me-hero">
@@ -613,9 +720,9 @@ function renderSheet() {
     <div class="me-sub">${raceName(p)} · ${className(p)}</div>
   </div>
   <div class="glyphs three">
-    <div title="Fuerza: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>Fuerza</span></div>
-    <div title="Cada 5 de Maná es una esfera multicolor"><b>${h.manaDisponible}${h.manaNext ? `<small class="mana-next">+${h.manaNext}</small>` : ''}</b><span>Maná</span></div>
-    <div title="Monedas para la tienda"><b>${h.monedas ?? 0}</b><span>Monedas</span></div>
+    <div title="${L('Fuerza', 'Strength')}: ${nextDiceHint(h.fuerza)}"><b>${h.fuerza}</b><span>${L('Fuerza', 'Strength')}</span></div>
+    <div title="${L('Cada 5 de Maná es una esfera multicolor', 'Every 5 Mana is a multicolor sphere')}"><b>${h.manaDisponible}${h.manaNext ? `<small class="mana-next">+${h.manaNext}</small>` : ''}</b><span>${L('Maná', 'Mana')}</span></div>
+    <div title="${L('Monedas para la tienda', 'Coins for the shop')}"><b>${h.monedas ?? 0}</b><span>${L('Monedas', 'Coins')}</span></div>
   </div>
   <div class="tiles">
     ${itemTile(inv.yelmo, 'Yelmo')}${itemTile(inv.armadura, 'Armadura')}${itemTile(inv.tunica, 'Túnica')}
@@ -623,7 +730,7 @@ function renderSheet() {
     ${slots3(inv.pociones, 'Poción')}
     ${slots3(inv.pergaminos, 'Pergamino')}
   </div>
-  <p class="muted small center">${h.victorias} victorias · ${h.trofeos || 0} trofeos · ${h.caidas} caídas</p>`;
+  <p class="muted small center">${L(`${h.victorias} victorias · ${h.trofeos || 0} trofeos · ${h.caidas} caídas`, `${h.victorias} wins · ${h.trofeos || 0} trophies · ${h.caidas} knockouts`)}</p>`;
 }
 
 // Detalle de un objeto (al tocarlo en tu hoja).
@@ -637,13 +744,13 @@ function renderItemDetail() {
       <div class="big-item">${itemIcon(it)}</div>
       <h2>${itemName(it)}</h2>
       <p class="muted">${itemDesc(it)}</p>
-      <div class="row center-row">${useBtn(it)}${discardBtn(it)}<button class="btn" data-a="closeDetail">Cerrar</button></div>
+      <div class="row center-row">${useBtn(it)}${discardBtn(it)}<button class="btn" data-a="closeDetail">${L('Cerrar', 'Close')}</button></div>
     </div>`;
 }
 
 function discardBtn(it) {
   if (S.phase !== 'prep' && S.phase !== 'combat') return '';
-  return `<button class="btn" data-a="discard" data-id="${it.id}">Descartar</button>`;
+  return `<button class="btn" data-a="discard" data-id="${it.id}">${L('Descartar', 'Discard')}</button>`;
 }
 
 function useBtn(it) {
@@ -656,7 +763,7 @@ function useBtn(it) {
   if (it.efecto === 'curacion') ok = h.vida < (h.vidaMax || h.base.vida) && !fullSoon && (S.phase === 'prep' || S.phase === 'combat' || (S.phase === 'torneo' && myCombat));
   if (it.efecto === 'robo') ok = S.phase === 'prep';
   if (!ok) return '';
-  const label = it.efecto === 'mana' && !myCombat ? 'Beber para el próximo combate' : 'Usar';
+  const label = it.efecto === 'mana' && !myCombat ? L('Beber para el próximo combate', 'Drink for the next fight') : L('Usar', 'Use');
   return `<button class="btn primary" data-a="use" data-id="${it.id}" data-efecto="${it.efecto}">${label}</button>`;
 }
 
@@ -664,16 +771,16 @@ function useBtn(it) {
 
 function opponentOf(p) {
   if (S.phase === 'combat') {
-    if (!p.monster && p.stage === 'combate') return { txt: 'tirando…' };
+    if (!p.monster && p.stage === 'combate') return { txt: L('tirando…', 'rolling…') };
     if (p.monster) {
       const res = p.combat && p.combat.status === 'victoria' ? 'win' : p.combat && p.combat.status === 'derrota' ? 'lose' : '';
-      return { art: monsterArt(p.monster, 'foe'), name: p.monster.nombre, res };
+      return { art: monsterArt(p.monster, 'foe'), name: monsterName(p.monster), res };
     }
   }
   if (S.phase === 'torneo' && S.tournament && S.tournament.stage === 'batalla') {
     const t = S.tournament;
-    if (!t.alive.includes(p.id)) return { txt: 'caído', out: true };
-    return { txt: p.combat && p.combat.status === 'activo' ? 'tirando…' : 'listo' };
+    if (!t.alive.includes(p.id)) return { txt: L('caído', 'fallen'), out: true };
+    return { txt: p.combat && p.combat.status === 'activo' ? L('tirando…', 'rolling…') : L('listo', 'ready') };
   }
   if (S.phase === 'torneo' && S.tournament) {
     const m = S.tournament.matches.find((x) => !x.winner && (x.a === p.id || x.b === p.id));
@@ -685,15 +792,15 @@ function opponentOf(p) {
     const lost = S.tournament.matches.some((x) => x.winner && x.winner !== p.id && (x.a === p.id || x.b === p.id));
     return { txt: lost ? 'eliminado' : 'espera', out: lost };
   }
-  if (S.phase === 'prep') return { txt: p.ready ? '✔ listo' : 'preparándose…' };
-  if (S.phase === 'fin') return { txt: S.winner === p.id ? 'campeón' : '' };
+  if (S.phase === 'prep') return { txt: p.ready ? '✔' : L('preparándose…', 'getting ready…') };
+  if (S.phase === 'fin') return { txt: S.winner === p.id ? L('campeón', 'champion') : '' };
   return { txt: '' };
 }
 
 function renderArena() {
   // En la Batalla final todos se ven en el centro: aquí no hace falta repetirlos.
   if (S.phase === 'torneo' && S.tournament && S.tournament.stage === 'batalla') return '';
-  return `<h3 class="col-title">Rivales</h3>` + others().map((p) => {
+  return `<h3 class="col-title">${L('Rivales', 'Rivals')}</h3>` + others().map((p) => {
     const h = p.hero;
     const pct = Math.max(0, Math.min(100, (h.vida / (h.vidaMax || h.base.vida)) * 100));
     const o = opponentOf(p);
@@ -704,14 +811,14 @@ function renderArena() {
         <div class="rival-side">${heroPortrait(p, 'rival')}</div>
         <div class="rival-vs">${o.art ? 'versus' : ''}</div>
         <div class="rival-side rival-foe ${o.res || ''}">
-          ${o.art ? `<div class="foe-imgs" title="${esc(o.name)}">${o.art}</div>` : `<div class="state">${o.txt === '✔ listo' ? '' : o.txt || ''}</div>`}
+          ${o.art ? `<div class="foe-imgs" title="${esc(o.name)}">${o.art}</div>` : `<div class="state">${o.txt === '✔' ? '' : o.txt || ''}</div>`}
         </div>
       </div>
       <div class="rival-info">
-        <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ' <small class="off">desconectado</small>' : ''}</div>
+        <div class="nm">${esc(p.name)} ${ready ? '<span class="check">✔</span>' : ''}${!p.connected && !p.bot ? ` <small class="off">${L('desconectado', 'disconnected')}</small>` : ''}</div>
         <div class="spheres-row">${spheresRow(h.dados, p.color, false, h.fijables, h.curses || 0)}</div>
         <div class="life thin"><i style="width:${pct}%"></i></div>
-        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · Fuerza ${h.fuerza ?? ''} · Vida ${h.vida} · ${h.monedas ?? 0} monedas</div>
+        <div class="muted small">${esc(raceName(p))} ${esc(className(p))} · ${L('Fuerza', 'Strength')} ${h.fuerza ?? ''} · ${L('Vida', 'Life')} ${h.vida} · ${h.monedas ?? 0} ${L('monedas', 'coins')}</div>
       </div>
     </div>`;
   }).join('');
@@ -737,14 +844,14 @@ function battleResultHtml() {
   const rows = Object.entries(t.last.vida).map(([id, v]) => {
     const x = byId(id);
     const n = Math.max(0, lost[id] || 0);
-    const txt = v <= 0 ? '<b class="bad">cae</b>' : n ? `<b class="bad">−${n}</b> · le quedan ${v}` : '<span class="muted">sin daño</span>';
-    return `<div class="br-row">${heroPortrait(x, 'sm')}<b>${id === S.me ? 'Tú' : esc(x.name)}</b> ${txt}</div>`;
+    const txt = v <= 0 ? `<b class="bad">${L('cae', 'falls')}</b>` : n ? `<b class="bad">−${n}</b> · ${L('le quedan', 'left:')} ${v}` : `<span class="muted">${L('sin daño', 'no damage')}</span>`;
+    return `<div class="br-row">${heroPortrait(x, 'sm')}<b>${id === S.me ? L('Tú', 'You') : esc(x.name)}</b> ${txt}</div>`;
   }).join('');
   return `
     <div class="card outcome battle-res">
-      <div class="outcome-title">Ronda ${t.last.round}</div>
+      <div class="outcome-title">${L('Ronda', 'Round')} ${t.last.round}</div>
       ${rows}
-      <div class="row center-row"><button class="btn primary" data-a="closeBattle">Continuar</button></div>
+      <div class="row center-row"><button class="btn primary" data-a="closeBattle">${L('Continuar', 'Continue')}</button></div>
     </div>`;
 }
 
@@ -757,9 +864,9 @@ function renderOutcome() {
   if (ui.fuerzaMsg) {
     return `
       <div class="card outcome fuerza-pop">
-        <div class="outcome-title">Fuerza ${ui.fuerzaMsg.f}</div>
+        <div class="outcome-title">${L('Fuerza', 'Strength')} ${ui.fuerzaMsg.f}</div>
         <div class="fz-lines">${ui.fuerzaMsg.msgs.map((m) => `<p>${m}</p>`).join('')}</div>
-        <div class="row center-row"><button class="btn primary" data-a="closeFuerza">Continuar</button></div>
+        <div class="row center-row"><button class="btn primary" data-a="closeFuerza">${L('Continuar', 'Continue')}</button></div>
       </div>`;
   }
   // Aviso: alguien te ha lanzado un maleficio.
@@ -769,17 +876,19 @@ function renderOutcome() {
     return `
       <div class="card outcome curse-alert">
         <div class="curse-sign"><img src="img/ui/calavera.webp" alt=""></div>
-        <div class="outcome-title">Maleficio</div>
-        ${lines(`<b>${esc(who)}</b> te ha lanzado un maleficio.`, n > 1 ? `Se te anularán ${n} esferas acertadas.` : 'Se te anulará una esfera acertada.', 'Saldrá con la calavera.', 'Tendrás que relanzarla.')}
-        <div class="row center-row"><button class="btn primary" data-a="closeCurse">Entendido</button></div>
+        <div class="outcome-title">${L('Maleficio', 'Curse')}</div>
+        ${LANG === 'en'
+          ? lines(`<b>${esc(who)}</b> has cursed you.`, n > 1 ? `${n} of your matching spheres will be cancelled.` : 'One of your matching spheres will be cancelled.', 'It will show the skull.', 'You will have to reroll it.')
+          : lines(`<b>${esc(who)}</b> te ha lanzado un maleficio.`, n > 1 ? `Se te anularán ${n} esferas acertadas.` : 'Se te anulará una esfera acertada.', 'Saldrá con la calavera.', 'Tendrás que relanzarla.')}
+        <div class="row center-row"><button class="btn primary" data-a="closeCurse">${L('Entendido', 'Got it')}</button></div>
       </div>`;
   }
   if (ui.coinsMsg && !(p.stage === 'recompensa')) {
     return `
       <div class="card outcome coins-pop">
         <img class="coins-big" src="img/ui/monedas.webp" alt="">
-        <p class="center big-text">${esc(ui.coinsMsg)}</p>
-        <div class="row center-row"><button class="btn primary" data-a="closeCoins">Continuar</button></div>
+        <p class="center big-text">${esc(typeof ui.coinsMsg === 'number' ? L(`+${ui.coinsMsg} monedas`, `+${ui.coinsMsg} coins`) : ui.coinsMsg)}</p>
+        <div class="row center-row"><button class="btn primary" data-a="closeCoins">${L('Continuar', 'Continue')}</button></div>
       </div>`;
   }
   // Botín de la semifinal: el ganador elige un objeto del vencido.
@@ -814,9 +923,9 @@ function renderOutcome() {
   if (ui.stealResult) {
     return `
       <div class="card outcome">
-        <div class="outcome-title">${ui.stealResult.ok ? '¡Robado!' : 'Robo'}</div>
-        ${lines(...ui.stealResult.text.replace(/\.$/, '').split(/:\s*| y (?=roba|pierde)/).map((x, i) => esc(x.charAt(0).toUpperCase() + x.slice(1) + '.')))}
-        <div class="row center-row"><button class="btn primary" data-a="closeSteal">Continuar</button></div>
+        <div class="outcome-title">${ui.stealResult.ok ? L('¡Robado!', 'Stolen!') : L('Robo', 'Theft')}</div>
+        ${lines(...((LANG === 'en' && ui.stealResult.en) || ui.stealResult.text).replace(/\.$/, '').split(/:\s*| y (?=roba|pierde)| and (?=steals|loses)/).map((x) => esc(x.charAt(0).toUpperCase() + x.slice(1) + '.')))}
+        <div class="row center-row"><button class="btn primary" data-a="closeSteal">${L('Continuar', 'Continue')}</button></div>
       </div>`;
   }
   if (ui.outcomeAt && Date.now() < ui.outcomeAt) return '';
@@ -827,9 +936,9 @@ function renderOutcome() {
   if (S.phase === 'combat' && p.stage === 'recompensa' && p.rewards) {
     return `
       <div class="card outcome win">
-        <div class="outcome-title">¡Victoria!</div>
+        <div class="outcome-title">${L('¡Victoria!', 'Victory!')}</div>
         ${monsterArt(p.monster, 'outcome-art')}
-        ${lines(`Has derrotado a ${esc(p.monster.nombre)} ${esc((p.monster.tamano || '').toLowerCase())}.`, p.monster.tier === 4 ? 'Ganas un trofeo.' : '', p.monster.tier === 4 ? '+1 de Vida en la Batalla final.' : '', 'Elige tu recompensa.')}
+        ${lines(L(`Has derrotado a ${esc(monsterFull(p.monster))}.`, `You defeated the ${esc(monsterFull(p.monster))}.`), p.monster.tier === 4 ? L('Ganas un trofeo.', 'You win a trophy.') : '', p.monster.tier === 4 ? L('+1 de Vida en la Batalla final.', '+1 Life in the Final Battle.') : '', L('Elige tu recompensa.', 'Choose your reward.'))}
         <div class="reward-pick">${p.rewards.map((it, i) => `
           <button class="reward-choice" data-a="reward" data-i="${i}">
             <span class="big-item">${itemIcon(it)}</span>
@@ -842,11 +951,11 @@ function renderOutcome() {
     const m = ui.defeat.monster;
     return `
       <div class="card outcome lose">
-        <div class="outcome-title">Derrota</div>
+        <div class="outcome-title">${L('Derrota', 'Defeat')}</div>
         ${m ? monsterArt(m, 'outcome-art') : ''}
-        ${(() => { const dn = (ui.defeat.text.match(/quita (\d+)/) || [])[1]; return lines('No derrotas a ningún monstruo.', m && dn ? `${esc(m.nombre)} te quita ${dn} de Vida.` : ''); })()}
-        ${ui.defeat.fell ? `<div class="warn">${lines('Has caído a 0 Vida.', 'Pierdes todos tus objetos.', 'Recuperas la Vida inicial.')}</div>` : ''}
-        <div class="row center-row"><button class="btn primary" data-a="closeDefeat">Continuar</button></div>
+        ${(() => { const dn = (ui.defeat.text.match(/quita (\d+)/) || [])[1]; return lines(L('No derrotas a ningún monstruo.', 'You defeat no monster.'), m && dn ? L(`${esc(monsterName(m))} te quita ${dn} de Vida.`, `The ${esc(monsterName(m))} deals ${dn} damage.`) : ''); })()}
+        ${ui.defeat.fell ? `<div class="warn">${lines(L('Has caído a 0 Vida.', 'You fell to 0 Life.'), L('Pierdes todos tus objetos.', 'You lose all your items.'), L('Recuperas la Vida inicial.', 'You recover your starting Life.'))}</div>` : ''}
+        <div class="row center-row"><button class="btn primary" data-a="closeDefeat">${L('Continuar', 'Continue')}</button></div>
       </div>`;
   }
   // Duelos del torneo en los que no participas: resumen en una ventana.
@@ -911,7 +1020,6 @@ const RULES = {
       y una <b>forma</b> (círculo, cuadrado, rombo, triángulo o <b>espiral</b> = comodín).</p></section>
     <section><div class="rule-ill"><span class="dice"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big azul"></span></span><span class="plus">o</span><img src="img/formas/rombo-tinta.webp" alt=""><img src="img/formas/triangulo-tinta.webp" alt=""></div><h4>Qué piden</h4><p>Cada monstruo pide <b>solo colores</b> o <b>solo formas</b>. Las esferas que le sirven al monstruo del centro se iluminan, y también lo que ya tienes de lo que pide.</p></section>
     <section><div class="rule-ill"><img src="img/formas/circulo-rojo.webp" alt=""><span class="reroll-ill"><img src="img/formas/cuadrado-verde.webp" alt=""></span><span class="lbl">1/3</span></div><h4>Tiradas</h4><p>Pulsa <b>Atacar</b>. Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan. En cuanto completes cualquier monstruo puedes <b>Derrotarlo</b>, o seguir tirando a por uno más grande.</p></section>
-      (toca una esfera para marcarla o desmarcarla). Cuando completes un monstruo, pulsa <b>Derrotar</b>.</p></section>
     <section><div class="rule-ill"><span class="big-dmg">−2</span></div><h4>Si no llegas</h4><p>Si se acaban las tiradas sin completar ninguno, pierdes contra el más pequeño.</p></section>`],
   entre: ['Entre rondas', `
     <section><div class="rule-ill"><img src="img/objetos/pocion-1.webp" alt=""><span class="plus">⇄</span><img src="img/objetos/botas-1.webp" alt=""></div><h4>Comerciar</h4><p>Ofreces objetos; los demás te dicen qué te dan a cambio y tú aceptas o rechazas. Una oferta por ronda.</p></section>
@@ -930,21 +1038,62 @@ const RULES = {
 
 };
 
+const RULES_EN = {
+  heroe: ['The hero', `
+    <section><div class="rule-ill"><img class="tall" src="img/heroes/enano-guerrero.webp" alt=""><span class="plus">=</span><span class="lbl">Dwarf<br>+<br>Warrior</span></div><h4>Race and class</h4>
+      <p>Your hero is a <b>Race</b> and a <b>Class</b>. Some pairs are <b class="ok">natural</b> (+1 Strength and +1 Mana)
+      and others <b class="bad">odd</b> (−1 Life): you see it when choosing.</p></section>
+    <section><div class="rule-ill"><div class="life rl"><i style="width:70%"></i><span>10 / 14</span></div></div><h4>Life</h4><p>How much you can take. It does not recover by itself: only with healing potions and scrolls. Whatever you have left at the end of the adventure is what you take into the Final Battle.</p></section>
+    <section><div class="rule-ill"><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="sphere big gris"></span><span class="lbl">Strength 22<br>= 4 rolls</span></div><h4>Strength</h4><p>You always throw <b>5 spheres</b>. Strength gives rolls: <b>3</b>, <b>4</b> at Strength 22 and <b>5</b> at 30. In the Final Battle it also adds damage to your strikes: <b>+1</b> at Strength 22, <b>+2</b> at 30 and <b>+3</b> at 38.</p></section>
+    <section><div class="rule-ill"><img src="img/formas/espiral-multicolor.webp" alt=""><span class="lbl">5 Mana<br>= 1 wild</span></div><h4>Mana</h4><p>Every <b>5</b> Mana turns one sphere into a <b>wild</b> (multicolor with a spiral), fixed from the start of the fight.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/yelmo-1.webp" alt=""><img src="img/objetos/espada-2.webp" alt=""><img src="img/objetos/tunica-1.webp" alt=""></div><h4>Gear</h4><p>Helmet, armor, robe, boots and two hands (a two-handed weapon takes both; at most one shield).
+      Gear adds <b>Strength</b>; the <b>robe</b> adds <b>Mana</b>. Up to 3 potions and 3 scrolls.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/arco-2.webp" alt=""><span class="lbl">Bow +3 <span class="af">+1</span></span></div><h4>Favored weapons</h4><p>Each class handles some weapons better: they give <b class="af">+1</b> extra Strength.
+      Bow → Ranger and Thief · Staff → Mage · Crook → Druid · Mace → Cleric · Axe → Barbarian · Sword and Shield → Warrior.</p></section>`],
+  aventura: ['Adventure', `
+    <section><div class="rule-ill"><img class="tall s1" src="img/monstruos/diablillo-1.webp" alt=""><img class="tall" src="img/monstruos/orco-2.webp" alt=""><img class="tall s3" src="img/monstruos/dragon-3.webp" alt=""></div><h4>12 rounds, 5 monsters</h4><p>Each round <b>5 monsters</b> appear, from small to large. You see them in a carousel: the one in the center and its neighbours at the sides (swipe or use the arrows).</p></section>
+    <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="plus">…</span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span></div><h4>From small to large</h4><p>Each one asks for something harder: from three of a kind plus one, up to five of a kind. The bigger it is, the more damage it deals and the better its coins and items. As the adventure goes on they all ask for more: at the end even the smallest asks for four of a kind plus one.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/espada-1.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>If you win</h4><p>You choose 1 of 2 rewards and earn <b>coins</b>: the bigger the monster, the more coins and the better the items.</p></section>
+    <section><div class="rule-ill"><img class="tall" src="img/monstruos/dragon-3.webp" alt=""><span class="lbl">+1 Life</span></div><h4>Trophies</h4><p>Each <b>large monster</b> you defeat is a trophy. Each trophy gives you <b>+1 Life</b> in the Final Battle.</p></section>
+    <section><div class="rule-ill"><span class="big-dmg">−4</span><span class="lbl">Life</span></div><h4>If you lose</h4><p>You lose the Life shown by the monster. If you fall to 0 you lose <b>all your items and coins</b> and recover your starting Life.</p></section>`],
+  combate: ['Combat', `
+    <section><div class="rule-ill"><img src="img/formas/circulo-rojo.webp" alt=""><img src="img/formas/cuadrado-azul.webp" alt=""><img src="img/formas/rombo-verde.webp" alt=""><img src="img/formas/triangulo-amarillo.webp" alt=""><img src="img/formas/espiral-multicolor.webp" alt=""></div><h4>Spheres</h4><p>Each sphere has a <b>color</b> (red, blue, green, yellow or <b>multicolor</b> = wild)
+      and a <b>shape</b> (circle, square, diamond, triangle or <b>spiral</b> = wild).</p></section>
+    <section><div class="rule-ill"><span class="dice"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big azul"></span></span><span class="plus">or</span><img src="img/formas/rombo-tinta.webp" alt=""><img src="img/formas/triangulo-tinta.webp" alt=""></div><h4>What they ask for</h4><p>Each monster asks for <b>colors only</b> or <b>shapes only</b>. The spheres that work for the monster in the center light up, and so does what you already have of what it asks for.</p></section>
+    <section><div class="rule-ill"><img src="img/formas/circulo-rojo.webp" alt=""><span class="reroll-ill"><img src="img/formas/cuadrado-verde.webp" alt=""></span><span class="lbl">1/3</span></div><h4>Rolls</h4><p>Press <b>Attack</b>. Tap a sphere to mark or unmark it: marked spheres are rerolled. As soon as you complete any monster you can <b>Defeat</b> it, or keep rolling for a bigger one.</p></section>
+    <section><div class="rule-ill"><span class="big-dmg">−2</span></div><h4>If you fall short</h4><p>If you run out of rolls without completing any, you lose against the smallest one.</p></section>`],
+  entre: ['Between rounds', `
+    <section><div class="rule-ill"><img src="img/objetos/pocion-1.webp" alt=""><span class="plus">⇄</span><img src="img/objetos/botas-1.webp" alt=""></div><h4>Trade</h4><p>You offer items; the others tell you what they would give in return and you accept or decline. One offer per round.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/escudo-1.webp" alt=""><img src="img/ui/monedas.webp" alt=""></div><h4>Buy</h4><p>Each round the shop has new items priced in <b>coins</b>. One purchase per round.</p></section>
+    <section><div class="rule-ill"><img src="img/objetos/pergamino-2.webp" alt=""><span class="lbl">1-2 ✔<br>3-5 ✘<br>6 –</span></div><h4>Steal</h4><p>With a Scroll of Theft, it always works. Without it you roll a die: <b>1–2</b> you steal · <b>3–5</b> you lose your Mana in the next fight · <b>6</b> nothing.</p></section>
+    <section><div class="rule-ill"><img src="img/ui/calavera.webp" alt=""></div><h4>Curse</h4><p>Spend 5 Mana: in their next fight, the rival loses one matching sphere: it shows a skull, does not count and must be rerolled.
+      Each hero receives at most one per round.</p></section>`],
+  sala: ['Room', `
+    <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">+</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""></div><h4>Playing on the same device</h4><p>In the room, <b>Player here</b> adds another player who plays on your same computer or phone.
+      Players take turns: when it is yours, <b>"…'s turn"</b> appears and the device is passed to you. You can mix it with friends on other devices and with bots.</p></section>`],
+  torneo: ['Final Battle', `
+    <section><div class="rule-ill"><img class="tall" src="img/heroes/humano-guerrero.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/elfo-mago.webp" alt=""><span class="plus">vs</span><img class="tall" src="img/heroes/enano-guerrero.webp" alt=""></div><h4>All against all</h4><p>After the adventure, everyone arrives with the Life they have left, plus 1 per trophy, and they all fight at once. Each round everyone throws their 5 spheres (3 rolls) and then chooses whom to strike. The last one standing wins.</p></section>
+    <section><div class="rule-ill"><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="sphere big rojo"></span><span class="lbl">→ −2</span></div><h4>Strike</h4><p>Spheres of your <b>victim's color</b> count (and wilds): 3 → 2 damage, 4 → 4, 5 → 6. Your Strength adds: +1 at Strength 22, +2 at 30, +3 at 38.</p></section>
+    <section><div class="rule-ill"><span class="sphere big azul"></span><span class="lbl">🛡 −1</span></div><h4>Shield</h4><p>Each sphere of <b>your own color</b> takes 1 off the damage you receive that round.</p></section>
+    <section><div class="rule-ill"><img src="img/ui/calavera.webp" alt=""></div><h4>Curse</h4><p>Once per round you can curse a rival: each skull (5 Mana) cancels one of their matching spheres.</p></section>`],
+};
+
 function renderRules() {
-  const tabs = Object.entries(RULES).map(([k, [t]]) => `<button class="btn small ${ui.rulesTab === k ? 'selected' : ''}" data-a="rulesTab" data-t="${k}">${t}</button>`).join('');
+  const R = LANG === 'en' ? RULES_EN : RULES;
+  const tabs = Object.entries(R).map(([k, [t]]) => `<button class="btn small ${ui.rulesTab === k ? 'selected' : ''}" data-a="rulesTab" data-t="${k}">${t}</button>`).join('');
   return `
     <div class="card rules">
-      <button class="modal-close" data-a="closeRules" aria-label="Cerrar" title="Cerrar">×</button>
-      <h2 class="center">Reglas de Héroes</h2>
+      <button class="modal-close" data-a="closeRules" aria-label="${L('Cerrar', 'Close')}" title="${L('Cerrar', 'Close')}">×</button>
+      <h2 class="center">${L('Reglas de Héroes', 'Rules of Heroes')}</h2>
       <div class="row center-row rules-tabs">${tabs}</div>
-      <div class="rules-body">${RULES[ui.rulesTab][1]}</div>
+      <div class="rules-body">${R[ui.rulesTab][1]}</div>
     </div>`;
 }
 $('rulesBtn').onclick = () => { ui.rules = true; renderModal(); };
 function paintSound() {
   const m = Sounds.isMuted();
   $('soundBtn').innerHTML = speakerIcon(m);
-  $('soundBtn').title = m ? 'Activar sonidos' : 'Silenciar sonidos';
+  $('soundBtn').title = m ? L('Activar sonidos', 'Sound on') : L('Silenciar sonidos', 'Mute sounds');
 }
 $('soundBtn').onclick = () => { Sounds.toggle(); paintSound(); };
 paintSound();
@@ -958,7 +1107,8 @@ function playEventSounds() {
   const lastN = S.log.length ? S.log[S.log.length - 1].n : 0;
   const myTurn = isMyTurnCombat() && S.phase === 'torneo';
   if (lastLogN === null) { lastLogN = lastN; lastMyTurn = myTurn; return; }
-  const texts = S.log.filter((l) => l.n > lastLogN).map((l) => l.text);
+  const fresh = S.log.filter((l) => l.n > lastLogN);
+  const texts = fresh.map((l) => l.text);
   lastLogN = lastN;
   if (!meP) return;
   const name = meP.name;
@@ -973,11 +1123,11 @@ function playEventSounds() {
   const lost = texts.find((t) => /^🩸/.test(t) && t.startsWith(`🩸 ${name} no consigue`));
   if (lost) { ui.defeat = { text: lost, monster: meP.monster || ui.lastMonster, fell: mine(/^💀/) }; holdOutcome(); }
   const healTxt = texts.find((t) => t.startsWith(`💚 ${name} usa `));
-  if (healTxt) { const n = (healTxt.match(/recupera (\d+)/) || [])[1]; toast(`Recuperas ${n} de Vida`); Sounds.play('fe'); }
+  if (healTxt) { const n = (healTxt.match(/recupera (\d+)/) || [])[1]; toast(L(`Recuperas ${n} de Vida`, `You recover ${n} Life`)); Sounds.play('fe'); }
   const coinsTxt = texts.find((t) => t.startsWith(`💰 ${name} gana `));
-  if (coinsTxt) ui.coinsMsg = coinsTxt.replace(/^💰 /, '').replace(`${name} gana`, 'Has ganado');
-  const stole = texts.find((t) => /^(🦝|🪤|🎲) /.test(t) && t.includes(`${name} saca`));
-  if (stole) ui.stealResult = { ok: stole.startsWith('🦝'), text: stole.replace(/^\S+ /, '') };
+  if (coinsTxt) ui.coinsMsg = Number((coinsTxt.match(/gana (\d+)/) || [])[1]) || coinsTxt;
+  const stoleEntry = fresh.find((l) => /^(🦝|🪤|🎲) /.test(l.text) && l.text.includes(`${name} saca`));
+  if (stoleEntry) ui.stealResult = { ok: stoleEntry.text.startsWith('🦝'), text: stoleEntry.text.replace(/^\S+ /, ''), en: (stoleEntry.en || '').replace(/^\S+ /, '') };
   const cursed = texts.find((t) => t.includes(`lanza un maleficio a ${name}:`));
   // Maleficio: risa cuando te lo lanzan o cuando lo lanzas tú.
   const castByMe = texts.some((t) => t.startsWith(`${name} gasta `) && t.includes('lanza un maleficio'));
@@ -1012,7 +1162,7 @@ function showReveal() {
   const box = $('reveal');
   if (!box.classList.contains('hidden') || !revealQueue.length) return;
   const it = revealQueue.shift();
-  box.innerHTML = `<div class="reveal-card card"><div class="reveal-title">Has conseguido</div><div class="big-item">${itemIcon(it)}</div><h2>${itemName(it)}</h2><p>${itemDesc(it)}</p></div>`;
+  box.innerHTML = `<div class="reveal-card card"><div class="reveal-title">${L('Has conseguido', 'You got')}</div><div class="big-item">${itemIcon(it)}</div><h2>${itemName(it)}</h2><p>${itemDesc(it)}</p></div>`;
   box.classList.remove('hidden');
   Sounds.play('fe');
   clearTimeout(revealTimer);
@@ -1046,16 +1196,16 @@ function renderPrep() {
   return `
   <div class="card prep-card">
     <img class="prep-cover" src="img/ui/${torneo || prefinal ? 'espadas' : 'monstruo'}.webp" alt="">
-    <h2>${prefinal ? 'Preparación para la final' : torneo ? 'Preparación para el Torneo' : `Ronda ${S.round} de ${S.rounds}`}</h2>
+    <h2>${prefinal ? L('Preparación para la final', 'Preparing for the final') : torneo ? L('Preparación para el Torneo', 'Preparing for the Tournament') : L(`Ronda ${S.round} de ${S.rounds}`, `Round ${S.round} of ${S.rounds}`)}</h2>
     <div class="prep-actions">
       ${p.ready
-        ? '<button class="seal green" data-a="ready" data-v="0">Listo ✔</button>'
-        : `<button class="seal" data-a="ready" data-v="1">¡Listo!</button>`}
+        ? `<button class="seal green" data-a="ready" data-v="0">${L('Listo', 'Ready')} ✔</button>`
+        : `<button class="seal" data-a="ready" data-v="1">${L('¡Listo!', 'Ready!')}</button>`}
       <div class="prep-buttons">
-        <button class="btn ${incoming ? 'alert' : ''}" data-a="prepWin" data-w="trade">Comerciar${incoming ? ` <span class="badge">${incoming}</span>` : ''}</button>
-        <button class="btn curse-btn" data-a="prepWin" data-w="curse" ${S.round <= 1 ? 'disabled title="Desde la ronda 2"' : ''}>Maleficio</button>
-        <button class="btn" data-a="prepWin" data-w="steal">Robar</button>
-        <button class="btn" data-a="prepWin" data-w="shop" ${p.boughtThisRound ? 'title="Ya has comprado esta ronda"' : ''}>Comprar</button>
+        <button class="btn ${incoming ? 'alert' : ''}" data-a="prepWin" data-w="trade">${L('Comerciar', 'Trade')}${incoming ? ` <span class="badge">${incoming}</span>` : ''}</button>
+        <button class="btn curse-btn" data-a="prepWin" data-w="curse" ${S.round <= 1 ? `disabled title="${L('Desde la ronda 2', 'From round 2')}"` : ''}>${L('Maleficio', 'Curse')}</button>
+        <button class="btn" data-a="prepWin" data-w="steal">${L('Robar', 'Steal')}</button>
+        <button class="btn" data-a="prepWin" data-w="shop" ${p.boughtThisRound ? `title="${L('Ya has comprado esta ronda', 'You already bought this round')}"` : ''}>${L('Comprar', 'Buy')}</button>
       </div>
     </div>
   </div>`;
@@ -1065,7 +1215,7 @@ function renderPrep() {
 function renderPrepWin() {
   if (S.phase !== 'prep' || !ui.prepWin) return '';
   const body = ui.prepWin === 'trade' ? renderTrade() : ui.prepWin === 'curse' ? renderMagic() : ui.prepWin === 'shop' ? renderShop() : renderTheft();
-  return `<div class="card prep-win"><button class="modal-close" data-a="closePrep" aria-label="Cerrar" title="Cerrar">×</button>${body}</div>`;
+  return `<div class="card prep-win"><button class="modal-close" data-a="closePrep" aria-label="${L('Cerrar', 'Close')}" title="${L('Cerrar', 'Close')}">×</button>${body}</div>`;
 }
 
 function renderShop() {
@@ -1073,15 +1223,15 @@ function renderShop() {
   const coins = p.hero.monedas || 0;
   const shop = p.shop || [];
   return `
-    <h3>Comprar</h3>
-    <p class="center shop-coins">Tienes <b>${coins}</b> monedas${p.boughtThisRound ? ' · ya has comprado esta ronda' : ' · una compra por ronda'}</p>
+    <h3>${L('Comprar', 'Buy')}</h3>
+    <p class="center shop-coins">${L(`Tienes <b>${coins}</b> monedas`, `You have <b>${coins}</b> coins`)}${p.boughtThisRound ? L(' · ya has comprado esta ronda', ' · you already bought this round') : L(' · una compra por ronda', ' · one purchase per round')}</p>
     <div class="trade-grid">${shop.map((it) => {
       const can = !p.boughtThisRound && coins >= it.precio;
       return `<div class="shop-item ${can ? '' : 'locked'}">
         ${tradeTile(it)}
-        <button class="btn small ${can ? 'primary' : ''}" data-a="buy" data-id="${it.id}" ${can ? '' : 'disabled'}>${it.precio} monedas</button>
+        <button class="btn small ${can ? 'primary' : ''}" data-a="buy" data-id="${it.id}" ${can ? '' : 'disabled'}>${it.precio} ${L('monedas', 'coins')}</button>
       </div>`;
-    }).join('') || '<p class="muted center">No queda nada a la venta.</p>'}</div>`;
+    }).join('') || `<p class="muted center">${L('No queda nada a la venta.', 'Nothing left for sale.')}</p>`}</div>`;
 }
 
 // Antes de la final solo puedes robar o lanzar maleficios a tu rival de la final.
@@ -1102,24 +1252,26 @@ function renderTheft() {
   const scroll = [...p.hero.inv.pergaminos].find((it) => it.efecto === 'robo');
   const picked = target && t.itemId && allItems(target.hero).find((it) => it.id === t.itemId);
   return `
-    <h3>Robar</h3>
-    <div class="muted small">${lines('Con Pergamino de Robo, te lo llevas seguro.', 'Sin él, tiras un dado.', '1-2: lo robas.', '3-5: pierdes tu Maná en el próximo combate.', '6: no pasa nada.')}</div>
+    <h3>${L('Robar', 'Steal')}</h3>
+    <div class="muted small">${LANG === 'en'
+      ? lines('With a Scroll of Theft, it always works.', 'Without it, you roll a die.', '1-2: you steal it.', '3-5: you lose your Mana in the next fight.', '6: nothing happens.')
+      : lines('Con Pergamino de Robo, te lo llevas seguro.', 'Sin él, tiras un dado.', '1-2: lo robas.', '3-5: pierdes tu Maná en el próximo combate.', '6: no pasa nada.')}</div>
     <div class="row">${prepTargets().map((o) => `<button class="btn small ${t.targetId === o.id ? 'selected' : ''}" data-a="theftTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
     ${target ? (allItems(target.hero).length ? `<div class="steal-items">${allItems(target.hero).map((it) => `
       <button class="steal-item ${t.itemId === it.id ? 'selected' : ''}" data-a="theftItem" data-id="${it.id}">
         <span class="ring">${itemIcon(it)}</span><span>${itemName(it)}</span></button>`).join('')}</div>`
-      : '<p class="muted center">No tiene objetos.</p>') : '<p class="muted center">Elige a quién robar.</p>'}
+      : `<p class="muted center">${L('No tiene objetos.', 'They have no items.')}</p>`) : `<p class="muted center">${L('Elige a quién robar.', 'Choose whom to steal from.')}</p>`}
     <div class="row">
-      ${scroll ? `<button class="btn primary" data-a="steal" data-mode="scroll" ${picked ? '' : 'disabled'}>Usar ${esc(scroll.nombre)}</button>` : ''}
-      <button class="btn ${scroll ? '' : 'primary'}" data-a="steal" data-mode="roll" ${picked && !p.stoleThisRound ? '' : 'disabled'}>Tirar el dado</button>
+      ${scroll ? `<button class="btn primary" data-a="steal" data-mode="scroll" ${picked ? '' : 'disabled'}>${L('Usar', 'Use')} ${esc(itemLabel(scroll))}</button>` : ''}
+      <button class="btn ${scroll ? '' : 'primary'}" data-a="steal" data-mode="roll" ${picked && !p.stoleThisRound ? '' : 'disabled'}>${L('Tirar el dado', 'Roll the die')}</button>
     </div>
-    ${p.stoleThisRound ? '<p class="muted small center">Ya has intentado robar con el dado esta ronda.</p>' : ''}`;
+    ${p.stoleThisRound ? `<p class="muted small center">${L('Ya has intentado robar con el dado esta ronda.', 'You already tried to steal with the die this round.')}</p>` : ''}`;
 }
 
 function renderMagic() {
   const p = me();
   const h = p.hero;
-  if (S.round <= 1) return '<h3>Maleficio</h3><p class="muted center">Podrás lanzar maleficios desde la ronda 2.</p>';
+  if (S.round <= 1) return `<h3>${L('Maleficio', 'Curse')}</h3><p class="muted center">${L('Podrás lanzar maleficios desde la ronda 2.', 'You can cast curses from round 2.')}</p>`;
   const avail = h.manaDisponible;
   const amounts = [];
   for (let a = 5; a <= avail; a += 5) amounts.push(a);
@@ -1130,15 +1282,15 @@ function renderMagic() {
   if (!ui.curse.target && targets.length === 1) ui.curse.target = targets[0].id;
   const tName = ui.curse.target && byId(ui.curse.target) ? byId(ui.curse.target).name : '';
   return `
-    <h3>Maleficio</h3>
+    <h3>${L('Maleficio', 'Curse')}</h3>
     ${amounts.length && targets.length ? `
-      ${finalFoeId() ? '' : `<div class="muted small">${lines('Elige a quién.', 'Un maleficio por rival y ronda.')}</div>`}
+      ${finalFoeId() ? '' : `<div class="muted small">${lines(L('Elige a quién.', 'Choose whom.'), L('Un maleficio por rival y ronda.', 'One curse per rival per round.'))}</div>`}
       <div class="row curse-targets">${prepTargets().map((o) => o.cursedThisRound
-        ? `<button class="btn small" disabled title="Ya tiene un maleficio esta ronda">${esc(o.name)} <small>(ya tiene uno)</small></button>`
+        ? `<button class="btn small" disabled title="${L('Ya tiene un maleficio esta ronda', 'Already cursed this round')}">${esc(o.name)} <small>${L('(ya tiene uno)', '(already cursed)')}</small></button>`
         : `<button class="btn small ${ui.curse.target === o.id ? 'selected' : ''}" data-a="curseTarget" data-id="${o.id}">${esc(o.name)}</button>`).join('')}</div>
-      <div class="row">${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} Maná</button>`).join('')}</div>
-      <div class="row"><button class="btn primary" data-a="curse" ${ui.curse.target ? '' : 'disabled'}>${tName ? `Lanzar maleficio a ${esc(tName)}` : 'Toca un rival para elegirlo'}</button></div>`
-    : `<p class="muted small center">${amounts.length ? 'Todos los rivales ya han recibido un maleficio esta ronda.' : 'Necesitas al menos 5 de Maná disponible.'}</p>`}`;
+      <div class="row">${amounts.map((a) => `<button class="btn tiny ${ui.curse.amount === a ? 'selected' : ''}" data-a="curseAmount" data-n="${a}">${a} ${L('Maná', 'Mana')}</button>`).join('')}</div>
+      <div class="row"><button class="btn primary" data-a="curse" ${ui.curse.target ? '' : 'disabled'}>${tName ? L(`Lanzar maleficio a ${esc(tName)}`, `Curse ${esc(tName)}`) : L('Toca un rival para elegirlo', 'Tap a rival to choose them')}</button></div>`
+    : `<p class="muted small center">${amounts.length ? L('Todos los rivales ya han recibido un maleficio esta ronda.', 'Every rival has already been cursed this round.') : L('Necesitas al menos 5 de Maná disponible.', 'You need at least 5 Mana available.')}</p>`}`;
 }
 
 // ---------- Comercio: oferta pública, respuestas y aceptar o rechazar
@@ -1168,40 +1320,40 @@ function renderTrade() {
   const mine = myOpenTrade();
   const items = allItems(p.hero);
   let body = '';
-  if (p.tradedThisRound) body = '<p class="muted center">Ya has comerciado esta ronda.</p>';
+  if (p.tradedThisRound) body = `<p class="muted center">${L('Ya has comerciado esta ronda.', 'You already traded this round.')}</p>`;
   else if (mine) {
     const counters = mine.counters.filter((c) => c.status === 'pendiente');
     body = `
       <div class="trade-block">
-        <h4>Tu oferta</h4>
+        <h4>${L('Tu oferta', 'Your offer')}</h4>
         <div class="trade-grid">${tradeItems(p, mine.give).map((it) => tradeTile(it)).join('')}</div>
       </div>
       <div class="trade-block">
-        <h4>Lo que te ofrecen a cambio</h4>
+        <h4>${L('Lo que te ofrecen a cambio', 'What they offer in return')}</h4>
         ${counters.length ? counters.map((c) => { const o = byId(c.by); return `
           <div class="trade-counter">
             <div class="who">${esc(o.name)}</div>
             <div class="trade-grid">${tradeItems(o, c.give).map((it) => tradeTile(it)).join('')}</div>
-            <div class="row"><button class="btn primary" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="1">Aceptar</button><button class="btn" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="0">Rechazar</button></div>
-          </div>`; }).join('') : '<p class="muted center">Todavía nadie ha respondido.</p>'}
+            <div class="row"><button class="btn primary" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="1">${L('Aceptar', 'Accept')}</button><button class="btn" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="0">${L('Rechazar', 'Decline')}</button></div>
+          </div>`; }).join('') : `<p class="muted center">${L('Todavía nadie ha respondido.', 'Nobody has answered yet.')}</p>`}
       </div>
-      <div class="row"><button class="btn small" data-a="withdraw" data-t="${mine.id}">Retirar oferta</button></div>`;
-  } else if (p.offeredThisRound) body = '<p class="muted center">Ya has hecho tu oferta de esta ronda.</p>';
+      <div class="row"><button class="btn small" data-a="withdraw" data-t="${mine.id}">${L('Retirar oferta', 'Withdraw offer')}</button></div>`;
+  } else if (p.offeredThisRound) body = `<p class="muted center">${L('Ya has hecho tu oferta de esta ronda.', 'You already made your offer this round.')}</p>`;
   else body = `
       <div class="trade-block">
-        <h4>¿Qué ofreces?</h4>
-        ${items.length ? `<div class="trade-grid">${items.map((it) => tradeTile(it, { selected: ui.trade.give.has(it.id), attrs: `data-a="tgive" data-id="${it.id}"` })).join('')}</div>` : '<p class="muted center">No tienes objetos para ofrecer.</p>'}
-        <p class="muted small center">${finalFoeId() ? `Antes de la final no puedes comerciar con ${esc(byId(finalFoeId()).name)}.` : 'Los demás verán tu oferta.</p><p>Te dirán qué te dan a cambio.</p><p>Una oferta por ronda.'}</p>
+        <h4>${L('¿Qué ofreces?', 'What do you offer?')}</h4>
+        ${items.length ? `<div class="trade-grid">${items.map((it) => tradeTile(it, { selected: ui.trade.give.has(it.id), attrs: `data-a="tgive" data-id="${it.id}"` })).join('')}</div>` : `<p class="muted center">${L('No tienes objetos para ofrecer.', 'You have no items to offer.')}</p>`}
+        <p class="muted small center">${finalFoeId() ? `Antes de la final no puedes comerciar con ${esc(byId(finalFoeId()).name)}.` : L('Los demás verán tu oferta.</p><p>Te dirán qué te dan a cambio.</p><p>Una oferta por ronda.', 'The others will see your offer.</p><p>They will tell you what they give in return.</p><p>One offer per round.')}</p>
       </div>
-      <div class="row"><button class="btn primary" data-a="offer" ${ui.trade.give.size ? '' : 'disabled'}>Ofrecer</button></div>`;
+      <div class="row"><button class="btn primary" data-a="offer" ${ui.trade.give.size ? '' : 'disabled'}>${L('Ofrecer', 'Offer')}</button></div>`;
   const others = unansweredTrades();
   return `
-    <h3>Comerciar</h3>
+    <h3>${L('Comerciar', 'Trade')}</h3>
     ${body}
-    ${others.length ? `<div class="trade-block"><h4>Ofertas de los demás</h4>${others.map((t) => { const o = byId(t.from); return `
-      <div class="trade-counter"><div class="who">${esc(o.name)} ofrece</div>
+    ${others.length ? `<div class="trade-block"><h4>${L('Ofertas de los demás', "Others' offers")}</h4>${others.map((t) => { const o = byId(t.from); return `
+      <div class="trade-counter"><div class="who">${esc(o.name)} ${L('ofrece', 'offers')}</div>
         <div class="trade-grid">${tradeItems(o, t.give).map((it) => tradeTile(it)).join('')}</div>
-        <div class="row"><button class="btn" data-a="respondTo" data-t="${t.id}">Ofrecer algo a cambio</button></div></div>`; }).join('')}</div>` : ''}`;
+        <div class="row"><button class="btn" data-a="respondTo" data-t="${t.id}">${L('Ofrecer algo a cambio', 'Offer something in return')}</button></div></div>`; }).join('')}</div>` : ''}`;
 }
 
 // Ventanas emergentes del comercio: alguien responde a tu oferta o alguien ofrece algo.
@@ -1214,11 +1366,11 @@ function renderTradePopup() {
     const o = byId(c.by);
     return `
       <div class="card prep-win trade-pop">
-        <h3>${esc(o.name)} te ofrece</h3>
+        <h3>${L(`${esc(o.name)} te ofrece`, `${esc(o.name)} offers you`)}</h3>
         <div class="trade-grid">${tradeItems(o, c.give).map((it) => tradeTile(it)).join('')}</div>
-        <p class="center muted">a cambio de</p>
+        <p class="center muted">${L('a cambio de', 'in exchange for')}</p>
         <div class="trade-grid">${tradeItems(p, mine.give).map((it) => tradeTile(it)).join('')}</div>
-        <div class="row"><button class="btn primary" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="1">Aceptar</button><button class="btn" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="0">Rechazar</button></div>
+        <div class="row"><button class="btn primary" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="1">${L('Aceptar', 'Accept')}</button><button class="btn" data-a="answer" data-t="${mine.id}" data-c="${c.id}" data-ok="0">${L('Rechazar', 'Decline')}</button></div>
       </div>`;
   }
   const t = unansweredTrades().find((x) => !(ui.seenTrades || new Set()).has(x.id) || ui.counter.trade === x.id);
@@ -1228,11 +1380,11 @@ function renderTradePopup() {
     if (ui.counter.trade !== t.id) ui.counter = { trade: t.id, give: new Set() };
     return `
       <div class="card prep-win trade-pop">
-        <h3>${esc(o.name)} ofrece</h3>
+        <h3>${esc(o.name)} ${L('ofrece', 'offers')}</h3>
         <div class="trade-grid">${tradeItems(o, t.give).map((it) => tradeTile(it)).join('')}</div>
-        <h4>¿Qué le das a cambio?</h4>
-        ${items.length ? `<div class="trade-grid">${items.map((it) => tradeTile(it, { selected: ui.counter.give.has(it.id), attrs: `data-a="tcounter" data-id="${it.id}"` })).join('')}</div>` : '<p class="muted center">No tienes objetos para ofrecer.</p>'}
-        <div class="row"><button class="btn primary" data-a="counterSend" ${ui.counter.give.size ? '' : 'disabled'}>Ofrecer a cambio</button><button class="btn" data-a="counterSkip">No me interesa</button></div>
+        <h4>${L('¿Qué le das a cambio?', 'What will you give in return?')}</h4>
+        ${items.length ? `<div class="trade-grid">${items.map((it) => tradeTile(it, { selected: ui.counter.give.has(it.id), attrs: `data-a="tcounter" data-id="${it.id}"` })).join('')}</div>` : `<p class="muted center">${L('No tienes objetos para ofrecer.', 'You have no items to offer.')}</p>`}
+        <div class="row"><button class="btn primary" data-a="counterSend" ${ui.counter.give.size ? '' : 'disabled'}>${L('Ofrecer a cambio', 'Offer in return')}</button><button class="btn" data-a="counterSkip">${L('No me interesa', 'Not interested')}</button></div>
       </div>`;
   }
   return '';
@@ -1252,7 +1404,7 @@ function renderRound() {
     body = `
     <div class="card">
       ${p.combat ? renderCombat(p, false) : ''}
-      <p class="muted" style="margin-top:10px">Esperando a que terminen los demás héroes…</p>
+      <p class="muted" style="margin-top:10px">${L('Esperando a que terminen los demás héroes…', 'Waiting for the other heroes to finish…')}</p>
     </div>`;
   }
   return body;
@@ -1334,10 +1486,10 @@ function renderCombat(p, controllable) {
   let controls = '';
   let result = '';
   if (cb.kind === 'duelo' && cb.damage !== undefined) {
-    result = cb.damage > 0 ? `<div class="result win">¡Golpe! −${cb.damage} Vida</div>` : '<div class="result lose">Ataque fallido</div>';
-  } else if (cb.status === 'victoria') result = `<div class="result win">¡Victoria!</div>`;
-  else if (cb.status === 'derrota') result = `<div class="result lose">Derrota</div>`;
-  else if (cb.status === 'cancelado') result = `<div class="muted center">Combate terminado</div>`;
+    result = cb.damage > 0 ? `<div class="result win">${L('¡Golpe!', 'Hit!')} −${cb.damage} ${L('Vida', 'Life')}</div>` : `<div class="result lose">${L('Ataque fallido', 'Missed attack')}</div>`;
+  } else if (cb.status === 'victoria') result = `<div class="result win">${L('¡Victoria!', 'Victory!')}</div>`;
+  else if (cb.status === 'derrota') result = `<div class="result lose">${L('Derrota', 'Defeat')}</div>`;
+  else if (cb.status === 'cancelado') result = `<div class="muted center">${L('Combate terminado', 'Fight over')}</div>`;
 
   if (controllable && cb.status === 'activo') {
     const left = cb.maxRolls - cb.rolls;
@@ -1345,16 +1497,16 @@ function renderCombat(p, controllable) {
     const manaPot = [...p.hero.inv.pociones, ...p.hero.inv.pergaminos].find((it) => it.efecto === 'mana');
     controls = `<div class="controls">
       <div class="row">
-        ${cb.rolls === 0 ? '<button class="btn primary" data-a="roll">Atacar</button>' : ''}
-        ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>Relanzar ${rerollN}</button>` : ''}
+        ${cb.rolls === 0 ? `<button class="btn primary" data-a="roll">${L('Atacar', 'Attack')}</button>` : ''}
+        ${cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) ? `<button class="btn primary" data-a="roll" ${rerollN ? '' : 'disabled'}>${L('Relanzar', 'Reroll')} ${rerollN}</button>` : ''}
       </div>
       <div class="rolls-left">${cb.rolls}/${cb.maxRolls}</div>
-      ${cb.kind === 'batalla' && !p.battleCursed && p.hero.manaDisponible >= 5 ? '<div class="duel-curse"><button class="btn curse-btn" data-a="duelCursePick" data-t="b">Maldecir</button></div>' : ''}
+      ${cb.kind === 'batalla' && !p.battleCursed && p.hero.manaDisponible >= 5 ? `<div class="duel-curse"><button class="btn curse-btn" data-a="duelCursePick" data-t="b">${L('Maldecir', 'Curse')}</button></div>` : ''}
       ${cb.kind === 'duelo' && S.tournament ? (() => { const m = S.tournament.matches.find((x) => x.started && !x.winner && (x.a === p.id || x.b === p.id)); return m ? duelCurseHtml(S.tournament, m) : ''; })() : ''}
-      ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? '<div class="muted small center">Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.</div>' : ''}
-      ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">Beber ${esc(manaPot.nombre)}</button></div>` : ''}
+      ${cb.kind !== 'duelo' && cb.rolls > 0 && left > 0 && cb.dice.some((d) => !d.fixed) && !(cb.cursed || []).length ? `<div class="muted small center">${L('Toca una esfera para marcarla o desmarcarla: las marcadas se relanzan.', 'Tap a sphere to mark or unmark it: marked spheres are rerolled.')}</div>` : ''}
+      ${manaPot ? `<div class="row"><button class="btn small" data-a="use" data-id="${manaPot.id}" data-efecto="mana">${L('Beber', 'Drink')} ${esc(itemLabel(manaPot))}</button></div>` : ''}
       ${cb.rolls > 0 && cb.kind === 'duelo' ? `<div class="row"><button class="btn small" data-a="endAttack">${duelBtnText(p, duelDamage(cb, faces))}</button></div>` : ''}
-      ${cb.rolls >= cb.maxRolls && cb.kind === 'monstruo' && !all.some((x) => x.ok) ? '<div class="row"><button class="btn small" data-a="concedeNow">Aceptar derrota</button></div>' : ''}</div>`;
+      ${cb.rolls >= cb.maxRolls && cb.kind === 'monstruo' && !all.some((x) => x.ok) ? `<div class="row"><button class="btn small" data-a="concedeNow">${L('Aceptar derrota', 'Accept defeat')}</button></div>` : ''}</div>`;
   }
 
   let foe = '';
@@ -1369,11 +1521,11 @@ function renderCombat(p, controllable) {
   <div class="combat">
     ${monster ? foesHtml(p, cb, all, controllable) : cb.kind === 'batalla' ? '' : cb.kind === 'duelo' ? `<div class="duel-target">${comboHtml(cb.combo, false)}</div>` : `<h2 class="center" style="margin:0">${esc(cb.label)}</h2>`}
     ${controllable || cb.kind === 'duelo' || cb.kind === 'batalla' ? '' : `<div class="rolls-count">${cb.rolls}/${cb.maxRolls}</div>`}
-    ${monster || cb.kind === 'duelo' || cb.kind === 'batalla' ? '' : `<div class="targetline"><span class="muted">Necesitas:</span>${comboHtml(cb.combo)}</div>`}
+    ${monster || cb.kind === 'duelo' || cb.kind === 'batalla' ? '' : `<div class="targetline"><span class="muted">${L('Necesitas:', 'You need:')}</span>${comboHtml(cb.combo)}</div>`}
     <div class="dice-zone"><div class="dice">${diceHtml}</div></div>
         ${result}
     ${controls}
-    ${cb.kind === 'duelo' ? '' : `<div class="events">${cb.events.slice().reverse().map((e) => `<div>${esc(e)}</div>`).join('')}</div>`}
+    ${cb.kind === 'duelo' ? '' : `<div class="events">${cb.events.slice().reverse().map((e) => `<div>${esc(trEvent(e))}</div>`).join('')}</div>`}
   </div>`;
 }
 
@@ -1381,19 +1533,32 @@ function renderCombat(p, controllable) {
 function duelBtnText(p, dmg) {
   const m = S.tournament && S.tournament.matches.find((x) => !x.winner && (x.a === p.id || x.b === p.id));
   const foe = m && byId(m.a === p.id ? m.b : m.a);
-  const name = foe ? esc(foe.name) : 'tu rival';
-  return dmg ? `Terminar: quitas ${dmg} de Vida a ${name}` : 'Terminar sin hacer daño';
+  const name = foe ? esc(foe.name) : L('tu rival', 'your rival');
+  return dmg ? L(`Terminar: quitas ${dmg} de Vida a ${name}`, `Finish: ${name} loses ${dmg} Life`) : L('Terminar sin hacer daño', 'Finish without damage');
 }
 
 
 
 // Efecto de una recompensa en pocas palabras (sin nombre).
 function rewardEffect(it) {
-  if (it.tipo === 'equipo') return `${it.slot === 'tunica' ? 'Maná' : 'Fuerza'} +${it.bonus}`;
-  if (it.efecto === 'mana') return `Maná +${it.valor}`;
-  if (it.efecto === 'curacion') return `Curación +${it.valor}`;
-  if (it.efecto === 'robo') return 'Robo';
-  return it.nombre;
+  if (it.tipo === 'equipo') return `${it.slot === 'tunica' ? L('Maná', 'Mana') : L('Fuerza', 'Strength')} +${it.bonus}`;
+  if (it.efecto === 'mana') return `${L('Maná', 'Mana')} +${it.valor}`;
+  if (it.efecto === 'curacion') return `${L('Curación', 'Healing')} +${it.valor}`;
+  if (it.efecto === 'robo') return L('Robo', 'Theft');
+  return itemLabel(it);
+}
+
+// Mensajes del combate que vienen del servidor (en español): se traducen al vuelo.
+function trEvent(e) {
+  if (LANG !== 'en') return e;
+  let m;
+  if ((m = e.match(/^Arrastra (\d+) maldición/))) return `Carries ${m[1]} curse(s): matching spheres will be cancelled.`;
+  if ((m = e.match(/^Tirada (\d+)$/))) return `Roll ${m[1]}`;
+  if (e.startsWith('Maleficio: una esfera acertada')) return 'Curse: a matching sphere is lost; reroll it';
+  if ((m = e.match(/^✨ Maná: fija (.*)$/))) return `✨ Mana: fixes ${m[1].split(', ').map((f) => FACE_LABEL_EN[f] || f).join(', ')}`;
+  if ((m = e.match(/: Maná (\d+) en este combate$/))) return `Mana ${m[1]} in this fight`;
+  if ((m = e.match(/^💚 Recupera (\d+) de Vida$/))) return `💚 Recovers ${m[1]} Life`;
+  return e;
 }
 
 // Los dos monstruos de la ronda, cada uno con lo que pide y su botón para derrotarlo.
@@ -1414,15 +1579,15 @@ function foeCard(p, cb, all, controllable, i, pos) {
   const chosen = done && cb.chosen === i;
   const can = controllable && !done && cb.rolls > 0 && st.ok;
   const state = done
-    ? (chosen ? '<div class="need ok">Derrotado</div>' : '')
+    ? (chosen ? `<div class="need ok">${L('Derrotado', 'Defeated')}</div>` : '')
     : '';
   return `
     <div class="foe-card ${pos} ${st.ok && !done && cb.rolls ? 'ready' : ''} ${isAim ? 'aim' : ''} ${chosen ? 'chosen' : ''}" ${pos !== 'center' ? `data-a="foeGo" data-i="${i}"` : ''}>
       <div class="foe-art">${monsterArt(m, 'duel-art')}</div>
-      <div class="foe-title">${esc(m.nombre)} <span class="muted small">${esc(m.tamano || '')}</span></div>
-      <div class="foe-dmg" title="Vida que pierdes si fallas">−${m.dano}</div>
+      <div class="foe-title">${esc(monsterName(m))} <span class="muted small">${esc(sizeName(m))}</span></div>
+      <div class="foe-dmg" title="${L('Vida que pierdes si fallas', 'Life you lose if you fail')}">−${m.dano}</div>
       ${pos === 'center' ? coveredComboHtml(p, cb, m, i) : ''}
-      ${pos === 'center' ? `<div class="foe-slot">${state}${can ? `<button class="btn primary defeat-btn" data-a="present" data-i="${i}">Derrotar a ${esc(m.nombre)}</button>` : ''}</div>
+      ${pos === 'center' ? `<div class="foe-slot">${state}${can ? `<button class="btn primary defeat-btn" data-a="present" data-i="${i}">${L(`Derrotar a ${esc(monsterName(m))}`, `Defeat the ${esc(monsterName(m))}`)}</button>` : ''}</div>
       <div class="rewards-sum">${m.rewards.map((it) => `<span>${shortName(it)}</span>`).join('')}</div>` : ''}
     </div>`;
 }
@@ -1440,17 +1605,17 @@ function coveredComboHtml(p, cb, m, i) {
 function foesHtml(p, cb, all, controllable) {
   const k = foeIndex(p, cb);
   const n = p.offers.length;
-  const dots = p.offers.map((m, i) => `<button class="car-dot ${i === k ? 'on' : ''} ${(all[i] || {}).ok && cb.rolls ? 'ok' : ''} ${cb.aim === i ? 'aim' : ''}" data-a="foeGo" data-i="${i}" aria-label="${esc(m.nombre)}"></button>`).join('');
+  const dots = p.offers.map((m, i) => `<button class="car-dot ${i === k ? 'on' : ''} ${(all[i] || {}).ok && cb.rolls ? 'ok' : ''} ${cb.aim === i ? 'aim' : ''}" data-a="foeGo" data-i="${i}" aria-label="${esc(monsterName(m))}"></button>`).join('');
   return `
   <div class="car-dots">${dots}</div>
   <div class="carousel" data-swipe="foes">
-    <button class="car-nav" data-a="foeGo" data-i="${k - 1}" ${k === 0 ? 'disabled' : ''} aria-label="Anterior">‹</button>
+    <button class="car-nav" data-a="foeGo" data-i="${k - 1}" ${k === 0 ? 'disabled' : ''} aria-label="${L('Anterior', 'Previous')}">‹</button>
     <div class="car-track">
       ${foeCard(p, cb, all, controllable, k - 1, 'side left')}
       ${foeCard(p, cb, all, controllable, k, 'center')}
       ${foeCard(p, cb, all, controllable, k + 1, 'side right')}
     </div>
-    <button class="car-nav" data-a="foeGo" data-i="${k + 1}" ${k === n - 1 ? 'disabled' : ''} aria-label="Siguiente">›</button>
+    <button class="car-nav" data-a="foeGo" data-i="${k + 1}" ${k === n - 1 ? 'disabled' : ''} aria-label="${L('Siguiente', 'Next')}">›</button>
   </div>`;
 }
 
@@ -1478,7 +1643,7 @@ function rivalCard(r, cb, pos, i) {
   const n = cb && cb.rolls ? cb.dice.filter((d) => d.face === r.color || d.face === 'multicolor').length : 0;
   const dmg = battleDamage(n);
   const want = Array.from({ length: 5 }, (_, k) => die(r.color, { cls: `target ${cb && cb.rolls ? (k < n ? 'got' : 'miss') : ''}` })).join('');
-  const st = r.combat && r.combat.status === 'activo' ? 'tirando…' : 'listo';
+  const st = r.combat && r.combat.status === 'activo' ? L('tirando…', 'rolling…') : L('listo', 'ready');
   return `
     <div class="foe-card ${pos} ${dmg && center ? 'ready' : ''}" ${!center ? `data-a="foeGo" data-i="${i}"` : ''}>
       ${!center && dmg ? `<div class="side-ok">−${dmg}</div>` : ''}
@@ -1487,7 +1652,7 @@ function rivalCard(r, cb, pos, i) {
       <div class="life duel-lifebar"><i style="width:${pct}%"></i><span>${r.hero.vida}</span></div>
       ${center ? `<div class="dice">${want}</div>
       <div class="muted small">${st}</div>
-      ${cb && cb.rolls && cb.status === 'activo' ? `<div class="foe-slot"><button class="btn ${dmg ? 'primary defeat-btn' : ''}" data-a="strike" data-id="${r.id}">${dmg ? `Golpear a ${esc(r.name)} · −${dmg}` : `Golpear a ${esc(r.name)} · sin daño`}</button></div>` : ''}` : ''}
+      ${cb && cb.rolls && cb.status === 'activo' ? `<div class="foe-slot"><button class="btn ${dmg ? 'primary defeat-btn' : ''}" data-a="strike" data-id="${r.id}">${dmg ? L(`Golpear a ${esc(r.name)} · −${dmg}`, `Strike ${esc(r.name)} · −${dmg}`) : L(`Golpear a ${esc(r.name)} · sin daño`, `Strike ${esc(r.name)} · no damage`)}</button></div>` : ''}` : ''}
     </div>`;
 }
 // Daño de tu golpe en la batalla: 3/4/5 esferas de su color → 2/4/6, más el extra por Fuerza.
@@ -1508,17 +1673,17 @@ function renderBattle() {
   const car = `
     <div class="car-dots">${dots}</div>
     <div class="carousel" data-swipe="foes">
-      <button class="car-nav" data-a="foeGo" data-i="${k - 1}" ${k === 0 ? 'disabled' : ''} aria-label="Anterior">‹</button>
+      <button class="car-nav" data-a="foeGo" data-i="${k - 1}" ${k === 0 ? 'disabled' : ''} aria-label="${L('Anterior', 'Previous')}">‹</button>
       <div class="car-track">${rivalCard(rivals[k - 1], cb, 'side left', k - 1)}${rivalCard(rivals[k], cb, 'center', k)}${rivalCard(rivals[k + 1], cb, 'side right', k + 1)}</div>
-      <button class="car-nav" data-a="foeGo" data-i="${k + 1}" ${k >= rivals.length - 1 ? 'disabled' : ''} aria-label="Siguiente">›</button>
+      <button class="car-nav" data-a="foeGo" data-i="${k + 1}" ${k >= rivals.length - 1 ? 'disabled' : ''} aria-label="${L('Siguiente', 'Next')}">›</button>
     </div>`;
   let mine = '';
   if (cb) mine = renderCombat(p, true);
-  else if (alive) mine = '<p class="center muted">Esperando a que los demás terminen de tirar…</p>';
-  else mine = '<p class="center muted">Has caído. Mira cómo acaba la batalla.</p>';
+  else if (alive) mine = `<p class="center muted">${L('Esperando a que los demás terminen de tirar…', 'Waiting for the others to finish rolling…')}</p>`;
+  else mine = `<p class="center muted">${L('Has caído. Mira cómo acaba la batalla.', 'You have fallen. Watch how the battle ends.')}</p>`;
   return `
     <div class="card duel-card battle-card">
-      <h2 class="duel-title">Batalla final · ronda ${t.round}</h2>
+      <h2 class="duel-title">${L('Batalla final · ronda', 'Final Battle · round')} ${t.round}</h2>
       ${car}
       ${mine}
     </div>`;
@@ -1571,9 +1736,9 @@ function duelCurseHtml(t, m) {
   const p = me();
   const rival = byId(m.a === S.me ? m.b : m.a);
   const target = m.attacker === rival.id ? m.turns : m.turns + 1;
-  if (p.duelCurseAt === target) return '<p class="muted small center">Maleficio lanzado.</p>';
+  if (p.duelCurseAt === target) return `<p class="muted small center">${L('Maleficio lanzado.', 'Curse cast.')}</p>`;
   if (p.hero.manaDisponible < 5) return '';
-  return `<div class="duel-curse"><button class="btn curse-btn" data-a="duelCursePick" data-t="${target}">Maldecir</button></div>`;
+  return `<div class="duel-curse"><button class="btn curse-btn" data-a="duelCursePick" data-t="${target}">${L('Maldecir', 'Curse')}</button></div>`;
 }
 
 // Juego en un mismo dispositivo: cuando al jugador activo no le toca nada y a
@@ -1590,10 +1755,10 @@ function renderHandoff() {
   const x = byId(n.id);
   return `
     <div class="card outcome handoff">
-      <div class="outcome-title">Turno de ${esc(n.name)}</div>
+      <div class="outcome-title">${L(`Turno de ${esc(n.name)}`, `${esc(n.name)}'s turn`)}</div>
       ${x && x.raza ? heroPortrait(x, 'duelist') : ''}
-      <p class="center muted">Pásale el dispositivo a <b>${esc(n.name)}</b>.</p>
-      <div class="row center-row"><button class="btn primary" data-a="setActive" data-id="${n.id}">Soy ${esc(n.name)}, empezar</button></div>
+      <p class="center muted">${L(`Pásale el dispositivo a <b>${esc(n.name)}</b>.`, `Hand the device to <b>${esc(n.name)}</b>.`)}</p>
+      <div class="row center-row"><button class="btn primary" data-a="setActive" data-id="${n.id}">${L(`Soy ${esc(n.name)}, empezar`, `I'm ${esc(n.name)}, start`)}</button></div>
     </div>`;
 }
 
@@ -1607,14 +1772,14 @@ function renderBattleCursePick() {
   const rows = t.alive.filter((id) => id !== S.me).map((id) => {
     const r = byId(id);
     const opts = [];
-    for (let n = 1; n <= max; n++) opts.push(`<button class="btn dc-opt" data-a="battleCurse" data-id="${id}" data-n="${n * 5}"><span class="dc-skulls">${skull.repeat(n)}</span><small>${n * 5} Maná</small></button>`);
+    for (let n = 1; n <= max; n++) opts.push(`<button class="btn dc-opt" data-a="battleCurse" data-id="${id}" data-n="${n * 5}"><span class="dc-skulls">${skull.repeat(n)}</span><small>${n * 5} ${L('Maná', 'Mana')}</small></button>`);
     return `<div class="dc-row"><div class="dc-who"><span class="sphere ${r.color}"></span> ${esc(r.name)}</div><div class="dc-opts">${opts.join('')}</div></div>`;
   }).join('');
   return `
     <div class="card outcome curse-pick">
-      <button class="modal-close" data-a="duelCursePick" data-t="" aria-label="Cerrar" title="Cerrar">×</button>
-      <div class="outcome-title">Maldecir</div>
-      <div class="muted">${lines('Cada calavera anula una esfera.', 'Solo en su próxima tirada.')}</div>
+      <button class="modal-close" data-a="duelCursePick" data-t="" aria-label="${L('Cerrar', 'Close')}" title="${L('Cerrar', 'Close')}">×</button>
+      <div class="outcome-title">${L('Maldecir', 'Curse')}</div>
+      <div class="muted">${lines(L('Cada calavera anula una esfera.', 'Each skull cancels one sphere.'), L('Solo en su próxima tirada.', 'Only on their next roll.'))}</div>
       ${rows}
     </div>`;
 }
@@ -1632,7 +1797,7 @@ function renderDuelCursePick() {
   const skull = '<img src="img/ui/calavera.webp" alt="">';
   const opts = [];
   for (let n = 1; n <= max; n++) {
-    opts.push(`<button class="btn dc-opt" data-a="duelCurse" data-n="${n * 5}"><span class="dc-skulls">${skull.repeat(n)}</span><small>${n * 5} Maná</small></button>`);
+    opts.push(`<button class="btn dc-opt" data-a="duelCurse" data-n="${n * 5}"><span class="dc-skulls">${skull.repeat(n)}</span><small>${n * 5} ${L('Maná', 'Mana')}</small></button>`);
   }
   return `
     <div class="card outcome curse-pick">
@@ -1647,11 +1812,11 @@ function renderEnd() {
   const w = byId(S.winner);
   return `
   <div class="card winner-banner end-card">
-    <img class="end-logo" src="img/logo-tinta.webp" alt="Héroes">
+    <img class="end-logo" src="img/logo-tinta.webp" alt="${L('Héroes', 'Heroes')}">
     ${heroPortrait(w, 'end')}
-    <div class="end-victory">Victoria</div>
+    <div class="end-victory">${L('Victoria', 'Victory')}</div>
     <p class="center"><b>${esc(w.name)}</b> · ${raceName(w)} ${className(w)}</p>
-    <button class="btn primary" data-a="leave">Volver al inicio</button>
+    <button class="btn primary" data-a="leave">${L('Volver al inicio', 'Back to start')}</button>
   </div>`;
 }
 
@@ -1662,9 +1827,9 @@ function renderRewardsView(p) {
   if (!m || S.phase !== 'combat') { ui.rewardsView = null; return ''; }
   return `
     <div class="card outcome rewards-view">
-      <button class="modal-close" data-a="closeRewards" aria-label="Cerrar" title="Cerrar">×</button>
-      <div class="outcome-title">Recompensas</div>
-      <p class="center muted">${esc(m.nombre)} ${esc((m.tamano || '').toLowerCase())}: si lo derrotas, eliges una.</p>
+      <button class="modal-close" data-a="closeRewards" aria-label="${L('Cerrar', 'Close')}" title="${L('Cerrar', 'Close')}">×</button>
+      <div class="outcome-title">${L('Recompensas', 'Rewards')}</div>
+      <p class="center muted">${L(`${esc(monsterFull(m))}: si lo derrotas, eliges una.`, `${esc(monsterFull(m))}: if you defeat it, you choose one.`)}</p>
       <div class="reward-pick">${m.rewards.map((it) => `
         <div class="reward-choice static">
           <span class="big-item">${itemIcon(it)}</span>
@@ -1714,9 +1879,9 @@ function modalHtml() {
       <div class="big-item center">${itemIcon(pend.item)}</div>
       <h2>${itemName(pend.item)}</h2>
       <p class="muted center">${itemDesc(pend.item)}</p>
-      ${lines('No tienes sitio para este objeto.', '¿Qué haces?')}
-      <div class="opts">${pend.options.map((o) => `<button class="btn ${o.torpe ? 'torpe' : 'primary'}" data-a="pending" data-c="${o.id}">${esc(o.label)}</button>`).join('')}</div>
-      ${pend.fromReward ? '<div class="row"><button class="link-btn" data-a="undoReward">Deshacer y volver a elegir recompensa</button></div>' : ''}
+      ${lines(L('No tienes sitio para este objeto.', 'You have no room for this item.'), L('¿Qué haces?', 'What do you do?'))}
+      <div class="opts">${pend.options.map((o) => `<button class="btn ${o.torpe ? 'torpe' : 'primary'}" data-a="pending" data-c="${o.id}">${esc((LANG === 'en' && o.labelEn) || o.label)}</button>`).join('')}</div>
+      ${pend.fromReward ? `<div class="row"><button class="link-btn" data-a="undoReward">${L('Deshacer y volver a elegir recompensa', 'Undo and choose the reward again')}</button></div>` : ''}
     </div>`;
 }
 
@@ -1729,7 +1894,7 @@ document.addEventListener('click', (e) => {
   const d = el.dataset;
   switch (a) {
     case 'copy':
-      navigator.clipboard?.writeText(d.text).then(() => toast('Enlace copiado'), () => {});
+      navigator.clipboard?.writeText(d.text).then(() => toast(L('Enlace copiado', 'Link copied')), () => {});
       break;
     case 'item': ui.detail = d.id; renderModal(); break;
     case 'closeDetail': ui.detail = null; renderModal(); break;
@@ -1737,8 +1902,9 @@ document.addEventListener('click', (e) => {
     case 'addBot': act('addBot'); break;
     case 'addLocal': {
       const used = new Set(S.players.map((x) => x.name));
-      const def = ['Jugador 2', 'Jugador 3', 'Jugador 4'].find((n) => !used.has(n)) || 'Jugador';
-      const name = (window.prompt('Nombre del jugador que juega en este dispositivo', def) || '').trim();
+      const base = L('Jugador', 'Player');
+      const def = [2, 3, 4].map((k) => `${base} ${k}`).find((n) => !used.has(n)) || base;
+      const name = (window.prompt(L('Nombre del jugador que juega en este dispositivo', 'Name of the player on this device'), def) || '').trim();
       if (name) socket.emit('addLocal', { name }, (res) => { if (res && !res.ok) toast(res.error); });
       break;
     }
@@ -1756,7 +1922,7 @@ document.addEventListener('click', (e) => {
     case 'clase': act('setHero', { clase: d.k }); break;
     case 'ready': act('ready', { value: d.v === '1' }); break;
     case 'discard':
-      if (confirm('¿Descartar este objeto?')) { act('discard', { itemId: d.id }); ui.detail = null; }
+      if (confirm(L('¿Descartar este objeto?', 'Discard this item?'))) { act('discard', { itemId: d.id }); ui.detail = null; }
       break;
     case 'use':
       ui.detail = null;
@@ -1831,13 +1997,13 @@ document.addEventListener('click', (e) => {
     case 'endAttack': act('concede'); break;
     case 'concedeNow': act('concede'); break;
     case 'concede':
-      if (confirm('¿Aceptar la derrota?')) act('concede');
+      if (confirm(L('¿Aceptar la derrota?', 'Accept defeat?'))) act('concede');
       break;
     case 'rival': act('chooseRival', { rivalId: d.id }); break;
     case 'undoReward': act('undoReward'); break;
     case 'pending': act('resolvePending', { choice: d.c }); break;
     case 'exit':
-      if (!confirm('¿Salir de la sala? Podrás volver con el mismo enlace.')) break;
+      if (!confirm(L('¿Salir de la sala? Podrás volver con el mismo enlace.', 'Leave the room? You can come back with the same link.'))) break;
       saveSession(null);
       location.href = location.pathname;
       break;
@@ -1878,3 +2044,6 @@ document.addEventListener('click', (e) => {
     render();
   }, { passive: true });
 })();
+
+$('langBtn').onclick = () => setLang(LANG === 'en' ? 'es' : 'en');
+applyStaticTexts();

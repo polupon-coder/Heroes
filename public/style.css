@@ -1687,3 +1687,13 @@ body.at-home .home-play {
   filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .6));
 }
 @media (max-width: 760px), (orientation: portrait) { body.at-home .home-play { width: 132px; height: 128px; } }
+
+/* Selector de idioma ES / EN */
+.lang-btn {
+  display: inline-flex; gap: 2px; align-items: center; padding: 3px 4px; border-radius: 8px; cursor: pointer;
+  border: 1px solid rgba(122, 82, 40, .55); background: rgba(246, 236, 214, .92); font-family: var(--title, serif); font-size: .78rem; letter-spacing: .05em;
+}
+.lang-btn span { padding: 2px 5px; border-radius: 5px; color: #8a6a48; }
+.lang-btn span.on { background: #7a2a1e; color: #f6ecd6; }
+/* El idioma se elige en la portada; durante la partida no ocupa sitio en la barra */
+body:not(.at-home) .lang-btn { display: none; }

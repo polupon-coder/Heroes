@@ -87,6 +87,18 @@ function makeConsumable(rng, level, tipo, nextId, opts = {}) {
   return { id: nextId(), tipo, efecto, grado, valor: efecto === 'robo' ? 0 : valor, nombre };
 }
 
+// Nombre en inglés de cualquier objeto (se calcula a partir de sus datos).
+const EN_EQUIPO = { espada: 'Sword', maza: 'Mace', arco: 'Bow', hacha: 'Axe', baculo: 'Staff', cayado: 'Crook', escudo: 'Shield', cota: 'Armor', yelmo: 'Helmet', armadura: 'Armor', tunica: 'Robe', botas: 'Boots' };
+function nameEn(it) {
+  if (!it) return '';
+  if (it.tipo === 'equipo') return `${EN_EQUIPO[it.forma] || EN_EQUIPO[it.slot] || 'Item'} +${it.bonus}`;
+  const base = it.tipo === 'pocion' ? 'Potion' : 'Scroll';
+  if (it.efecto === 'mana') return `${base} of Mana +${it.valor}`;
+  if (it.efecto === 'curacion') return `${base} of Healing +${it.valor}`;
+  if (it.efecto === 'robo') return `${base} of Theft`;
+  return it.nombre;
+}
+
 function makeReward(rng, level, nextId, inv, opts = {}) {
   const r = rng();
   const w = C.REWARD_WEIGHTS;
@@ -190,12 +202,12 @@ function conflictOptions(inv, item, conflicts) {
   // «Poco lógico»: tirar algo mejor de lo que te quedas (para marcarlo más suave).
   const val = (it) => (it.tipo === 'equipo' ? it.bonus : it.valor || 0);
   const minOld = Math.min(...conflicts.map(val));
-  const opts = [{ id: 'descartar', label: `Descartar ${item.nombre}`, torpe: val(item) > minOld }];
+  const opts = [{ id: 'descartar', label: `Descartar ${item.nombre}`, labelEn: `Discard ${nameEn(item)}`, torpe: val(item) > minOld }];
   if (item.slot === 'dosManos') {
     const sum = conflicts.reduce((s, c) => s + val(c), 0);
-    opts.push({ id: 'todas', label: `Descartar ${conflicts.map((c) => c.nombre).join(' y ')}`, torpe: sum >= val(item) });
+    opts.push({ id: 'todas', label: `Descartar ${conflicts.map((c) => c.nombre).join(' y ')}`, labelEn: `Discard ${conflicts.map(nameEn).join(' and ')}`, torpe: sum >= val(item) });
   } else {
-    for (const c of conflicts) opts.push({ id: c.id, label: `Descartar ${c.nombre}`, torpe: val(c) > val(item) || val(c) > minOld });
+    for (const c of conflicts) opts.push({ id: c.id, label: `Descartar ${c.nombre}`, labelEn: `Discard ${nameEn(c)}`, torpe: val(c) > val(item) || val(c) > minOld });
   }
   return opts;
 }
@@ -217,6 +229,7 @@ function resolveConflict(inv, item, choice) {
 }
 
 module.exports = {
+  nameEn,
   SLOT_LABEL,
   makeReward,
   makeEquipment,

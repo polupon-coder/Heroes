@@ -1540,3 +1540,10 @@ body { font-size: 18px; font-weight: 600; }
 @media (max-width: 760px) { .choice .choice-body { height: 210px; } }
 /* todos los druidas a la misma altura: la caja tiene la proporción del más ancho (el del caldero) */
 .choice .choice-body { width: 100% !important; height: auto !important; aspect-ratio: 878 / 1000; object-fit: contain; object-position: bottom; }
+@media (max-width: 760px) {
+  /* el Prestigio del rival separado de la esfera de su mascota */
+  .rivals.wood .r-pet { right: -12px !important; bottom: -16px !important; }
+  .r-pet .pet-pic.free { width: 66px !important; height: 66px !important; }
+  .rivals > .rival { min-height: 160px !important; }
+  .rivals.wood .pts-ball { margin-top: -4px; }
+}

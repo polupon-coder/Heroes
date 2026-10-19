@@ -1182,3 +1182,16 @@ body { font-size: 18px; font-weight: 600; }
 .m-hero .pts-ball { margin-left: auto; }
 .r-sub { font-size: .85em; }
 .r-name { flex-wrap: wrap; min-width: 0; } .rivals.wood .r-head .pts-ball { margin-left: 6px; }
+/* hechizos y pociones del mismo tamaño que en los conocimientos */
+.mesa .spell-ico { width: auto !important; padding: 0 2px !important; }
+.mesa .spell-ico .card-icon.md, .mesa .spell-ico .card-icon.ill.md { width: 84px !important; height: 92px !important; }
+.mesa .spell-row { gap: 2px 6px !important; }
+.rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 66px !important; height: 72px !important; }
+.rivals .learned { width: 66px !important; height: 72px !important; }
+.rivals .r-learned { gap: 2px 4px !important; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .mesa .spell-ico .card-icon.md, .mesa .spell-ico .card-icon.ill.md { width: 62px !important; height: 66px !important; }
+  .rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 44px !important; height: 48px !important; }
+  .rivals .learned { width: 44px !important; height: 48px !important; }
+}
+@media (max-width: 1500px), (max-height: 920px) { .mesa .spell-name { display: none; } }

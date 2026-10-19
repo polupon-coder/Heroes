@@ -1256,3 +1256,10 @@ body { font-size: 18px; font-weight: 600; }
 }
 /* papiro del personaje algo más bajo: más sitio para los ingredientes */
 .mesa > .m-hero { flex-grow: 1.25 !important; }
+/* El Claro algo más abajo, para no quedar bajo los avisos */
+.claro-area { padding-top: 56px; }
+.ring { width: min(100%, 720px, calc((100vh - 360px) * 1.2)) !important; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .claro-area { padding-top: 48px; }
+  .ring { width: min(100%, 560px, calc((100vh - 370px) * 1.25)) !important; }
+}

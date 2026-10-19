@@ -25,7 +25,7 @@ function setLang(l) {
 function applyStaticTexts() {
   document.documentElement.lang = LANG;
   const set = (id, es, en) => { const el = $(id); if (el) el.textContent = L(es, en); };
-  const logo = D && D.img.ui.titulo;
+  const logo = D && ((LANG === 'en' && D.img.ui['titulo-en']) || D.img.ui.titulo);
   for (const id of ['homeH1', 'brand']) {
     const el = $(id);
     if (logo) el.innerHTML = `<img class="title-art" src="${logo}" alt="${L('Escuela de Magia', 'School of Magic')}">`;

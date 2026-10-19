@@ -87,7 +87,7 @@ function costHtml(coste) {
 function druidPortrait(id, cls = '') {
   const info = D.druidas[id];
   if (!info) return '';
-  const tall = /\b(xl|full)\b/.test(cls);
+  const tall = /\b(xl|full|hero)\b/.test(cls);
   const img = tall ? D.img.druidas[id] : (D.img.retratos[id] || D.img.druidas[id]);
   if (img) return `<span class="portrait ${cls} ${tall ? 'body' : ''}" style="--c:${info.hex}"><img src="${img}" alt="${esc(info.nombre)}"></span>`;
   return `<span class="portrait ph ${cls}" style="--c:${info.hex}" title="${esc(info.nombre)}"><svg viewBox="0 0 40 40" aria-hidden="true">
@@ -374,7 +374,7 @@ function renderCatalog() {
       ${known ? '<span class="kc-done" title="Aprendido">✓</span>' : `<span class="kc-copies" title="Copias en el catálogo">×${S.catalogo[id] || 0}</span>`}
     </button>`;
   }).join('');
-  $('catalog').innerHTML = `<h2 class="ptitle">Conocimientos</h2><div class="kcs">${cards}</div>`;
+  $('catalog').innerHTML = `<div class="kcs">${cards}</div>`;
 }
 
 function petUsable() {
@@ -398,7 +398,7 @@ function resClickable() {
 const usosHtml = (p) => `${'●'.repeat(p.usos)}${'○'.repeat(Math.max(0, D.mascotas[p.mascota].usos - p.usos))}`;
 const prestigeHtml = (n, cls = '') => `<span class="prestige-badge ${cls}" title="Prestigio">${tok('lumen', { cls: 'sm' })}<b>${n}</b></span>`;
 
-// Posiciones de los 6 espacios de El Claro dentro del círculo de piedras.
+// Los 6 espacios de El Claro, en corro; cada ingrediente sobre su propio círculo de piedras.
 const CLARO_ANG = [-90, -30, 30, 90, 150, 210];
 
 function renderClaro() {
@@ -406,27 +406,18 @@ function renderClaro() {
   const pick = isMyTurn() && t && t.paso === 'recoger' && !ui.mode;
   const clickable = pick || ui.mode === 'pensar' || (ui.mode === 'chispa' && ui.chispaTipo);
   const pend = me().estudio ? me().estudio.pend : {};
-  const art = D.img.ui['claro-piedras'];
-  const stones = art ? '' : Array.from({ length: 18 }, (_, i) => {
-    const a = (i / 18) * Math.PI * 2 + 0.17;
-    return `<span class="stone" style="left:${50 + 44 * Math.cos(a)}%;top:${50 + 43 * Math.sin(a)}%"></span>`;
-  }).join('');
   const claro = S.claro.length ? S.claro : new Array(6).fill(null);
   const slots = claro.map((c, i) => {
     const a = (CLARO_ANG[i] * Math.PI) / 180;
-    const pos = `style="left:${50 + (art ? 26 : 34) * Math.cos(a)}%;top:${50 + (art ? 27 : 36) * Math.sin(a)}%"`;
+    const pos = `style="left:${50 + 33 * Math.cos(a)}%;top:${50 + 34 * Math.sin(a)}%"`;
+    const inner = c ? tok(c, { cls: 'xxl' }) : '';
     if (!c) return `<span class="cslot empty" ${pos}></span>`;
     const on = ui.sel.includes(i);
     const hint = ui.mode === 'pensar' && !(pend[c] > 0) ? 'dim' : '';
-    return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos}>${tok(c, { cls: 'xxl' })}</button>`
-      : `<span class="cslot" ${pos}>${tok(c, { cls: 'xxl' })}</span>`;
+    return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos} title="${N(c)}">${inner}</button>`
+      : `<span class="cslot" ${pos} title="${N(c)}">${inner}</span>`;
   }).join('');
-  const bg = art ? ` style="background-image:url(${art})"` : '';
-  $('claro').innerHTML = `
-    <div class="ring ${art ? 'with-art' : ''}"${bg}>${stones}${slots}
-      <span class="claro-label">El Claro</span>
-      <span class="bag-pill" title="Ingredientes en la bolsa">👜 ${sum(S.bolsa)}</span>
-    </div>`;
+  $('claro').innerHTML = `<div class="ring">${slots}<span class="bag-pill" title="Ingredientes en la bolsa">👜 ${sum(S.bolsa)}</span></div>`;
 }
 
 function studyHtml(p, t) {
@@ -462,37 +453,34 @@ function renderMesa() {
   const spells = ['chispa', 'burbuja', ...p.aprendidas.filter((id) => D.cartas[id].tipo === 'hechizo')].map((id) => {
     const c = card(id);
     const live = id !== 'burbuja' && !c.ataque && canCast(id);
-    return `<button class="chip-card ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.nombre)}: ${esc(c.texto)}">
-      ${cardIcon(id, 'sm')}<span>${esc(c.nombre)}</span></button>`;
+    return `<button class="spell-ico ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.nombre)}: ${esc(c.texto)}">
+      ${cardIcon(id, 'md')}<span>${esc(c.nombre)}</span></button>`;
   }).join('');
   const recipes = p.aprendidas.filter((id) => D.cartas[id].tipo === 'pocion');
   const boxes = [0, 1].map((i) => {
     const id = p.pociones[i];
-    if (!id) return `<div class="potion-box empty" title="Hueco para una poción preparada">${kindIcon('pocion', 'ghost')}</div>`;
+    if (!id) return `<span class="spell-ico empty" title="Hueco para una poción preparada">${kindIcon('pocion', 'ghost')}</span>`;
     const c = D.cartas[id];
     const live = !c.ataque && canCast(id);
-    return `<button class="potion-box ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.nombre)}: ${esc(c.texto)}">
-      ${cardIcon(id, 'sm')}<span>${esc(c.nombre)}</span></button>`;
+    return `<button class="spell-ico potion ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.nombre)}: ${esc(c.texto)}">
+      ${cardIcon(id, 'md')}<span>${esc(c.nombre)}</span></button>`;
   }).join('');
   const prep = recipes.filter(canPrepare).map((id) => `<button class="btn tiny" data-a="prep" data-v="${id}" title="Preparar ${esc(D.cartas[id].nombre)}">${cardIcon(id, 'xs')} ${costHtml(D.cartas[id].coste)}</button>`).join('');
   $('mesa').innerHTML = `
-    <section class="m-me">
-      ${druidPortrait(p.druida, 'mid')}
-      <div class="m-me-info">
-        <b class="m-name">${esc(p.name)}</b>
-        ${prestigeHtml(p.puntos)}
-        <span class="magic ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Te queda la magia de este turno' : 'Ya has usado tu magia en este turno'}">✦ ${p.magiaLibre ? 'magia' : 'usada'}</span>${p.dormido ? ' 💤' : ''}
-      </div>
-    </section>
-    <section class="m-pet">
-      ${petPortrait(p.mascota, 'lg2')}
+    <div class="m-hero">
+      ${druidPortrait(p.druida, 'hero')}
+      <div class="m-pet-pic" title="${esc(pet.nombre)}: ${esc(pet.texto)}">${petPortrait(p.mascota, 'free')}</div>
+      <div class="m-name-row"><b class="m-name">${esc(p.name)}</b>${prestigeHtml(p.puntos)}</div>
+    </div>
+    <div class="m-row">
       <button class="skill ${petOn ? 'on' : ''} ${petUsable() ? 'live' : ''}" data-a="habilidad" ${petUsable() ? '' : 'disabled'} title="${esc(pet.nombre)}: ${esc(pet.texto)}">
         ${esc(pet.don)} <span class="usos">${usosHtml(p)}</span></button>
-    </section>
-    <section class="m-res"><h4 title="Al final de tu turno, como máximo ${D.limiteReserva}">Reserva ${sum(p.reserva)}/${D.limiteReserva}</h4><div class="ing-row">${ings}</div></section>
-    <section class="m-study"><h4>En estudio</h4>${studyHtml(p, t)}</section>
-    <section class="m-spells"><h4>${kindIcon('hechizo', 'sm')}Hechizos</h4><div class="chip-row">${spells}</div></section>
-    <section class="m-potions"><h4>${kindIcon('pocion', 'sm')}Pociones</h4><div class="potion-row">${boxes}</div>
+      <span class="magic ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Te queda la magia de este turno' : 'Ya has usado tu magia en este turno'}">✦ ${p.magiaLibre ? 'magia' : 'usada'}</span>${p.dormido ? ' 💤' : ''}
+    </div>
+    <section><h4 title="Al final de tu turno, como máximo ${D.limiteReserva}">Reserva ${sum(p.reserva)}/${D.limiteReserva}</h4><div class="ing-row">${ings}</div></section>
+    <section><h4>En estudio</h4>${studyHtml(p, t)}</section>
+    <section><h4>${kindIcon('hechizo', 'sm')}Hechizos</h4><div class="spell-row">${spells}</div></section>
+    <section><h4>${kindIcon('pocion', 'sm')}Pociones</h4><div class="spell-row">${boxes}</div>
       ${prep ? `<div class="prep-row">Preparar: ${prep}</div>` : ''}</section>`;
 }
 
@@ -841,6 +829,17 @@ document.addEventListener('change', (e) => {
 $('modal').addEventListener('click', (e) => {
   if (e.target === $('modal') && ui.modal && ui.modal.kind !== 'descartar') { ui.modal = null; renderModal(); }
 });
+
+function closeMenu() {
+  $('menu').classList.add('hidden');
+  $('menuBtn').setAttribute('aria-expanded', 'false');
+}
+$('menuBtn').onclick = (e) => {
+  e.stopPropagation();
+  const open = $('menu').classList.toggle('hidden');
+  $('menuBtn').setAttribute('aria-expanded', String(!open));
+};
+document.addEventListener('click', (e) => { if (!e.target.closest('#menuBtn')) closeMenu(); }, true);
 
 $('rulesBtn').onclick = () => {
   if (!D) return;

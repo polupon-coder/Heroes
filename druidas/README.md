@@ -33,7 +33,7 @@ Abre <http://localhost:3000>, escribe tu nombre y pulsa **Crear partida**. Compa
 
 ## Pantalla de juego
 
-El fondo es el claro del bosque. En el centro, **El Claro**: el círculo de piedras con los 6 ingredientes, sin caja. A la izquierda, los **Conocimientos** como fichas de iconos (pulsa una para ver la carta y estudiarla); a la derecha, los **Rivales**; y abajo, la **Mesa del druida** en una sola barra: tu druida, tu mascota con su habilidad, tu reserva, la receta en estudio, tus hechizos y tus pociones (se pulsan para usarlos). Todos los paneles van enmarcados con las ramitas de moras. Lo que toca hacer aparece en la barra de la cabecera. En pantallas más bajas todo se encoge para caber sin desplazarse; en móvil los paneles se apilan.
+El fondo es el claro del bosque. En el centro, **El Claro**: los 6 ingredientes en corro, cada uno sobre su propio círculo de piedras. A la izquierda, la **Mesa del druida** sobre la mesa de madera: tu druida de cuerpo entero con tu mascota, la habilidad de la mascota, tu reserva, la receta en estudio, tus hechizos y tus pociones (se pulsan para usarlos). A la derecha, los **Rivales**, y abajo, la franja de **Conocimientos** (pulsa uno para ver la carta y estudiarla). Los paneles van enmarcados con ramitas de moras. Lo que toca hacer aparece en la cabecera, y el botón **Menú** abre las reglas, la crónica con el chat y la pantalla principal. En pantallas más bajas todo se encoge para caber sin desplazarse; en móvil los paneles se apilan.
 
 ## Ilustraciones
 

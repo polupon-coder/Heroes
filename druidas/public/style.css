@@ -1706,3 +1706,13 @@ body { font-size: 18px; font-weight: 600; }
 .parch-card .kcard .art { width: auto !important; max-width: 100%; display: flex; justify-content: center; }
 .parch-card .kcard .art img { height: min(26vh, 200px) !important; width: auto !important; max-width: 100%; }
 .modal-card.parch-card { max-height: calc(100dvh - 24px); }
+/* ventana de carta: todo cabe, botón incluido */
+.parch-card .kcard { gap: 4px; }
+.parch-card .kcard .art img { height: min(20vh, 180px) !important; }
+.parch-card .kcard .kname { font-size: 1.6em; }
+.parch-card .kcard .ktext { margin: 2px 0; line-height: 1.3; }
+.parch-card .kcard .req .tok, .parch-card .kcard .req .tok.sm { width: 38px; height: 38px; }
+.parch-card .row.end { margin-top: 6px; }
+@media (max-width: 760px) {
+  .modal-card.parch-card { border-width: 46px 16px !important; border-image-width: 46px 16px !important; padding: 0 12px !important; font-size: .95em; }
+}

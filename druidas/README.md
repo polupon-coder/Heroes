@@ -47,7 +47,7 @@ El juego muestra dibujos provisionales hasta que estén las ilustraciones. Basta
 | `public/img/mascotas/` | `lechuza`, `zorro`, `liebre`, `cervatillo` ✅ |
 | `public/img/cartas/` | iconos de magia: `chispa`, `burbuja`, `robo`, `cambio`, `idea`, `lio`, `memoria`, `sueno`, `suerte`, `pensar` ✅ |
 | `public/img/ingredientes/` | `eter`, `umbra`, `lumen`, `raiz` ✅ |
-| `public/img/ui/` | `claro` y `claro-fondo` (suelo del bosque; el segundo es el fondo de la página), `claro-piedras` (círculo de piedras, fondo transparente), `mesa` (mesa de madera de fondo), y los adornos `rama` (bajo los títulos), `corona` (mascotas), `marco-ovalo` (hechizos y pociones), `marco-retrato` (tu druida) y `marco-carta` (cartas); `libro` (reglas), `libro-perspectiva` (portada), `pergamino` (crónica y resultados), `pocion`, `pocion-vacia` (frasco sin líquido para los conocimientos) y `hechizo` (símbolos de tipo) ✅ |
+| `public/img/ui/` | `claro` y `claro-fondo` (suelo del bosque; el segundo es el fondo de la página), `claro-piedras` (círculo de piedras, fondo transparente), `mesa` (mesa de madera), `mesa-vertical` (opcional: fondo completo de la columna de tu personaje), y los adornos `rama` (bajo los títulos), `corona` (mascotas), `marco-ovalo` (hechizos y pociones), `marco-retrato` (tu druida) y `marco-carta` (cartas); `libro` (reglas), `libro-perspectiva` (portada), `pergamino` (crónica y resultados), `pocion`, `pocion-vacia` (frasco sin líquido para los conocimientos) y `hechizo` (símbolos de tipo) ✅ |
 
 `tools/preparar_arte.py` recorta y prepara las ilustraciones originales (hojas de mascotas y fichas, quitar fondos y el pergamino de los adornos, tamaños web).
 

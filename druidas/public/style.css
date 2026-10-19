@@ -1630,3 +1630,20 @@ body { font-size: 18px; font-weight: 600; }
 .choice.pet .pet-pic img { width: 100% !important; height: 100% !important; max-width: 100%; object-fit: contain; }
 .choice.pet > span { font: 700 1.15em var(--title); }
 .choice.pet small { font-size: .85em; line-height: 1.25; }
+
+/* ---- botones grandes: marco de madera con hiedra (img/ui/boton) ---- */
+.btn.primary, .float-act .btn, .home-actions .btn, .lobby .row .btn, .parch-card .row .btn {
+  background: none !important; box-shadow: none !important; border-radius: 0 !important;
+  border-style: solid !important; border-color: transparent !important;
+  border-width: 14px 34px !important;
+  border-image: url(img/ui/boton.webp) 58 150 58 150 fill / 14px 34px / 0 stretch !important;
+  color: #3f2610 !important; font: 700 1.05em var(--text) !important; text-shadow: 0 1px 0 rgba(255, 240, 210, .6);
+  padding: 2px 6px !important; min-height: 0; line-height: 1.15;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .35)); transition: transform .12s, filter .12s;
+}
+.btn.primary:hover:not(:disabled), .float-act .btn:hover:not(:disabled), .home-actions .btn:hover:not(:disabled),
+.lobby .row .btn:hover:not(:disabled), .parch-card .row .btn:hover:not(:disabled) {
+  transform: translateY(-1px); filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .4)) brightness(1.06);
+}
+.btn.primary:disabled, .lobby .row .btn:disabled { opacity: .55; filter: grayscale(.4); }
+.float-act .btn.attack { color: var(--attack) !important; }

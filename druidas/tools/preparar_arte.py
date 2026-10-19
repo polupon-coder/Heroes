@@ -161,6 +161,12 @@ def libro_inclinado():
     save(fit(cut.crop(alpha.point(lambda v: 255 if v > 20 else 0).getbbox()), 1500), 'ui', 'libro-perspectiva', q=86)
 
 
+def boton():
+    """Marco de madera con hiedra (hoja 43) para los botones grandes."""
+    im = cut_background(load(43), thr=24, feather=1.2, erode=3)
+    save(fit(im, 1000), 'ui', 'boton', q=88)
+
+
 def libros_e_iconos():
     # Libros y pergamino: se quita solo el fondo exterior (las páginas quedan).
     save(fit(cut_background(load(18), thr=28, feather=1), 1500), 'ui', 'libro', q=84)
@@ -405,6 +411,8 @@ if __name__ == '__main__':
         escenario_y_fichas()
     if 'adornos' in que:
         adornos()
+    if 'boton' in que:
+        boton()
     if 'libros' in que:
         libros_e_iconos()
     if 'simbolos' in que:

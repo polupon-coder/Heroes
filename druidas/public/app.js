@@ -367,9 +367,8 @@ function renderCatalog() {
     const dots = ING().map((t) => tok(t, { cls: 'dot flat', flat: true }).repeat(c.req[t] || 0)).join('');
     return `<button class="kc ${c.tipo} ${c.ataque ? 'attack' : ''} ${known ? 'known' : ''} ${pick && !known && S.catalogo[id] > 0 ? 'pickable' : ''}"
         data-a="info" data-v="${id}" title="${esc(c.nombre)}: ${esc(c.texto)}">
-      <span class="kc-kind">${kindIcon(c.tipo)}</span>
       <span class="kc-pts" title="Prestigio">${c.puntos}</span>
-      <span class="kc-icon">${cardIcon(id)}</span>
+      <span class="kc-icon ${c.tipo === 'pocion' ? 'flask' : 'scroll'}" title="${c.tipo === 'pocion' ? 'Poción' : 'Hechizo'}">${cardIcon(id)}</span>
       <span class="kc-name">${esc(c.nombre)}</span>
       <span class="kc-req" title="Para aprenderlo">${dots}</span>
       ${known ? '<span class="kc-done" title="Aprendido">✓</span>' : `<span class="kc-copies" title="Copias en el catálogo">×${S.catalogo[id] || 0}</span>`}

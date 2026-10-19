@@ -25,11 +25,15 @@ Abre <http://localhost:3000>, escribe tu nombre y pulsa **Crear partida**. Compa
 
 ## Cómo se juega en la web
 
-- **Tu turno:** 1) *Recoger*: pulsa 3 ingredientes de El Claro (5 con el Zorro). 2) *Ataques*: los rivales tienen unos segundos para atacarte; si te atacan, puedes defenderte con Burbuja. 3) *Estudiar*: elige un conocimiento del catálogo y pulsa ingredientes de tu reserva para colocarlos. 4) *Preparar*: prepara una poción que conozcas. Si acabas con más de 6 ingredientes, eliges cuáles devuelves.
-- **Magia:** los botones **Lanzar** y **Beber** de tu mesa se activan cuando puedes usarlos, también durante los turnos rivales (un efecto por jugador en cada turno). Chispa es gratis una vez en tu turno.
+- **Tu turno:** 1) *Recoger*: pulsa 3 ingredientes de El Claro (5 con el Zorro). 2) *Ataques*: los rivales tienen unos segundos para atacarte; si te atacan, puedes defenderte con Burbuja. 3) *Estudiar*: elige un conocimiento disponible y pulsa ingredientes de tu reserva para colocarlos. 4) *Preparar*: prepara una poción que conozcas. Si acabas con más de 6 ingredientes, eliges cuáles devuelves.
+- **Magia:** los hechizos y las pociones de la Mesa del druida se iluminan cuando puedes usarlos (púlsalos), también durante los turnos rivales (un efecto por jugador en cada turno). Chispa es gratis una vez en tu turno.
 - **Ataques (Robo, Lío y Sueño):** cuando el jugador activo termina de recoger, a cada rival que puede atacar le aparecen los botones de ataque. Si atacan varios, se resuelve el primero en el orden de juego. Si nadie decide a tiempo (25 s), se sigue sin ataque.
 - **Todo es público:** se ven las reservas, las recetas en estudio y las pociones preparadas de todos.
 - **Reconexión:** si se cierra el navegador, al volver a abrir el enlace vuelves a tu partida.
+
+## Pantalla de juego
+
+Sigue el esquema de interfaz (PC, 1920 × 1080): arriba los **Conocimientos disponibles** (pulsa uno para ver la carta y estudiarla); en el centro **Druida activo** (tu druida, tu mascota con su habilidad especial y tu reserva), **El Claro** y la **Receta en estudio**; abajo la **Mesa del druida** (ingredientes por tipo, hechizos aprendidos y pociones preparadas, que se pulsan para usarlos), y a la derecha los **Druidas rivales**. Lo que toca hacer en cada momento aparece en la barra de la cabecera. En pantallas más pequeñas los paneles se apilan.
 
 ## Ilustraciones
 

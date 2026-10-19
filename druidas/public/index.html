@@ -6,16 +6,22 @@
   <title>Escuela de Magia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">Escuela de Magia</div>
-    <div id="status" class="status"></div>
-    <button id="rulesBtn" class="btn ghost small">Reglas</button>
-    <button id="logBtn" class="btn ghost small hidden">Crónica</button>
-    <span id="roomInfo" class="room-info"></span>
+    <div class="titleblock">
+      <div class="brand">Escuela de Magia</div>
+      <div id="sub" class="sub">El bosque de los druidas</div>
+    </div>
+    <div id="roundPill" class="round-pill hidden"></div>
+    <div id="prompt" class="prompt hidden"></div>
+    <div class="top-actions">
+      <button id="rulesBtn" class="btn ghost small">Reglas</button>
+      <button id="logBtn" class="btn ghost small hidden">Crónica</button>
+      <button id="homeBtn" class="btn green wide hidden" data-a="home">Pantalla principal</button>
+    </div>
   </header>
 
   <main id="home" class="home hidden">
@@ -24,6 +30,7 @@
         <h1>Escuela de Magia</h1>
         <p class="subtitle">El bosque de los druidas</p>
       </div>
+      <div id="backRow"></div>
       <input id="nameInput" class="input" maxlength="20" placeholder="Tu nombre" aria-label="Tu nombre">
       <div class="home-actions">
         <button id="createBtn" class="btn primary">Crear partida</button>
@@ -39,15 +46,14 @@
   <main id="app" class="hidden">
     <section id="lobby" class="hidden"></section>
     <section id="table" class="table hidden">
-      <div id="prompt" class="prompt"></div>
-      <div class="board">
-        <section class="center">
-          <div id="claro" class="panel claro-panel"></div>
-          <div id="catalog" class="panel catalog-panel"></div>
-        </section>
-        <section id="mine" class="panel mine"></section>
-        <aside id="rivals" class="rivals"></aside>
+      <section id="catalog" class="panel catalog"></section>
+      <div class="mid">
+        <section id="active" class="panel active-panel"></section>
+        <section id="claro" class="panel claro-panel"></section>
+        <section id="study" class="panel study-panel"></section>
       </div>
+      <section id="mesa" class="panel mesa"></section>
+      <aside id="rivals" class="panel rivals"></aside>
     </section>
   </main>
 

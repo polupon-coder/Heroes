@@ -326,7 +326,7 @@ function renderLobby() {
   const list = S.players.map((x) => `
     <li>${druidPortrait(x.druida, 'sm')} ${petPortrait(x.mascota, 'sm')} <b>${esc(x.name)}</b>
       ${x.id === S.hostId ? `<span class="tag">${L('anfitrión', 'host')}</span>` : ''}${x.connected || x.bot ? '' : `<span class="tag off">${L('desconectado', 'offline')}</span>`}
-      ${host && x.id !== S.me ? `<button class="btn tiny ghost dark" data-a="kick" data-v="${x.id}">${L('Quitar', 'Remove')}</button>` : ''}</li>`).join('');
+      ${host && x.id !== S.me ? `<button class="btn tiny ghost dark kick" data-a="kick" data-v="${x.id}" title="${L('Quitar', 'Remove')}" aria-label="${L('Quitar', 'Remove')}">✕</button>` : ''}</li>`).join('');
   $('lobby').innerHTML = `
     <div class="lobby">
       <div class="panel lobby-side">

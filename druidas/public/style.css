@@ -1668,3 +1668,21 @@ body { font-size: 18px; font-weight: 600; }
 @media (max-width: 760px) { .btn.primary, .float-act .btn, .home-actions .btn, .lobby .row .btn, .parch-card .row .btn { --bh: 44px; font-size: 1em !important; } }
 /* requisitos que te faltan: el color del ingrediente, suave (no un círculo vacío) */
 .req-dot.miss { background: color-mix(in srgb, var(--c) 35%, #f4ead2) !important; border-color: color-mix(in srgb, var(--c) 45%, #f4ead2) !important; opacity: 1 !important; }
+@media (max-width: 760px) {
+  /* lista de aprendices: dentro del pergamino siempre */
+  .lobby .plist, .lobby .plist li { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
+  .lobby .plist li { flex-wrap: wrap; justify-content: center; gap: 6px 10px; padding: 8px !important; }
+  .lobby .plist .portrait.sm { width: 72px !important; height: 56px !important; }
+  .lobby .plist .pet-pic.sm { width: 46px !important; height: 46px !important; }
+  .lobby .plist li b { font-size: 1.1em; }
+  .lobby .plist .tag { font-size: .8em; }
+  .lobby .share .input { min-width: 0; width: 100%; box-sizing: border-box; }
+}
+@media (max-width: 760px) {
+  .lobby .plist li { flex-wrap: nowrap; justify-content: flex-start; }
+  .lobby .plist .portrait.sm { width: 62px !important; height: 50px !important; flex: none; }
+  .lobby .plist .pet-pic.sm { width: 40px !important; height: 40px !important; flex: none; }
+  .lobby .plist li b { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .lobby .plist li .btn { margin-left: auto; font-size: .8em; padding: 3px 8px; flex: none; }
+}
+.lobby .plist li .btn.kick { width: 30px; height: 30px; padding: 0 !important; border-radius: 50%; display: grid; place-items: center; font-size: .9em; }

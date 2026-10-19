@@ -307,7 +307,7 @@ function renderTop() {
   $('roundPill').before($('sub'));
   const pill = $('roundPill');
   pill.classList.toggle('hidden', S.phase === 'lobby');
-  if (S.phase !== 'lobby') pill.textContent = S.ultima ? L(`Ronda ${S.round} · ¡última!`, `Round ${S.round} · last one!`) : `${L('Ronda', 'Round')} ${S.round} · ${L('meta', 'goal')} ${S.meta} ✦`;
+  if (S.phase !== 'lobby') pill.textContent = S.ultima ? L(`Ronda ${S.round} · ¡última!`, `Round ${S.round} · last one!`) : `${L('Ronda', 'Round')} ${S.round}`;
   $('prompt').classList.toggle('hidden', S.phase === 'lobby');
 }
 

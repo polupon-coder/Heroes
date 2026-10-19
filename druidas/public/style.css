@@ -34,7 +34,7 @@ html, body { margin: 0; }
 body {
   min-height: 100vh;
   color: var(--ink);
-  font: 15px/1.4 var(--text);
+  font: 17px/1.4 var(--text);
   background-color: var(--wood);
   background-image:
     linear-gradient(180deg, rgba(0, 0, 0, .12), transparent 30%, rgba(0, 0, 0, .18)),
@@ -263,14 +263,15 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   transition: transform .1s, background .15s;
 }
 .kc:hover { transform: translateY(-2px); background: rgba(255, 250, 240, .55); }
-.kc-name { font: 700 .9em var(--title); text-transform: uppercase; letter-spacing: .03em; }
+.kc-name { font: 700 1.02em var(--title); text-transform: uppercase; letter-spacing: .03em; }
+.kc-top { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .kc-pts {
-  position: absolute; top: 2px; right: 6px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f6d27a, #c58f22); border: 2px solid #8a6216; color: #fff; font-weight: 800; font-size: .8em;
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; flex: none;
+  background: radial-gradient(circle at 35% 30%, #f6d27a, #c58f22); border: 2px solid #8a6216; color: #fff; font-weight: 800; font-size: .95em;
 }
 .kc-icon { min-height: 56px; display: grid; place-items: center; }
-.kc-req { display: flex; gap: 2px; }
-.kc-copies, .kc-done { position: absolute; bottom: 4px; right: 8px; font-size: .75em; color: var(--muted); font-weight: 700; }
+.kc-req { display: flex; flex-direction: column; gap: 3px; }
+.kc-copies, .kc-done { position: absolute; bottom: 4px; right: 8px; font-size: .85em; color: var(--muted); font-weight: 700; }
 .kc-done { color: var(--ok); font-size: .95em; }
 .kc.known { opacity: .55; }
 .kc.pickable { box-shadow: 0 0 0 3px var(--gold), 0 0 18px rgba(227, 181, 74, .6); border-radius: 10px; }
@@ -306,26 +307,24 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 }
 
 /* mesa del druida: columna izquierda con la mesa de madera de fondo */
-.mesa {
-  display: flex; flex-direction: column; gap: 8px;
-  position: relative; isolation: isolate; color: var(--parch);
-  background: none;
-}
+.mesa { display: flex; flex-direction: column; gap: 8px; }
+.wood { position: relative; isolation: isolate; color: var(--parch); background: none; border-color: rgba(60, 38, 20, .6); }
 /* la mesa de trabajo entera de fondo, algo más clara y suave */
-.mesa::before {
+.wood::before {
   content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
   background: var(--mesa-img, url(img/ui/mesa.webp)) center / var(--mesa-fit, cover) no-repeat;
   filter: brightness(1.12) contrast(.82) saturate(.9);
 }
-.mesa.vertical { --mesa-img: url(img/ui/mesa-vertical.webp); --mesa-fit: 100% 100%; }
-.mesa h4 { display: flex; align-items: center; justify-content: center; margin: 0 0 4px; font-size: .78em; color: #f1dfb8; text-shadow: 0 1px 2px #000; }
+.wood.vertical { --mesa-img: url(img/ui/mesa-vertical.webp); --mesa-fit: 100% 100%; }
+.mesa h4 { display: flex; align-items: center; justify-content: center; margin: 0 0 4px; font-size: .9em; color: #f1dfb8; text-shadow: 0 1px 2px #000; }
 .mesa > section { background: none; color: var(--parch); padding: 4px 6px; }
 .mesa .study-mini, .mesa .study-name b { color: #fff3d6; text-shadow: 0 1px 3px #000; }
 .mesa .study-mini.empty { color: #f1dfb8; border-color: rgba(241, 223, 184, .5); }
 .m-hero { position: relative; display: grid; justify-items: center; }
 .portrait.hero { width: 100%; height: auto; aspect-ratio: 3 / 2; background: none; border: 0; box-shadow: none; overflow: visible; }
 .portrait.hero { position: relative; }
-.portrait.hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 10px; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .5)); }
+.portrait.hero { aspect-ratio: 11 / 7; background: url(img/ui/papiro.webp) center / 100% 100% no-repeat !important; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .5)); }
+.portrait.hero img { position: absolute; inset: 12% 19% 13%; width: 62%; height: 75%; object-fit: cover; border-radius: 4px; mix-blend-mode: multiply; }
 .portrait.hero.body { background: none; }
 .m-pet-pic { position: absolute; right: 8px; bottom: 28px; z-index: 1; }
 .pet-pic.free {
@@ -388,8 +387,8 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .rival.active { background: rgba(227, 181, 74, .18); box-shadow: 0 0 0 2px var(--gold); }
 .r-head { display: flex; align-items: center; gap: 10px; }
 .r-who { flex: 1; display: grid; min-width: 0; }
-.r-who b { font: 700 1em var(--title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.r-sub { display: flex; align-items: center; gap: 4px; font-size: .85em; color: var(--ink-soft); }
+.r-who b { font: 700 1.1em var(--title); color: #fff3d6; text-shadow: 0 1px 3px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r-sub { display: flex; align-items: center; gap: 4px; font-size: .95em; color: #f1dfb8; text-shadow: 0 1px 2px #000; }
 .usos { color: var(--ink-soft); }
 .r-study { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
 .r-learned { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -606,9 +605,10 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .kc-icon.scroll .card-icon.lg { width: 36px; height: 36px; }
   .kc-icon.flask { width: 49px; }
   .kc-icon.flask .card-icon.lg { width: 30px; height: 30px; }
-  .kc-name { font-size: .72em; }
+  .kc-name { font-size: .85em; }
   .tok.dot { width: 11px; height: 11px; }
-  .portrait.hero { height: auto; width: 78%; }
+  .portrait.hero { height: auto; width: 58%; }
+  .pet-pic.free { width: 64px; height: 64px; }
   .kc { padding: 6px 4px 4px; }
   .pet-pic.free { width: 74px; height: 74px; }
   .m-pet-pic { bottom: 30px; }
@@ -650,3 +650,10 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .kc-name { font-size: .62em; }
   .lobby { grid-template-columns: 1fr; padding: 8px 16px 24px; }
 }
+
+/* rivales sobre la madera */
+.rivals.wood .ptitle { color: #fff3d6; text-shadow: 0 2px 3px #000; }
+.rivals.wood .usos { color: #f1dfb8; }
+.rivals.wood .rival + .rival { border-top-color: rgba(241, 223, 184, .35); }
+.rivals.wood .rival { background: rgba(35, 20, 8, .45); }
+.rivals.wood .rival.active { background: rgba(110, 75, 20, .55); }

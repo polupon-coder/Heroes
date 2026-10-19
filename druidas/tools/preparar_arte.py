@@ -1,6 +1,6 @@
 """Prepara las ilustraciones originales para el juego (recortes, fondos transparentes, tamaños web).
 
-Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos|druidas]
+Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos|druidas|mesa]
 """
 import os
 import sys
@@ -177,6 +177,15 @@ def retratos():
         save(sheet.crop((qx * w // 2, qy * h // 2, (qx + 1) * w // 2, (qy + 1) * h // 2)), 'retratos', name, q=86)
 
 
+def mesa_y_papiro():
+    # Mesa de trabajo girada en vertical (para que se vea entera en las columnas laterales)
+    # y pergamino desplegado en horizontal (para la cara del personaje).
+    mesa = Image.open(os.path.join(OUT, 'ui', 'mesa.webp')).convert('RGB')
+    save(mesa.rotate(90, expand=True), 'ui', 'mesa-vertical', q=82)
+    perg = Image.open(os.path.join(OUT, 'ui', 'pergamino.webp'))
+    save(perg.rotate(90, expand=True), 'ui', 'papiro', q=86)
+
+
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
@@ -185,7 +194,7 @@ def druidas_recortados():
 
 
 if __name__ == '__main__':
-    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos', 'druidas']
+    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos', 'druidas', 'mesa']
     if 'escenario' in que:
         escenario_y_fichas()
     if 'adornos' in que:
@@ -197,4 +206,6 @@ if __name__ == '__main__':
     if 'druidas' in que:
         druidas_recortados()
         retratos()
+    if 'mesa' in que:
+        mesa_y_papiro()
     print('listo')

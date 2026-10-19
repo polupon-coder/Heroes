@@ -956,3 +956,29 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .rivals.wood .r-pet { position: absolute; right: 6px; bottom: 6px; }
 .rivals.wood .r-learned { padding-right: 90px; }
 @media (max-width: 1500px), (max-height: 920px) { .rivals.wood .r-learned { padding-right: 64px; } }
+/* panel propio como el de rivales: pergaminos que reparten la altura */
+.mesa { justify-content: flex-start !important; gap: 8px !important; }
+.mesa > .m-hero, .mesa > section.m-card { flex: 1 1 0; min-height: 0; }
+.mesa > section.m-card { display: flex; flex-direction: column; justify-content: center; padding: 6px 10px !important; }
+.portrait.hero { height: 100% !important; min-height: 150px; }
+.m-hero { position: relative; display: flex !important; }
+/* nombre (izquierda) y Prestigio (derecha) dentro del pergamino de la cara */
+.m-hero .m-name-row {
+  position: absolute; z-index: 2; top: 18px; left: 34px; right: 34px; margin: 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.m-hero .m-name { color: var(--ink); text-shadow: 0 0 6px rgba(250, 243, 225, .95), 0 0 2px rgba(250, 243, 225, 1); font-size: 1.15em; }
+.m-hero .magic-dot { order: 1; margin-left: auto; margin-right: 8px; }
+.m-hero .pts-ball { order: 2; }
+/* número de Prestigio de los rivales algo más hacia dentro */
+.rivals.wood .r-head .pts-ball { margin-right: 14px; }
+.mesa > .m-hero { flex-grow: 1.4; }
+.m-hero .m-name-row { top: 16px; left: 32px; right: 32px; height: 36px; }
+.portrait.hero img { inset: 44px 0 0 0 !important; height: calc(100% - 44px) !important; }
+.m-hero .m-name { text-shadow: none; }
+.m-hero .magic-dot { color: rgba(90, 60, 30, .3); }
+.m-hero .magic-dot.on { color: #8d5fd3; text-shadow: none; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .m-hero .m-name-row { top: 12px; height: 28px; }
+  .portrait.hero img { inset: 34px 0 0 0 !important; height: calc(100% - 34px) !important; }
+}

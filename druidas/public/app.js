@@ -473,11 +473,11 @@ function renderMesa() {
   const known = (tipo) => p.aprendidas.filter((id) => D.cartas[id].tipo === tipo);
   const magic = [...['chispa', 'burbuja', ...known('hechizo')].map(spell), ...known('pocion').map(potion)].join('');
   $('mesa').innerHTML = `
-    <div class="m-name-row">
+    <div class="m-hero">
+      <div class="m-name-row">
       <b class="m-name">${esc(p.name)}</b>${prestigeHtml(p.puntos)}
       <span class="magic-dot ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Te queda la magia de este turno' : 'Ya has usado tu magia en este turno'}">✦</span>${p.dormido ? '<span title="Dormido: solo 1 ingrediente">💤</span>' : ''}
     </div>
-    <div class="m-hero">
       ${druidPortrait(p.druida, 'hero')}
       <button class="m-pet-pic ${petUsable() ? 'live' : ''} ${petOn ? 'on' : ''}" data-a="habilidad" ${petUsable() ? '' : 'disabled'}
         title="${esc(pet.nombre)} · ${esc(pet.don)}: ${esc(pet.texto)}">${petPortrait(p.mascota, 'free')}</button>

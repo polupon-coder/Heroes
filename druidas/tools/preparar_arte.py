@@ -19,7 +19,7 @@ def save(im, folder, name, **kw):
     im.save(os.path.join(OUT, folder, f'{name}.webp'), 'WEBP', quality=kw.get('q', 84), method=6)
 
 
-def cut_background(im, thr=40, feather=2, erode=3, grow=1, extra=(), holes=0):
+def cut_background(im, thr=40, feather=2, erode=3, grow=1, extra=(), holes=0, crop=True):
     """Quita el fondo liso (el color de la esquina) que toca los bordes."""
     bg = im.getpixel((3, 3))
     diff = ImageChops.difference(im, Image.new('RGB', im.size, bg)).convert('L')
@@ -46,6 +46,8 @@ def cut_background(im, thr=40, feather=2, erode=3, grow=1, extra=(), holes=0):
     alpha = alpha.filter(ImageFilter.GaussianBlur(feather))
     out = im.convert('RGBA')
     out.putalpha(alpha)
+    if not crop:
+        return out
     return out.crop(alpha.point(lambda v: 255 if v > 20 else 0).getbbox())
 
 
@@ -121,10 +123,37 @@ def adornos():
     save(fit(trim(drop_paper(load(16))), 800), 'ui', 'marco-carta', q=86)
 
 
+def libro_inclinado():
+    """Libro abierto en perspectiva: además del fondo, se quita la sombra clara de abajo y de la derecha.
+    El contorno lo marca la tapa (oscura); las filas sin tapa (cantos superiores de las hojas) se dejan."""
+    import numpy as np
+    im = load(19)
+    a = np.asarray(im).astype(int)
+    dark = a.sum(2) < 420
+    h, w = dark.shape
+    rows = np.zeros_like(dark)
+    cols = np.zeros_like(dark)
+    for y in range(h):
+        xs = np.where(dark[y])[0]
+        if len(xs) > 40:
+            rows[y, xs[0]:xs[-1] + 1] = True
+        elif y < h // 3:
+            rows[y] = True
+    for x in range(w):
+        ys = np.where(dark[:, x])[0]
+        if len(ys) > 3:
+            cols[:ys[-1] + 1, x] = True
+    hull = Image.fromarray(((rows & cols) * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(1))
+    cut = cut_background(im, thr=28, feather=1, crop=False)
+    alpha = ImageChops.darker(cut.getchannel('A'), hull)
+    cut.putalpha(alpha)
+    save(fit(cut.crop(alpha.point(lambda v: 255 if v > 20 else 0).getbbox()), 1500), 'ui', 'libro-perspectiva', q=86)
+
+
 def libros_e_iconos():
     # Libros y pergamino: se quita solo el fondo exterior (las páginas quedan).
     save(fit(cut_background(load(18), thr=28, feather=1), 1500), 'ui', 'libro', q=84)
-    save(fit(cut_background(load(19), thr=28, feather=1), 1500), 'ui', 'libro-perspectiva', q=84)
+    libro_inclinado()
     perg = cut_background(load(20), thr=45, feather=1.5, erode=13, grow=7, extra=[(0, 0, 0)])
     # El papel es pardo y apagado: los píxeles amarillos o rojos muy saturados del borde son restos del fondo.
     hsv = perg.convert('RGB').convert('HSV')

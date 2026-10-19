@@ -45,7 +45,8 @@ function applyStaticTexts() {
   set('journalTitle', 'Crónica', 'Chronicle');
   set('chatSend', 'Enviar', 'Send');
   $('chatInput').placeholder = L('Escribe al grupo…', 'Write to the group…');
-  for (const id of ['rulesTopBtn']) { $(id).title = L('Reglas', 'Rules'); $(id).setAttribute('aria-label', $(id).title); }
+  $('rulesTopBtn').title = L('Reglas', 'Rules');
+  $('rulesTopBtn').setAttribute('aria-label', $('rulesTopBtn').title);
   $('menuBtn').title = L('Menú', 'Menu');
   $('menuBtn').setAttribute('aria-label', $('menuBtn').title);
   // El botón muestra el idioma al que se cambia.
@@ -620,7 +621,7 @@ function renderModal() {
   const p = me();
   const pend = p && p.estudio ? p.estudio.pend : {};
   if (m.kind === 'rules') {
-    body = rulesHtml();
+    body = rulesHtml(m.page || 0);
   } else if (m.kind === 'info') {
     const known = p.aprendidas.includes(m.id);
     const can = canPickCard() && !known && S.catalogo[m.id] > 0;
@@ -694,7 +695,7 @@ function renderModal() {
     ok = sum(m.ings) === extra ? L('Devolver', 'Return') : '';
   }
   const closable = m.kind !== 'descartar';
-  el.innerHTML = `<div class="modal-card ${{ rules: 'book-card', info: 'framed', final: 'scroll-card' }[m.kind] || ''}">
+  el.innerHTML = `<div class="modal-card ${m.kind === 'rules' ? 'book-card' : 'parch-card'}">
     ${closable ? `<button class="modal-close" data-a="closeModal" aria-label="${L('Cerrar', 'Close')}">×</button>` : ''}
     ${body}
     ${ok ? `<div class="row end"><button class="btn primary" data-a="mOk">${ok}</button></div>` : ''}
@@ -725,48 +726,102 @@ function modalOk() {
   return close();
 }
 
-function rulesHtml() {
-  const knowledge = ['chispa', 'burbuja', ...Object.keys(D.cartas)].map((id) => {
+// Libro de reglas: varias páginas, de dos en dos.
+function rulesPages() {
+  const ruleCard = (id) => {
     const c = card(id);
-    const req = c.req ? ING().map((t) => tok(t, { cls: 'xs' }).repeat(c.req[t] || 0)).join('') : `<i>${L('inicial', 'starting')}</i>`;
-    const tipo = c.tipo === 'pocion' ? L('poción', 'potion') : L('hechizo', 'spell');
-    return `<div class="rule-card ${c.ataque ? 'attack' : ''}">${cardIcon(id, 'md')}
-      <div><b>${esc(cname(c))}</b> <span class="small muted">${tipo}${c.ataque ? L(' · ataque', ' · attack') : ''}${c.puntos ? ` · ${c.puntos} ${L('pts', 'pts')}` : ''}</span>
-        <div class="small">${L('Aprender', 'Learn')}: ${req} · ${c.tipo === 'pocion' ? L('Preparar', 'Brew') : L('Usar', 'Use')}: ${costHtml(c.coste)}</div>
-        <div class="small">${esc(ctext(c))}</div></div></div>`;
+    const req = c.req ? ING().map((t) => tok(t, { cls: 'sm' }).repeat(c.req[t] || 0)).join('') : `<i>${L('se tiene desde el principio', 'you start with it')}</i>`;
+    const tipo = c.tipo === 'pocion' ? L('Poción', 'Potion') : L('Hechizo', 'Spell');
+    return `<div class="rule-card ${c.ataque ? 'attack' : ''}">${cardIcon(id, 'lg')}
+      <b class="rc-name">${esc(cname(c))}</b>
+      <div class="rc-sub">${tipo}${c.ataque ? L(' · ataque', ' · attack') : ''}${c.puntos ? ` · ${c.puntos} ${L('de Prestigio', 'Prestige')}` : ''}</div>
+      <div class="rc-line">${L('Aprender', 'Learn')}: ${req}</div>
+      <div class="rc-line">${c.tipo === 'pocion' ? L('Preparar', 'Brew') : L('Lanzar', 'Cast')}: ${costHtml(c.coste) || L('gratis', 'free')}</div>
+      <p>${esc(ctext(c))}</p></div>`;
+  };
+  const cards = (title, ids) => `<h2 class="ptitle">${title}</h2>${ids.map(ruleCard).join('')}`;
+  const ings = ING().map((t) => `<span class="rule-ing">${tok(t)}<span>${esc(N(t))}</span></span>`).join('');
+  const pets = (ids) => ids.map((id) => {
+    const m = D.mascotas[id];
+    return `<div class="rule-pet">${petPortrait(id, 'lg2')}<b>${esc(petName(m))}</b><i class="rp-don">${esc(petDon(m))}</i>
+      <p>${esc(L(m.texto, m.textoEn || m.texto))}</p></div>`;
   }).join('');
-  const pets = Object.values(D.mascotas).map((m) => `<li><b>${esc(petName(m))}</b> (${m.usos} ${m.usos > 1 ? L('usos', 'uses') : L('uso', 'use')}): ${esc(L(m.texto, m.textoEn || m.texto))}</li>`).join('');
-  const es = `
-      <h2 class="ptitle">Cómo se juega</h2>
-      <p>Gana quien tenga más <b>Prestigio</b> al terminar la ronda ${D.rondas}. Solo se consigue aprendiendo conocimientos (3 o 4 puntos).</p>
-      <h3>Tu turno</h3>
-      <ol><li><b>Recoger:</b> 3 ingredientes de El Claro (se rellena desde la bolsa).</li>
-        <li><b>Ataques:</b> los rivales pueden lanzarte <i>un</i> ataque. Te defiendes con Burbuja (2 Lumen).</li>
-        <li><b>Estudiar:</b> una sola receta a la vez; coloca hasta 2 ingredientes que encajen. Al completarla la aprendes y los ingredientes vuelven a la bolsa. Una poción recién aprendida viene preparada gratis.</li>
-        <li><b>Preparar:</b> 1 poción conocida pagando su coste (máx. 2 preparadas, distintas).</li>
-        <li>Al final del turno conservas como máximo ${D.limiteReserva} ingredientes.</li></ol>
-      <h3>Magia</h3>
-      <p>Un efecto mágico por jugador <b>en el turno de cada jugador</b>, también en el tuyo. Chispa es gratis, una vez en tu turno, y no gasta tu magia. Los hechizos se aprenden para siempre; cada poción preparada sirve una vez.</p>
-      <h3>Mascotas</h3>`;
-  const en = `
-      <h2 class="ptitle">How to play</h2>
-      <p>Whoever has the most <b>Prestige</b> at the end of round ${D.rondas} wins. You only earn it by learning knowledge (3 or 4 points).</p>
-      <h3>Your turn</h3>
-      <ol><li><b>Gather:</b> 3 ingredients from the Clearing (refilled from the bag).</li>
-        <li><b>Attacks:</b> rivals may cast <i>one</i> attack on you. You defend with Bubble (2 Lumen).</li>
-        <li><b>Study:</b> one recipe at a time; place up to 2 ingredients that fit. When it is complete you learn it and the ingredients go back to the bag. A newly learned potion comes brewed for free.</li>
-        <li><b>Brew:</b> 1 known potion by paying its cost (max. 2 brewed, different ones).</li>
-        <li>At the end of your turn you keep at most ${D.limiteReserva} ingredients.</li></ol>
-      <h3>Magic</h3>
-      <p>One magic effect per player <b>on each player's turn</b>, yours included. Spark is free, once on your turn, and does not use your magic. Spells are learned forever; each brewed potion works once.</p>
-      <h3>Pets</h3>`;
+  const petIds = Object.keys(D.mascotas);
+  const spells = Object.keys(D.cartas).filter((id) => D.cartas[id].tipo === 'hechizo');
+  const potions = Object.keys(D.cartas).filter((id) => D.cartas[id].tipo === 'pocion');
+  return [
+    L(`<h2 class="ptitle">El objetivo</h2>
+      <p>Sois aprendices de druida en la Escuela de Magia. Durante <b>${D.rondas} rondas</b> recogéis ingredientes en El Claro y estudiáis hechizos y recetas de pociones.</p>
+      <p>Gana quien tenga más <b>Prestigio</b> al terminar la última ronda. El Prestigio solo se consigue <b>aprendiendo conocimientos</b>: cada uno da 3 o 4 puntos.</p>
+      <p>Todo es público: se ven las reservas, las recetas en estudio y las pociones preparadas de todos.</p>`,
+    `<h2 class="ptitle">The goal</h2>
+      <p>You are druid apprentices at the School of Magic. For <b>${D.rondas} rounds</b> you gather ingredients in the Clearing and study spells and potion recipes.</p>
+      <p>Whoever has the most <b>Prestige</b> at the end of the last round wins. Prestige is only earned by <b>learning knowledge</b>: each one gives 3 or 4 points.</p>
+      <p>Everything is public: everyone's reserves, recipes in study and brewed potions can be seen.</p>`),
+    L(`<h2 class="ptitle">Los ingredientes</h2>
+      <div class="rule-ings">${ings}</div>
+      <p>Hay 4 tipos de ingredientes. Están en la <b>bolsa</b>, y siempre hay 6 a la vista en <b>El Claro</b>.</p>
+      <p>Cuando alguien recoge, El Claro se rellena desde la bolsa. Los ingredientes que se gastan vuelven a la bolsa.</p>`,
+    `<h2 class="ptitle">The ingredients</h2>
+      <div class="rule-ings">${ings}</div>
+      <p>There are 4 types of ingredients. They are in the <b>bag</b>, and there are always 6 in sight in <b>the Clearing</b>.</p>
+      <p>When someone gathers, the Clearing is refilled from the bag. Spent ingredients go back to the bag.</p>`),
+    L(`<h2 class="ptitle">Tu turno (I)</h2>
+      <h3>1 · Recoger</h3>
+      <p>Toma 3 ingredientes de El Claro y ponlos en tu reserva.</p>
+      <h3>2 · Ataques</h3>
+      <p>Los rivales tienen unos segundos para lanzarte <i>un</i> ataque (Robo, Lío o Sueño). Si atacan varios, vale el primero en el orden de juego.</p>
+      <p>Puedes defenderte con <b>Burbuja</b>, pagando 2 Lumen.</p>`,
+    `<h2 class="ptitle">Your turn (I)</h2>
+      <h3>1 · Gather</h3>
+      <p>Take 3 ingredients from the Clearing and put them in your reserve.</p>
+      <h3>2 · Attacks</h3>
+      <p>Rivals have a few seconds to cast <i>one</i> attack on you (Steal, Mix-up or Sleep). If several attack, the first in turn order counts.</p>
+      <p>You can defend yourself with <b>Bubble</b>, paying 2 Lumen.</p>`),
+    L(`<h2 class="ptitle">Tu turno (II)</h2>
+      <h3>3 · Estudiar</h3>
+      <p>Estudias una sola receta a la vez. Coloca hasta 2 ingredientes de tu reserva que encajen. Al completarla, la aprendes y sus ingredientes vuelven a la bolsa.</p>
+      <p>Una poción recién aprendida viene preparada gratis.</p>
+      <h3>4 · Preparar</h3>
+      <p>Prepara 1 poción que conozcas pagando su coste. Puedes tener 2 preparadas como máximo, y distintas.</p>
+      <h3>5 · Final del turno</h3>
+      <p>Conservas como máximo ${D.limiteReserva} ingredientes; el resto vuelve a la bolsa.</p>`,
+    `<h2 class="ptitle">Your turn (II)</h2>
+      <h3>3 · Study</h3>
+      <p>You study only one recipe at a time. Place up to 2 ingredients from your reserve that fit. When it is complete you learn it and its ingredients go back to the bag.</p>
+      <p>A newly learned potion comes brewed for free.</p>
+      <h3>4 · Brew</h3>
+      <p>Brew 1 potion you know by paying its cost. You can have at most 2 brewed, and they must be different.</p>
+      <h3>5 · End of turn</h3>
+      <p>You keep at most ${D.limiteReserva} ingredients; the rest go back to the bag.</p>`),
+    L(`<h2 class="ptitle">La magia</h2>
+      <p>Cada jugador puede usar <b>un efecto mágico en el turno de cada jugador</b>, también en el suyo.</p>
+      <p>Los <b>hechizos</b> se aprenden para siempre. Cada <b>poción</b> preparada sirve una sola vez.</p>
+      <p><b>Chispa</b> es gratis, una vez en tu turno, y no gasta tu magia.</p>
+      <p>Los <b>ataques</b> (Robo, Lío y Sueño) van siempre contra el jugador activo, después de su recogida.</p>`,
+    `<h2 class="ptitle">Magic</h2>
+      <p>Each player may use <b>one magic effect on each player's turn</b>, their own included.</p>
+      <p><b>Spells</b> are learned forever. Each brewed <b>potion</b> works only once.</p>
+      <p><b>Spark</b> is free, once on your turn, and does not use your magic.</p>
+      <p><b>Attacks</b> (Steal, Mix-up and Sleep) always target the active player, after they gather.</p>`),
+    `<h2 class="ptitle">${L('Las mascotas', 'The pets')}</h2>${pets(petIds.slice(0, 2))}`,
+    `<h2 class="ptitle">${L('Las mascotas', 'The pets')}</h2>${pets(petIds.slice(2))}`,
+    ...['chispa', 'burbuja'].map((id) => cards(L('Magia inicial', 'Starting magic'), [id])),
+    ...spells.map((id) => cards(L('Hechizos', 'Spells'), [id])),
+    ...potions.map((id) => cards(L('Pociones', 'Potions'), [id])),
+  ];
+}
+
+function rulesHtml(spread = 0) {
+  const pages = rulesPages();
+  const last = Math.ceil(pages.length / 2) - 1;
+  const s = Math.max(0, Math.min(spread, last));
+  const page = (k) => (pages[k] ? `${pages[k]}<span class="pnum">${k + 1}</span>` : '');
   return `<div class="book">
-    <section class="page left">${L(es, en)}<ul>${pets}</ul>
-    </section>
-    <section class="page right">
-      <h2 class="ptitle">${L('Conocimientos', 'Knowledge')}</h2>
-      ${knowledge}
-    </section>
+    <section class="page left">${page(2 * s)}</section>
+    <section class="page right">${page(2 * s + 1)}</section>
+    ${s > 0 ? `<button class="book-nav prev" data-a="rulesPage" data-v="${s - 1}" aria-label="${L('Anterior', 'Previous')}">‹</button>` : ''}
+    ${s < last ? `<button class="book-nav next" data-a="rulesPage" data-v="${s + 1}" aria-label="${L('Siguiente', 'Next')}">›</button>` : ''}
   </div>`;
 }
 
@@ -857,6 +912,7 @@ const H = {
   defender: () => send('defender'),
   noDefender: () => send('no_defender'),
   closeModal: () => { ui.modal = null; renderModal(); },
+  rulesPage: (v) => { ui.modal.page = Number(v); renderModal(); },
   closeLog: () => { ui.logOpen = false; renderLog(); },
   m: (v, el) => {
     const f = el.dataset.f;

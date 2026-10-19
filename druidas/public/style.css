@@ -1278,3 +1278,103 @@ body { font-size: 18px; font-weight: 600; }
 .round-btn { font-size: 17px !important; line-height: 1 !important; padding: 0 !important; display: inline-grid; place-items: center; }
 .lang-btn { font: 700 14px/1 var(--text) !important; color: #5a3a1c !important; letter-spacing: .02em; }
 @media (max-width: 1500px), (max-height: 920px) { .brand .title-art { height: 36px; } }
+
+/* ---- botón de reglas (R) y título más grande ---- */
+#rulesTopBtn { font: 700 21px/1 var(--title) !important; color: #5a3a1c !important; }
+.brand .title-art { height: 64px !important; }
+.topbar { min-height: 70px; }
+.table { height: calc(100vh - 74px) !important; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .brand .title-art { height: 50px !important; }
+  .topbar { min-height: 56px; }
+  .table { height: calc(100vh - 60px) !important; }
+}
+
+/* ---- sin ramitas ni marcos de hojas en ninguna parte ---- */
+.ptitle::after { display: none !important; }
+.home-orn { display: none !important; }
+.pet-pic.md:has(img), .pet-pic.lg:has(img), .pet-pic.lg2:has(img) { background: none !important; padding: 0 !important; }
+.portrait.xl, .portrait.mid { background: none !important; }
+.chip-card, .potion-box { background: none !important; }
+.recipe, .modal-card.framed { border-image: none !important; }
+
+/* ---- libro inclinado (portada y reglas), más grande ---- */
+.home-card.book-home {
+  width: min(1560px, 97vw, calc((100vh - 96px) * 1.736)) !important; aspect-ratio: 1384 / 797 !important;
+}
+.home-page { top: 9% !important; bottom: 21% !important; }
+.home-page.left { left: 13% !important; right: 52.5% !important; }
+.home-page.right { left: 53.5% !important; right: 13% !important; }
+.book-home .home-title h1 .title-art { width: min(100%, 560px); }
+.home-intro { font-size: 1.25em !important; max-width: 30ch; }
+.home-page.right .input, .home-page.right .btn { font-size: 1.15em; }
+
+.modal-card.book-card {
+  width: min(1600px, 98vw, calc((100vh - 24px) * 1.736)) !important; aspect-ratio: 1384 / 797 !important;
+  background: url(img/ui/libro-perspectiva.webp) center / 100% 100% no-repeat !important;
+}
+.book-card .modal-close { top: 7% !important; right: 12% !important; }
+.book .page {
+  top: 8% !important; bottom: 21% !important; overflow-y: auto; padding: 0 1.2% !important;
+  font-size: clamp(14px, 1.15vw, 19px) !important; line-height: 1.45; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: .3em;
+}
+.book .page.left { left: 13.5% !important; right: 52.5% !important; }
+.book .page.right { left: 53% !important; right: 13% !important; }
+.book .page p { margin: .35em 0; max-width: 34ch; }
+.book .page h3 { margin: .5em 0 0; color: var(--green); font: 600 1.25em var(--title); }
+.book .ptitle { font-size: 2em; margin: 0 0 .2em; }
+.book .pnum { margin-top: auto; padding-top: .4em; font: 600 1.1em var(--title); color: var(--ink-soft); }
+.book .rule-card { display: flex; flex-direction: column; align-items: center; gap: 4px; border: 0; padding: .4em 0 .6em; }
+.book .rule-card .rc-name { font: 700 1.5em var(--title); }
+.book .rule-card.attack .rc-name { color: var(--attack); }
+.book .rc-sub { color: var(--ink-soft); font-style: italic; }
+.book .rc-line { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
+.book .rule-card p { margin: .2em 0 0; }
+.rule-ings { display: grid; grid-template-columns: repeat(2, auto); gap: 14px 34px; justify-content: center; margin: .6em 0; }
+.rule-ing { display: flex; flex-direction: column; align-items: center; gap: 4px; font: 600 1.2em var(--title); }
+.rule-ing .tok { width: 64px; height: 64px; }
+.rule-pet { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: .4em 0; }
+.rule-pet b { font: 700 1.35em var(--title); }
+.rule-pet p { margin: 0; }
+.book-nav {
+  position: absolute; bottom: 14%; width: 46px; height: 46px; border-radius: 50%; border: 0; cursor: pointer;
+  background: radial-gradient(circle at 35% 30%, #fbf2da, #e6d2a6); color: #5a3a1c; font: 700 30px/1 var(--title);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+}
+.book-nav.prev { left: 9%; }
+.book-nav.next { right: 9%; }
+
+/* ---- ventanas salientes: pergamino, todo centrado ---- */
+.modal-card.parch-card {
+  width: min(500px, 94vw); max-height: calc(100vh - 32px); overflow-y: auto; border-radius: 0; box-shadow: none;
+  background: none; border-style: solid; border-color: transparent;
+  border-width: 64px 24px; border-image: url(img/ui/pergamino.webp) 125 45 125 45 fill / 64px 24px / 0 stretch;
+  padding: 2px 34px; filter: drop-shadow(0 16px 30px rgba(0, 0, 0, .5));
+  text-align: center; scrollbar-width: thin;
+}
+.parch-card .modal-close { top: 0; right: 4px; }
+.parch-card h3, .parch-card h4, .parch-card p { text-align: center; }
+.parch-card :is(.picks, .picked, .drow, .check, .row, .row.end, .req, .use, .kind, .kfoot, header) { justify-content: center !important; }
+.parch-card .kcard { text-align: center; border: 0; background: none; box-shadow: none; padding: 0; }
+.parch-card .kcard header { display: flex; align-items: center; gap: 10px; }
+.parch-card .kcard .art { margin: 0 auto; max-width: 240px; background: none; }
+.parch-card .kfoot { flex-direction: column; gap: 4px; }
+.parch-card .final { padding: 0; list-style-position: inside; }
+.parch-card .final li { display: flex; flex-direction: column; align-items: center; }
+.float-act {
+  background: none !important; border-radius: 0 !important; box-shadow: none !important;
+  border-style: solid; border-color: transparent; border-width: 16px 36px;
+  border-image: url(img/ui/papiro.webp) 70 135 70 135 fill / 16px 36px / 0 stretch;
+  padding: 4px 14px !important; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .45));
+}
+.rule-pet .rp-don { color: var(--green); font-size: 1.05em; }
+.book .rule-card { padding-top: .8em; gap: 8px; }
+.book .rule-card .card-icon { transform: scale(1.5); margin: 1.4em 0 1em; }
+.book .rule-card .rc-name { font-size: 1.9em; }
+.book .rule-card p { max-width: 30ch; font-size: 1.08em; }
+.book-card .modal-close {
+  width: 40px; height: 40px; border-radius: 50%; z-index: 3; color: #5a3a1c !important; font: 700 26px/1 var(--text);
+  background: radial-gradient(circle at 35% 30%, #fbf2da, #e6d2a6) !important; box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+  top: 9% !important; right: 13.5% !important;
+}

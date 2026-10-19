@@ -184,8 +184,12 @@ def mesa_y_papiro():
     # y pergamino desplegado en horizontal (para la cara del personaje).
     mesa = Image.open(os.path.join(OUT, 'ui', 'mesa.webp')).convert('RGB')
     save(mesa.rotate(90, expand=True), 'ui', 'mesa-vertical', q=82)
-    perg = Image.open(os.path.join(OUT, 'ui', 'pergamino.webp'))
-    save(perg.rotate(90, expand=True), 'ui', 'papiro', q=86)
+    # Papiro para la cara: el pergamino vertical (hoja 26) sin fondo, girado en horizontal.
+    perg = cut_background(load(26), thr=30, feather=1.5, erode=11, grow=5)
+    hsv = perg.convert('RGB').convert('HSV')
+    vivid = ImageChops.multiply(hsv.getchannel('S').point(lambda v: 255 if v > 150 else 0), hsv.getchannel('V').point(lambda v: 255 if v > 150 else 0))
+    perg.putalpha(ImageChops.subtract(perg.getchannel('A'), vivid.filter(ImageFilter.MaxFilter(5))))
+    save(fit(perg.rotate(90, expand=True), 1100), 'ui', 'papiro', q=86)
 
 
 def fichas_piedra():

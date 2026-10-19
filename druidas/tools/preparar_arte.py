@@ -283,6 +283,13 @@ def mascara_pincel(seed=7):
     m2.save(os.path.join(OUT, 'ui', 'pincel-cara.png'), optimize=True)
 
 
+def retratos_sin_fondo():
+    # Caras sin el papel de fondo (transparente), para que se vea el pergamino de detrás.
+    for name in ['mostaza', 'azul', 'verde', 'lila']:
+        im = Image.open(os.path.join(OUT, 'retratos', f'{name}.webp')).convert('RGB')
+        save(cut_background(im, thr=34, feather=1.5, erode=3), 'retratos-sin-fondo', name, q=88)
+
+
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
@@ -303,6 +310,7 @@ if __name__ == '__main__':
     if 'druidas' in que:
         druidas_recortados()
         retratos()
+        retratos_sin_fondo()
     if 'mesa' in que:
         mesa_y_papiro()
     if 'fichas' in que:

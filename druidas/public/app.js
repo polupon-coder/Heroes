@@ -89,7 +89,7 @@ function druidPortrait(id, cls = '') {
   if (!info) return '';
   const tall = /\b(xl|full|hero)\b/.test(cls);
   // Siempre la cara (el retrato completo de la hoja de caras).
-  const img = D.img.retratos[id] || D.img.druidas[id];
+  const img = (D.img.sinfondo && D.img.sinfondo[id]) || D.img.retratos[id] || D.img.druidas[id];
   if (img) return `<span class="portrait ${cls} ${tall ? 'body' : ''}" style="--c:${info.hex}"><img src="${img}" alt="${esc(info.nombre)}"></span>`;
   return `<span class="portrait ph ${cls}" style="--c:${info.hex}" title="${esc(info.nombre)}"><svg viewBox="0 0 40 40" aria-hidden="true">
     <path d="M20 4C12 4 8 11.5 8 19.5L5.5 38h29L32 19.5C32 11.5 28 4 20 4z"/><path class="face" d="M20 12.5c-4.6 0-6.8 4.4-6.8 8.2 0 3.8 3 5.8 6.8 5.8s6.8-2 6.8-5.8c0-3.8-2.2-8.2-6.8-8.2z"/></svg></span>`;
@@ -216,6 +216,7 @@ function render() {
 
 function renderTop() {
   $('sub').innerHTML = `Sala <code>${esc(S.code)}</code>`;
+  $('roundPill').before($('sub'));
   const pill = $('roundPill');
   pill.classList.toggle('hidden', S.phase === 'lobby');
   if (S.phase !== 'lobby') pill.textContent = `Ronda ${Math.min(S.round, S.rondas)}/${S.rondas}`;

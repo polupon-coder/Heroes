@@ -1002,3 +1002,39 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .rivals { overflow: visible !important; }
 /* número de la bolsa en blanco */
 .bag-pill { color: #fffaf0 !important; text-shadow: 0 2px 6px rgba(0, 0, 0, .7) !important; }
+
+/* caras sin fondo, sobre el pergamino; el corte superior se difumina */
+.portrait.hero img, .portrait.rsm img {
+  mix-blend-mode: normal !important;
+  -webkit-mask: linear-gradient(to bottom, transparent 0, #000 14%, #000 100%) !important;
+  mask: linear-gradient(to bottom, transparent 0, #000 14%, #000 100%) !important;
+}
+.portrait.rsm { background: url(img/ui/papiro.webp) center / 100% 100% no-repeat !important; }
+
+/* cabecera en una sola línea, más baja */
+.topbar { padding: 4px 20px !important; gap: 16px !important; flex-wrap: nowrap !important; align-items: center; }
+.titleblock { display: contents; }
+.brand { font-size: 1.35em !important; white-space: nowrap; }
+.sub { margin: 0 !important; font-size: .9em !important; white-space: nowrap; color: rgba(244, 236, 212, .75); }
+.prompt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prompt .msg { overflow: hidden; text-overflow: ellipsis; }
+.table { height: calc(100vh - 44px) !important; }
+/* botón de menú: papiro con líneas marrones */
+.menu-btn {
+  background: #f1e3c2 !important; color: #6b4a26 !important; border: 1.5px solid #8b6a40 !important;
+  padding: 2px 9px !important; font-size: 1.1em !important; line-height: 1.2; border-radius: 8px; box-shadow: none !important;
+}
+
+/* piedras de El Claro integradas: tonos del suelo, sin sombra añadida */
+.cslot { filter: sepia(.35) saturate(.85) brightness(.97) !important; }
+.cslot.on { filter: sepia(.35) saturate(.85) drop-shadow(0 0 8px var(--gold)) !important; }
+.cslot .tok { filter: none; }
+/* las piedras en una capa propia, entonadas con el suelo; la ficha conserva su color */
+.cslot, .cslot.on { filter: none !important; background: none !important; }
+.cslot::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: url(img/ui/claro-piedras.webp) center / contain no-repeat;
+  filter: sepia(.4) saturate(.8) brightness(.95);
+}
+.cslot { isolation: isolate; }
+.cslot.on::before { filter: sepia(.4) saturate(.8) brightness(1.05) drop-shadow(0 0 8px var(--gold)); }

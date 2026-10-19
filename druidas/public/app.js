@@ -690,8 +690,7 @@ function renderModal() {
     ok = L('Nueva partida', 'New game');
   } else if (m.kind === 'learned') {
     const c = card(m.id);
-    body = `<h3>✦ ${L('¡Has aprendido', 'You have learned')} ${esc(cname(c))}${L('!', '!')}</h3>
-      ${cardHtml(m.id, { cls: 'big', prepared: c.tipo === 'pocion' })}
+    body = `${cardHtml(m.id, { cls: 'big', prepared: c.tipo === 'pocion' })}
       <p class="learned-pts">+${c.puntos} ${L('de Prestigio', 'Prestige')}</p>`;
     ok = L('¡Estupendo!', 'Great!');
   } else if (m.kind === 'chispa') {

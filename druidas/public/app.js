@@ -681,7 +681,7 @@ function renderModal() {
     const known = p.aprendidas.includes(m.id);
     const can = canPickCard() && !known && S.catalogo[m.id] > 0;
     body = cardHtml(m.id, { cls: 'big', footer: `<div class="kfoot"><span class="muted small">${S.catalogo[m.id] || 0} ${S.catalogo[m.id] === 1 ? L('copia en el catálogo', 'copy in the catalogue') : L('copias en el catálogo', 'copies in the catalogue')}</span>${known ? `<span class="tag ok">${L('aprendido', 'learned')}</span>` : ''}</div>` });
-    ok = can ? L('Estudiar este conocimiento', 'Study this knowledge') : '';
+    ok = can ? L('Estudiar', 'Study') : '';
   } else if (m.kind === 'final') {
     const rank = [...S.players].sort((a, b) => b.puntos - a.puntos);
     body = `<h2 class="ptitle">${S.winners.length > 1 ? L('Victoria compartida', 'Shared victory') : L(`¡${esc(pl(S.winners[0]).name)} gana!`, `${esc(pl(S.winners[0]).name)} wins!`)}</h2>

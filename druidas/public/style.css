@@ -826,3 +826,50 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 /* la ficha conserva la perspectiva al pasar el ratón o seleccionarla */
 .cslot.live:hover .tok { transform: perspective(500px) rotateX(38deg) translateY(-3px) scale(1.06); }
 .cslot.on .tok { transform: perspective(500px) rotateX(38deg) scale(1.08); }
+
+/* prueba: conocimientos solo en el centro y paneles laterales hasta abajo */
+.table { grid-template-areas: "mesa claro rivals" "mesa catalog rivals"; }
+.mesa, .rivals { align-self: stretch; }
+.catalog { margin-top: 0; }
+.kcs { gap: 4px; }
+.catalog .kc { padding: 4px 0 2px; }
+.catalog .kc-name { font-size: .88em; }
+/* más sitio en los laterales: iconos más grandes */
+.mesa .ing-row .tok.lg { width: 58px; height: 58px; }
+.mesa .recipe-slots .tok { width: 50px; height: 50px; }
+.mesa .study-mini .card-icon.md { width: 64px; height: 64px; }
+.mesa .spell-ico { width: 84px; }
+.mesa .spell-ico .card-icon.md, .mesa .spell-ico .card-icon.ill.md { width: 62px; height: 62px; }
+.rivals { display: flex; flex-direction: column; }
+.rivals.wood .rival { flex: 1; align-content: start; }
+.portrait.rsm { width: 120px; height: 80px; }
+.r-pet .pet-pic.free { width: 84px; height: 84px; }
+.rivals .reserve.sm .tok.sm { width: 34px; height: 34px; }
+.rivals .learned, .rivals .r-learned .card-icon.sm { width: 44px; height: 44px; }
+.rivals .r-study .tok.xs { width: 26px; height: 26px; }
+.mesa { justify-content: space-between; }
+.rivals.wood .rival { align-content: space-evenly; }
+.rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 48px; height: 48px; }
+.rivals .reserve.sm .tok.sm { width: 40px; height: 40px; }
+.catalog .kc-name { white-space: nowrap; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .kcs { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 2px; }
+  .catalog .kc { grid-template-columns: auto; padding: 0; }
+  .catalog .kc-top { gap: 4px; }
+  .catalog .card-icon.ill.lg { width: 40px; height: 44px; }
+  .catalog .req-dot { width: 11px; height: 11px; }
+  .catalog .kc-name { font-size: .78em; }
+  .ring { width: min(100%, 640px, calc((100vh - 360px) * 1.2)); }
+  .mesa .ing-row .tok.lg { width: 42px; height: 42px; }
+  .mesa .recipe-slots .tok { width: 34px; height: 34px; }
+  .mesa .study-mini .card-icon.md { width: 44px; height: 44px; }
+  .mesa .spell-ico { width: 60px; }
+  .mesa .spell-ico .card-icon.md, .mesa .spell-ico .card-icon.ill.md { width: 42px; height: 42px; }
+  .portrait.hero { width: 70%; margin: 0 auto; }
+  .rivals { overflow-y: auto; scrollbar-width: thin; }
+  .portrait.rsm { width: 84px; height: 56px; }
+  .r-pet .pet-pic.free { width: 58px; height: 58px; }
+  .rivals .reserve.sm .tok.sm { width: 28px; height: 28px; }
+  .rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 34px; height: 34px; }
+  .rivals.wood .r-who b { font-size: .8em; }
+}

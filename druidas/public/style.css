@@ -387,7 +387,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .rival.active { background: rgba(227, 181, 74, .18); box-shadow: 0 0 0 2px var(--gold); }
 .r-head { display: flex; align-items: center; gap: 10px; }
 .r-who { flex: 1; display: grid; min-width: 0; }
-.r-who b { font: 700 1.1em var(--title); color: #fff3d6; text-shadow: 0 1px 3px #000; overflow-wrap: anywhere; line-height: 1.15; }
+.r-who b { font: 700 .98em var(--title); color: #fff3d6; text-shadow: 0 1px 3px #000; line-height: 1.15; }
 .r-sub { display: flex; align-items: center; gap: 4px; font-size: .95em; color: #f1dfb8; text-shadow: 0 1px 2px #000; }
 .usos { color: var(--ink-soft); }
 .r-study { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
@@ -662,3 +662,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .r-pet .pet-pic.free { width: 80px; height: 80px; padding: 6px; font-size: 48px; }
 @media (max-width: 1500px) { .r-pet .pet-pic.free { width: 64px; height: 64px; } }
 @media (min-width: 1151px) and (max-height: 920px) { .r-pet .pet-pic.free { width: 52px; height: 52px; padding: 4px; } }
+/* las mascotas caben enteras dentro de su esfera */
+.pet-pic.free { overflow: visible; padding: 14%; }
+.pet-pic.free img { width: 100%; height: 100%; object-fit: contain; }
+.r-pet .pet-pic.free { padding: 12%; }

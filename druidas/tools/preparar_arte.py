@@ -1,6 +1,6 @@
 """Prepara las ilustraciones originales para el juego (recortes, fondos transparentes, tamaños web).
 
-Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos|druidas|mesa]
+Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos|druidas|mesa|fichas]
 """
 import os
 import sys
@@ -71,7 +71,9 @@ def escenario_y_fichas():
         cell = sheet.crop((cx * cw + 12, cy * ch + 8, (cx + 1) * cw - 12, (cy + 1) * ch - (40 if cy == 0 else 8)))
         save(fit(cut_background(cell, thr=28), 420), 'mascotas', name)
 
-    # Ingredientes: cuatro fichas redondas (Éter, Umbra / Lumen, Raíz).
+    # Ingredientes: las fichas de piedra de fichas_piedra() las sustituyen.
+    return
+    # (Fichas antiguas: cuatro fichas redondas (Éter, Umbra / Lumen, Raíz).)
     tokens = load(11)
     bg = tokens.getpixel((3, 3))
     ink = ImageChops.difference(tokens, Image.new('RGB', tokens.size, bg)).convert('L').point(lambda v: 255 if v > 45 else 0)
@@ -186,6 +188,27 @@ def mesa_y_papiro():
     save(perg.rotate(90, expand=True), 'ui', 'papiro', q=86)
 
 
+def fichas_piedra():
+    # Fichas de ingredientes de piedra (hoja 2 × 2: Éter, Umbra / Lumen, Raíz).
+    tokens = load(24)
+    bg = tokens.getpixel((3, 3))
+    ink = ImageChops.difference(tokens, Image.new('RGB', tokens.size, bg)).convert('L').point(lambda v: 255 if v > 80 else 0)
+    mx, my = tokens.width // 2, tokens.height // 2
+    for (qx, qy), name in {(0, 0): 'eter', (1, 0): 'umbra', (0, 1): 'lumen', (1, 1): 'raiz'}.items():
+        box = (qx * mx, qy * my, (qx + 1) * mx, (qy + 1) * my)
+        l, t, r, b = ink.crop(box).getbbox()
+        l, t, r, b = l + box[0], t + box[1], r + box[0], b + box[1]
+        # La sombra cae hacia abajo: el ancho da el diámetro y el disco empieza arriba.
+        side = r - l
+        x0, y0 = l, t
+        piece = tokens.crop((x0, y0, x0 + side, y0 + side)).convert('RGBA')
+        big = Image.new('L', (side * 4, side * 4), 0)
+        m = side * 4 * 0.035
+        ImageDraw.Draw(big).ellipse((m, m, side * 4 - m, side * 4 - m), fill=255)
+        piece.putalpha(big.resize((side, side), Image.LANCZOS))
+        save(piece.resize((256, 256), Image.LANCZOS), 'ingredientes', name, q=88)
+
+
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
@@ -194,7 +217,7 @@ def druidas_recortados():
 
 
 if __name__ == '__main__':
-    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos', 'druidas', 'mesa']
+    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos', 'druidas', 'mesa', 'fichas']
     if 'escenario' in que:
         escenario_y_fichas()
     if 'adornos' in que:
@@ -208,4 +231,6 @@ if __name__ == '__main__':
         retratos()
     if 'mesa' in que:
         mesa_y_papiro()
+    if 'fichas' in que:
+        fichas_piedra()
     print('listo')

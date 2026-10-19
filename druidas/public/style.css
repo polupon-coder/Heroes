@@ -1111,3 +1111,56 @@ body { font-size: 16px; }
   .catalog .kc { padding: 2px 0 !important; }
   .catalog { padding-top: 4px !important; padding-bottom: 4px !important; }
 }
+
+/* tipografía manuscrita elegante */
+:root { --title: "Dancing Script", cursive; --text: "Cormorant Garamond", Georgia, serif; }
+body { font-size: 18px; font-weight: 600; }
+.brand { font-size: 1.9em !important; }
+.mesa .m-card h4 { font-size: 1.5em !important; }
+.kc-name { font-size: 1.25em !important; }
+
+/* botón de menú: esfera de papiro con tres líneas marrones centradas */
+.menu-btn {
+  width: 36px !important; height: 36px !important; padding: 0 !important; border-radius: 50% !important;
+  display: grid !important; place-items: center; background: radial-gradient(circle at 38% 32%, #fbf2dc, #e6d2a6) !important;
+}
+.burger { display: grid; gap: 3px; width: 16px; }
+.burger i { display: block; height: 2px; border-radius: 2px; background: #6b4a26; }
+
+/* rivales: contenido repartido dentro del papiro; mascota solapada en la esquina */
+.rivals.wood .rival { overflow: visible !important; justify-content: space-evenly !important; padding: 10px 12px !important; }
+.rivals.wood .r-head { gap: 12px !important; }
+.portrait.rsm { width: 170px !important; height: 124px !important; }
+.rivals.wood .r-who b { font-size: 1.8em !important; }
+.rivals .r-learned { justify-content: flex-start; gap: 10px !important; padding-right: 100px !important; }
+.rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 70px !important; height: 70px !important; }
+.rivals .learned { width: 72px !important; height: 72px !important; }
+.rivals.wood .r-pet { right: -22px !important; bottom: -18px !important; z-index: 4; }
+.r-pet .pet-pic.free { width: 112px !important; height: 112px !important; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .portrait.rsm { width: 104px !important; height: 76px !important; }
+  .rivals.wood .r-who b { font-size: 1.35em !important; }
+  .rivals .r-learned { padding-right: 64px !important; gap: 6px !important; }
+  .rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 42px !important; height: 42px !important; }
+  .rivals .learned { width: 44px !important; height: 44px !important; }
+  .rivals.wood .r-head { padding-right: 0 !important; }
+  .rivals.wood .r-pet { right: -16px !important; bottom: -14px !important; }
+  .r-pet .pet-pic.free { width: 76px !important; height: 76px !important; }
+}
+.rivals.wood .rival { padding: 10px 14px !important; }
+.rivals.wood .r-head { flex-wrap: nowrap !important; }
+.portrait.rsm { width: 150px !important; height: 110px !important; flex: none; }
+.rivals.wood .r-who { flex: 1; min-width: 0; }
+.rivals.wood .r-who b { font-size: 1.5em !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.rivals.wood .r-head .pts-ball { flex: none; margin-right: 0 !important; }
+.rivals .r-learned { padding-right: 96px !important; gap: 6px !important; }
+.rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 56px !important; height: 56px !important; }
+.rivals .learned { width: 58px !important; height: 58px !important; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .portrait.rsm { width: 96px !important; height: 70px !important; }
+  .rivals.wood .r-who b { font-size: 1.2em !important; }
+  .rivals .r-learned { padding-right: 62px !important; gap: 4px !important; }
+  .rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 36px !important; height: 36px !important; }
+  .rivals .learned { width: 38px !important; height: 38px !important; }
+}
+.rivals.wood .r-who b { white-space: normal !important; overflow: visible !important; font-size: 1.35em !important; }

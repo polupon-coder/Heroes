@@ -83,7 +83,7 @@ class Game {
       druida: Object.keys(C.DRUIDAS).find((d) => !this.players.some((x) => x.druida === d)),
       mascota: Object.keys(C.MASCOTAS).find((m) => !this.players.some((x) => x.mascota === m)),
     };
-    if (bot) p.name = `${C.MASCOTAS[p.mascota].nombre} (bot)`;
+    if (bot) p.name = C.MASCOTAS[p.mascota].nombre;
     this.players.push(p);
     this.say(`${p.name} entra en la escuela.`);
     return p;

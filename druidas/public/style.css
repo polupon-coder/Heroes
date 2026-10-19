@@ -713,3 +713,6 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   -webkit-mask-image: url(img/ui/pincel.png); mask-image: url(img/ui/pincel.png);
   inset: 4% 9%; width: 82%; height: 92%; object-fit: contain; object-position: center;
 }
+/* tablero de madera de fondo: entero, sin recuadro del panel */
+.wood { border: 0 !important; box-shadow: none !important; backdrop-filter: none; background: none !important; }
+.wood::before { filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .5)); border-radius: 0; }

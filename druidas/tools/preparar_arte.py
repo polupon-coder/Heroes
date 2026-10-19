@@ -182,8 +182,9 @@ def retratos():
 def mesa_y_papiro():
     # Mesa de trabajo girada en vertical (para que se vea entera en las columnas laterales)
     # y pergamino desplegado en horizontal (para la cara del personaje).
-    mesa = Image.open(os.path.join(OUT, 'ui', 'mesa.webp')).convert('RGB')
-    save(mesa.rotate(90, expand=True), 'ui', 'mesa-vertical', q=82)
+    # Tablero de madera (hoja 27) sin el fondo gris, girado en vertical.
+    tablero = cut_background(load(27), thr=22, feather=1.2)
+    save(fit(tablero.rotate(90, expand=True), 1600), 'ui', 'mesa-vertical', q=84)
     # Papiro para la cara: el pergamino vertical (hoja 26) sin fondo, girado en horizontal.
     perg = cut_background(load(26), thr=30, feather=1.5, erode=11, grow=5)
     hsv = perg.convert('RGB').convert('HSV')

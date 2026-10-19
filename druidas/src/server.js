@@ -44,6 +44,7 @@ app.get('/api/datos', (req, res) => {
     mascotas: C.MASCOTAS,
     druidas: C.DRUIDAS,
     rondas: C.RONDAS,
+    meta: C.META,
     limiteReserva: C.LIMITE_RESERVA,
     img: {
       druidas: listImages('druidas'),

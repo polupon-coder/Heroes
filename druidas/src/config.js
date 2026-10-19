@@ -16,7 +16,8 @@ const POR_TIPO = 14; // 56 fichas en total
 const CLARO = 6; // espacios de El Claro
 const RECOGER = 3;
 const RECOGER_ZORRO = 5;
-const RONDAS = 10;
+const META = 25; // Prestigio para ganar: quien llega termina la ronda y se acaba la partida
+const RONDAS = 15; // tope de rondas por si nadie llega a la meta
 const LIMITE_RESERVA = 6;
 const MAX_POCIONES = 2;
 const COPIAS = 4; // copias de cada conocimiento aprendible
@@ -103,6 +104,6 @@ const DRUIDAS = {
 const VENTANA_MS = Number(process.env.VENTANA_MS || 25000);
 
 module.exports = {
-  ING, ING_INFO, POR_TIPO, CLARO, RECOGER, RECOGER_ZORRO, RONDAS, LIMITE_RESERVA, MAX_POCIONES, COPIAS,
+  ING, ING_INFO, POR_TIPO, CLARO, RECOGER, RECOGER_ZORRO, META, RONDAS, LIMITE_RESERVA, MAX_POCIONES, COPIAS,
   ESTUDIO_NORMAL, ESTUDIO_IDEA, ESTUDIO_SUENO, BURBUJA_COSTE, CARTAS, INICIALES, MASCOTAS, DRUIDAS, VENTANA_MS,
 };

@@ -211,11 +211,18 @@ class Game {
   nextTurn() {
     this.turnIndex += 1;
     this.turnInRound += 1;
+    const best = Math.max(...this.players.map((p) => this.points(p)));
+    if (best >= C.META && !this.metaReached) {
+      this.metaReached = true;
+      if (this.turnInRound < this.players.length) {
+        this.say(`✦ Alguien ha llegado a ${C.META} de Prestigio: esta es la última ronda.`, `✦ Someone has reached ${C.META} Prestige: this is the last round.`);
+      }
+    }
     if (this.turnInRound >= this.players.length) {
       this.turnInRound = 0;
       this.round += 1;
       this.startIdx = (this.startIdx + 1) % this.players.length;
-      if (this.round > C.RONDAS) return this.finish();
+      if (this.metaReached || this.round > C.RONDAS) return this.finish();
     }
     this.beginTurn();
   }
@@ -631,6 +638,8 @@ class Game {
       hostId: this.hostId,
       round: this.round,
       rondas: C.RONDAS,
+      meta: C.META,
+      ultima: !!this.metaReached,
       startId: this.phase === 'juego' ? this.players[this.startIdx].id : null,
       players: this.players.map(pub),
       claro: this.claro,

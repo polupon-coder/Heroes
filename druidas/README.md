@@ -2,7 +2,7 @@
 
 Juego de mesa virtual para jugar con amigos por internet, basado en el **Reglamento v1.11**.
 
-Cada jugador es un aprendiz de druida con un animal del bosque. Durante 10 rondas recoge ingredientes de El Claro, estudia hechizos y recetas de pociones y usa la magia (también en los turnos de los demás). Gana quien consiga más **Prestigio**.
+Cada jugador es un aprendiz de druida con un animal del bosque. Recoge ingredientes de El Claro, estudia hechizos y recetas de pociones y usa la magia (también en los turnos de los demás). Cuando alguien llega a **25 de Prestigio** se termina esa ronda y gana quien tenga más (como mucho, 15 rondas).
 
 ## Jugar en local
 

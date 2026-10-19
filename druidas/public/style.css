@@ -1601,3 +1601,8 @@ body { font-size: 18px; font-weight: 600; }
 }
 /* botón de reglas: un librito abierto, del mismo trazo que el menú */
 #rulesTopBtn .book-ico { width: 20px; height: 20px; fill: none; stroke: #5a3a1c; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+/* ventana de decisión: a un lado de El Claro (abajo a la derecha), sin tapar los ingredientes */
+@media (min-width: 761px) {
+  .float-act { left: auto !important; right: 1% !important; bottom: 3% !important; transform: none !important; max-width: min(300px, 30%) !important; }
+}
+.float-act .btn { white-space: nowrap; } @media (min-width: 761px) { .float-act { max-width: min(320px, 36%) !important; } }

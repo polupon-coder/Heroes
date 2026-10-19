@@ -299,7 +299,7 @@ function renderTop() {
   $('roundPill').before($('sub'));
   const pill = $('roundPill');
   pill.classList.toggle('hidden', S.phase === 'lobby');
-  if (S.phase !== 'lobby') pill.textContent = `${L('Ronda', 'Round')} ${Math.min(S.round, S.rondas)}/${S.rondas}`;
+  if (S.phase !== 'lobby') pill.textContent = S.ultima ? L(`Ronda ${S.round} · ¡última!`, `Round ${S.round} · last one!`) : `${L('Ronda', 'Round')} ${S.round} · ${L('meta', 'goal')} ${S.meta} ✦`;
   $('prompt').classList.toggle('hidden', S.phase === 'lobby');
 }
 
@@ -800,12 +800,12 @@ function rulesPages() {
   const potions = Object.keys(D.cartas).filter((id) => D.cartas[id].tipo === 'pocion');
   return [
     L(`<h2 class="ptitle">El objetivo</h2>
-      <p>Sois aprendices de druida en la Escuela de Magia. Durante <b>${D.rondas} rondas</b> recogéis ingredientes en El Claro y estudiáis hechizos y recetas de pociones.</p>
-      <p>Gana quien tenga más <b>Prestigio</b> al terminar la última ronda. El Prestigio solo se consigue <b>aprendiendo conocimientos</b>: cada uno da 3 o 4 puntos.</p>
+      <p>Sois aprendices de druida en la Escuela de Magia. Recogéis ingredientes en El Claro y estudiáis hechizos y recetas de pociones.</p>
+      <p>Cuando alguien llega a <b>${D.meta} de Prestigio</b>, se termina esa ronda (así todos juegan los mismos turnos) y gana quien tenga más. Si nadie llega, la partida acaba tras la ronda ${D.rondas}. El Prestigio solo se consigue <b>aprendiendo conocimientos</b>: cada uno da 3 o 4 puntos.</p>
       <p>Todo es público: se ven las reservas, las recetas en estudio y las pociones preparadas de todos.</p>`,
     `<h2 class="ptitle">The goal</h2>
-      <p>You are druid apprentices at the School of Magic. For <b>${D.rondas} rounds</b> you gather ingredients in the Clearing and study spells and potion recipes.</p>
-      <p>Whoever has the most <b>Prestige</b> at the end of the last round wins. Prestige is only earned by <b>learning knowledge</b>: each one gives 3 or 4 points.</p>
+      <p>You are druid apprentices at the School of Magic. You gather ingredients in the Clearing and study spells and potion recipes.</p>
+      <p>When someone reaches <b>${D.meta} Prestige</b>, that round is finished (so everyone plays the same number of turns) and whoever has the most wins. If nobody gets there, the game ends after round ${D.rondas}. Prestige is only earned by <b>learning knowledge</b>: each one gives 3 or 4 points.</p>
       <p>Everything is public: everyone's reserves, recipes in study and brewed potions can be seen.</p>`),
     L(`<h2 class="ptitle">Los ingredientes</h2>
       <div class="rule-ings">${ings}</div>

@@ -1647,3 +1647,6 @@ body { font-size: 18px; font-weight: 600; }
 }
 .btn.primary:disabled, .lobby .row .btn:disabled { opacity: .55; filter: grayscale(.4); }
 .float-act .btn.attack { color: var(--attack) !important; }
+/* si la ventana de decisión solo tiene botones, sin papiro detrás: bastan los botones de madera */
+.float-act.bare { border: 0 !important; border-image: none !important; background: none !important; filter: none !important; padding: 0 !important; }
+.float-act.bare .btn { font-size: 1.2em !important; padding: 6px 14px !important; }

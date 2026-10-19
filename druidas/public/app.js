@@ -413,7 +413,7 @@ function renderPrompt() {
   el.innerHTML = `<div class="msg">${msg}</div>`;
   // En ataques y defensa la ventana explica qué pasa; en el resto basta con el botón.
   const explain = t.paso === 'ventana' || t.paso === 'defensa';
-  ui.floatHtml = btns ? `<div class="float-act">${explain ? `<div class="float-msg">${msg}</div>` : ''}<div class="btns">${btns}</div></div>` : '';
+  ui.floatHtml = btns ? `<div class="float-act ${explain ? '' : 'bare'}">${explain ? `<div class="float-msg">${msg}</div>` : ''}<div class="btns">${btns}</div></div>` : '';
 }
 
 function attackDesc(a) {

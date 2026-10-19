@@ -66,7 +66,7 @@ def escenario_y_fichas():
     # Mascotas: hoja de 3 × 2 (gato, lechuza, zorro / cervatillo, liebre, conejo).
     sheet = load(10)
     cw, ch = sheet.width // 3, sheet.height // 2
-    for (cx, cy), name in {(1, 0): 'lechuza', (2, 0): 'zorro', (0, 1): 'cervatillo', (1, 1): 'liebre'}.items():
+    for (cx, cy), name in {(1, 0): 'lechuza', (2, 0): 'zorro', (0, 1): 'cervatillo', (2, 1): 'liebre'}  # la liebre usa el conejo: el dibujo de la liebre tiene las orejas cortadas.items():
         # Márgenes para no arrastrar orejas o colas de los vecinos.
         cell = sheet.crop((cx * cw + 12, cy * ch + 8, (cx + 1) * cw - 12, (cy + 1) * ch - (40 if cy == 0 else 8)))
         save(fit(cut_background(cell, thr=28), 420), 'mascotas', name)

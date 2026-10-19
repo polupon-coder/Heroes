@@ -296,7 +296,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .cslot.live { cursor: pointer; }
 .cslot.live:hover { transform: translate(-50%, -50%) scale(1.04); }
 .cslot.empty { opacity: .55; }
-.cslot .tok { width: 46%; height: auto; aspect-ratio: 1; transform: perspective(500px) rotateX(38deg); }
+.cslot .tok { width: 62%; height: auto; aspect-ratio: 1; transform: perspective(500px) rotateX(38deg); }
 .cslot.live .tok { box-shadow: 0 0 0 3px rgba(255, 255, 255, .7), 0 4px 10px rgba(0, 0, 0, .4); }
 .cslot.on { filter: drop-shadow(0 0 10px var(--gold)) drop-shadow(0 0 4px var(--gold)); }
 .cslot.on .tok { box-shadow: 0 0 0 5px var(--gold), 0 0 24px var(--gold); }

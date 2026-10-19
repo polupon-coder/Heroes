@@ -47,6 +47,7 @@ app.get('/api/datos', (req, res) => {
     limiteReserva: C.LIMITE_RESERVA,
     img: {
       druidas: listImages('druidas'),
+      retratos: listImages('retratos'),
       mascotas: listImages('mascotas'),
       cartas: listImages('cartas'),
       ingredientes: listImages('ingredientes'),

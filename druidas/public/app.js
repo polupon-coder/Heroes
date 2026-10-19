@@ -79,11 +79,13 @@ function costHtml(coste) {
   return out.join('') || '<span class="free">gratis</span>';
 }
 
+// Retrato del druida: cuerpo entero en los formatos altos (xl, full); la cara en el resto.
 function druidPortrait(id, cls = '') {
   const info = D.druidas[id];
   if (!info) return '';
-  const img = D.img.druidas[id];
-  if (img) return `<span class="portrait ${cls}"><img src="${img}" alt="${esc(info.nombre)}"></span>`;
+  const tall = /\b(xl|full)\b/.test(cls);
+  const img = tall ? D.img.druidas[id] : (D.img.retratos[id] || D.img.druidas[id]);
+  if (img) return `<span class="portrait ${cls} ${tall ? 'body' : ''}" style="--c:${info.hex}"><img src="${img}" alt="${esc(info.nombre)}"></span>`;
   return `<span class="portrait ph ${cls}" style="--c:${info.hex}" title="${esc(info.nombre)}"><svg viewBox="0 0 40 40" aria-hidden="true">
     <path d="M20 4C12 4 8 11.5 8 19.5L5.5 38h29L32 19.5C32 11.5 28 4 20 4z"/><path class="face" d="M20 12.5c-4.6 0-6.8 4.4-6.8 8.2 0 3.8 3 5.8 6.8 5.8s6.8-2 6.8-5.8c0-3.8-2.2-8.2-6.8-8.2z"/></svg></span>`;
 }
@@ -231,7 +233,7 @@ function renderLobby() {
   const taken = (field, v) => S.players.some((x) => x.id !== S.me && x[field] === v);
   const druids = Object.entries(D.druidas).map(([id, d]) => `
     <button class="choice ${p.druida === id ? 'on' : ''}" data-a="druida" data-v="${id}" ${taken('druida', id) ? 'disabled' : ''}>
-      ${druidPortrait(id, 'lg')}<span>${esc(d.nombre)}</span><small>ropa ${esc(d.ropa)}</small>
+      ${druidPortrait(id, 'full')}<span>${esc(d.nombre)}</span><small>ropa ${esc(d.ropa)}</small>
     </button>`).join('');
   const pets = Object.entries(D.mascotas).map(([id, m]) => `
     <button class="choice pet ${p.mascota === id ? 'on' : ''}" data-a="mascota" data-v="${id}" ${taken('mascota', id) ? 'disabled' : ''}>
@@ -240,7 +242,7 @@ function renderLobby() {
   const list = S.players.map((x) => `
     <li>${druidPortrait(x.druida, 'sm')} ${petPortrait(x.mascota, 'sm')} <b>${esc(x.name)}</b>
       ${x.id === S.hostId ? '<span class="tag">anfitrión</span>' : ''}${x.connected || x.bot ? '' : '<span class="tag off">desconectado</span>'}
-      ${host && x.id !== S.me ? `<button class="btn tiny ghost" data-a="kick" data-v="${x.id}">Quitar</button>` : ''}</li>`).join('');
+      ${host && x.id !== S.me ? `<button class="btn tiny ghost dark" data-a="kick" data-v="${x.id}">Quitar</button>` : ''}</li>`).join('');
   $('lobby').innerHTML = `
     <div class="lobby">
       <div class="panel lobby-side">

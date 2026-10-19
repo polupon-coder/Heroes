@@ -41,7 +41,8 @@ El juego muestra dibujos provisionales hasta que estén las ilustraciones. Basta
 
 | Carpeta | Archivos |
 | --- | --- |
-| `public/img/druidas/` | `mostaza`, `azul`, `verde`, `lila` |
+| `public/img/druidas/` | `mostaza`, `azul`, `verde`, `lila` (cuerpo entero) ✅ |
+| `public/img/retratos/` | `mostaza`, `azul`, `verde`, `lila` (cara, para los retratos redondos) ✅ |
 | `public/img/mascotas/` | `lechuza`, `zorro`, `liebre`, `cervatillo` |
 | `public/img/cartas/` | `robo`, `cambio`, `idea`, `lio`, `memoria`, `sueno`, `suerte`, `pensar` |
 | `public/img/ingredientes/` | `eter`, `umbra`, `lumen`, `raiz` |

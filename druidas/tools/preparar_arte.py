@@ -139,10 +139,14 @@ def libro_inclinado():
             rows[y, xs[0]:xs[-1] + 1] = True
         elif y < h // 3:
             rows[y] = True
+    # borde inferior: el último píxel muy oscuro de la tapa en cada columna, suavizado (mediana)
+    deep = a.sum(2) < 300
+    bottom = np.array([(np.where(deep[:, x])[0][-1] if deep[:, x].any() else 0) for x in range(w)])
+    k = 25
+    pad = np.pad(bottom, k, mode='edge')
+    bottom = np.array([int(np.median(pad[x:x + 2 * k + 1])) for x in range(w)])
     for x in range(w):
-        ys = np.where(dark[:, x])[0]
-        if len(ys) > 3:
-            cols[:ys[-1] + 1, x] = True
+        cols[:bottom[x], x] = True
     hull = Image.fromarray(((rows & cols) * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(1))
     cut = cut_background(im, thr=28, feather=1, crop=False)
     alpha = ImageChops.darker(cut.getchannel('A'), hull)

@@ -1378,3 +1378,28 @@ body { font-size: 18px; font-weight: 600; }
   background: radial-gradient(circle at 35% 30%, #fbf2da, #e6d2a6) !important; box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
   top: 9% !important; right: 13.5% !important;
 }
+/* libro algo más pequeño */
+.home-card.book-home { width: min(1380px, 88vw, calc((100vh - 150px) * 1.746)) !important; aspect-ratio: 1383 / 792 !important; }
+.modal-card.book-card { width: min(1440px, 90vw, calc((100vh - 110px) * 1.746)) !important; aspect-ratio: 1383 / 792 !important; }
+.book .page { font-size: clamp(13px, 1.05vw, 18px) !important; }
+
+/* ventanas flotantes: textos y dibujos más grandes */
+.modal-card.parch-card { width: min(640px, 94vw); font-size: 1.22em; border-width: 72px 28px; border-image-width: 72px 28px; padding: 4px 40px; }
+.parch-card h3 { font: 700 1.9em var(--title); margin: 0 0 .3em; }
+.parch-card h4 { font-size: 1em; margin: .9em 0 .3em; }
+.parch-card p { font-size: 1.05em; line-height: 1.4; }
+.parch-card .kname { font-size: 1.9em; }
+.parch-card .kcard .art { max-width: 340px; }
+.parch-card .tok { width: 54px; height: 54px; }
+.parch-card .tok.sm { width: 42px; height: 42px; }
+.parch-card .tok.xs { width: 28px; height: 28px; }
+.parch-card .picks, .parch-card .picked { gap: 10px; }
+.parch-card .btn { font-size: 1.05em; padding: 10px 22px; }
+.parch-card .final li { font-size: 1.1em; }
+.parch-card .portrait { transform: scale(1.25); margin: 8px; }
+.float-act { font-size: 1.2em; max-width: min(680px, 94%) !important; }
+.float-act .tok { width: 46px; height: 46px; }
+.float-act .btn { font-size: 1.05em; padding: 9px 18px; }
+.parch-card .kcard .art { width: min(100%, 300px); max-width: none; }
+.parch-card .ptitle { font-size: 2.2em; }
+.parch-card .modal-close { color: #5a3a1c; font-size: 34px; }

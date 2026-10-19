@@ -556,6 +556,7 @@ function renderMesa() {
       ${cardIcon(id, 'md')}<span class="spell-name">${esc(cname(c))}</span>${prep ? `<span class="prep-cost">${costHtml(c.coste)}</span>` : ''}</button>`;
   };
   const known = (tipo) => p.aprendidas.filter((id) => D.cartas[id].tipo === tipo);
+  const studying = isMyTurn() && t && t.paso === 'estudiar' && !!p.estudio && !t.lechuza;
   const magicIds = [...['chispa', 'burbuja', ...known('hechizo')].map(spell), ...known('pocion').map(potion)];
   const magicCount = magicIds.length;
   const magic = magicIds.join('');
@@ -570,7 +571,7 @@ function renderMesa() {
         title="${esc(petName(pet))} · ${esc(petDon(pet))}: ${esc(L(pet.texto, pet.textoEn))}">${petPortrait(p.mascota, 'free')}</button>
     </div>
     <section class="m-card"><h4>${L('Ingredientes', 'Ingredients')} <span class="h4-n">${sum(p.reserva)}/${D.limiteReserva}</span></h4><div class="ing-row">${ings}</div></section>
-    <section class="m-card"><h4>${L('Aprendiendo', 'Learning')}</h4>${studyHtml(p, t)}</section>
+    <section class="m-card"><h4>${L('Aprendiendo', 'Learning')}${studying ? ` <span class="h4-n study-n" title="${L('Ingredientes que puedes colocar en este turno', 'Ingredients you can place this turn')}">${t.estudiadas}/${t.limite}</span>` : ''}</h4>${studyHtml(p, t)}</section>
     <section class="m-card"><h4>${L('Magia', 'Magic')}</h4><div class="spell-row" style="--n:${Math.min(5, magicCount)}">${magic}</div></section>`;
 }
 

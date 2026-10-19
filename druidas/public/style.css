@@ -1686,3 +1686,4 @@ body { font-size: 18px; font-weight: 600; }
   .lobby .plist li .btn { margin-left: auto; font-size: .8em; padding: 3px 8px; flex: none; }
 }
 .lobby .plist li .btn.kick { width: 30px; height: 30px; padding: 0 !important; border-radius: 50%; display: grid; place-items: center; font-size: .9em; }
+.study-n { color: var(--green) !important; }

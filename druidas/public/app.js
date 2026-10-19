@@ -426,7 +426,7 @@ function renderClaro() {
 
 function studyHtml(p, t) {
   if (!p.estudio) {
-    return `<div class="study-mini empty">${canPickCard() ? '← Elige un conocimiento' : 'Sin receta'}</div>`;
+    return `<div class="study-mini empty">${canPickCard() ? 'Elige un conocimiento abajo ↓' : 'Nada en estudio'}</div>`;
   }
   const c = D.cartas[p.estudio.card];
   const slots = [];
@@ -436,10 +436,7 @@ function studyHtml(p, t) {
   const canAbandon = isMyTurn() && t.paso === 'estudiar' && !t.tocado && t.estudiadas === 0;
   return `<div class="study-mini ${c.tipo}" title="${esc(c.texto)}">
       ${cardIcon(p.estudio.card, 'md')}
-      <div class="study-body">
-        <div class="study-name">${kindIcon(c.tipo, 'xs')}<b>${esc(c.nombre)}</b>${prestigeHtml(c.puntos, 'sm')}</div>
-        <div class="recipe-slots">${slots.join('')}</div>
-      </div>
+      <div class="study-body"><b class="study-title">${esc(c.nombre)}</b><div class="recipe-slots">${slots.join('')}</div></div>
       ${canAbandon ? '<button class="btn tiny ghost dark" data-a="abandonar" title="Abandonar receta">✕</button>' : ''}
     </div>`;
 }
@@ -450,44 +447,42 @@ function renderMesa() {
   const pet = D.mascotas[p.mascota];
   const click = resClickable();
   const petOn = ui.mode === 'liebre' || ui.mode === 'lechuza' || ui.mode === 'cerv' || ui.zorro;
-  const ings = ING().map((k) => {
-    const tk = tok(k, { cls: 'xl', n: p.reserva[k] });
-    return `<span class="ing-col ${p.reserva[k] ? '' : 'none'}" title="${N(k)}">${click && p.reserva[k] ? `<button class="tokbtn" data-a="res" data-v="${k}">${tk}</button>` : tk}</span>`;
-  }).join('');
-  // Todos los hechizos y pociones: lo que aún no tienes, en gris y tenue.
-  const ids = (tipo) => Object.keys(D.cartas).filter((id) => D.cartas[id].tipo === tipo);
-  const spells = ['chispa', 'burbuja', ...ids('hechizo')].map((id) => {
+  // Ingredientes: solo los que tienes, uno por ficha.
+  const ings = ING().flatMap((k) => Array.from({ length: p.reserva[k] }, () => (click
+    ? `<button class="tokbtn" data-a="res" data-v="${k}" title="${N(k)}">${tok(k, { cls: 'lg' })}</button>`
+    : tok(k, { cls: 'lg' })))).join('') || '<span class="none-txt">Sin ingredientes</span>';
+  // Magia: solo lo que conoces. Las pociones sin preparar, en gris (con su coste si puedes prepararlas).
+  const spell = (id) => {
     const c = card(id);
-    const known = !D.cartas[id] || p.aprendidas.includes(id);
-    const live = known && id !== 'burbuja' && !c.ataque && canCast(id);
-    return `<button class="spell-ico ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''} ${known ? '' : 'locked'}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'}
-      title="${esc(c.nombre)}${known ? '' : ' (sin aprender)'}: ${esc(c.texto)}">${cardIcon(id, 'md')}</button>`;
-  }).join('');
-  const potions = ids('pocion').map((id) => {
+    const live = id !== 'burbuja' && !c.ataque && canCast(id);
+    return `<button class="spell-ico ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.texto)}">
+      ${cardIcon(id, 'md')}<span class="spell-name">${esc(c.nombre)}</span></button>`;
+  };
+  const potion = (id) => {
     const c = D.cartas[id];
     const ready = p.pociones.includes(id);
-    const known = p.aprendidas.includes(id);
     const live = ready && !c.ataque && canCast(id);
     const prep = !ready && canPrepare(id);
-    const state = ready ? '' : known ? 'unready' : 'locked';
-    const what = ready ? 'preparada' : known ? 'sin preparar' : 'sin aprender';
-    return `<button class="spell-ico potion ${c.ataque ? 'attack' : ''} ${live || prep ? 'live' : ''} ${state}" ${live ? `data-a="cast" data-v="${id}"` : prep ? `data-a="prep" data-v="${id}"` : 'disabled'}
-      title="${esc(c.nombre)} (${what}${prep ? ': pulsa para prepararla' : ''}): ${esc(c.texto)}">${cardIcon(id, 'md')}${prep ? `<span class="prep-cost">${costHtml(c.coste)}</span>` : ''}</button>`;
-  }).join('');
+    return `<button class="spell-ico potion ${c.ataque ? 'attack' : ''} ${live || prep ? 'live' : ''} ${ready ? '' : 'unready'}"
+      ${live ? `data-a="cast" data-v="${id}"` : prep ? `data-a="prep" data-v="${id}"` : 'disabled'}
+      title="${ready ? 'Preparada' : prep ? 'Pulsa para prepararla' : 'Sin preparar'}: ${esc(c.texto)}">
+      ${cardIcon(id, 'md')}<span class="spell-name">${esc(c.nombre)}</span>${prep ? `<span class="prep-cost">${costHtml(c.coste)}</span>` : ''}</button>`;
+  };
+  const known = (tipo) => p.aprendidas.filter((id) => D.cartas[id].tipo === tipo);
+  const magic = [...['chispa', 'burbuja', ...known('hechizo')].map(spell), ...known('pocion').map(potion)].join('');
   $('mesa').innerHTML = `
     <div class="m-hero">
       ${druidPortrait(p.druida, 'hero')}
-      <div class="m-pet-pic" title="${esc(pet.nombre)}: ${esc(pet.texto)}">${petPortrait(p.mascota, 'free')}</div>
-      <div class="m-name-row"><b class="m-name">${esc(p.name)}</b>${prestigeHtml(p.puntos)}</div>
+      <button class="m-pet-pic ${petUsable() ? 'live' : ''} ${petOn ? 'on' : ''}" data-a="habilidad" ${petUsable() ? '' : 'disabled'}
+        title="${esc(pet.nombre)} · ${esc(pet.don)}: ${esc(pet.texto)}">${petPortrait(p.mascota, 'free')}<span class="pet-usos">${usosHtml(p)}</span></button>
     </div>
-    <div class="m-row">
-      <button class="skill ${petOn ? 'on' : ''} ${petUsable() ? 'live' : ''}" data-a="habilidad" ${petUsable() ? '' : 'disabled'} title="${esc(pet.nombre)}: ${esc(pet.texto)}">
-        ${esc(pet.don)} <span class="usos">${usosHtml(p)}</span></button>
-      <span class="magic ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Te queda la magia de este turno' : 'Ya has usado tu magia en este turno'}">✦ ${p.magiaLibre ? 'magia' : 'usada'}</span>${p.dormido ? ' 💤' : ''}
+    <div class="m-name-row">
+      <b class="m-name">${esc(p.name)}</b>${prestigeHtml(p.puntos)}
+      <span class="magic-dot ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Te queda la magia de este turno' : 'Ya has usado tu magia en este turno'}">✦</span>${p.dormido ? '<span title="Dormido: solo 1 ingrediente">💤</span>' : ''}
     </div>
-    <section><h4 title="Al final de tu turno, como máximo ${D.limiteReserva}">Reserva ${sum(p.reserva)}/${D.limiteReserva}</h4><div class="ing-row">${ings}</div></section>
-    <section><h4>En estudio</h4>${studyHtml(p, t)}</section>
-    <section class="m-magic"><div class="spell-row">${spells}</div><div class="spell-row">${potions}</div></section>`;
+    <section class="m-card"><h4>Ingredientes <span class="h4-n">${sum(p.reserva)}/${D.limiteReserva}</span></h4><div class="ing-row">${ings}</div></section>
+    <section class="m-card"><h4>Aprendiendo</h4>${studyHtml(p, t)}</section>
+    <section class="m-card"><h4>Magia</h4><div class="spell-row">${magic}</div></section>`;
 }
 
 function renderRivals() {

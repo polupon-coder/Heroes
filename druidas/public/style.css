@@ -42,6 +42,9 @@ body {
     repeating-linear-gradient(180deg, var(--wood) 0 136px, var(--wood-line) 136px 139px, #6f4e31 139px 142px);
   background-attachment: fixed;
 }
+body.has-table-art {
+  background: linear-gradient(rgba(30, 18, 8, .25), rgba(30, 18, 8, .35)), url(img/ui/mesa.webp) center / cover fixed, var(--wood);
+}
 
 h1, h2, h3 { font-family: var(--title); margin: 0 0 .4em; }
 h4 { margin: 0 0 8px; font: 600 .95em var(--text); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); text-align: center; }
@@ -86,6 +89,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 }
 
 /* ---- cabecera ---- */
+.has-table-art .topbar { background: linear-gradient(rgba(25, 14, 6, .75), rgba(25, 14, 6, .35)); }
 .topbar {
   display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
   padding: 14px 40px 10px;
@@ -184,6 +188,8 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .pet-pic img { width: 100%; height: 100%; object-fit: contain; }
 .pet-pic.sm { width: 32px; height: 32px; font-size: 22px; }
 .pet-pic.md { width: 56px; height: 56px; font-size: 42px; }
+.pet-pic.lg2 { width: 84px; height: 84px; font-size: 56px; }
+.pet-pic:has(img) { border-radius: 0; overflow: visible; }
 .pet-pic.lg { width: 96px; height: 96px; font-size: 64px; }
 
 /* ---- ingredientes ---- */
@@ -198,7 +204,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .tok svg { width: 68%; height: 68%; fill: none; stroke: #fff; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
 .tok svg .fill { fill: #fff; stroke: none; }
 .tok-raiz svg path:first-child { stroke-width: 2.6; }
-.tok.has-img { background: none; border: 0; box-shadow: none; }
+.tok.has-img { background: none; border: 0; box-shadow: 0 2px 4px rgba(0, 0, 0, .35); }
 .tok.has-img img { width: 100%; height: 100%; object-fit: contain; }
 .tok-eter { --c: var(--eter); } .tok-umbra { --c: var(--umbra); } .tok-lumen { --c: var(--lumen); } .tok-raiz { --c: var(--raiz); }
 .tok.dot { width: 14px; height: 14px; border-width: 1.5px; }
@@ -212,6 +218,8 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .tok.xl b { font-size: 14px; padding: 1px 7px; }
 .tok.slot-empty { background: rgba(255, 255, 255, .45); border: 2px dashed color-mix(in srgb, var(--c) 70%, #000); box-shadow: none; }
 .tok.slot-empty svg { stroke: color-mix(in srgb, var(--c) 80%, #000); opacity: .55; }
+.tok.slot-empty.has-img { background: rgba(255, 255, 255, .35); box-shadow: none; }
+.tok.slot-empty.has-img img { opacity: .35; filter: grayscale(.4); }
 .tok.slot-empty svg .fill { fill: color-mix(in srgb, var(--c) 80%, #000); }
 .free { font-size: .85em; color: var(--ok); font-weight: 700; }
 
@@ -231,7 +239,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .catalog { grid-area: catalog; }
 .mid { grid-area: mid; display: grid; grid-template-columns: 1fr 1fr 0.95fr; gap: 18px; }
 .mesa { grid-area: mesa; background: linear-gradient(180deg, #ddb682, var(--tan)); border-color: var(--tan-edge); }
-.rivals { grid-area: rivals; align-self: start; background: linear-gradient(180deg, #6a4a2e, #5a3e26); border-color: #3e2a17; padding: 12px; display: grid; gap: 14px; }
+.rivals { grid-area: rivals; align-self: start; background: rgba(60, 38, 20, .72); border-color: #3e2a17; padding: 12px; display: grid; gap: 14px; }
 .rivals > .ptitle { background: var(--parch); border: 2px solid var(--parch-edge); border-radius: 10px; padding: 12px; margin: 0; }
 
 /* conocimientos */
@@ -280,6 +288,9 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 /* el claro */
 .claro-panel { background: linear-gradient(180deg, #6f9663, #5d8452); border-color: #3f5e37; display: flex; flex-direction: column; }
 .ring { position: relative; flex: 1; min-height: 250px; background-size: cover; background-position: center; border-radius: 12px; }
+.ring.with-art { background-size: contain; background-repeat: no-repeat; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .35)); }
+.claro-panel { background-size: cover; background-position: center; }
+.claro-panel .ptitle, .claro-foot { text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
 .stone { position: absolute; width: 34px; height: 22px; margin: -11px 0 0 -17px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #bdb8a6, #8c887a); box-shadow: 0 2px 2px rgba(0, 0, 0, .3); }
 .cslot { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; display: grid; place-items: center; z-index: 1; }
 .cslot.empty { border-radius: 50%; border: 2px dashed rgba(255, 255, 255, .5); }

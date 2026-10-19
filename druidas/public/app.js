@@ -71,7 +71,11 @@ function tok(t, { cls = '', n = null } = {}) {
   const inner = img ? `<img src="${img}" alt="">` : `<svg viewBox="0 0 24 24" aria-hidden="true">${SYMBOL[t]}</svg>`;
   return `<span class="tok tok-${t} ${img ? 'has-img' : ''} ${cls}" title="${N(t)}">${inner}${n !== null ? `<b>${n}</b>` : ''}</span>`;
 }
-const emptyTok = (t, cls = '') => `<span class="tok slot-empty tok-${t} ${cls}" title="Falta ${N(t)}"><svg viewBox="0 0 24 24" aria-hidden="true">${SYMBOL[t]}</svg></span>`;
+const emptyTok = (t, cls = '') => {
+  const img = D.img.ingredientes[t];
+  const inner = img ? `<img src="${img}" alt="">` : `<svg viewBox="0 0 24 24" aria-hidden="true">${SYMBOL[t]}</svg>`;
+  return `<span class="tok slot-empty tok-${t} ${img ? 'has-img' : ''} ${cls}" title="Falta ${N(t)}">${inner}</span>`;
+};
 
 function costHtml(coste) {
   const out = [];
@@ -402,7 +406,7 @@ function renderActive() {
       </div>
       <div class="active-info">
         <div class="label">Mascota</div>
-        <div class="pet-row">${petPortrait(p.mascota, 'md')}<div><b>${esc(pet.nombre)}</b><br><span class="small muted">${'●'.repeat(p.usos)}${'○'.repeat(Math.max(0, pet.usos - p.usos))} usos</span></div></div>
+        <div class="pet-row">${petPortrait(p.mascota, 'lg2')}<div><b>${esc(pet.nombre)}</b><br><span class="small muted">${'●'.repeat(p.usos)}${'○'.repeat(Math.max(0, pet.usos - p.usos))} usos</span></div></div>
         <button class="skill ${on ? 'on' : ''} ${petUsable() ? 'live' : ''}" data-a="habilidad" ${petUsable() ? '' : 'disabled'} title="${esc(pet.texto)}">
           ${esc(pet.don)}</button>
         <div class="label">Ingredientes en reserva</div>
@@ -425,23 +429,25 @@ function renderClaro() {
   const pick = isMyTurn() && t && t.paso === 'recoger' && !ui.mode;
   const clickable = pick || ui.mode === 'pensar' || (ui.mode === 'chispa' && ui.chispaTipo);
   const pend = me().estudio ? me().estudio.pend : {};
-  const stones = Array.from({ length: 18 }, (_, i) => {
+  const art = D.img.ui['claro-piedras'];
+  const stones = art ? '' : Array.from({ length: 18 }, (_, i) => {
     const a = (i / 18) * Math.PI * 2 + 0.17;
     return `<span class="stone" style="left:${50 + 44 * Math.cos(a)}%;top:${50 + 43 * Math.sin(a)}%"></span>`;
   }).join('');
   const claro = S.claro.length ? S.claro : new Array(6).fill(null);
   const slots = claro.map((c, i) => {
     const a = (CLARO_ANG[i] * Math.PI) / 180;
-    const pos = `style="left:${50 + 34 * Math.cos(a)}%;top:${50 + 36 * Math.sin(a)}%"`;
+    const pos = `style="left:${50 + (art ? 27 : 34) * Math.cos(a)}%;top:${50 + (art ? 28 : 36) * Math.sin(a)}%"`;
     if (!c) return `<span class="cslot empty" ${pos}></span>`;
     const on = ui.sel.includes(i);
     const hint = ui.mode === 'pensar' && !(pend[c] > 0) ? 'dim' : '';
     return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos}>${tok(c, { cls: 'lg' })}</button>`
       : `<span class="cslot" ${pos}>${tok(c, { cls: 'lg' })}</span>`;
   }).join('');
-  const bg = D.img.ui.claro ? ` style="background-image:url(${D.img.ui.claro})"` : '';
+  $('claro').style.backgroundImage = D.img.ui.claro ? `linear-gradient(rgba(40, 60, 25, .25), rgba(40, 60, 25, .45)), url(${D.img.ui.claro})` : '';
+  const bg = art ? ` style="background-image:url(${art})"` : '';
   $('claro').innerHTML = `<h2 class="ptitle light">El Claro</h2>
-    <div class="ring"${bg}>${stones}${slots}</div>
+    <div class="ring ${art ? 'with-art' : ''}"${bg}>${stones}${slots}</div>
     <div class="claro-foot">${claro.filter(Boolean).length} ingredientes visibles · 👜 ${sum(S.bolsa)} en la bolsa</div>`;
 }
 
@@ -942,5 +948,6 @@ setInterval(() => {
 
 fetch('/api/datos').then((r) => r.json()).then((d) => {
   D = d;
+  document.body.classList.toggle('has-table-art', !!D.img.ui.mesa);
   render();
 });

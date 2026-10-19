@@ -266,6 +266,20 @@ def mascara_pincel(seed=7):
     m = ImageChops.lighter(centro, trazos)
     os.makedirs(os.path.join(OUT, 'ui'), exist_ok=True)
     m.save(os.path.join(OUT, 'ui', 'pincel.png'), optimize=True)
+    # Variante para las caras: llena de arriba abajo (no corta la cabeza) y solo se deshace por los lados.
+    lados = Image.new('L', (W, H), 0)
+    ImageDraw.Draw(lados).rectangle((80, 6, W - 80, H - 6), fill=255)
+    lados = lados.filter(ImageFilter.GaussianBlur(14))
+    t2 = Image.new('L', (W, H), 0)
+    d2 = ImageDraw.Draw(t2)
+    for _ in range(110):
+        y = rnd.uniform(4, H - 4)
+        d2.line((rnd.uniform(10, 80), y, W - rnd.uniform(10, 80), y + rnd.uniform(-5, 5)), fill=rnd.randint(210, 255), width=int(rnd.uniform(8, 22)))
+    t2 = t2.filter(ImageFilter.GaussianBlur(2.5))
+    borde = Image.new('L', (W, H), 0)  # filo irregular de 4 px arriba y abajo
+    ImageDraw.Draw(borde).rectangle((0, 3, W, H - 3), fill=255)
+    m2 = ImageChops.multiply(ImageChops.lighter(lados, t2), borde.filter(ImageFilter.GaussianBlur(1.5)))
+    m2.save(os.path.join(OUT, 'ui', 'pincel-cara.png'), optimize=True)
 
 
 def druidas_recortados():

@@ -1666,3 +1666,5 @@ body { font-size: 18px; font-weight: 600; }
 }
 .float-act.bare .btn { --bh: 56px; }
 @media (max-width: 760px) { .btn.primary, .float-act .btn, .home-actions .btn, .lobby .row .btn, .parch-card .row .btn { --bh: 44px; font-size: 1em !important; } }
+/* requisitos que te faltan: el color del ingrediente, suave (no un círculo vacío) */
+.req-dot.miss { background: color-mix(in srgb, var(--c) 35%, #f4ead2) !important; border-color: color-mix(in srgb, var(--c) 45%, #f4ead2) !important; opacity: 1 !important; }

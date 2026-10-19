@@ -4,7 +4,7 @@ Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [esce
 """
 import os
 import sys
-from PIL import Image, ImageDraw, ImageFilter, ImageChops
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageChops
 
 SRC = sys.argv[1]
 OUT = os.path.join(os.path.dirname(__file__), '..', 'public', 'img')
@@ -201,7 +201,12 @@ def simbolos():
     pocion = fit(cut_background(load(22), thr=30, feather=1.5), 300)
     save(pocion, 'ui', 'pocion', q=88)
     save(vaciar_frasco(pocion), 'ui', 'pocion-vacia', q=88)
-    save(fit(cut_background(load(23), thr=34, feather=1.5), 300), 'ui', 'hechizo', q=88)
+    # pergamino lacrado sin saturación (tinta parda apagada)
+    sello = fit(cut_background(load(23), thr=34, feather=1.5), 300)
+    alfa = sello.getchannel('A')
+    sello = ImageEnhance.Color(sello.convert('RGB')).enhance(0.12).convert('RGBA')
+    sello.putalpha(alfa)
+    save(sello, 'ui', 'hechizo', q=88)
 
 
 def retratos():

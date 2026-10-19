@@ -31,7 +31,6 @@ function applyStaticTexts() {
     if (logo) el.innerHTML = `<img class="title-art" src="${logo}" alt="${L('Escuela de Magia', 'School of Magic')}">`;
     else el.textContent = L('Escuela de Magia', 'School of Magic');
   }
-  set('homeSub', 'El bosque de los druidas', 'The Druids’ Forest');
   set('homeIntro', 'Recoge ingredientes en El Claro, aprende hechizos y pociones, y consigue más Prestigio que los demás aprendices.',
     'Gather ingredients in the Clearing, learn spells and potions, and earn more Prestige than the other apprentices.');
   document.title = L('Escuela de Magia', 'School of Magic');
@@ -625,7 +624,7 @@ function renderModal() {
   } else if (m.kind === 'info') {
     const known = p.aprendidas.includes(m.id);
     const can = canPickCard() && !known && S.catalogo[m.id] > 0;
-    body = cardHtml(m.id, { cls: 'big', footer: `<div class="kfoot"><span class="muted small">${S.catalogo[m.id] || 0} ${L('copias en el catálogo', 'copies in the catalogue')}</span>${known ? `<span class="tag ok">${L('aprendido', 'learned')}</span>` : ''}</div>` });
+    body = cardHtml(m.id, { cls: 'big', footer: `<div class="kfoot"><span class="muted small">${S.catalogo[m.id] || 0} ${S.catalogo[m.id] === 1 ? L('copia en el catálogo', 'copy in the catalogue') : L('copias en el catálogo', 'copies in the catalogue')}</span>${known ? `<span class="tag ok">${L('aprendido', 'learned')}</span>` : ''}</div>` });
     ok = can ? L('Estudiar este conocimiento', 'Study this knowledge') : '';
   } else if (m.kind === 'final') {
     const rank = [...S.players].sort((a, b) => b.puntos - a.puntos);
@@ -804,8 +803,7 @@ function rulesPages() {
       <p><b>Spells</b> are learned forever. Each brewed <b>potion</b> works only once.</p>
       <p><b>Spark</b> is free, once on your turn, and does not use your magic.</p>
       <p><b>Attacks</b> (Steal, Mix-up and Sleep) always target the active player, after they gather.</p>`),
-    `<h2 class="ptitle">${L('Las mascotas', 'The pets')}</h2>${pets(petIds.slice(0, 2))}`,
-    `<h2 class="ptitle">${L('Las mascotas', 'The pets')}</h2>${pets(petIds.slice(2))}`,
+    ...petIds.map((id) => `<h2 class="ptitle">${L('Las mascotas', 'The pets')}</h2>${pets([id])}`),
     ...['chispa', 'burbuja'].map((id) => cards(L('Magia inicial', 'Starting magic'), [id])),
     ...spells.map((id) => cards(L('Hechizos', 'Spells'), [id])),
     ...potions.map((id) => cards(L('Pociones', 'Potions'), [id])),
@@ -820,8 +818,8 @@ function rulesHtml(spread = 0) {
   return `<div class="book">
     <section class="page left">${page(2 * s)}</section>
     <section class="page right">${page(2 * s + 1)}</section>
-    ${s > 0 ? `<button class="book-nav prev" data-a="rulesPage" data-v="${s - 1}" aria-label="${L('Anterior', 'Previous')}">‹</button>` : ''}
-    ${s < last ? `<button class="book-nav next" data-a="rulesPage" data-v="${s + 1}" aria-label="${L('Siguiente', 'Next')}">›</button>` : ''}
+    ${s > 0 ? `<button class="book-nav prev" data-a="rulesPage" data-v="${s - 1}" aria-label="${L('Anterior', 'Previous')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>` : ''}
+    ${s < last ? `<button class="book-nav next" data-a="rulesPage" data-v="${s + 1}" aria-label="${L('Siguiente', 'Next')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>` : ''}
   </div>`;
 }
 

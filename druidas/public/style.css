@@ -1403,3 +1403,18 @@ body { font-size: 18px; font-weight: 600; }
 .parch-card .kcard .art { width: min(100%, 300px); max-width: none; }
 .parch-card .ptitle { font-size: 2.2em; }
 .parch-card .modal-close { color: #5a3a1c; font-size: 34px; }
+/* portada: bloque de nombre y botones más pequeño */
+.home-page.right { left: 58% !important; right: 18% !important; gap: 10px; }
+.home-page.right .input, .home-page.right .btn { font-size: .95em !important; padding: 7px 12px; min-height: 0; }
+.home-page.right .home-actions { gap: 8px; }
+/* flechas a los lados del libro, centradas en vertical; la cruz fuera, arriba a la derecha */
+.book-nav { top: 50% !important; bottom: auto !important; transform: translateY(-50%); width: 52px; height: 52px; }
+.book-nav.prev { left: -70px !important; }
+.book-nav.next { right: -70px !important; }
+.book-card .modal-close { top: 0 !important; right: -70px !important; }
+.book-nav { display: grid; place-items: center; padding: 0; }
+.book-nav svg { width: 26px; height: 26px; fill: none; stroke: #5a3a1c; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.book-card .modal-close { display: grid; place-items: center; padding: 0 0 3px; line-height: 1; }
+.rule-pet .pet-pic { transform: scale(1.5); margin: 1.2em 0 .8em; }
+.rule-pet p { max-width: 30ch; font-size: 1.08em; }
+.rule-pet b { font-size: 1.8em !important; } .rule-pet .rp-don { font-size: 1.2em; }

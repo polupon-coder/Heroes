@@ -501,7 +501,7 @@ function renderRivals() {
       <div class="r-head">
         ${druidPortrait(p.druida, 'rsm')}
         <span class="r-pet" title="${esc(D.mascotas[p.mascota].nombre)}: ${esc(D.mascotas[p.mascota].texto)}">${petPortrait(p.mascota, 'free')}</span>
-        <div class="r-who"><span class="r-name"><b>${esc(p.name)}</b>${star}</span>
+        <div class="r-who"><span class="r-name"><b title="${esc(p.name)}">${esc([...p.name].slice(0, 2).join(''))}</b>${star}</span>
           ${status ? `<span class="r-sub">${status}</span>` : ''}</div>
         ${prestigeHtml(p.puntos, '', p.druida)}
       </div>

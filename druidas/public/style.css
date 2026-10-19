@@ -1214,3 +1214,16 @@ body { font-size: 18px; font-weight: 600; }
   .rivals.wood .r-who b { font-size: 1.05em !important; }
 }
 .rivals.wood .r-who b { font-size: 1.15em !important; } .rivals.wood .r-name { gap: 4px; } .rivals.wood .r-name .magic-dot { font-size: 1.4em !important; } @media (max-width: 1500px), (max-height: 920px) { .rivals.wood .r-who b { font-size: .95em !important; } .rivals.wood .r-name .magic-dot { font-size: 1.15em !important; } }
+/* rivales: nombre de dos letras, más grande */
+.rivals.wood .r-who b { font-size: 1.8em !important; }
+.rivals.wood .r-name .magic-dot { font-size: 1.6em !important; }
+/* nombre y Prestigio del personaje propio un poco más abajo */
+.m-hero .m-name-row { top: 26px !important; }
+/* más espacio dentro de los papiros: menos margen del tablero y rollos más finos */
+.mesa, .rivals.wood { padding: 4% 4% 5% !important; }
+.mesa > section.m-card, .rivals.wood .rival { border-width: 12px 22px !important; border-image-width: 12px 22px !important; }
+.portrait.hero { border-width: 12px 22px !important; border-image-width: 12px 22px !important; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .rivals.wood .r-who b { font-size: 1.35em !important; }
+  .m-hero .m-name-row { top: 18px !important; }
+}

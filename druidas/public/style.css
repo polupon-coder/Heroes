@@ -987,3 +987,18 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .portrait.hero img { object-fit: contain !important; }
 /* número de la bolsa en El Claro: solo la cifra */
 .bag-pill { background: none !important; padding: 0 !important; color: #1d140a; font: 700 2.4em var(--title); text-shadow: 0 0 8px rgba(255, 245, 220, .7); }
+/* ingredientes del panel propio: en una fila, dentro del pergamino */
+.mesa .ing-row { flex-wrap: nowrap; gap: 4px; }
+.mesa .ing-row .tok.lg { width: 46px; height: 46px; }
+.mesa .recipe-slots { flex-wrap: nowrap; gap: 4px; }
+.mesa .recipe-slots .tok { width: 42px; height: 42px; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .mesa .ing-row .tok.lg { width: 36px; height: 36px; }
+  .mesa .recipe-slots .tok { width: 32px; height: 32px; }
+}
+/* mascota de rival solapada sobre el borde del papiro, sin cortarse */
+.rivals.wood .rival { overflow: visible !important; }
+.rivals.wood .r-pet { right: -16px; bottom: -14px; z-index: 3; }
+.rivals { overflow: visible !important; }
+/* número de la bolsa en blanco */
+.bag-pill { color: #fffaf0 !important; text-shadow: 0 2px 6px rgba(0, 0, 0, .7) !important; }

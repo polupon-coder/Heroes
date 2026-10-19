@@ -290,6 +290,8 @@ def retratos_enteros():
     for (qx, qy), name in {(0, 0): 'mostaza', (1, 0): 'azul', (0, 1): 'verde', (1, 1): 'lila'}.items():
         q = sheet.crop((qx * w // 2, qy * h // 2, (qx + 1) * w // 2, (qy + 1) * h // 2))
         cut = cut_background(q, thr=30, feather=1.2, erode=3)
+        if name == 'lila':  # en espejo: que mire hacia el mismo lado que los demás
+            cut = cut.transpose(Image.FLIP_LEFT_RIGHT)
         save(cut, 'retratos-sin-fondo', name, q=88)
 
 

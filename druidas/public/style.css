@@ -804,3 +804,25 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .catalog .kc-name { z-index: 2; background: rgba(248, 238, 214, .7); border-radius: 6px; padding: 0 4px; }
 /* indicador de ronda discreto */
 .round-pill { background: none; border: 0; padding: 0; font: 600 .95em var(--text); text-transform: none; letter-spacing: .04em; color: rgba(244, 236, 212, .75); }
+
+/* pergaminos sin deformar: los rollos de los lados se escalan proporcionalmente y el papel se estira */
+.catalog, .rivals.wood .rival, .mesa > section.m-card {
+  background: none !important;
+  border-style: solid !important; border-color: transparent !important;
+  border-image: url(img/ui/papiro.webp) 70 135 70 135 fill / 18px 34px 18px 34px / 0 stretch !important;
+}
+.catalog { border-width: 18px 34px !important; padding: 0 12px !important; }
+.rivals.wood .rival { border-width: 14px 26px !important; border-image-width: 14px 26px !important; padding: 0 4px !important; }
+.mesa > section.m-card { border-width: 14px 26px !important; border-image-width: 14px 26px !important; padding: 0 4px 2px !important; }
+
+/* caras de los rivales: sin pergamino, retrato normal */
+.portrait.rsm { background: none !important; filter: none; width: 96px; height: 64px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,.35) !important; }
+.portrait.rsm img { position: static; inset: auto; width: 100%; height: 100%; object-fit: cover; -webkit-mask: none; mask: none; mix-blend-mode: normal; }
+
+/* el panel propio: todo dentro del tablero */
+.mesa { padding: 7% 7% 8% !important; }
+.m-name-row { margin: 0 0 4px; }
+
+/* la ficha conserva la perspectiva al pasar el ratón o seleccionarla */
+.cslot.live:hover .tok { transform: perspective(500px) rotateX(38deg) translateY(-3px) scale(1.06); }
+.cslot.on .tok { transform: perspective(500px) rotateX(38deg) scale(1.08); }

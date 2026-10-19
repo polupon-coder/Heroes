@@ -160,7 +160,8 @@ function petPortrait(id, cls = '') {
 // Carta de conocimiento. estudio = { placed, pend } para mostrar los espacios.
 function cardHtml(id, { estudio = null, footer = '', cls = '', prepared = false } = {}) {
   const c = card(id);
-  const img = D.img.cartas[id];
+  // la ilustración en color (pergamino o frasco con su símbolo); si no hay, el icono sepia
+  const img = (D.img.ilustradas && D.img.ilustradas[id]) || D.img.cartas[id];
   let slots = '';
   if (c.req) {
     const out = [];
@@ -171,12 +172,11 @@ function cardHtml(id, { estudio = null, footer = '', cls = '', prepared = false 
     }
     slots = `<div class="req">${out.join('')}</div>`;
   }
-  const kind = c.tipo === 'pocion' ? L('Poción', 'Potion') : L('Hechizo', 'Spell');
   const use = c.tipo === 'pocion' ? L('Preparar', 'Brew') : L('Lanzar', 'Cast');
   return `<article class="kcard ${c.tipo} ${cls} ${c.ataque ? 'attack' : ''}">
     <header><span class="kname">${esc(cname(c))}</span>${c.puntos ? `<span class="pts" title="${L('Prestigio', 'Prestige')}">${c.puntos}</span>` : ''}</header>
     ${img ? `<div class="art"><img src="${img}" alt=""></div>` : ''}
-    <div class="kind">${kindIcon(c.tipo, 'sm')}${kind}${c.ataque ? L(' · ataque', ' · attack') : ''}${prepared ? ` · <b class="ready">${L('preparada', 'brewed')}</b>` : ''}</div>
+    ${prepared ? `<div class="kind"><b class="ready">${L('preparada', 'brewed')}</b></div>` : ''}
     ${slots}
     <div class="use">${use}: ${costHtml(c.coste)}</div>
     <p class="ktext">${esc(ctext(c))}</p>

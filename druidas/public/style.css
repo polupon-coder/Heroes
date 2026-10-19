@@ -1699,3 +1699,6 @@ body { font-size: 18px; font-weight: 600; }
 /* «Recoges ●●●» siempre en una línea */
 .toast { white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; width: max-content; max-width: none !important; }
 .toast.hidden { display: none; }
+/* carta en ventana: la ilustración entera (pergamino o frasco con su símbolo), sin recortar ni marco */
+.parch-card .kcard .art { aspect-ratio: auto !important; background: none !important; border-radius: 0; overflow: visible; width: min(100%, 200px) !important; }
+.parch-card .kcard .art img { width: 100%; height: auto !important; object-fit: contain !important; }

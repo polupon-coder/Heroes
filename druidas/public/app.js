@@ -402,7 +402,7 @@ function resClickable() {
 }
 
 const usosHtml = (p) => `${'●'.repeat(p.usos)}${'○'.repeat(Math.max(0, D.mascotas[p.mascota].usos - p.usos))}`;
-const prestigeHtml = (n, cls = '') => `<span class="prestige-badge ${cls}" title="Prestigio">${tok('lumen', { cls: 'sm' })}<b>${n}</b></span>`;
+const prestigeHtml = (n, cls = '') => `<span class="pts-ball ${cls}" title="Prestigio">${n}</span>`;
 
 // Los 6 espacios de El Claro, en corro; cada ingrediente sobre su propio círculo de piedras.
 const CLARO_ANG = [-90, -30, 30, 90, 150, 210];

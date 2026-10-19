@@ -910,3 +910,39 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 /* el pergamino de la cara, del mismo ancho que los demás */
 .portrait.hero, .m-hero { width: 100% !important; margin: 0 !important; }
 .m-hero { justify-items: stretch; }
+
+/* Prestigio: solo el número en una esfera */
+.pts-ball {
+  display: inline-grid; place-items: center; flex: none; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #f6d27a, #c58f22); border: 2px solid #8a6216;
+  color: #fff; font: 800 1.05em var(--title); text-shadow: 0 1px 2px rgba(0, 0, 0, .45);
+}
+.pts-ball.sm { min-width: 24px; height: 24px; font-size: .8em; }
+
+/* conocimientos: ilustración y esferas en columnas fijas, siempre alineados */
+.catalog .kc-top { display: grid; grid-template-columns: 84px 20px; align-items: center; justify-content: center; gap: 6px; }
+.catalog .kc-icon { width: 84px; justify-self: center; }
+.catalog .kc-req { justify-self: start; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .catalog .kc-top { grid-template-columns: 44px 12px; gap: 4px; }
+  .catalog .kc-icon { width: 44px; }
+}
+
+/* cara propia: pergamino apaisado sin deformar (rollos proporcionados), más bajo */
+.portrait.hero {
+  aspect-ratio: auto !important; height: 200px !important; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45));
+  background: none !important; border: solid transparent; border-width: 14px 26px;
+  border-image: url(img/ui/papiro.webp) 70 135 70 135 fill / 14px 26px / 0 stretch;
+}
+.portrait.hero img { position: absolute; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: contain; }
+.m-pet-pic { right: -4px; bottom: -6px; }
+.m-pet-pic .pet-pic.free { width: 86px !important; height: 86px !important; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .portrait.hero { height: 130px !important; }
+  .m-pet-pic .pet-pic.free { width: 60px !important; height: 60px !important; }
+}
+
+/* rivales: todo dentro del pergamino */
+.rivals.wood .r-head { flex-wrap: wrap; min-width: 0; }
+.rivals.wood .r-who { min-width: 0; }
+.rivals.wood .rival { overflow: hidden; }

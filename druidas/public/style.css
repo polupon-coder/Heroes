@@ -1173,3 +1173,12 @@ body { font-size: 18px; font-weight: 600; }
 .cslot::before { filter: sepia(.55) saturate(1) hue-rotate(-12deg) contrast(1.2) brightness(.97) !important; }
 .cslot.on::before { filter: sepia(.55) saturate(1) hue-rotate(-12deg) contrast(1.2) drop-shadow(0 0 8px var(--gold)) !important; }
 .pts-ball { font-family: var(--text) !important; font-weight: 700 !important; font-size: 1.1em !important; min-width: 36px; height: 36px; }
+/* estrella de magia: junto al nombre y más grande */
+.r-name { display: flex; align-items: center; gap: 6px; }
+.magic-dot { font-size: 1.7em !important; line-height: 1; color: rgba(90, 60, 30, .3); text-shadow: none; }
+.magic-dot.on { color: #8d5fd3 !important; text-shadow: 0 0 8px rgba(160, 110, 240, .6) !important; }
+.m-hero .m-name-row { justify-content: flex-start !important; gap: 8px; }
+.m-hero .magic-dot { order: 0 !important; margin: 0 !important; }
+.m-hero .pts-ball { margin-left: auto; }
+.r-sub { font-size: .85em; }
+.r-name { flex-wrap: wrap; min-width: 0; } .rivals.wood .r-head .pts-ball { margin-left: 6px; }

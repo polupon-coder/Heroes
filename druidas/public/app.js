@@ -495,13 +495,14 @@ function renderRivals() {
     const active = S.turn && S.turn.pid === p.id;
     const learned = p.aprendidas.map((id) => `<span class="learned ${D.cartas[id].ataque ? 'attack' : ''} ${D.cartas[id].tipo === 'pocion' && !p.pociones.includes(id) ? 'unready' : ''}" title="${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? ' (preparada)' : ''}: ${esc(D.cartas[id].texto)}">
       ${cardIcon(id, 'sm')}</span>`).join('');
-    const status = `${p.magiaLibre ? '✦' : '<span class="muted">✦</span>'}${p.connected || p.bot ? '' : ' · desconectado'}${S.startId === p.id ? ' · 1º' : ''}`;
+    const star = `<span class="magic-dot ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Le queda la magia de este turno' : 'Ya ha usado su magia en este turno'}">✦</span>`;
+    const status = `${p.connected || p.bot ? '' : 'desconectado'}${S.startId === p.id ? `${p.connected || p.bot ? '' : ' · '}abre la ronda` : ''}`;
     return `<div class="rival ${active ? 'active' : ''}">
       <div class="r-head">
         ${druidPortrait(p.druida, 'rsm')}
         <span class="r-pet" title="${esc(D.mascotas[p.mascota].nombre)}: ${esc(D.mascotas[p.mascota].texto)}">${petPortrait(p.mascota, 'free')}</span>
-        <div class="r-who"><b>${esc(p.name)}</b>
-          <span class="r-sub"><span title="Magia de este turno">${status}</span></span></div>
+        <div class="r-who"><span class="r-name"><b>${esc(p.name)}</b>${star}</span>
+          ${status ? `<span class="r-sub">${status}</span>` : ''}</div>
         ${prestigeHtml(p.puntos, '', p.druida)}
       </div>
       ${learned ? `<div class="r-learned">${learned}</div>` : '<div class="r-learned none-txt">Nada aprendido</div>'}

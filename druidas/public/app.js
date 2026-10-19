@@ -347,7 +347,10 @@ function kindIcon(tipo, cls = '') {
   return img ? `<img class="kind-ico ${cls}" src="${img}" alt="${label}" title="${label}">` : '';
 }
 
+// Ilustración del conocimiento: el pergamino o frasco ilustrado; si no hay, el icono sepia.
 function cardIcon(id, cls = 'lg') {
+  const ill = D.img.ilustradas && D.img.ilustradas[id];
+  if (ill) return `<span class="card-icon ill ${cls}"><img src="${ill}" alt=""></span>`;
   const img = D.img.cartas[id];
   if (img) return `<span class="card-icon ${cls}"><img src="${img}" alt=""></span>`;
   return tok(Object.keys(card(id).coste)[0] || 'lumen', { cls });
@@ -369,7 +372,7 @@ function renderCatalog() {
         data-a="info" data-v="${id}" title="${esc(c.nombre)}: ${esc(c.texto)}">
       <span class="kc-top">
         <span class="kc-pts" title="Prestigio">${c.puntos}</span>
-        <span class="kc-icon ${c.tipo === 'pocion' ? 'flask' : 'scroll'}" title="${c.tipo === 'pocion' ? 'Poción' : 'Hechizo'}">${cardIcon(id)}</span>
+        <span class="kc-icon ${D.img.ilustradas && D.img.ilustradas[id] ? '' : c.tipo === 'pocion' ? 'flask' : 'scroll'}" title="${c.tipo === 'pocion' ? 'Poción' : 'Hechizo'}">${cardIcon(id)}</span>
         <span class="kc-req" title="Para aprenderlo">${dots}</span>
       </span>
       <span class="kc-name">${esc(c.nombre)}</span>

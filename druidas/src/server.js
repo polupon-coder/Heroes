@@ -48,6 +48,7 @@ app.get('/api/datos', (req, res) => {
     img: {
       druidas: listImages('druidas'),
       retratos: listImages('retratos'),
+      ilustradas: listImages('cartas-ilustradas'),
       recortes: listImages('druidas-recorte'),
       mascotas: listImages('mascotas'),
       cartas: listImages('cartas'),

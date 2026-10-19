@@ -1,6 +1,6 @@
 """Prepara las ilustraciones originales para el juego (recortes, fondos transparentes, tamaños web).
 
-Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos|druidas|mesa|fichas]
+Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos|druidas|mesa|fichas|cartas]
 """
 import os
 import sys
@@ -66,7 +66,7 @@ def escenario_y_fichas():
     # Mascotas: hoja de 3 × 2 (gato, lechuza, zorro / cervatillo, liebre, conejo).
     sheet = load(10)
     cw, ch = sheet.width // 3, sheet.height // 2
-    for (cx, cy), name in {(1, 0): 'lechuza', (2, 0): 'zorro', (0, 1): 'cervatillo', (2, 1): 'liebre'}  # la liebre usa el conejo: el dibujo de la liebre tiene las orejas cortadas.items():
+    for (cx, cy), name in {(1, 0): 'lechuza', (2, 0): 'zorro', (0, 1): 'cervatillo', (2, 1): 'liebre'}.items():  # la liebre usa el conejo (la liebre tiene las orejas cortadas)
         # Márgenes para no arrastrar orejas o colas de los vecinos.
         cell = sheet.crop((cx * cw + 12, cy * ch + 8, (cx + 1) * cw - 12, (cy + 1) * ch - (40 if cy == 0 else 8)))
         save(fit(cut_background(cell, thr=28), 420), 'mascotas', name)
@@ -209,6 +209,35 @@ def fichas_piedra():
         save(piece.resize((256, 256), Image.LANCZOS), 'ingredientes', name, q=88)
 
 
+def cartas_ilustradas():
+    # Conocimientos ilustrados: pergaminos (arriba) y frascos (abajo). Las piezas no caen en una
+    # cuadrícula exacta, así que cada una se localiza por los huecos de papel que la rodean.
+    import numpy as np
+    sheet = load(25)
+    a = np.asarray(sheet).astype(int)
+    bg = np.asarray(sheet.getpixel((3, 3)))
+    ink = np.abs(a - bg).sum(axis=2) > 60
+    h = sheet.height
+    filas = [['chispa', 'burbuja', 'robo', 'cambio', 'idea'], ['lio', 'pensar', 'sueno', 'suerte', 'memoria']]
+    for fy, fila in enumerate(filas):
+        y0, y1 = (0, h // 2) if fy == 0 else (h // 2, h)
+        cols = ink[y0:y1].sum(axis=0) > 3
+        runs, start = [], None
+        for x, v in enumerate(list(cols) + [False]):
+            if v and start is None:
+                start = x
+            elif not v and start is not None:
+                if x - start > 40:
+                    runs.append((start, x))
+                start = None
+        assert len(runs) == len(fila), runs
+        for (x0, x1), name in zip(runs, fila):
+            rows = np.nonzero(ink[y0:y1, x0:x1].sum(axis=1) > 2)[0]
+            t, b = y0 + rows.min(), y0 + rows.max() + 1
+            cell = sheet.crop((max(0, x0 - 6), max(0, t - 6), x1 + 6, b + 6))
+            save(fit(cut_background(cell, thr=22, feather=1.2), 360), 'cartas-ilustradas', name, q=88)
+
+
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
@@ -217,7 +246,7 @@ def druidas_recortados():
 
 
 if __name__ == '__main__':
-    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos', 'druidas', 'mesa', 'fichas']
+    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos', 'druidas', 'mesa', 'fichas', 'cartas']
     if 'escenario' in que:
         escenario_y_fichas()
     if 'adornos' in que:
@@ -233,4 +262,6 @@ if __name__ == '__main__':
         mesa_y_papiro()
     if 'fichas' in que:
         fichas_piedra()
+    if 'cartas' in que:
+        cartas_ilustradas()
     print('listo')

@@ -45,7 +45,8 @@ El juego muestra dibujos provisionales hasta que estén las ilustraciones. Basta
 | `public/img/druidas-recorte/` | `mostaza`, `azul`, `verde`, `lila` (cuerpo entero sin fondo, para tu personaje) ✅ |
 | `public/img/retratos/` | `mostaza`, `azul`, `verde`, `lila` (caras: cada cuadrante completo de la hoja de retratos; es la imagen de los personajes) ✅ |
 | `public/img/mascotas/` | `lechuza`, `zorro`, `liebre`, `cervatillo` ✅ |
-| `public/img/cartas/` | iconos de magia: `chispa`, `burbuja`, `robo`, `cambio`, `idea`, `lio`, `memoria`, `sueno`, `suerte`, `pensar` ✅ |
+| `public/img/cartas-ilustradas/` | pergaminos (hechizos) y frascos (pociones) con su símbolo: `chispa`, `burbuja`, `robo`, `cambio`, `idea`, `lio`, `memoria`, `sueno`, `suerte`, `pensar` ✅ |
+| `public/img/cartas/` | iconos sepia (se usan si falta la ilustración): `chispa`, `burbuja`, `robo`, `cambio`, `idea`, `lio`, `memoria`, `sueno`, `suerte`, `pensar` ✅ |
 | `public/img/ingredientes/` | `eter`, `umbra`, `lumen`, `raiz` (fichas de piedra) ✅ |
 | `public/img/ui/` | `claro` y `claro-fondo` (suelo del bosque; el segundo es el fondo de la página), `claro-piedras` (círculo de piedras, fondo transparente), `mesa` (mesa de madera), `mesa-vertical` (la mesa girada, entera, de fondo en tu columna y en la de rivales), `papiro` (pergamino desplegado bajo la cara de tu personaje), y los adornos `rama` (bajo los títulos), `corona` (mascotas), `marco-ovalo` (hechizos y pociones), `marco-retrato` (tu druida) y `marco-carta` (cartas); `libro` (reglas), `libro-perspectiva` (portada), `pergamino` (crónica y resultados), `pocion`, `pocion-vacia` (frasco sin líquido para los conocimientos) y `hechizo` (símbolos de tipo) ✅ |
 

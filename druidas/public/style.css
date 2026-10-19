@@ -1164,3 +1164,12 @@ body { font-size: 18px; font-weight: 600; }
   .rivals .learned { width: 38px !important; height: 38px !important; }
 }
 .rivals.wood .r-who b { white-space: normal !important; overflow: visible !important; font-size: 1.35em !important; }
+/* Prestigio: número negro sobre el color del personaje */
+.pts-ball {
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--pc, #e3b54a) 45%, #fff), var(--pc, #e3b54a) 70%) !important;
+  border: 2px solid color-mix(in srgb, var(--pc, #e3b54a) 60%, #000) !important; color: #1d140a !important; text-shadow: none !important;
+}
+/* piedras de El Claro: amarillo tostado, no lima */
+.cslot::before { filter: sepia(.55) saturate(1) hue-rotate(-12deg) contrast(1.2) brightness(.97) !important; }
+.cslot.on::before { filter: sepia(.55) saturate(1) hue-rotate(-12deg) contrast(1.2) drop-shadow(0 0 8px var(--gold)) !important; }
+.pts-ball { font-family: var(--text) !important; font-weight: 700 !important; font-size: 1.1em !important; min-width: 36px; height: 36px; }

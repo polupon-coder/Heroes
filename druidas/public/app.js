@@ -403,7 +403,8 @@ function resClickable() {
 }
 
 const usosHtml = (p) => `${'●'.repeat(p.usos)}${'○'.repeat(Math.max(0, D.mascotas[p.mascota].usos - p.usos))}`;
-const prestigeHtml = (n, cls = '') => `<span class="pts-ball ${cls}" title="Prestigio">${n}</span>`;
+// Prestigio: número en negro sobre una esfera del color del druida.
+const prestigeHtml = (n, cls = '', druida = null) => `<span class="pts-ball ${cls}" title="Prestigio"${druida && D.druidas[druida] ? ` style="--pc:${D.druidas[druida].hex}"` : ''}>${n}</span>`;
 
 // Los 6 espacios de El Claro, en corro; cada ingrediente sobre su propio círculo de piedras.
 const CLARO_ANG = [-90, -30, 30, 90, 150, 210];
@@ -476,7 +477,7 @@ function renderMesa() {
   $('mesa').innerHTML = `
     <div class="m-hero">
       <div class="m-name-row">
-      <b class="m-name">${esc(p.name)}</b>${prestigeHtml(p.puntos)}
+      <b class="m-name">${esc(p.name)}</b>${prestigeHtml(p.puntos, '', p.druida)}
       <span class="magic-dot ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Te queda la magia de este turno' : 'Ya has usado tu magia en este turno'}">✦</span>${p.dormido ? '<span title="Dormido: solo 1 ingrediente">💤</span>' : ''}
     </div>
       ${druidPortrait(p.druida, 'hero')}
@@ -501,7 +502,7 @@ function renderRivals() {
         <span class="r-pet" title="${esc(D.mascotas[p.mascota].nombre)}: ${esc(D.mascotas[p.mascota].texto)}">${petPortrait(p.mascota, 'free')}</span>
         <div class="r-who"><b>${esc(p.name)}</b>
           <span class="r-sub"><span title="Magia de este turno">${status}</span></span></div>
-        ${prestigeHtml(p.puntos)}
+        ${prestigeHtml(p.puntos, '', p.druida)}
       </div>
       ${learned ? `<div class="r-learned">${learned}</div>` : '<div class="r-learned none-txt">Nada aprendido</div>'}
     </div>`;

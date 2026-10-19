@@ -163,7 +163,15 @@ def libro_inclinado():
 
 def boton():
     """Papiro con ramas y hojas (hoja 44) para los botones grandes."""
-    im = cut_background(load(44), thr=24, feather=1.2, erode=3)
+    im = cut_background(load(44), thr=34, feather=1.2, erode=5)
+    # el contorno trae puntitos rojizos: se pasan al pardo de las ramas
+    import numpy as np
+    a = np.asarray(im).astype(float)
+    r, g, bl = a[..., 0], a[..., 1], a[..., 2]
+    red = ((r - g) > 55)[..., None]
+    brown = np.stack([r * .55 + g * .45, g * .95 + r * .05, bl], -1)
+    a[..., :3] = np.where(red, brown, a[..., :3])
+    im = Image.fromarray(a.clip(0, 255).astype('uint8'), 'RGBA')
     save(fit(im, 1000), 'ui', 'boton', q=88)
 
 

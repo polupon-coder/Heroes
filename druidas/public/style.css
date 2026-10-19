@@ -1656,3 +1656,13 @@ body { font-size: 18px; font-weight: 600; }
   border-image: url(img/ui/boton.webp) 44 140 44 140 fill / 12px 34px / 0 stretch !important;
   padding: 4px 4px !important;
 }
+/* botón de papiro: altura fija y una sola línea; solo se estira el papel del centro, nunca las esquinas con hojas */
+.btn.primary, .float-act .btn, .home-actions .btn, .lobby .row .btn, .parch-card .row .btn {
+  --bh: 48px;
+  height: var(--bh); white-space: nowrap; display: inline-flex !important; align-items: center; justify-content: center;
+  border-width: 0 calc(var(--bh) * 140 / 208) !important;
+  border-image: url(img/ui/boton.webp) 0 140 fill / 0 calc(var(--bh) * 140 / 208) / 0 stretch !important;
+  padding: 0 6px !important;
+}
+.float-act.bare .btn { --bh: 56px; }
+@media (max-width: 760px) { .btn.primary, .float-act .btn, .home-actions .btn, .lobby .row .btn, .parch-card .row .btn { --bh: 44px; font-size: 1em !important; } }

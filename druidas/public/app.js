@@ -831,11 +831,11 @@ function rulesPages() {
   return [
     L(`<h2 class="ptitle">El objetivo</h2>
       <p>Sois aprendices de druida en la Escuela de Magia. Recogéis ingredientes en El Claro y estudiáis hechizos y recetas de pociones.</p>
-      <p>Cuando alguien llega a <b>${D.meta} de Prestigio</b>, se termina esa ronda (así todos juegan los mismos turnos) y gana quien tenga más. Si nadie llega, la partida acaba tras la ronda ${D.rondas}. El Prestigio solo se consigue <b>aprendiendo conocimientos</b>: cada uno da 3 o 4 puntos.</p>
+      <p>Cuando alguien llega a <b>${D.meta} de Prestigio</b>, se termina esa ronda (así todos juegan los mismos turnos) y gana quien tenga más. Si nadie llega, la partida acaba tras la ronda ${D.rondas}. Si hay empate, gana quien tenga más ingredientes; después, más pociones preparadas; y si sigue, quien jugó más tarde en la última ronda. El Prestigio solo se consigue <b>aprendiendo conocimientos</b>: cada uno da 3 o 4 puntos.</p>
       <p>Todo es público: se ven las reservas, las recetas en estudio y las pociones preparadas de todos.</p>`,
     `<h2 class="ptitle">The goal</h2>
       <p>You are druid apprentices at the School of Magic. You gather ingredients in the Clearing and study spells and potion recipes.</p>
-      <p>When someone reaches <b>${D.meta} Prestige</b>, that round is finished (so everyone plays the same number of turns) and whoever has the most wins. If nobody gets there, the game ends after round ${D.rondas}. Prestige is only earned by <b>learning knowledge</b>: each one gives 3 or 4 points.</p>
+      <p>When someone reaches <b>${D.meta} Prestige</b>, that round is finished (so everyone plays the same number of turns) and whoever has the most wins. If nobody gets there, the game ends after round ${D.rondas}. On a tie, whoever has more ingredients wins; then more brewed potions; then whoever played later in the last round. Prestige is only earned by <b>learning knowledge</b>: each one gives 3 or 4 points.</p>
       <p>Everything is public: everyone's reserves, recipes in study and brewed potions can be seen.</p>`),
     L(`<h2 class="ptitle">Los ingredientes</h2>
       <div class="rule-ings">${ings}</div>

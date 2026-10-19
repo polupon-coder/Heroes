@@ -982,3 +982,8 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .m-hero .m-name-row { top: 12px; height: 28px; }
   .portrait.hero img { inset: 34px 0 0 0 !important; height: calc(100% - 34px) !important; }
 }
+/* cara propia: más espacio y sin recortar */
+.mesa > .m-hero { flex-grow: 2.2; }
+.portrait.hero img { object-fit: contain !important; }
+/* número de la bolsa en El Claro: solo la cifra */
+.bag-pill { background: none !important; padding: 0 !important; color: #1d140a; font: 700 2.4em var(--title); text-shadow: 0 0 8px rgba(255, 245, 220, .7); }

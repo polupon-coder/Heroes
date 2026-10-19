@@ -423,7 +423,7 @@ function renderClaro() {
     return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos} title="${N(c)}">${inner}</button>`
       : `<span class="cslot" ${pos} title="${N(c)}">${inner}</span>`;
   }).join('');
-  $('claro').innerHTML = `<div class="ring">${slots}<span class="bag-pill" title="Ingredientes en la bolsa">👜 ${sum(S.bolsa)}</span></div>${ui.floatHtml || ''}`;
+  $('claro').innerHTML = `<div class="ring">${slots}<span class="bag-pill" title="Ingredientes que quedan en la bolsa">${sum(S.bolsa)}</span></div>${ui.floatHtml || ''}`;
 }
 
 function studyHtml(p, t) {

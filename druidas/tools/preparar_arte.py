@@ -324,6 +324,29 @@ def recolorear_pociones():
         save(out, 'cartas-ilustradas', name, q=88)
 
 
+def suavizar_pociones():
+    # Líquido más suave y sin grano para que el símbolo oscuro destaque; el símbolo y el contorno se conservan.
+    import numpy as np
+    for name in ['lio', 'memoria', 'sueno', 'suerte', 'pensar']:
+        path = os.path.join(OUT, 'cartas-ilustradas', f'{name}.webp')
+        im = Image.open(path).convert('RGBA')
+        a = im.getchannel('A')
+        rgb = im.convert('RGB')
+        smooth = rgb.filter(ImageFilter.MedianFilter(7)).filter(ImageFilter.GaussianBlur(3))
+        hsv = np.asarray(smooth.convert('HSV')).astype(float)
+        hsv[..., 1] *= 0.6                                  # menos saturado
+        hsv[..., 2] = np.clip(hsv[..., 2] * 0.85 + 45, 0, 255)  # más claro
+        soft = np.asarray(Image.fromarray(hsv.astype('uint8'), 'HSV').convert('RGB')).astype(float)
+        o = np.asarray(rgb).astype(float)
+        ohsv = np.asarray(rgb.convert('HSV')).astype(float)
+        liquid = (ohsv[..., 1] > 55) & (ohsv[..., 2] > 115)   # coloreado y no oscuro: el líquido
+        m = np.asarray(Image.fromarray((liquid * 255).astype('uint8')).filter(ImageFilter.GaussianBlur(1.2))).astype(float)[..., None] / 255
+        out = o * (1 - m) + soft * m
+        res = Image.fromarray(out.clip(0, 255).astype('uint8')).convert('RGBA')
+        res.putalpha(a)
+        save(res, 'cartas-ilustradas', name, q=90)
+
+
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
@@ -352,6 +375,7 @@ if __name__ == '__main__':
     if 'cartas' in que:
         cartas_ilustradas()
         recolorear_pociones()
+        suavizar_pociones()
     if 'pincel' in que:
         mascara_pincel()
     print('listo')

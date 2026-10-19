@@ -1227,3 +1227,22 @@ body { font-size: 18px; font-weight: 600; }
   .rivals.wood .r-who b { font-size: 1.35em !important; }
   .m-hero .m-name-row { top: 18px !important; }
 }
+/* conocimientos siempre en una sola fila, también en pantallas pequeñas */
+@media (max-width: 1500px), (max-height: 920px) {
+  .kcs { grid-template-columns: repeat(8, minmax(0, 1fr)) !important; gap: 2px !important; }
+  .catalog .kc-top { grid-template-columns: 40px 10px !important; gap: 3px !important; }
+  .catalog .kc-icon { width: 40px !important; }
+  .catalog .card-icon.ill.lg { width: 40px !important; height: 46px !important; }
+  .catalog .req-dot { width: 9px !important; height: 9px !important; }
+  .catalog .kc-name { font-size: .95em !important; white-space: nowrap; }
+  .catalog .kc-count { font-size: .75em; }
+  .ring { width: min(100%, 600px, calc((100vh - 330px) * 1.25)) !important; }
+}
+/* sin sombras oscuras detrás de papiros, pergaminos y pociones */
+.card-icon.ill img, .catalog, .mesa > section.m-card, .rivals.wood .rival, .portrait.hero, .kc-kind .kind-ico, .portrait.rsm { filter: none !important; }
+.rivals.wood .rival.active { filter: drop-shadow(0 0 6px var(--gold)) !important; }
+/* portátil: nombres de conocimientos sin pisarse */
+@media (max-width: 1500px), (max-height: 920px) {
+  .catalog .kc-name { font-size: .82em !important; }
+  .catalog .kc-count { display: none; }
+}

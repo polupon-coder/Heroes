@@ -215,10 +215,10 @@ function render() {
 }
 
 function renderTop() {
-  $('sub').innerHTML = `El bosque de los druidas · Sala <code>${esc(S.code)}</code>`;
+  $('sub').innerHTML = `Sala <code>${esc(S.code)}</code>`;
   const pill = $('roundPill');
   pill.classList.toggle('hidden', S.phase === 'lobby');
-  if (S.phase !== 'lobby') pill.innerHTML = `Ronda <span class="round-num">${Math.min(S.round, S.rondas)}</span><span class="round-of">/ ${S.rondas}</span>`;
+  if (S.phase !== 'lobby') pill.textContent = `Ronda ${Math.min(S.round, S.rondas)}/${S.rondas}`;
   $('prompt').classList.toggle('hidden', S.phase === 'lobby');
 }
 
@@ -872,7 +872,7 @@ function showHome() {
   $('roundPill').classList.add('hidden');
   $('prompt').classList.add('hidden');
   $('logBtn').classList.add('hidden');
-  $('sub').textContent = 'El bosque de los druidas';
+  $('sub').textContent = '';
   const sess = S && loadSession();
   $('backRow').innerHTML = sess ? `<button class="btn green" data-a="back">Volver a la partida ${esc(sess.code)}</button>` : '';
   const code = new URLSearchParams(location.search).get('sala');

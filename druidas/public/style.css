@@ -1196,3 +1196,21 @@ body { font-size: 18px; font-weight: 600; }
 }
 @media (max-width: 1500px), (max-height: 920px) { .mesa .spell-name { display: none; } }
 .pts-ball { font-variant-numeric: lining-nums tabular-nums; line-height: 1 !important; padding: 0 0 1px !important; display: inline-flex !important; align-items: center; justify-content: center; }
+/* aprendiendo: receta del mismo tamaño que la magia */
+.mesa .study-mini .card-icon.md, .mesa .study-mini .card-icon.ill.md { width: 84px !important; height: 92px !important; }
+/* ingredientes en dos filas, más grandes */
+.mesa .ing-row { flex-wrap: wrap !important; max-width: 300px; margin: 0 auto; gap: 6px 10px !important; }
+.mesa .ing-row .tok.lg { width: 60px !important; height: 60px !important; }
+/* menos separación entre pergaminos */
+.mesa, .rivals.wood { gap: 6px !important; }
+/* rivales: nombre en una línea con la estrella al lado, a eje */
+.r-name { flex-wrap: nowrap !important; align-items: center; }
+.rivals.wood .r-who b { white-space: nowrap !important; font-size: 1.3em !important; }
+.rivals.wood .r-who { display: flex; flex-direction: column; justify-content: center; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .mesa .study-mini .card-icon.md, .mesa .study-mini .card-icon.ill.md { width: 62px !important; height: 66px !important; }
+  .mesa .ing-row { max-width: 220px; gap: 4px 8px !important; }
+  .mesa .ing-row .tok.lg { width: 42px !important; height: 42px !important; }
+  .rivals.wood .r-who b { font-size: 1.05em !important; }
+}
+.rivals.wood .r-who b { font-size: 1.15em !important; } .rivals.wood .r-name { gap: 4px; } .rivals.wood .r-name .magic-dot { font-size: 1.4em !important; } @media (max-width: 1500px), (max-height: 920px) { .rivals.wood .r-who b { font-size: .95em !important; } .rivals.wood .r-name .magic-dot { font-size: 1.15em !important; } }

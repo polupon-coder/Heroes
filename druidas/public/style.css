@@ -1650,3 +1650,9 @@ body { font-size: 18px; font-weight: 600; }
 /* si la ventana de decisión solo tiene botones, sin papiro detrás: bastan los botones de madera */
 .float-act.bare { border: 0 !important; border-image: none !important; background: none !important; filter: none !important; padding: 0 !important; }
 .float-act.bare .btn { font-size: 1.2em !important; padding: 6px 14px !important; }
+/* botón: papiro con ramas (más bajo en los bordes que el marco anterior) */
+.btn.primary, .float-act .btn, .home-actions .btn, .lobby .row .btn, .parch-card .row .btn {
+  border-width: 12px 34px !important;
+  border-image: url(img/ui/boton.webp) 44 140 44 140 fill / 12px 34px / 0 stretch !important;
+  padding: 4px 4px !important;
+}

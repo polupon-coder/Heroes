@@ -162,8 +162,8 @@ def libro_inclinado():
 
 
 def boton():
-    """Marco de madera con hiedra (hoja 43) para los botones grandes."""
-    im = cut_background(load(43), thr=24, feather=1.2, erode=3)
+    """Papiro con ramas y hojas (hoja 44) para los botones grandes."""
+    im = cut_background(load(44), thr=24, feather=1.2, erode=3)
     save(fit(im, 1000), 'ui', 'boton', q=88)
 
 

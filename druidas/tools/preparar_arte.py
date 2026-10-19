@@ -302,6 +302,28 @@ def retratos_sin_fondo():
         save(cut_background(im, thr=34, feather=1.5, erode=3), 'retratos-sin-fondo', name, q=88)
 
 
+def recolorear_pociones():
+    # Que el líquido de las pociones no se confunda con los ingredientes (violeta, azul, amarillo, verde):
+    # Pensar → rosa, Sueño → turquesa, Suerte → plata. Lío (rojo) y Memoria (naranja) se quedan.
+    import numpy as np
+    destino = {'pensar': ('hue', 330), 'sueno': ('hue', 185), 'suerte': ('plata', None)}
+    for name, (modo, hue) in destino.items():
+        path = os.path.join(OUT, 'cartas-ilustradas', f'{name}.webp')
+        im = Image.open(path).convert('RGBA')
+        a = im.getchannel('A')
+        hsv = np.asarray(im.convert('RGB').convert('HSV')).astype(float)
+        H, S, V = hsv[..., 0], hsv[..., 1], hsv[..., 2]
+        liquid = (S > 90) & (V > 60)  # el corcho y el papel son poco saturados
+        if modo == 'hue':
+            H = np.where(liquid, hue / 360 * 255, H)
+        else:
+            S = np.where(liquid, S * 0.12, S)
+            V = np.where(liquid, np.clip(V * 1.05 + 20, 0, 255), V)
+        out = Image.fromarray(np.dstack([H, S, V]).astype('uint8'), 'HSV').convert('RGBA')
+        out.putalpha(a)
+        save(out, 'cartas-ilustradas', name, q=88)
+
+
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
@@ -329,6 +351,7 @@ if __name__ == '__main__':
         fichas_piedra()
     if 'cartas' in que:
         cartas_ilustradas()
+        recolorear_pociones()
     if 'pincel' in que:
         mascara_pincel()
     print('listo')

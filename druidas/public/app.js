@@ -492,8 +492,8 @@ function renderRivals() {
   const rivals = S.players.filter((p) => p.id !== S.me);
   $('rivals').innerHTML = rivals.map((p) => {
     const active = S.turn && S.turn.pid === p.id;
-    const learned = p.aprendidas.map((id) => `<span class="learned ${D.cartas[id].ataque ? 'attack' : ''}" title="${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? ' (preparada)' : ''}: ${esc(D.cartas[id].texto)}">
-      ${cardIcon(id, 'sm')}${p.pociones.includes(id) ? kindIcon('pocion', 'badge') : ''}</span>`).join('');
+    const learned = p.aprendidas.map((id) => `<span class="learned ${D.cartas[id].ataque ? 'attack' : ''} ${D.cartas[id].tipo === 'pocion' && !p.pociones.includes(id) ? 'unready' : ''}" title="${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? ' (preparada)' : ''}: ${esc(D.cartas[id].texto)}">
+      ${cardIcon(id, 'sm')}</span>`).join('');
     const status = `${p.magiaLibre ? '✦' : '<span class="muted">✦</span>'}${p.connected || p.bot ? '' : ' · desconectado'}${S.startId === p.id ? ' · 1º' : ''}`;
     return `<div class="rival ${active ? 'active' : ''}">
       <div class="r-head">

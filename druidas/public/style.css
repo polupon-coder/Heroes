@@ -946,3 +946,13 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .rivals.wood .r-head { flex-wrap: wrap; min-width: 0; }
 .rivals.wood .r-who { min-width: 0; }
 .rivals.wood .rival { overflow: hidden; }
+/* el papel del retrato se funde con el pergamino */
+.portrait.hero img, .portrait.rsm img { mix-blend-mode: multiply !important; }
+.portrait.hero img { object-fit: cover; -webkit-mask: url(img/ui/pincel.png) center / 100% 100% no-repeat; mask: url(img/ui/pincel.png) center / 100% 100% no-repeat; }
+.portrait.rsm { box-shadow: none !important; background: none !important; overflow: visible; }
+.portrait.rsm img { -webkit-mask: url(img/ui/pincel.png) center / 100% 100% no-repeat; mask: url(img/ui/pincel.png) center / 100% 100% no-repeat; }
+/* mascota del rival en la esquina inferior derecha de su pergamino */
+.rivals.wood .rival { position: relative; }
+.rivals.wood .r-pet { position: absolute; right: 6px; bottom: 6px; }
+.rivals.wood .r-learned { padding-right: 90px; }
+@media (max-width: 1500px), (max-height: 920px) { .rivals.wood .r-learned { padding-right: 64px; } }

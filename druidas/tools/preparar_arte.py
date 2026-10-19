@@ -70,8 +70,9 @@ def escenario_y_fichas():
     cw, ch = sheet.width // 3, sheet.height // 2
     for (cx, cy), name in {(1, 0): 'lechuza', (2, 0): 'zorro', (0, 1): 'cervatillo', (2, 1): 'liebre'}.items():  # la liebre usa el conejo (la liebre tiene las orejas cortadas)
         # Márgenes para no arrastrar orejas o colas de los vecinos.
-        cell = sheet.crop((cx * cw + 12, cy * ch + 8, (cx + 1) * cw - 12, (cy + 1) * ch - (40 if cy == 0 else 8)))
-        save(fit(cut_background(cell, thr=28), 420), 'mascotas', name)
+        # (la fila de abajo empieza algo antes para no cortar las orejas del cervatillo)
+        cell = sheet.crop((cx * cw + 12, cy * ch - (20 if cy else -8), (cx + 1) * cw - 12, (cy + 1) * ch - (40 if cy == 0 else 8)))
+        save(fit(cut_background(cell, thr=28, holes=600), 420), 'mascotas', name)
 
     # Ingredientes: las fichas de piedra de fichas_piedra() las sustituyen.
     return
@@ -387,7 +388,7 @@ def suavizar_pociones():
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
-        im = cut_background(load(n), thr=26, feather=1.2, erode=3)
+        im = cut_background(load(n), thr=26, feather=1.2, erode=3, holes=1500)  # también los huecos de papel entre brazos, ramas y piernas
         save(fit(im, 1000), 'druidas-recorte', name, q=86)
 
 

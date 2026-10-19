@@ -1547,3 +1547,55 @@ body { font-size: 18px; font-weight: 600; }
   .rivals > .rival { min-height: 160px !important; }
   .rivals.wood .pts-ball { margin-top: -4px; }
 }
+
+/* ---- claridad: qué coges de El Claro y cuándo puedes estudiar ---- */
+.cslot .sel-n {
+  position: absolute; top: 2%; right: 8%; z-index: 3; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; font: 700 18px/1 var(--text); color: #3a2508;
+  background: radial-gradient(circle at 35% 30%, #fff3c4, var(--gold)); box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
+}
+.cslot.on { transform: translate(-50%, -50%) scale(1.1) !important; }
+.toast .tok { width: 26px; height: 26px; margin: 0 2px; vertical-align: middle; }
+.tokbtn.fresh .tok, .tokwrap.fresh .tok { animation: fresh 2.6s ease-out; }
+@keyframes fresh {
+  0% { transform: translateY(-18px) scale(1.35); box-shadow: 0 0 0 4px var(--gold), 0 0 22px var(--gold); }
+  25% { transform: none; box-shadow: 0 0 0 4px var(--gold), 0 0 22px var(--gold); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.tokwrap { display: inline-grid; }
+/* requisitos: relleno = ya lo tienes en tu reserva; hueco = te falta */
+.req-dot.miss { background: transparent !important; opacity: .75; }
+.kcs-hint { text-align: center; font: 600 1.15em var(--title); color: var(--green); margin: 0 0 2px; }
+.catalog.picking .kc.pickable { animation: pickpulse 1.6s ease-in-out infinite; }
+@keyframes pickpulse { 50% { filter: drop-shadow(0 0 10px var(--gold)); } }
+.catalog .kc:not(.pickable):not(.known) { opacity: 1; }
+/* magia del panel propio: siempre cabe (como mucho 5 por fila, que se encogen) */
+.mesa .spell-row { display: grid !important; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)) !important; justify-items: center; gap: 4px !important; width: 100%; }
+.mesa .spell-row .spell-ico { min-width: 0; max-width: 100%; }
+.mesa .spell-row .card-icon { max-width: 100% !important; height: auto !important; aspect-ratio: 1; }
+.swap-preview { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0 4px; font-size: 1.6em; color: var(--ink-soft); }
+@media (max-width: 760px) {
+  /* sala de espera: más aire dentro del pergamino */
+  .lobby .panel { border-width: 60px 22px !important; border-image-width: 60px 22px !important; padding: 6px 30px 10px !important; }
+  .lobby .panel > * + * { margin-top: 12px; }
+  .lobby .share .input { font-size: .85em; padding: 8px 12px; }
+  .lobby .plist { display: grid; gap: 8px; }
+  .lobby .plist li { padding: 8px 12px; }
+  .lobby .row { gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .lobby .choices { gap: 12px !important; }
+}
+/* magia del panel propio en pantallas bajas: iconos más pequeños para que quepan dos filas */
+@media (max-width: 1500px), (max-height: 920px) {
+  .mesa .spell-row .card-icon, .mesa .spell-row .card-icon.ill.md { width: 40px !important; height: 40px !important; }
+  .mesa .spell-row { gap: 2px !important; }
+}
+@media (max-width: 760px) {
+  .mesa .spell-row .card-icon, .mesa .spell-row .card-icon.ill.md { width: 52px !important; height: 52px !important; }
+  /* portada en móvil: pergamino de fondo */
+  .home-card.book-home {
+    background: none !important; border-radius: 0 !important; box-shadow: none !important; aspect-ratio: auto !important;
+    border-style: solid !important; border-color: transparent !important; border-width: 60px 22px !important;
+    border-image: url(img/ui/pergamino.webp) 125 45 125 45 fill / 60px 22px / 0 stretch !important;
+    padding: 6px 26px 14px !important; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .45));
+  }
+}

@@ -233,6 +233,29 @@ function recogerNeed() {
 
 // ------------------------------------------------------------ render
 
+// Ingredientes que acaban de entrar en tu reserva: brillan un momento y se anuncian.
+function markFresh() {
+  const p = S.phase !== 'lobby' && me();
+  if (!p) return;
+  const now = ING().reduce((o, k) => ({ ...o, [k]: p.reserva[k] }), {});
+  const prev = ui.prevRes;
+  ui.prevRes = now;
+  if (!prev) return;
+  const gained = ING().flatMap((k) => Array(Math.max(0, now[k] - prev[k])).fill(k));
+  if (!gained.length) return;
+  ui.fresh = { add: gained.reduce((o, k) => ({ ...o, [k]: (o[k] || 0) + 1 }), {}) };
+  toastHtml(`${L('Recoges', 'You take')} ${gained.map((k) => tok(k, { cls: 'sm' })).join('')}`);
+  setTimeout(() => { ui.fresh = null; if (S) renderMesa(); }, 2700);
+}
+
+function toastHtml(html) {
+  const t = $('toast');
+  t.innerHTML = html;
+  t.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 3000);
+}
+
 function render() {
   if (!S || !D || ui.home) return;
   $('home').classList.add('hidden');
@@ -249,6 +272,7 @@ function render() {
     if (ui.modal && ui.modal.kind !== 'rules') ui.modal = null;
     if (S.phase === 'fin') ui.modal = { kind: 'final' };
   }
+  markFresh();
   renderTop();
   if (S.phase === 'lobby') {
     $('lobby').classList.remove('hidden');
@@ -427,7 +451,7 @@ function renderCatalog() {
   const cards = Object.keys(D.cartas).map((id) => {
     const c = D.cartas[id];
     const known = p.aprendidas.includes(id);
-    const dots = ING().map((t) => `<span class="req-dot tok-${t}" title="${N(t)}"></span>`.repeat(c.req[t] || 0)).join('');
+    const dots = ING().map((t) => Array.from({ length: c.req[t] || 0 }, (_, j) => `<span class="req-dot tok-${t} ${j < p.reserva[t] ? 'have' : 'miss'}" title="${N(t)}"></span>`).join('')).join('');
     return `<button class="kc ${c.tipo} ${c.ataque ? 'attack' : ''} ${known ? 'known' : ''} ${pick && !known && S.catalogo[id] > 0 ? 'pickable' : ''}"
         data-a="info" data-v="${id}" title="${esc(cname(c))}: ${esc(ctext(c))}">
       <span class="kc-top">
@@ -437,7 +461,8 @@ function renderCatalog() {
       <span class="kc-name">${esc(cname(c))} <span class="kc-count">${known ? '✓' : `×${S.catalogo[id] || 0}`}</span></span>
     </button>`;
   }).join('');
-  $('catalog').innerHTML = `<div class="kcs">${cards}</div>`;
+  $('catalog').innerHTML = `${pick ? `<div class="kcs-hint">${L('Elige qué quieres estudiar', 'Choose what to study')} ↓</div>` : ''}<div class="kcs">${cards}</div>`;
+  $('catalog').classList.toggle('picking', pick);
 }
 
 function petUsable() {
@@ -477,8 +502,9 @@ function renderClaro() {
     const inner = c ? tok(c, { cls: 'xxl' }) : '';
     if (!c) return `<span class="cslot empty" ${pos}></span>`;
     const on = ui.sel.includes(i);
+    const n = on ? ui.sel.indexOf(i) + 1 : 0;
     const hint = ui.mode === 'pensar' && !(pend[c] > 0) ? 'dim' : '';
-    return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos} title="${N(c)}">${inner}</button>`
+    return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos} title="${N(c)}">${inner}${n ? `<b class="sel-n">${n}</b>` : ''}</button>`
       : `<span class="cslot" ${pos} title="${N(c)}">${inner}</span>`;
   }).join('');
   $('claro').innerHTML = `<div class="ring">${slots}<span class="bag-pill" title="${L('Ingredientes que quedan en la bolsa', 'Ingredients left in the bag')}">${sum(S.bolsa)}</span></div>${ui.floatHtml || ''}`;
@@ -508,9 +534,10 @@ function renderMesa() {
   const click = resClickable();
   const petOn = ui.mode === 'liebre' || ui.mode === 'lechuza' || ui.mode === 'cerv' || ui.zorro;
   // Ingredientes: solo los que tienes, uno por ficha.
-  const ings = ING().flatMap((k) => Array.from({ length: p.reserva[k] }, () => (click
-    ? `<button class="tokbtn" data-a="res" data-v="${k}" title="${N(k)}">${tok(k, { cls: 'lg' })}</button>`
-    : tok(k, { cls: 'lg' })))).join('') || `<span class="none-txt">${L('Sin ingredientes', 'No ingredients')}</span>`;
+  const fresh = (k, j) => (ui.fresh && j >= p.reserva[k] - (ui.fresh.add[k] || 0) ? 'fresh' : '');
+  const ings = ING().flatMap((k) => Array.from({ length: p.reserva[k] }, (_, j) => (click
+    ? `<button class="tokbtn ${fresh(k, j)}" data-a="res" data-v="${k}" title="${N(k)}">${tok(k, { cls: 'lg' })}</button>`
+    : `<span class="tokwrap ${fresh(k, j)}">${tok(k, { cls: 'lg' })}</span>`))).join('') || `<span class="none-txt">${L('Sin ingredientes', 'No ingredients')}</span>`;
   // Magia: solo lo que conoces. Las pociones sin preparar, en gris (con su coste si puedes prepararlas).
   const spell = (id) => {
     const c = card(id);
@@ -529,7 +556,9 @@ function renderMesa() {
       ${cardIcon(id, 'md')}<span class="spell-name">${esc(cname(c))}</span>${prep ? `<span class="prep-cost">${costHtml(c.coste)}</span>` : ''}</button>`;
   };
   const known = (tipo) => p.aprendidas.filter((id) => D.cartas[id].tipo === tipo);
-  const magic = [...['chispa', 'burbuja', ...known('hechizo')].map(spell), ...known('pocion').map(potion)].join('');
+  const magicIds = [...['chispa', 'burbuja', ...known('hechizo')].map(spell), ...known('pocion').map(potion)];
+  const magicCount = magicIds.length;
+  const magic = magicIds.join('');
   $('mesa').innerHTML = `
     <div class="m-hero">
       <div class="m-name-row">
@@ -542,7 +571,7 @@ function renderMesa() {
     </div>
     <section class="m-card"><h4>${L('Ingredientes', 'Ingredients')} <span class="h4-n">${sum(p.reserva)}/${D.limiteReserva}</span></h4><div class="ing-row">${ings}</div></section>
     <section class="m-card"><h4>${L('Aprendiendo', 'Learning')}</h4>${studyHtml(p, t)}</section>
-    <section class="m-card"><h4>${L('Magia', 'Magic')}</h4><div class="spell-row">${magic}</div></section>`;
+    <section class="m-card"><h4>${L('Magia', 'Magic')}</h4><div class="spell-row" style="--n:${Math.min(5, magicCount)}">${magic}</div></section>`;
 }
 
 function renderRivals() {
@@ -551,6 +580,7 @@ function renderRivals() {
     const active = S.turn && S.turn.pid === p.id;
     const learned = p.aprendidas.map((id) => `<span class="learned ${D.cartas[id].ataque ? 'attack' : ''} ${D.cartas[id].tipo === 'pocion' && !p.pociones.includes(id) ? 'unready' : ''}" title="${esc(cname(D.cartas[id]))}${p.pociones.includes(id) ? L(' (preparada)', ' (brewed)') : ''}: ${esc(ctext(D.cartas[id]))}">
       ${cardIcon(id, 'sm')}</span>`).join('');
+    const initial = ['chispa', 'burbuja'].map((id) => `<span class="learned initial" title="${esc(cname(card(id)))}: ${esc(ctext(card(id)))}">${cardIcon(id, 'sm')}</span>`).join('');
     const star = `<span class="magic-dot ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? L('Le queda la magia de este turno', 'Still has this turn\'s magic') : L('Ya ha usado su magia en este turno', 'Already used their magic this turn')}">✦</span>`;
     const status = `${p.connected || p.bot ? '' : L('desconectado', 'offline')}${S.startId === p.id ? `${p.connected || p.bot ? '' : ' · '}${L('abre la ronda', 'opens the round')}` : ''}`;
     return `<div class="rival ${active ? 'active' : ''}">
@@ -561,7 +591,7 @@ function renderRivals() {
           ${status ? `<span class="r-sub">${status}</span>` : ''}</div>
         ${prestigeHtml(p.puntos, '', p.druida)}
       </div>
-      ${learned ? `<div class="r-learned">${learned}</div>` : `<div class="r-learned none-txt">${L('Nada aprendido', 'Nothing learned')}</div>`}
+      <div class="r-learned">${initial}${learned}</div>
     </div>`;
   }).join('');
 }
@@ -633,6 +663,22 @@ function renderModal() {
       <ol class="final">${rank.map((x) => `<li>${druidPortrait(x.druida, 'sm')} <b>${esc(x.name)}</b> — ${x.puntos} ${L('de Prestigio', 'Prestige')}
         <div class="small muted">${x.aprendidas.map((id) => esc(cname(card(id)))).join(', ') || L('nada aprendido', 'nothing learned')}</div></li>`).join('')}</ol>`;
     ok = L('Nueva partida', 'New game');
+  } else if (m.kind === 'chispa') {
+    const slots = S.claro.map((c, i) => (c ? { value: String(i), html: tok(c) } : null)).filter(Boolean);
+    const target = m.slot !== null ? S.claro[Number(m.slot)] : null;
+    body = `<h3>✧ ${L('Chispa', 'Spark')}</h3><p>${esc(ctext(card('chispa')))}</p>
+      <h4>${L('1 · Das este ingrediente de tu reserva…', '1 · You give this ingredient from your reserve…')}</h4><div class="picks">${picker('tipo', resValues(me().reserva), m.tipo)}</div>
+      <h4>${L('2 · …y te llevas este de El Claro', '2 · …and take this one from the Clearing')}</h4><div class="picks">${picker('slot', slots, m.slot)}</div>
+      ${m.tipo && target ? `<div class="swap-preview">${tok(m.tipo)} <span>⇄</span> ${tok(target)}</div>` : ''}`;
+    ok = m.tipo && m.slot !== null ? L('Lanzar Chispa', 'Cast Spark') : '';
+  } else if (m.kind === 'pensar') {
+    const slots = S.claro.map((c, i) => (c && pend[c] > 0 ? { value: String(i), html: tok(c) } : null)).filter(Boolean);
+    body = `<h3>✦ ${L('Pensar', 'Think')}</h3><p>${esc(ctext(card('pensar')))}</p>
+      <h4>${L('Ingrediente de El Claro que irá a tu receta', 'Ingredient from the Clearing that goes on your recipe')}</h4><div class="picks">${picker('slot', slots, m.slot)}</div>`;
+    ok = m.slot !== null ? L('Beber Pensar', 'Drink Think') : '';
+  } else if (m.kind === 'idea') {
+    body = `<h3>💡 ${L('Idea', 'Idea')}</h3><p>${esc(ctext(card('idea')))}</p>`;
+    ok = L('Lanzar Idea', 'Cast Idea');
   } else if (m.kind === 'memoria') {
     const r = freeRes(m.list);
     const left = { ...pend };
@@ -707,6 +753,9 @@ function modalOk() {
   const close = () => { ui.modal = null; renderModal(); };
   if (m.kind === 'info') return send('elegir', { carta: m.id }, close);
   if (m.kind === 'final') return H.leave();
+  if (m.kind === 'chispa') return send('magia', { carta: 'chispa', tipo: m.tipo, slot: Number(m.slot) }, close);
+  if (m.kind === 'pensar') return send('magia', { carta: 'pensar', slot: Number(m.slot) }, close);
+  if (m.kind === 'idea') return send('magia', { carta: 'idea' }, close);
   if (m.kind === 'memoria') return send('magia', { carta: 'memoria', colocar: m.list.map((t) => ({ tipo: t })) }, close);
   if (m.kind === 'cambio') {
     const list = [];
@@ -893,9 +942,9 @@ const H = {
   openDescartar: () => { ui.modal = { kind: 'descartar', ings: { eter: 0, umbra: 0, lumen: 0, raiz: 0 } }; render(); },
   prep: (v) => send('preparar', { carta: v }),
   cast: (v) => {
-    if (v === 'chispa') { ui.mode = 'chispa'; ui.chispaTipo = null; return render(); }
-    if (v === 'pensar') { ui.mode = 'pensar'; return render(); }
-    if (v === 'idea') return send('magia', { carta: 'idea' });
+    if (v === 'chispa') ui.modal = { kind: 'chispa', tipo: null, slot: null };
+    if (v === 'pensar') ui.modal = { kind: 'pensar', slot: null };
+    if (v === 'idea') ui.modal = { kind: 'idea' };
     if (v === 'memoria') ui.modal = { kind: 'memoria', list: [] };
     if (v === 'cambio') ui.modal = { kind: 'cambio', wTipo: null, wComo: null, match: null };
     if (v === 'suerte') ui.modal = { kind: 'suerte', slots: [], colocar: null };

@@ -1195,3 +1195,4 @@ body { font-size: 18px; font-weight: 600; }
   .rivals .learned { width: 44px !important; height: 48px !important; }
 }
 @media (max-width: 1500px), (max-height: 920px) { .mesa .spell-name { display: none; } }
+.pts-ball { font-variant-numeric: lining-nums tabular-nums; line-height: 1 !important; padding: 0 0 1px !important; display: inline-flex !important; align-items: center; justify-content: center; }

@@ -1263,3 +1263,10 @@ body { font-size: 18px; font-weight: 600; }
   .claro-area { padding-top: 48px; }
   .ring { width: min(100%, 560px, calc((100vh - 370px) * 1.25)) !important; }
 }
+/* Prestigio: número manuscrito, grande, en el color del personaje, sin esfera */
+.pts-ball {
+  background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 4px !important;
+  min-width: 0 !important; height: auto !important; font: 700 2.4em/1 var(--title) !important;
+  color: color-mix(in srgb, var(--pc, #a87a1f) 70%, #2a1c05) !important; text-shadow: none !important;
+}
+@media (max-width: 1500px), (max-height: 920px) { .pts-ball { font-size: 1.9em !important; } }

@@ -714,7 +714,7 @@ function renderModal() {
     const r = freeRes(m.list);
     const left = { ...pend };
     for (const t of m.list) left[t] -= 1;
-    body = `<h3>${L('Memoria', 'Memory')}</h3><p>${L('Coloca hasta 2 ingredientes de tu reserva que encajen en tu receta.', 'Place up to 2 ingredients from your reserve that fit your recipe.')}</p>
+    body = `<h3>${L('Memoria', 'Memory')}</h3><p>${L('Elige hasta 2 ingredientes.', 'Choose up to 2 ingredients.')}</p>
       <div class="picked">${m.list.map((t, i) => `<button class="pick on" data-a="mDel" data-f="list" data-i="${i}">${tok(t)}</button>`).join('') || '<span class="muted">—</span>'}</div>
       ${m.list.length < 2 ? `<div class="picks">${picker('list', resValues(r, (t) => left[t] > 0), null, { multi: true })}</div>` : ''}`;
     ok = m.list.length ? L('Beber Memoria', 'Drink Memory') : '';
@@ -724,7 +724,7 @@ function renderModal() {
     if (m.match) left[m.match] -= 1;
     const pendValues = ING().filter((t) => pend[t] > 0 && (t === m.wComo || left[t] > 0)).map((t) => ({ value: t, html: emptyTok(t) }));
     body = `<h3>${L('Cambio', 'Change')} <span class="small">(${L('paga', 'pay')} ${tok('eter', { cls: 'xs' })})</span></h3>
-      <p>${L('Coloca hasta 2 ingredientes en tu receta. Uno puede ser comodín.', 'Place up to 2 ingredients on your recipe. One may be a wildcard.')}</p>
+      <p>${L('Elige hasta 2 ingredientes. Uno puede ser comodín.', 'Choose up to 2 ingredients. One can be a wildcard.')}</p>
       <h4>${L('Comodín (opcional): este ingrediente…', 'Wildcard (optional): this ingredient…')}</h4><div class="picks">${picker('wTipo', resValues(freeRes(['eter', m.match]), (t) => true), m.wTipo)}</div>
       <h4>${L('…ocupa este espacio', '…fills this slot')}</h4><div class="picks">${picker('wComo', pendValues, m.wComo)}</div>
       <h4>${L('Ingrediente que coincide (opcional)', 'Matching ingredient (optional)')}</h4><div class="picks">${picker('match', resValues(freeRes(['eter', m.wTipo]), (t) => (pend[t] || 0) - (m.wComo === t ? 1 : 0) > 0), m.match)}</div>`;
@@ -749,7 +749,7 @@ function renderModal() {
     const swaps = S.lio.map((s, i) => ({ value: String(i), html: `<span class="swap">${tok(s.tipo, { cls: 'sm' })} ⇄ ${tok(S.claro[s.slot], { cls: 'sm' })}</span>` }));
     const r = freeRes(['umbra']);
     body = `<h3>${L('Lío', 'Mix-up')} <span class="small">(${L('paga', 'pay')} ${tok('umbra', { cls: 'xs' })})</span></h3>
-      <p>${L(`Cambia un ingrediente que ${esc(target.name)} necesita (izquierda) por uno de El Claro que no le sirve (derecha).`, `Swap an ingredient ${esc(target.name)} needs (left) for one from the Clearing that is useless to them (right).`)}</p>
+      <p>${L(`Elige qué cambias a ${esc(target.name)}.`, `Choose what to swap from ${esc(target.name)}.`)}</p>
       <div class="picks">${picker('swap', swaps, m.swap)}</div>
       ${p.estudio ? `<h4>${L('Si no te bloquean: coloca uno de tu reserva como comodín (opcional)', 'If not blocked: place one of yours as a wildcard (optional)')}</h4>
         <div class="picks">${picker('bTipo', resValues(r), m.bTipo)}</div>
@@ -768,7 +768,7 @@ function renderModal() {
     const extra = sum(p.reserva) - D.limiteReserva;
     const rows = ING().filter((t) => p.reserva[t] > 0).map((t) => `<div class="drow">${tok(t, { n: p.reserva[t] })}
       <button class="btn tiny" data-a="dMinus" data-v="${t}">−</button><b>${m.ings[t]}</b><button class="btn tiny" data-a="dPlus" data-v="${t}">+</button></div>`).join('');
-    body = `<h3>${L('Devolver a la bolsa', 'Return to the bag')}</h3><p>${L(`Al final del turno solo puedes conservar ${D.limiteReserva}. Devuelve ${extra}`, `At the end of your turn you may keep only ${D.limiteReserva}. Return ${extra}`)} (${sum(m.ings)}/${extra}).</p>${rows}`;
+    body = `<h3>${L('Devolver a la bolsa', 'Return to the bag')}</h3><p>${L(`Solo puedes guardar ${D.limiteReserva}. Devuelve ${extra}`, `You can keep only ${D.limiteReserva}. Return ${extra}`)} (${sum(m.ings)}/${extra}).</p>${rows}`;
     ok = sum(m.ings) === extra ? L('Devolver', 'Return') : '';
   }
   const closable = m.kind !== 'descartar';

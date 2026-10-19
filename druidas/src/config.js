@@ -30,66 +30,66 @@ const BURBUJA_COSTE = { lumen: 2 };
 // o preparar la poción. ataque = solo contra el jugador activo, tras su recogida.
 const CARTAS = {
   robo: {
-    nombre: 'Robo', en: "Steal", textoEn: "Steal an ingredient from the active player's reserve. If it fits your recipe, you may place it directly.", tipo: 'hechizo', req: { umbra: 2, raiz: 1, eter: 1 }, puntos: 4, coste: { umbra: 1 }, ataque: true,
-    texto: 'Roba un ingrediente de la reserva del jugador activo. Si encaja en tu receta en estudio, puedes colocarlo directamente.',
+    nombre: 'Robo', en: "Steal", textoEn: "Steal 1 ingredient from the active player.", tipo: 'hechizo', req: { umbra: 2, raiz: 1, eter: 1 }, puntos: 4, coste: { umbra: 1 }, ataque: true,
+    texto: 'Robas 1 ingrediente al jugador activo.',
   },
   cambio: {
-    nombre: 'Cambio', en: "Change", textoEn: "Place up to 2 ingredients from your reserve on your recipe. One may be a wildcard. Does not use your normal study.", tipo: 'hechizo', req: { raiz: 2, eter: 1 }, puntos: 3, coste: { eter: 1 },
-    texto: 'Coloca hasta 2 ingredientes de tu reserva en tu receta. Uno puede ser comodín. No consume tu estudio normal.',
+    nombre: 'Cambio', en: "Change", textoEn: "Place 2 ingredients on your recipe. One can be a wildcard.", tipo: 'hechizo', req: { raiz: 2, eter: 1 }, puntos: 3, coste: { eter: 1 },
+    texto: 'Colocas 2 ingredientes en tu receta. Uno puede ser comodín.',
   },
   idea: {
-    nombre: 'Idea', en: "Idea", textoEn: "In your study phase, before placing anything, you may place up to 3 ingredients instead of 2.", tipo: 'hechizo', req: { eter: 2, lumen: 1, raiz: 1 }, puntos: 4, coste: { lumen: 1 },
-    texto: 'En tu fase de estudio, antes de colocar nada, puedes colocar hasta 3 ingredientes en lugar de 2.',
+    nombre: 'Idea', en: "Idea", textoEn: "This turn you place 3 ingredients instead of 2.", tipo: 'hechizo', req: { eter: 2, lumen: 1, raiz: 1 }, puntos: 4, coste: { lumen: 1 },
+    texto: 'Este turno colocas 3 ingredientes en vez de 2.',
   },
   lio: {
-    nombre: 'Lío', en: "Mix-up", textoEn: "Swap an ingredient the active player needs for one from the Clearing that is useless to them. If not blocked, place one of yours as a wildcard.", tipo: 'hechizo', req: { umbra: 1, lumen: 1, raiz: 1, eter: 1 }, puntos: 4, coste: { umbra: 1 }, ataque: true,
-    texto: 'Cambia un ingrediente que el jugador activo necesita por uno de El Claro que no le sirva. Si no te bloquean, colocas uno de tu reserva como comodín.',
+    nombre: 'Lío', en: "Mix-up", textoEn: "Swap one of the active player's ingredients for one from the Clearing.", tipo: 'hechizo', req: { umbra: 1, lumen: 1, raiz: 1, eter: 1 }, puntos: 4, coste: { umbra: 1 }, ataque: true,
+    texto: 'Cambias un ingrediente del jugador activo por otro de El Claro.',
   },
   memoria: {
-    nombre: 'Memoria', en: "Memory", textoEn: "Place up to 2 valid ingredients from your reserve on your recipe. Does not use your normal study.", tipo: 'pocion', req: { eter: 1, lumen: 1, raiz: 1 }, puntos: 3, coste: { lumen: 1 },
-    texto: 'Coloca hasta 2 ingredientes válidos de tu reserva en tu receta. No consume tu estudio normal.',
+    nombre: 'Memoria', en: "Memory", textoEn: "Place 2 more ingredients on your recipe.", tipo: 'pocion', req: { eter: 1, lumen: 1, raiz: 1 }, puntos: 3, coste: { lumen: 1 },
+    texto: 'Colocas 2 ingredientes más en tu receta.',
   },
   sueno: {
-    nombre: 'Sueño', en: "Sleep", textoEn: "The active player may place only 1 ingredient in their normal study. If not blocked, place one valid ingredient of yours.", tipo: 'pocion', req: { umbra: 2, raiz: 1, lumen: 1 }, puntos: 4, coste: { umbra: 1 }, ataque: true,
-    texto: 'El jugador activo solo podrá colocar 1 ingrediente en su estudio normal. Si no te bloquean, colocas uno válido de tu reserva.',
+    nombre: 'Sueño', en: "Sleep", textoEn: "The active player places only 1 ingredient this turn.", tipo: 'pocion', req: { umbra: 2, raiz: 1, lumen: 1 }, puntos: 4, coste: { umbra: 1 }, ataque: true,
+    texto: 'El jugador activo solo coloca 1 ingrediente este turno.',
   },
   suerte: {
-    nombre: 'Suerte', en: "Luck", textoEn: "Take 3 ingredients from the Clearing. Then you may place a valid one from your reserve on your recipe.", tipo: 'pocion', req: { eter: 2, lumen: 1 }, puntos: 3, coste: { raiz: 1 },
-    texto: 'Recoge 3 ingredientes de El Claro. Después puedes colocar uno válido de tu reserva en tu receta.',
+    nombre: 'Suerte', en: "Luck", textoEn: "Take 3 more ingredients from the Clearing.", tipo: 'pocion', req: { eter: 2, lumen: 1 }, puntos: 3, coste: { raiz: 1 },
+    texto: 'Coges 3 ingredientes más de El Claro.',
   },
   pensar: {
-    nombre: 'Pensar', en: "Think", textoEn: "Place on your recipe an ingredient from the Clearing that it needs, without having it in your reserve.", tipo: 'pocion', req: { eter: 2, raiz: 1, umbra: 1 }, puntos: 4, coste: { eter: 1 },
-    texto: 'Coloca en tu receta un ingrediente de El Claro que le sirva, sin tenerlo en tu reserva.',
+    nombre: 'Pensar', en: "Think", textoEn: "Place an ingredient from the Clearing on your recipe.", tipo: 'pocion', req: { eter: 2, raiz: 1, umbra: 1 }, puntos: 4, coste: { eter: 1 },
+    texto: 'Colocas en tu receta un ingrediente de El Claro.',
   },
 };
 
 const INICIALES = {
   chispa: {
-    nombre: 'Chispa', en: "Spark", textoEn: "Free, once on your turn: swap an ingredient from your reserve with one in the Clearing. Does not use your magic.", tipo: 'hechizo', puntos: 0, coste: {},
-    texto: 'Gratis, una vez en tu turno: cambia un ingrediente de tu reserva por uno de El Claro. No gasta tu magia.',
+    nombre: 'Chispa', en: "Spark", textoEn: "Free: swap one of your ingredients for one from the Clearing.", tipo: 'hechizo', puntos: 0, coste: {},
+    texto: 'Gratis: cambias un ingrediente tuyo por uno de El Claro.',
   },
   burbuja: {
-    nombre: 'Burbuja', en: "Bubble", textoEn: "Costs 2 Lumen: cancels a magic attack against you.", tipo: 'hechizo', puntos: 0, coste: BURBUJA_COSTE,
-    texto: 'Cuesta 2 Lumen: anula un ataque mágico contra ti.',
+    nombre: 'Burbuja', en: "Bubble", textoEn: "Pay 2 Lumen to stop an attack.", tipo: 'hechizo', puntos: 0, coste: BURBUJA_COSTE,
+    texto: 'Paga 2 Lumen y paras un ataque.',
   },
 };
 
 const MASCOTAS = {
   lechuza: {
-    nombre: 'Lechuza', don: 'Sabiduría', usos: 1, corto: '+1 ingrediente al estudiar', cortoEn: '+1 ingredient when studying', en: "Owl", donEn: "Wisdom", textoEn: "Once per game, when you finish your normal study, place one more valid ingredient from your reserve.",
-    texto: 'Una vez por partida, al terminar tu estudio normal, coloca un ingrediente válido más de tu reserva.',
+    nombre: 'Lechuza', don: 'Sabiduría', usos: 1, corto: '+1 ingrediente al estudiar', cortoEn: '+1 ingredient when studying', en: "Owl", donEn: "Wisdom", textoEn: "Once: after your study, place 1 more ingredient.",
+    texto: '1 vez: al acabar tu estudio, colocas 1 ingrediente más.',
   },
   zorro: {
-    nombre: 'Zorro', don: 'Astucia', usos: 2, corto: 'Recoge 5 en vez de 3', cortoEn: 'Take 5 instead of 3', en: "Fox", donEn: "Cunning", textoEn: "Twice per game, take 5 ingredients from the Clearing instead of 3.",
-    texto: 'Dos veces por partida, recoge 5 ingredientes de El Claro en lugar de 3.',
+    nombre: 'Zorro', don: 'Astucia', usos: 2, corto: 'Recoge 5 en vez de 3', cortoEn: 'Take 5 instead of 3', en: "Fox", donEn: "Cunning", textoEn: "Twice: take 5 ingredients instead of 3.",
+    texto: '2 veces: recoges 5 ingredientes en vez de 3.',
   },
   liebre: {
-    nombre: 'Liebre', don: 'Transformación', usos: 2, corto: 'Un ingrediente cuenta como otro', cortoEn: 'One ingredient counts as another', en: "Hare", donEn: "Transformation", textoEn: "Twice per game, in your study, use an ingredient from your reserve as if it were another type.",
-    texto: 'Dos veces por partida, en tu estudio, usa un ingrediente de tu reserva como si fuera de otro tipo.',
+    nombre: 'Liebre', don: 'Transformación', usos: 2, corto: 'Un ingrediente cuenta como otro', cortoEn: 'One ingredient counts as another', en: "Hare", donEn: "Transformation", textoEn: "Twice: when studying, one ingredient counts as another.",
+    texto: '2 veces: al estudiar, un ingrediente cuenta como otro.',
   },
   cervatillo: {
-    nombre: 'Cervatillo', don: 'Energía natural', usos: 1, corto: '+1 ingrediente tras usar magia', cortoEn: '+1 ingredient after using magic', en: "Fawn", donEn: "Natural energy", textoEn: "Once per game, after using non-free magic, place one more valid ingredient from your reserve (also on rivals' turns).",
-    texto: 'Una vez por partida, tras usar una magia que no sea gratis, coloca un ingrediente válido más de tu reserva (también en turnos rivales).',
+    nombre: 'Cervatillo', don: 'Energía natural', usos: 1, corto: '+1 ingrediente tras usar magia', cortoEn: '+1 ingredient after using magic', en: "Fawn", donEn: "Natural energy", textoEn: "Once: after using magic, place 1 more ingredient.",
+    texto: '1 vez: tras usar magia, colocas 1 ingrediente más.',
   },
 };
 

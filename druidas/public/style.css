@@ -1695,3 +1695,7 @@ body { font-size: 18px; font-weight: 600; }
   /* el aviso «Recoges…» sobre El Claro, sin tapar la cabecera */
   .toast { top: auto !important; bottom: 18px; position: fixed; }
 }
+.learned-pts { font: 700 1.5em var(--title) !important; color: var(--green); margin: .4em 0 0; }
+/* «Recoges ●●●» siempre en una línea */
+.toast { white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; width: max-content; max-width: none !important; }
+.toast.hidden { display: none; }

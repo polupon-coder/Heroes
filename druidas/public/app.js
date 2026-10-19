@@ -248,6 +248,11 @@ function markFresh() {
   const now = ING().reduce((o, k) => ({ ...o, [k]: p.reserva[k] }), {});
   const prev = ui.prevRes;
   ui.prevRes = now;
+  // Conocimiento recién aprendido: ventana para celebrarlo.
+  const prevL = ui.prevLearned;
+  ui.prevLearned = [...p.aprendidas];
+  const nuevo = prevL && p.aprendidas.find((id) => !prevL.includes(id));
+  if (nuevo) ui.modal = { kind: 'learned', id: nuevo };
   if (!prev) return;
   const gained = ING().flatMap((k) => Array(Math.max(0, now[k] - prev[k])).fill(k));
   if (!gained.length) return;
@@ -277,7 +282,7 @@ function render() {
     ui.zorro = false;
     ui.mode = null;
     ui.chispaTipo = null;
-    if (ui.modal && ui.modal.kind !== 'rules') ui.modal = null;
+    if (ui.modal && !['rules', 'learned'].includes(ui.modal.kind)) ui.modal = null;
     if (S.phase === 'fin') ui.modal = { kind: 'final' };
   }
   markFresh();
@@ -683,6 +688,12 @@ function renderModal() {
       <ol class="final">${rank.map((x) => `<li>${druidPortrait(x.druida, 'sm')} <b>${esc(x.name)}</b> — ${x.puntos} ${L('de Prestigio', 'Prestige')}
         <div class="small muted">${x.aprendidas.map((id) => esc(cname(card(id)))).join(', ') || L('nada aprendido', 'nothing learned')}</div></li>`).join('')}</ol>`;
     ok = L('Nueva partida', 'New game');
+  } else if (m.kind === 'learned') {
+    const c = card(m.id);
+    body = `<h3>✦ ${L('¡Has aprendido', 'You have learned')} ${esc(cname(c))}${L('!', '!')}</h3>
+      ${cardHtml(m.id, { cls: 'big', prepared: c.tipo === 'pocion' })}
+      <p class="learned-pts">+${c.puntos} ${L('de Prestigio', 'Prestige')}</p>`;
+    ok = L('¡Estupendo!', 'Great!');
   } else if (m.kind === 'chispa') {
     const slots = S.claro.map((c, i) => (c ? { value: String(i), html: tok(c) } : null)).filter(Boolean);
     const target = m.slot !== null ? S.claro[Number(m.slot)] : null;

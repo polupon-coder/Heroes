@@ -490,7 +490,7 @@ function renderMesa() {
 
 function renderRivals() {
   const rivals = S.players.filter((p) => p.id !== S.me);
-  $('rivals').innerHTML = '<h2 class="ptitle">Rivales</h2>' + rivals.map((p) => {
+  $('rivals').innerHTML = rivals.map((p) => {
     const active = S.turn && S.turn.pid === p.id;
     const learned = p.aprendidas.map((id) => `<span class="learned ${D.cartas[id].ataque ? 'attack' : ''}" title="${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? ' (preparada)' : ''}: ${esc(D.cartas[id].texto)}">
       ${cardIcon(id, 'sm')}${p.pociones.includes(id) ? kindIcon('pocion', 'badge') : ''}</span>`).join('');

@@ -1046,3 +1046,8 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 /* caras de rivales sin pergamino: la cara recortada directamente sobre su panel */
 .portrait.rsm { background: none !important; border: 0 !important; border-image: none !important; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .2)); }
 .portrait.rsm img { inset: 0 !important; width: 100% !important; height: 100% !important; }
+/* rivales: mismos márgenes que el panel propio y pergaminos repartidos por igual */
+.rivals.wood { padding: 7% 7% 8% !important; gap: 8px !important; display: flex !important; flex-direction: column; }
+.rivals.wood .rival { flex: 1 1 0; min-height: 0; margin: 0 !important; }
+.rivals.wood .rival + .rival { border-top: 0 !important; }
+.rivals.wood { gap: 18px !important; } .mesa { gap: 18px !important; }

@@ -1489,3 +1489,27 @@ body { font-size: 18px; font-weight: 600; }
   }
   .mesa .portrait.hero img { height: 120px !important; }
 }
+
+/* ---- sala de espera: paneles en pergamino y tarjetas que nunca se cortan ---- */
+.lobby .panel {
+  background: none !important; box-shadow: none !important; border-radius: 0 !important; backdrop-filter: none !important;
+  border-style: solid !important; border-color: transparent !important;
+  border-width: 70px 28px !important;
+  border-image: url(img/ui/pergamino.webp) 125 45 125 45 fill / 70px 28px / 0 stretch !important;
+  padding: 0 22px !important; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .45));
+  text-align: center;
+}
+.lobby .panel .row { justify-content: center; }
+.lobby .plist li { justify-content: center; background: rgba(255, 250, 240, .55); }
+.choice { min-width: 0; overflow: hidden; background: rgba(255, 250, 240, .6); }
+.choice > span, .choice > small { max-width: 100%; overflow-wrap: anywhere; }
+.choice .portrait.full { width: 100% !important; height: auto !important; aspect-ratio: 3 / 2; }
+.choice .portrait.full img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.choice .pet-pic.lg { width: min(100%, 116px) !important; height: auto !important; aspect-ratio: 1; }
+.choice .pet-pic img { object-fit: contain !important; }
+@media (max-width: 760px) {
+  .lobby .panel { border-width: 54px 18px !important; border-image-width: 54px 18px !important; padding: 0 10px !important; }
+  .choice { padding: 8px 6px; font-size: .9em; }
+  .share { flex-wrap: wrap; justify-content: center; }
+}
+#table.hidden, .table.hidden, .lobby.hidden, #lobby.hidden { display: none !important; }

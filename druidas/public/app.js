@@ -680,7 +680,7 @@ function renderModal() {
   } else if (m.kind === 'info') {
     const known = p.aprendidas.includes(m.id);
     const can = canPickCard() && !known && S.catalogo[m.id] > 0;
-    body = cardHtml(m.id, { cls: 'big', footer: `<div class="kfoot"><span class="muted small">${S.catalogo[m.id] || 0} ${S.catalogo[m.id] === 1 ? L('copia en el catálogo', 'copy in the catalogue') : L('copias en el catálogo', 'copies in the catalogue')}</span>${known ? `<span class="tag ok">${L('aprendido', 'learned')}</span>` : ''}</div>` });
+    body = cardHtml(m.id, { cls: 'big', footer: `<div class="kfoot"><span class="muted small">${S.catalogo[m.id] === 1 ? L('Queda 1', '1 left') : L(`Quedan ${S.catalogo[m.id] || 0}`, `${S.catalogo[m.id] || 0} left`)}</span>${known ? `<span class="tag ok">${L('aprendido', 'learned')}</span>` : ''}</div>` });
     ok = can ? L('Estudiar', 'Study') : '';
   } else if (m.kind === 'final') {
     const rank = [...S.players].sort((a, b) => b.puntos - a.puntos);

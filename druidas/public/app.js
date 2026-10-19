@@ -434,8 +434,8 @@ function studyHtml(p, t) {
   }
   const canAbandon = isMyTurn() && t.paso === 'estudiar' && !t.tocado && t.estudiadas === 0;
   return `<div class="study-mini ${c.tipo}" title="${esc(c.texto)}">
-      ${cardIcon(p.estudio.card, 'md')}
-      <div class="study-body"><b class="study-title">${esc(c.nombre)}</b><div class="recipe-slots">${slots.join('')}</div></div>
+      <div class="study-ico">${cardIcon(p.estudio.card, 'md')}<b class="study-title">${esc(c.nombre)}</b></div>
+      <div class="recipe-slots">${slots.join('')}</div>
       ${canAbandon ? '<button class="btn tiny ghost dark" data-a="abandonar" title="Abandonar receta">✕</button>' : ''}
     </div>`;
 }
@@ -477,7 +477,7 @@ function renderMesa() {
     <div class="m-hero">
       ${druidPortrait(p.druida, 'hero')}
       <button class="m-pet-pic ${petUsable() ? 'live' : ''} ${petOn ? 'on' : ''}" data-a="habilidad" ${petUsable() ? '' : 'disabled'}
-        title="${esc(pet.nombre)} · ${esc(pet.don)}: ${esc(pet.texto)}">${petPortrait(p.mascota, 'free')}<span class="pet-usos">${usosHtml(p)}</span></button>
+        title="${esc(pet.nombre)} · ${esc(pet.don)}: ${esc(pet.texto)}">${petPortrait(p.mascota, 'free')}</button>
     </div>
     <section class="m-card"><h4>Ingredientes <span class="h4-n">${sum(p.reserva)}/${D.limiteReserva}</span></h4><div class="ing-row">${ings}</div></section>
     <section class="m-card"><h4>Aprendiendo</h4>${studyHtml(p, t)}</section>
@@ -490,21 +490,16 @@ function renderRivals() {
     const active = S.turn && S.turn.pid === p.id;
     const learned = p.aprendidas.map((id) => `<span class="learned ${D.cartas[id].ataque ? 'attack' : ''}" title="${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? ' (preparada)' : ''}: ${esc(D.cartas[id].texto)}">
       ${cardIcon(id, 'sm')}${p.pociones.includes(id) ? kindIcon('pocion', 'badge') : ''}</span>`).join('');
-    const study = p.estudio
-      ? `<span class="r-study" title="Estudiando ${esc(D.cartas[p.estudio.card].nombre)}">${cardIcon(p.estudio.card, 'xs')}${cardSlots(p.estudio)}</span>`
-      : '';
     const status = `${p.magiaLibre ? '✦' : '<span class="muted">✦</span>'}${p.connected || p.bot ? '' : ' · desconectado'}${S.startId === p.id ? ' · 1º' : ''}`;
     return `<div class="rival ${active ? 'active' : ''}">
       <div class="r-head">
         ${druidPortrait(p.druida, 'rsm')}
         <span class="r-pet" title="${esc(D.mascotas[p.mascota].nombre)}: ${esc(D.mascotas[p.mascota].texto)}">${petPortrait(p.mascota, 'free')}</span>
         <div class="r-who"><b>${esc(p.name)}</b>
-          <span class="r-sub"><span class="usos">${usosHtml(p)}</span> <span title="Magia de este turno">${status}</span></span></div>
+          <span class="r-sub"><span title="Magia de este turno">${status}</span></span></div>
         ${prestigeHtml(p.puntos)}
       </div>
-      <div class="reserve sm" title="Reserva">${reserveHtml(p)}</div>
-      ${study}
-      ${learned ? `<div class="r-learned">${learned}</div>` : ''}
+      ${learned ? `<div class="r-learned">${learned}</div>` : '<div class="r-learned none-txt">Nada aprendido</div>'}
     </div>`;
   }).join('');
 }

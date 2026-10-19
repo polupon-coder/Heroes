@@ -873,3 +873,19 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 34px; height: 34px; }
   .rivals.wood .r-who b { font-size: .8em; }
 }
+/* aprendiendo: nombre pequeño bajo la ilustración */
+.study-ico { display: grid; justify-items: center; gap: 2px; }
+.study-title { font-size: .72em !important; }
+/* mascotas enteras dentro de su esfera */
+.pet-pic.free { padding: 17% !important; }
+.pet-pic.free img { object-fit: contain; }
+/* rivales: solo lo aprendido */
+.rivals .r-learned { gap: 6px; }
+/* El Claro sin aro blanco */
+.cslot.live .tok { box-shadow: none !important; }
+.rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 64px; height: 64px; }
+.rivals .learned { width: 66px; height: 66px; background: none; border: 0; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 42px; height: 42px; }
+  .rivals .learned { width: 44px; height: 44px; }
+}

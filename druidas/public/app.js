@@ -292,8 +292,8 @@ function renderLobby() {
   const link = `${location.origin}${location.pathname}?sala=${S.code}`;
   const taken = (field, v) => S.players.some((x) => x.id !== S.me && x[field] === v);
   const druids = Object.entries(D.druidas).map(([id, d]) => `
-    <button class="choice ${p.druida === id ? 'on' : ''}" data-a="druida" data-v="${id}" ${taken('druida', id) ? 'disabled' : ''}>
-      ${D.img.recortes[id] ? `<img class="choice-body" src="${D.img.recortes[id]}" alt="">` : druidPortrait(id, 'full')}<span>${esc(L(d.nombre, d.en || d.nombre))}</span>
+    <button class="choice ${p.druida === id ? 'on' : ''}" data-a="druida" data-v="${id}" ${taken('druida', id) ? 'disabled' : ''} title="${esc(L(d.nombre, d.en || d.nombre))}" aria-label="${esc(L(d.nombre, d.en || d.nombre))}">
+      ${D.img.recortes[id] ? `<img class="choice-body" src="${D.img.recortes[id]}" alt="">` : druidPortrait(id, 'full')}
     </button>`).join('');
   const pets = Object.entries(D.mascotas).map(([id, m]) => `
     <button class="choice pet ${p.mascota === id ? 'on' : ''}" data-a="mascota" data-v="${id}" ${taken('mascota', id) ? 'disabled' : ''}>
@@ -319,7 +319,6 @@ function renderLobby() {
       </div>
       <div class="panel lobby-main">
         <h3 class="ptitle sm">${L('Tu druida', 'Your druid')}</h3>
-        <p class="muted small center">${L('Todos funcionan igual: el aspecto no da ventajas.', 'They all play the same: looks give no advantage.')}</p>
         <div class="choices">${druids}</div>
         <h3 class="ptitle sm">${L('Tu animal del bosque', 'Your forest animal')}</h3>
         <div class="choices">${pets}</div>

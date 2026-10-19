@@ -293,7 +293,7 @@ function renderLobby() {
   const taken = (field, v) => S.players.some((x) => x.id !== S.me && x[field] === v);
   const druids = Object.entries(D.druidas).map(([id, d]) => `
     <button class="choice ${p.druida === id ? 'on' : ''}" data-a="druida" data-v="${id}" ${taken('druida', id) ? 'disabled' : ''}>
-      ${druidPortrait(id, 'full')}<span>${esc(L(d.nombre, d.en || d.nombre))}</span>
+      ${D.img.recortes[id] ? `<img class="choice-body" src="${D.img.recortes[id]}" alt="">` : druidPortrait(id, 'full')}<span>${esc(L(d.nombre, d.en || d.nombre))}</span>
     </button>`).join('');
   const pets = Object.entries(D.mascotas).map(([id, m]) => `
     <button class="choice pet ${p.mascota === id ? 'on' : ''}" data-a="mascota" data-v="${id}" ${taken('mascota', id) ? 'disabled' : ''}>

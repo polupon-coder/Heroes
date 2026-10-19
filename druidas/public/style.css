@@ -1535,3 +1535,6 @@ body { font-size: 18px; font-weight: 600; }
   .topbar .top-actions .menu-btn { width: 32px !important; height: 32px !important; }
   .topbar .prompt { white-space: normal !important; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 }
+/* selección inicial: personajes de cuerpo entero, sin recortar */
+.choice .choice-body { display: block; width: 100%; height: 240px; object-fit: contain; object-position: bottom; }
+@media (max-width: 760px) { .choice .choice-body { height: 210px; } }

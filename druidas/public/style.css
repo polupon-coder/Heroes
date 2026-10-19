@@ -424,6 +424,18 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .art { aspect-ratio: 2 / 1; background: none; }
 .art img { object-fit: contain; }
 
+/* ---- símbolos de poción y hechizo ---- */
+.kind-ico { height: 30px; width: auto; vertical-align: middle; object-fit: contain; }
+.kind-ico.sm { height: 22px; margin-right: 6px; }
+.kind-ico.xs { height: 16px; margin-left: 4px; }
+.kind-ico.ghost { height: 34px; opacity: .3; filter: grayscale(.6); }
+.kc-kind { position: absolute; top: -16px; left: -16px; }
+.kc-kind .kind-ico { height: 26px; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .25)); }
+.side-label, .kind, .recipe-sub, .mesa h4 { display: inline-flex; align-items: center; }
+.mesa h4 { display: flex; justify-content: center; }
+.chip { display: inline-flex; align-items: center; }
+.potion-box.empty { gap: 6px; }
+
 /* ---- libro de reglas ---- */
 .modal-card.book-card {
   width: min(1240px, 96vw); aspect-ratio: 1301 / 891; max-height: none; overflow: visible; padding: 0;

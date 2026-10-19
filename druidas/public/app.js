@@ -119,7 +119,7 @@ function cardHtml(id, { estudio = null, footer = '', cls = '', prepared = false 
   return `<article class="kcard ${c.tipo} ${cls} ${c.ataque ? 'attack' : ''}">
     <header><span class="kname">${esc(c.nombre)}</span>${c.puntos ? `<span class="pts" title="Prestigio">${c.puntos}</span>` : ''}</header>
     ${img ? `<div class="art"><img src="${img}" alt=""></div>` : ''}
-    <div class="kind">${kind}${c.ataque ? ' · ataque' : ''}${prepared ? ' · <b class="ready">preparada</b>' : ''}</div>
+    <div class="kind">${kindIcon(c.tipo, 'sm')}${kind}${c.ataque ? ' · ataque' : ''}${prepared ? ' · <b class="ready">preparada</b>' : ''}</div>
     ${slots}
     <div class="use">${use}: ${costHtml(c.coste)}</div>
     <p class="ktext">${esc(c.texto)}</p>
@@ -341,6 +341,13 @@ function attackDesc(a) {
 }
 
 // Icono grande de una carta: su ilustración o el ingrediente con que se usa.
+// Símbolo del tipo de conocimiento: frasco (poción) o pergamino sellado (hechizo).
+function kindIcon(tipo, cls = '') {
+  const img = D.img.ui[tipo === 'pocion' ? 'pocion' : 'hechizo'];
+  const label = tipo === 'pocion' ? 'Poción' : 'Hechizo';
+  return img ? `<img class="kind-ico ${cls}" src="${img}" alt="${label}" title="${label}">` : '';
+}
+
 function cardIcon(id, cls = 'lg') {
   const img = D.img.cartas[id];
   if (img) return `<span class="card-icon ${cls}"><img src="${img}" alt=""></span>`;
@@ -362,6 +369,7 @@ function renderCatalog() {
     const dots = ING().map((t) => tok(t, { cls: 'dot' }).repeat(c.req[t] || 0)).join('');
     return `<button class="kc ${c.tipo} ${c.ataque ? 'attack' : ''} ${known ? 'known' : ''} ${pick && !known && S.catalogo[id] > 0 ? 'pickable' : ''}"
         data-a="info" data-v="${id}" title="${esc(c.texto)}">
+      <span class="kc-kind">${kindIcon(c.tipo)}</span>
       <span class="kc-name">${esc(c.nombre)}</span>
       <span class="kc-pts" title="Prestigio">${c.puntos}</span>
       <span class="kc-icon">${cardIcon(id)}</span>
@@ -371,7 +379,7 @@ function renderCatalog() {
   }).join('');
   const nH = ids.filter((id) => D.cartas[id].tipo === 'hechizo').length;
   $('catalog').innerHTML = `
-    <div class="ptitle-row"><span class="side-label">${nH} hechizos</span><h2 class="ptitle">Conocimientos disponibles</h2><span class="side-label">${ids.length - nH} pociones</span></div>
+    <div class="ptitle-row"><span class="side-label">${kindIcon('hechizo', 'sm')}${nH} hechizos</span><h2 class="ptitle">Conocimientos disponibles</h2><span class="side-label">${kindIcon('pocion', 'sm')}${ids.length - nH} pociones</span></div>
     <div class="kcs">${cards}</div>`;
 }
 
@@ -465,7 +473,7 @@ function renderStudy() {
     const canAbandon = isMyTurn() && t.paso === 'estudiar' && !t.tocado && t.estudiadas === 0;
     inner = `<div class="recipe ${c.tipo}">
         <h3 class="recipe-name">${esc(c.nombre)}</h3>
-        <div class="recipe-sub">${c.tipo === 'pocion' ? 'Poción' : 'Hechizo'} · ${c.puntos} de Prestigio</div>
+        <div class="recipe-sub">${kindIcon(c.tipo, 'sm')}${c.tipo === 'pocion' ? 'Poción' : 'Hechizo'} · ${c.puntos} de Prestigio</div>
         <div class="label center">Ingredientes necesarios</div>
         <div class="recipe-slots">${slots.join('')}</div>
         <div class="recipe-count">${placed} / ${placed + sum(p.estudio.pend)} colocados</div>
@@ -496,7 +504,7 @@ function renderMesa() {
   }).join('');
   const boxes = [0, 1].map((i) => {
     const id = p.pociones[i];
-    if (!id) return '<div class="potion-box empty">vacío</div>';
+    if (!id) return `<div class="potion-box empty">${kindIcon('pocion', 'ghost')}<span>vacío</span></div>`;
     const c = D.cartas[id];
     const live = !c.ataque && canCast(id);
     return `<button class="potion-box ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.texto)}">
@@ -507,8 +515,8 @@ function renderMesa() {
   $('mesa').innerHTML = `<h2 class="ptitle">Mesa del druida</h2>
     <div class="mesa-cols">
       <section><h4>Ingredientes</h4><div class="ing-row">${ings}</div></section>
-      <section><h4>Hechizos aprendidos</h4><div class="chip-row">${spells}</div></section>
-      <section><h4>Pociones preparadas</h4><div class="potion-row">${boxes}</div>
+      <section><h4>${kindIcon('hechizo', 'sm')}Hechizos aprendidos</h4><div class="chip-row">${spells}</div></section>
+      <section><h4>${kindIcon('pocion', 'sm')}Pociones preparadas</h4><div class="potion-row">${boxes}</div>
         <div class="recipes small">${recipes.length ? `Recetas: ${recipes.map((id) => esc(D.cartas[id].nombre)).join(', ')}` : '<span class="muted">Aún no conoces recetas de poción.</span>'}</div>
         ${prep ? `<div class="prep-row">${prep}</div>` : ''}</section>
     </div>`;
@@ -520,7 +528,7 @@ function renderRivals() {
     const active = S.turn && S.turn.pid === p.id;
     const pet = D.mascotas[p.mascota];
     const progress = p.estudio ? cardSlots(p.estudio) : '<span class="small muted">—</span>';
-    const learned = p.aprendidas.map((id) => `<span class="chip ${D.cartas[id].tipo} ${D.cartas[id].ataque ? 'attack' : ''}" title="${esc(D.cartas[id].texto)}">${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? ' ⚗️' : ''}</span>`).join('');
+    const learned = p.aprendidas.map((id) => `<span class="chip ${D.cartas[id].tipo} ${D.cartas[id].ataque ? 'attack' : ''}" title="${esc(D.cartas[id].texto)}">${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? kindIcon('pocion', 'xs') : ''}</span>`).join('');
     return `<div class="rival ${active ? 'active' : ''}">
       <h3 class="rival-name">${esc(p.name)}${active ? ' <span class="turn-tag">turno</span>' : ''}</h3>
       <div class="rival-top">

@@ -1,6 +1,6 @@
 """Prepara las ilustraciones originales para el juego (recortes, fondos transparentes, tamaños web).
 
-Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros]
+Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos]
 """
 import os
 import sys
@@ -137,12 +137,20 @@ def libros_e_iconos():
             save(sq.resize((256, 256), Image.LANCZOS), 'cartas', name, q=88)
 
 
+def simbolos():
+    # Frasco (poción) y pergamino sellado (hechizo).
+    save(fit(cut_background(load(22), thr=30, feather=1.5), 300), 'ui', 'pocion', q=88)
+    save(fit(cut_background(load(23), thr=34, feather=1.5), 300), 'ui', 'hechizo', q=88)
+
+
 if __name__ == '__main__':
-    que = sys.argv[2:] or ['escenario', 'adornos', 'libros']
+    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos']
     if 'escenario' in que:
         escenario_y_fichas()
     if 'adornos' in que:
         adornos()
     if 'libros' in que:
         libros_e_iconos()
+    if 'simbolos' in que:
+        simbolos()
     print('listo')

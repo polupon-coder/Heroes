@@ -1051,3 +1051,25 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .rivals.wood .rival { flex: 1 1 0; min-height: 0; margin: 0 !important; }
 .rivals.wood .rival + .rival { border-top: 0 !important; }
 .rivals.wood { gap: 18px !important; } .mesa { gap: 18px !important; }
+
+/* tipografía manuscrita, de pluma */
+:root { --title: "Caveat", "Segoe Script", cursive; --text: "Kalam", "Segoe Print", cursive; }
+body { font-size: 16px; }
+.ptitle, .kname, .kc-name, .m-name, .r-who b, .study-title, .brand, .pts-ball { text-transform: none !important; letter-spacing: 0 !important; }
+.brand { font-size: 2em !important; font-weight: 700; }
+.kc-name { font-size: 1.2em !important; }
+.r-who b, .m-name { font-size: 1.45em !important; }
+.pts-ball { font-family: var(--text) !important; font-weight: 700; }
+
+/* títulos de los papiros propios: centrados, arriba y siempre en el mismo sitio */
+.mesa > section.m-card { justify-content: flex-start !important; }
+.mesa .m-card h4 {
+  justify-content: center !important; margin: 0 0 6px !important; text-transform: none; letter-spacing: 0;
+  font: 700 1.35em var(--title) !important; color: var(--ink-soft);
+}
+.mesa .m-card > :not(h4) { margin-top: auto; margin-bottom: auto; }
+.mesa .ing-row, .mesa .spell-row, .mesa .study-mini { justify-content: center !important; }
+.bag-pill { font-size: 3.4em !important; font-family: var(--title) !important; }
+.study-title { font-size: 1.05em !important; }
+.spell-name { font: 700 .95em var(--title) !important; text-transform: none; }
+.kc-count { font-size: .85em; }

@@ -786,3 +786,19 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 }
 .mesa > section.m-card { padding: 4% 12% 5%; }
 .kc-count { font: inherit; color: var(--muted); }
+/* pergamino abierto de fondo: franja de conocimientos y panel de cada rival */
+.catalog {
+  background: url(img/ui/papiro.webp) center / 100% 100% no-repeat !important; border: 0 !important;
+  box-shadow: none !important; backdrop-filter: none; padding: 1.2% 6% 1.4%; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .4));
+}
+.rivals.wood .rival {
+  background: url(img/ui/papiro.webp) center / 100% 100% no-repeat !important; border: 0 !important;
+  padding: 14px 11% 16px; border-radius: 0; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .4));
+}
+.rivals.wood .rival.active { filter: drop-shadow(0 0 6px var(--gold)) drop-shadow(0 0 10px var(--gold)); box-shadow: none; }
+.rivals.wood .r-who b { color: var(--ink); text-shadow: none; }
+.rivals.wood .r-sub, .rivals.wood .usos { color: var(--ink-soft); text-shadow: none; }
+.rivals.wood .rival { padding: 14px 9% 16px 7%; }
+.rivals.wood .r-head { gap: 6px; }
+.rivals.wood .r-who b { font-size: .9em; }
+.catalog .kc-name { z-index: 2; background: rgba(248, 238, 214, .7); border-radius: 6px; padding: 0 4px; }

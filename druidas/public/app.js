@@ -174,7 +174,7 @@ function cardHtml(id, { estudio = null, footer = '', cls = '', prepared = false 
   }
   const use = c.tipo === 'pocion' ? L('Preparar', 'Brew') : L('Lanzar', 'Cast');
   return `<article class="kcard ${c.tipo} ${cls} ${c.ataque ? 'attack' : ''}">
-    <header><span class="kname">${esc(cname(c))}</span>${c.puntos ? `<span class="pts" title="${L('Prestigio', 'Prestige')}">${c.puntos}</span>` : ''}</header>
+    <header><span class="kname">${esc(cname(c))}</span></header>
     ${img ? `<div class="art"><img src="${img}" alt=""></div>` : ''}
     ${prepared ? `<div class="kind"><b class="ready">${L('preparada', 'brewed')}</b></div>` : ''}
     ${slots}

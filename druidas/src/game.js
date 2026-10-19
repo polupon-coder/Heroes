@@ -230,12 +230,33 @@ class Game {
   finish() {
     this.phase = 'fin';
     this.turn = null;
-    const best = Math.max(...this.players.map((p) => this.points(p)));
-    this.winners = this.players.filter((p) => this.points(p) === best).map((p) => p.id);
-    const names = this.winners.map((id) => this.player(id).name).join(' y ');
-    const namesEn = this.winners.map((id) => this.player(id).name).join(' and ');
-    this.say(this.winners.length > 1 ? `Empate con ${best} de Prestigio: ganan ${names}.` : `¡${names} gana con ${best} de Prestigio!`,
-      this.winners.length > 1 ? `Tie at ${best} Prestige: ${namesEn} win.` : `${namesEn} wins with ${best} Prestige!`);
+    // Sin empates. Desempate: más ingredientes (reserva + colocados en la receta), luego más pociones
+    // preparadas y, si aún empatan, gana quien jugó más tarde en la última ronda (tuvo menos turnos de ventaja).
+    const n = this.players.length;
+    const lastStart = (this.startIdx - 1 + n) % n;
+    const key = (p) => {
+      const i = this.players.indexOf(p);
+      const ings = total(p.reserva) + (p.estudio ? total(p.estudio.placed) : 0);
+      return [this.points(p), ings, p.pociones.length, (i - lastStart + n) % n];
+    };
+    const ranked = [...this.players].sort((x, y) => {
+      const a = key(x); const b = key(y);
+      for (let k = 0; k < a.length; k += 1) if (a[k] !== b[k]) return b[k] - a[k];
+      return 0;
+    });
+    const w = ranked[0];
+    this.winners = [w.id];
+    this.ranking = ranked.map((p) => p.id);
+    const best = this.points(w);
+    const tied = this.players.filter((p) => p !== w && this.points(p) === best);
+    const why = tied.length ? (() => {
+      const [, i1, p1] = key(w);
+      const r = key(ranked[1]);
+      if (i1 !== r[1]) return [' (desempate: más ingredientes)', ' (tie-break: more ingredients)'];
+      if (p1 !== r[2]) return [' (desempate: más pociones preparadas)', ' (tie-break: more brewed potions)'];
+      return [' (desempate: jugó más tarde en la última ronda)', ' (tie-break: played later in the last round)'];
+    })() : ['', ''];
+    this.say(`¡${w.name} gana con ${best} de Prestigio!${why[0]}`, `${w.name} wins with ${best} Prestige!${why[1]}`);
   }
 
   // ---------------------------------------------------------------- Consultas
@@ -649,6 +670,7 @@ class Game {
       ataques: me && this.phase === 'juego' ? this.attacksFor(me) : [],
       lio: me && this.phase === 'juego' && t && t.paso === 'ventana' && me.id !== t.pid ? this.lioSwaps(this.active) : [],
       winners: this.winners,
+      ranking: this.ranking || null,
       log: this.log.slice(-80),
       version: this.version,
     };

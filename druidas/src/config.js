@@ -101,7 +101,7 @@ const DRUIDAS = {
 };
 
 // Segundos que tienen los rivales para decidir si atacan (y el atacado si se defiende).
-const VENTANA_MS = Number(process.env.VENTANA_MS || 25000);
+const VENTANA_MS = Number(process.env.VENTANA_MS || 12000);
 
 module.exports = {
   ING, ING_INFO, POR_TIPO, CLARO, RECOGER, RECOGER_ZORRO, META, RONDAS, LIMITE_RESERVA, MAX_POCIONES, COPIAS,

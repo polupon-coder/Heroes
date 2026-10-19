@@ -27,7 +27,7 @@ Abre <http://localhost:3000>, escribe tu nombre y pulsa **Crear partida**. Compa
 
 - **Tu turno:** 1) *Recoger*: pulsa 3 ingredientes de El Claro (5 con el Zorro). 2) *Ataques*: los rivales tienen unos segundos para atacarte; si te atacan, puedes defenderte con Burbuja. 3) *Estudiar*: elige un conocimiento disponible y pulsa ingredientes de tu reserva para colocarlos. 4) *Preparar*: prepara una poción que conozcas. Si acabas con más de 6 ingredientes, eliges cuáles devuelves.
 - **Magia:** los hechizos y las pociones de la Mesa del druida se iluminan cuando puedes usarlos (púlsalos), también durante los turnos rivales (un efecto por jugador en cada turno). Chispa es gratis una vez en tu turno.
-- **Ataques (Robo, Lío y Sueño):** cuando el jugador activo termina de recoger, a cada rival que puede atacar le aparecen los botones de ataque. Si atacan varios, se resuelve el primero en el orden de juego. Si nadie decide a tiempo (25 s), se sigue sin ataque.
+- **Ataques (Robo, Lío y Sueño):** cuando el jugador activo termina de recoger, a cada rival que puede atacar le aparecen los botones de ataque. Si atacan varios, se resuelve el primero en el orden de juego. Si nadie decide a tiempo (12 s), se sigue sin ataque.
 - **Todo es público:** se ven las reservas, las recetas en estudio y las pociones preparadas de todos.
 - **Reconexión:** si se cierra el navegador, al volver a abrir el enlace vuelves a tu partida.
 

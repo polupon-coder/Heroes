@@ -683,7 +683,7 @@ function renderModal() {
     body = cardHtml(m.id, { cls: 'big', footer: `<div class="kfoot"><span class="muted small">${S.catalogo[m.id] === 1 ? L('Queda 1', '1 left') : L(`Quedan ${S.catalogo[m.id] || 0}`, `${S.catalogo[m.id] || 0} left`)}</span>${known ? `<span class="tag ok">${L('aprendido', 'learned')}</span>` : ''}</div>` });
     ok = can ? L('Estudiar', 'Study') : '';
   } else if (m.kind === 'final') {
-    const rank = [...S.players].sort((a, b) => b.puntos - a.puntos);
+    const rank = S.ranking ? S.ranking.map(pl) : [...S.players].sort((a, b) => b.puntos - a.puntos);
     body = `<h2 class="ptitle">${S.winners.length > 1 ? L('Victoria compartida', 'Shared victory') : L(`¡${esc(pl(S.winners[0]).name)} gana!`, `${esc(pl(S.winners[0]).name)} wins!`)}</h2>
       <ol class="final">${rank.map((x) => `<li>${druidPortrait(x.druida, 'sm')} <b>${esc(x.name)}</b> — ${x.puntos} ${L('de Prestigio', 'Prestige')}
         <div class="small muted">${x.aprendidas.map((id) => esc(cname(card(id)))).join(', ') || L('nada aprendido', 'nothing learned')}</div></li>`).join('')}</ol>`;

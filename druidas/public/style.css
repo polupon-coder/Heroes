@@ -1043,3 +1043,6 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .portrait.rsm img { position: absolute; inset: 6% 8% !important; width: 84% !important; height: 88% !important; }
 .portrait.rsm { width: 150px !important; height: 108px !important; }
 @media (max-width: 1500px), (max-height: 920px) { .portrait.rsm { width: 104px !important; height: 76px !important; } }
+/* caras de rivales sin pergamino: la cara recortada directamente sobre su panel */
+.portrait.rsm { background: none !important; border: 0 !important; border-image: none !important; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .2)); }
+.portrait.rsm img { inset: 0 !important; width: 100% !important; height: 100% !important; }

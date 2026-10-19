@@ -667,7 +667,7 @@ function renderModal() {
     ok = sum(m.ings) === extra ? 'Devolver' : '';
   }
   const closable = m.kind !== 'descartar';
-  el.innerHTML = `<div class="modal-card ${m.kind === 'rules' ? 'wide' : ''}">
+  el.innerHTML = `<div class="modal-card ${m.kind === 'rules' ? 'wide' : ''} ${m.kind === 'info' ? 'framed' : ''}">
     ${closable ? '<button class="modal-close" data-a="closeModal" aria-label="Cerrar">×</button>' : ''}
     ${body}
     ${ok ? `<div class="row end"><button class="btn primary" data-a="mOk">${ok}</button></div>` : ''}

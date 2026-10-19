@@ -33,7 +33,7 @@ Abre <http://localhost:3000>, escribe tu nombre y pulsa **Crear partida**. Compa
 
 ## Pantalla de juego
 
-Sigue el esquema de interfaz (PC, 1920 × 1080): arriba los **Conocimientos disponibles** (pulsa uno para ver la carta y estudiarla); en el centro **Druida activo** (tu druida, tu mascota con su habilidad especial y tu reserva), **El Claro** y la **Receta en estudio**; abajo la **Mesa del druida** (ingredientes por tipo, hechizos aprendidos y pociones preparadas, que se pulsan para usarlos), y a la derecha los **Druidas rivales**. Lo que toca hacer en cada momento aparece en la barra de la cabecera. En pantallas más pequeñas los paneles se apilan.
+El fondo es el claro del bosque. En el centro, **El Claro**: el círculo de piedras con los 6 ingredientes, sin caja. A la izquierda, los **Conocimientos** como fichas de iconos (pulsa una para ver la carta y estudiarla); a la derecha, los **Rivales**; y abajo, la **Mesa del druida** en una sola barra: tu druida, tu mascota con su habilidad, tu reserva, la receta en estudio, tus hechizos y tus pociones (se pulsan para usarlos). Todos los paneles van enmarcados con las ramitas de moras. Lo que toca hacer aparece en la barra de la cabecera. En pantallas más bajas todo se encoge para caber sin desplazarse; en móvil los paneles se apilan.
 
 ## Ilustraciones
 
@@ -46,7 +46,7 @@ El juego muestra dibujos provisionales hasta que estén las ilustraciones. Basta
 | `public/img/mascotas/` | `lechuza`, `zorro`, `liebre`, `cervatillo` ✅ |
 | `public/img/cartas/` | iconos de magia: `chispa`, `burbuja`, `robo`, `cambio`, `idea`, `lio`, `memoria`, `sueno`, `suerte`, `pensar` ✅ |
 | `public/img/ingredientes/` | `eter`, `umbra`, `lumen`, `raiz` ✅ |
-| `public/img/ui/` | `claro` (suelo del bosque), `claro-piedras` (círculo de piedras, fondo transparente), `mesa` (mesa de madera de fondo), y los adornos `rama` (bajo los títulos), `corona` (mascotas), `marco-ovalo` (hechizos y pociones), `marco-retrato` (tu druida) y `marco-carta` (cartas); `libro` (reglas), `libro-perspectiva` (portada), `pergamino` (crónica y resultados), `pocion` y `hechizo` (símbolos de tipo) ✅ |
+| `public/img/ui/` | `claro` y `claro-fondo` (suelo del bosque; el segundo es el fondo de la página), `claro-piedras` (círculo de piedras, fondo transparente), `mesa` (mesa de madera de fondo), y los adornos `rama` (bajo los títulos), `corona` (mascotas), `marco-ovalo` (hechizos y pociones), `marco-retrato` (tu druida) y `marco-carta` (cartas); `libro` (reglas), `libro-perspectiva` (portada), `pergamino` (crónica y resultados), `pocion` y `hechizo` (símbolos de tipo) ✅ |
 
 `tools/preparar_arte.py` recorta y prepara las ilustraciones originales (hojas de mascotas y fichas, quitar fondos y el pergamino de los adornos, tamaños web).
 

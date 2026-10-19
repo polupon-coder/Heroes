@@ -52,6 +52,7 @@ def escenario_y_fichas():
     # El Claro: círculo de piedras (sin fondo) sobre el suelo del bosque.
     save(fit(cut_background(load(7), thr=30), 1100), 'ui', 'claro-piedras')
     save(fit(load(8), 1300), 'ui', 'claro', q=80)
+    save(load(8), 'ui', 'claro-fondo', q=78)  # fondo de toda la página, a la resolución original
     # Mesa de madera para el fondo de la página.
     save(load(9).resize((1920, 1080), Image.LANCZOS), 'ui', 'mesa', q=82)
 

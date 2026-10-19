@@ -202,9 +202,7 @@ function render() {
     $('table').classList.remove('hidden');
     renderPrompt();
     renderCatalog();
-    renderActive();
     renderClaro();
-    renderStudy();
     renderMesa();
     renderRivals();
     if (isMyTurn() && S.turn.paso === 'descartar' && (!ui.modal || ui.modal.kind !== 'descartar')) {
@@ -362,25 +360,21 @@ function canPickCard() {
 function renderCatalog() {
   const p = me();
   const pick = canPickCard();
-  const ids = Object.keys(D.cartas);
-  const cards = ids.map((id) => {
+  const cards = Object.keys(D.cartas).map((id) => {
     const c = D.cartas[id];
     const known = p.aprendidas.includes(id);
     const dots = ING().map((t) => tok(t, { cls: 'dot' }).repeat(c.req[t] || 0)).join('');
     return `<button class="kc ${c.tipo} ${c.ataque ? 'attack' : ''} ${known ? 'known' : ''} ${pick && !known && S.catalogo[id] > 0 ? 'pickable' : ''}"
-        data-a="info" data-v="${id}" title="${esc(c.texto)}">
+        data-a="info" data-v="${id}" title="${esc(c.nombre)}: ${esc(c.texto)}">
       <span class="kc-kind">${kindIcon(c.tipo)}</span>
-      <span class="kc-name">${esc(c.nombre)}</span>
       <span class="kc-pts" title="Prestigio">${c.puntos}</span>
       <span class="kc-icon">${cardIcon(id)}</span>
-      <span class="kc-req">${dots}</span>
-      <span class="kc-copies"><span class="kc-use" title="${c.tipo === 'pocion' ? 'Preparar' : 'Lanzar'}">${costHtml(c.coste)}</span>${known ? '✓ aprendido' : `×${S.catalogo[id] || 0}`}</span>
+      <span class="kc-name">${esc(c.nombre)}</span>
+      <span class="kc-req" title="Para aprenderlo">${dots}</span>
+      ${known ? '<span class="kc-done" title="Aprendido">✓</span>' : `<span class="kc-copies" title="Copias en el catálogo">×${S.catalogo[id] || 0}</span>`}
     </button>`;
   }).join('');
-  const nH = ids.filter((id) => D.cartas[id].tipo === 'hechizo').length;
-  $('catalog').innerHTML = `
-    <div class="ptitle-row"><span class="side-label">${kindIcon('hechizo', 'sm')}${nH} hechizos</span><h2 class="ptitle">Conocimientos disponibles</h2><span class="side-label">${kindIcon('pocion', 'sm')}${ids.length - nH} pociones</span></div>
-    <div class="kcs">${cards}</div>`;
+  $('catalog').innerHTML = `<h2 class="ptitle">Conocimientos</h2><div class="kcs">${cards}</div>`;
 }
 
 function petUsable() {
@@ -401,35 +395,10 @@ function resClickable() {
     || (isMyTurn() && t.paso === 'estudiar' && !!p.estudio && !t.lechuza && t.estudiadas < t.limite));
 }
 
-function renderActive() {
-  const p = me();
-  const pet = D.mascotas[p.mascota];
-  const on = (ui.mode === 'liebre' || ui.mode === 'lechuza' || ui.mode === 'cerv' || ui.zorro);
-  $('active').innerHTML = `
-    <h2 class="ptitle">${isMyTurn() ? 'Druida activo' : 'Tu druida'}</h2>
-    <div class="active-body">
-      <div class="figure">
-        ${druidPortrait(p.druida, 'xl')}
-        <span class="figure-name">${esc(p.name)}</span>
-      </div>
-      <div class="active-info">
-        <div class="label">Mascota</div>
-        <div class="pet-row">${petPortrait(p.mascota, 'lg2')}<div><b>${esc(pet.nombre)}</b><br><span class="small muted">${'●'.repeat(p.usos)}${'○'.repeat(Math.max(0, pet.usos - p.usos))} usos</span></div></div>
-        <button class="skill ${on ? 'on' : ''} ${petUsable() ? 'live' : ''}" data-a="habilidad" ${petUsable() ? '' : 'disabled'} title="${esc(pet.texto)}">
-          ${esc(pet.don)}</button>
-        <div class="label">Ingredientes en reserva</div>
-        <div class="reserve">${reserveHtml(p, { clickable: resClickable() })}</div>
-        <div class="small muted">${sum(p.reserva)} · Máx. ${D.limiteReserva}</div>
-      </div>
-    </div>
-    <div class="active-foot">
-      <span class="prestige">${tok('lumen', { cls: 'sm' })} <b>${p.puntos}</b> Prestigio</span>
-      <span class="magic ${p.magiaLibre ? 'on' : ''}">✦ ${p.magiaLibre ? 'magia libre' : 'magia usada'}</span>
-      ${p.dormido ? '<span>💤</span>' : ''}
-    </div>`;
-}
+const usosHtml = (p) => `${'●'.repeat(p.usos)}${'○'.repeat(Math.max(0, D.mascotas[p.mascota].usos - p.usos))}`;
+const prestigeHtml = (n, cls = '') => `<span class="prestige-badge ${cls}" title="Prestigio">${tok('lumen', { cls: 'sm' })}<b>${n}</b></span>`;
 
-// Posiciones de los 6 espacios de El Claro alrededor del círculo de piedras.
+// Posiciones de los 6 espacios de El Claro dentro del círculo de piedras.
 const CLARO_ANG = [-90, -30, 30, 90, 150, 210];
 
 function renderClaro() {
@@ -445,103 +414,108 @@ function renderClaro() {
   const claro = S.claro.length ? S.claro : new Array(6).fill(null);
   const slots = claro.map((c, i) => {
     const a = (CLARO_ANG[i] * Math.PI) / 180;
-    const pos = `style="left:${50 + (art ? 27 : 34) * Math.cos(a)}%;top:${50 + (art ? 28 : 36) * Math.sin(a)}%"`;
+    const pos = `style="left:${50 + (art ? 26 : 34) * Math.cos(a)}%;top:${50 + (art ? 27 : 36) * Math.sin(a)}%"`;
     if (!c) return `<span class="cslot empty" ${pos}></span>`;
     const on = ui.sel.includes(i);
     const hint = ui.mode === 'pensar' && !(pend[c] > 0) ? 'dim' : '';
-    return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos}>${tok(c, { cls: 'lg' })}</button>`
-      : `<span class="cslot" ${pos}>${tok(c, { cls: 'lg' })}</span>`;
+    return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos}>${tok(c, { cls: 'xxl' })}</button>`
+      : `<span class="cslot" ${pos}>${tok(c, { cls: 'xxl' })}</span>`;
   }).join('');
-  $('claro').style.backgroundImage = D.img.ui.claro ? `linear-gradient(rgba(40, 60, 25, .25), rgba(40, 60, 25, .45)), url(${D.img.ui.claro})` : '';
   const bg = art ? ` style="background-image:url(${art})"` : '';
-  $('claro').innerHTML = `<h2 class="ptitle light">El Claro</h2>
-    <div class="ring ${art ? 'with-art' : ''}"${bg}>${stones}${slots}</div>
-    <div class="claro-foot">${claro.filter(Boolean).length} ingredientes visibles · 👜 ${sum(S.bolsa)} en la bolsa</div>`;
+  $('claro').innerHTML = `
+    <div class="ring ${art ? 'with-art' : ''}"${bg}>${stones}${slots}
+      <span class="claro-label">El Claro</span>
+      <span class="bag-pill" title="Ingredientes en la bolsa">👜 ${sum(S.bolsa)}</span>
+    </div>`;
 }
 
-function renderStudy() {
-  const p = me();
-  const t = S.turn;
-  let inner;
-  if (p.estudio) {
-    const c = D.cartas[p.estudio.card];
-    const slots = [];
-    for (const k of ING()) {
-      for (let j = 0; j < (c.req[k] || 0); j += 1) slots.push(j < p.estudio.placed[k] ? tok(k) : emptyTok(k));
-    }
-    const placed = sum(p.estudio.placed);
-    const canAbandon = isMyTurn() && t.paso === 'estudiar' && !t.tocado && t.estudiadas === 0;
-    inner = `<div class="recipe ${c.tipo}">
-        <h3 class="recipe-name">${esc(c.nombre)}</h3>
-        <div class="recipe-sub">${kindIcon(c.tipo, 'sm')}${c.tipo === 'pocion' ? 'Poción' : 'Hechizo'} · ${c.puntos} de Prestigio</div>
-        <div class="label center">Ingredientes necesarios</div>
-        <div class="recipe-slots">${slots.join('')}</div>
-        <div class="recipe-count">${placed} / ${placed + sum(p.estudio.pend)} colocados</div>
-        <p class="recipe-text">${esc(c.texto)}</p>
-      </div>
-      ${canAbandon ? '<button class="btn small ghost dark" data-a="abandonar">Abandonar receta</button>' : ''}`;
-  } else {
-    inner = `<div class="recipe empty"><p>Sin receta en estudio.</p>
-      <p class="small muted">${canPickCard() ? 'Elige un conocimiento disponible ↑' : 'Elegirás una en tu fase de estudio.'}</p></div>`;
+function studyHtml(p, t) {
+  if (!p.estudio) {
+    return `<div class="study-mini empty">${canPickCard() ? '← Elige un conocimiento' : 'Sin receta'}</div>`;
   }
-  $('study').innerHTML = `<h2 class="ptitle">Receta en estudio</h2><div class="study-stack">${inner}</div>`;
+  const c = D.cartas[p.estudio.card];
+  const slots = [];
+  for (const k of ING()) {
+    for (let j = 0; j < (c.req[k] || 0); j += 1) slots.push(j < p.estudio.placed[k] ? tok(k) : emptyTok(k));
+  }
+  const canAbandon = isMyTurn() && t.paso === 'estudiar' && !t.tocado && t.estudiadas === 0;
+  return `<div class="study-mini ${c.tipo}" title="${esc(c.texto)}">
+      ${cardIcon(p.estudio.card, 'md')}
+      <div class="study-body">
+        <div class="study-name">${kindIcon(c.tipo, 'xs')}<b>${esc(c.nombre)}</b>${prestigeHtml(c.puntos, 'sm')}</div>
+        <div class="recipe-slots">${slots.join('')}</div>
+      </div>
+      ${canAbandon ? '<button class="btn tiny ghost dark" data-a="abandonar" title="Abandonar receta">✕</button>' : ''}
+    </div>`;
 }
 
 function renderMesa() {
   const p = me();
+  const t = S.turn;
+  const pet = D.mascotas[p.mascota];
   const click = resClickable();
+  const petOn = ui.mode === 'liebre' || ui.mode === 'lechuza' || ui.mode === 'cerv' || ui.zorro;
   const ings = ING().map((k) => {
-    const t = tok(k, { cls: 'xl', n: p.reserva[k] });
-    return `<div class="ing-col ${p.reserva[k] ? '' : 'none'}">${click && p.reserva[k] ? `<button class="tokbtn" data-a="res" data-v="${k}">${t}</button>` : t}
-      <span class="small">${N(k)}</span></div>`;
+    const tk = tok(k, { cls: 'xl', n: p.reserva[k] });
+    return `<span class="ing-col ${p.reserva[k] ? '' : 'none'}" title="${N(k)}">${click && p.reserva[k] ? `<button class="tokbtn" data-a="res" data-v="${k}">${tk}</button>` : tk}</span>`;
   }).join('');
   const spells = ['chispa', 'burbuja', ...p.aprendidas.filter((id) => D.cartas[id].tipo === 'hechizo')].map((id) => {
     const c = card(id);
     const live = id !== 'burbuja' && !c.ataque && canCast(id);
-    const icon = cardIcon(id, 'sm');
-    return `<button class="chip-card ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.texto)}">
-      ${icon}<span>${esc(c.nombre)}</span></button>`;
-  }).join('');
-  const boxes = [0, 1].map((i) => {
-    const id = p.pociones[i];
-    if (!id) return `<div class="potion-box empty">${kindIcon('pocion', 'ghost')}<span>vacío</span></div>`;
-    const c = D.cartas[id];
-    const live = !c.ataque && canCast(id);
-    return `<button class="potion-box ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.texto)}">
-      ${cardIcon(id, 'md')}<span>${esc(c.nombre)}</span></button>`;
+    return `<button class="chip-card ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.nombre)}: ${esc(c.texto)}">
+      ${cardIcon(id, 'sm')}<span>${esc(c.nombre)}</span></button>`;
   }).join('');
   const recipes = p.aprendidas.filter((id) => D.cartas[id].tipo === 'pocion');
-  const prep = recipes.filter(canPrepare).map((id) => `<button class="btn tiny" data-a="prep" data-v="${id}">Preparar ${esc(D.cartas[id].nombre)} ${costHtml(D.cartas[id].coste)}</button>`).join('');
-  $('mesa').innerHTML = `<h2 class="ptitle">Mesa del druida</h2>
-    <div class="mesa-cols">
-      <section><h4>Ingredientes</h4><div class="ing-row">${ings}</div></section>
-      <section><h4>${kindIcon('hechizo', 'sm')}Hechizos aprendidos</h4><div class="chip-row">${spells}</div></section>
-      <section><h4>${kindIcon('pocion', 'sm')}Pociones preparadas</h4><div class="potion-row">${boxes}</div>
-        <div class="recipes small">${recipes.length ? `Recetas: ${recipes.map((id) => esc(D.cartas[id].nombre)).join(', ')}` : '<span class="muted">Aún no conoces recetas de poción.</span>'}</div>
-        ${prep ? `<div class="prep-row">${prep}</div>` : ''}</section>
-    </div>`;
+  const boxes = [0, 1].map((i) => {
+    const id = p.pociones[i];
+    if (!id) return `<div class="potion-box empty" title="Hueco para una poción preparada">${kindIcon('pocion', 'ghost')}</div>`;
+    const c = D.cartas[id];
+    const live = !c.ataque && canCast(id);
+    return `<button class="potion-box ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.nombre)}: ${esc(c.texto)}">
+      ${cardIcon(id, 'sm')}<span>${esc(c.nombre)}</span></button>`;
+  }).join('');
+  const prep = recipes.filter(canPrepare).map((id) => `<button class="btn tiny" data-a="prep" data-v="${id}" title="Preparar ${esc(D.cartas[id].nombre)}">${cardIcon(id, 'xs')} ${costHtml(D.cartas[id].coste)}</button>`).join('');
+  $('mesa').innerHTML = `
+    <section class="m-me">
+      ${druidPortrait(p.druida, 'mid')}
+      <div class="m-me-info">
+        <b class="m-name">${esc(p.name)}</b>
+        ${prestigeHtml(p.puntos)}
+        <span class="magic ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Te queda la magia de este turno' : 'Ya has usado tu magia en este turno'}">✦ ${p.magiaLibre ? 'magia' : 'usada'}</span>${p.dormido ? ' 💤' : ''}
+      </div>
+    </section>
+    <section class="m-pet">
+      ${petPortrait(p.mascota, 'lg2')}
+      <button class="skill ${petOn ? 'on' : ''} ${petUsable() ? 'live' : ''}" data-a="habilidad" ${petUsable() ? '' : 'disabled'} title="${esc(pet.nombre)}: ${esc(pet.texto)}">
+        ${esc(pet.don)} <span class="usos">${usosHtml(p)}</span></button>
+    </section>
+    <section class="m-res"><h4 title="Al final de tu turno, como máximo ${D.limiteReserva}">Reserva ${sum(p.reserva)}/${D.limiteReserva}</h4><div class="ing-row">${ings}</div></section>
+    <section class="m-study"><h4>En estudio</h4>${studyHtml(p, t)}</section>
+    <section class="m-spells"><h4>${kindIcon('hechizo', 'sm')}Hechizos</h4><div class="chip-row">${spells}</div></section>
+    <section class="m-potions"><h4>${kindIcon('pocion', 'sm')}Pociones</h4><div class="potion-row">${boxes}</div>
+      ${prep ? `<div class="prep-row">Preparar: ${prep}</div>` : ''}</section>`;
 }
 
 function renderRivals() {
   const rivals = S.players.filter((p) => p.id !== S.me);
-  $('rivals').innerHTML = `<h2 class="ptitle">Druidas rivales</h2>` + rivals.map((p) => {
+  $('rivals').innerHTML = '<h2 class="ptitle">Rivales</h2>' + rivals.map((p) => {
     const active = S.turn && S.turn.pid === p.id;
-    const pet = D.mascotas[p.mascota];
-    const progress = p.estudio ? cardSlots(p.estudio) : '<span class="small muted">—</span>';
-    const learned = p.aprendidas.map((id) => `<span class="chip ${D.cartas[id].tipo} ${D.cartas[id].ataque ? 'attack' : ''}" title="${esc(D.cartas[id].texto)}">${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? kindIcon('pocion', 'xs') : ''}</span>`).join('');
+    const learned = p.aprendidas.map((id) => `<span class="learned ${D.cartas[id].ataque ? 'attack' : ''}" title="${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? ' (preparada)' : ''}: ${esc(D.cartas[id].texto)}">
+      ${cardIcon(id, 'sm')}${p.pociones.includes(id) ? kindIcon('pocion', 'badge') : ''}</span>`).join('');
+    const study = p.estudio
+      ? `<span class="r-study" title="Estudiando ${esc(D.cartas[p.estudio.card].nombre)}">${cardIcon(p.estudio.card, 'xs')}${cardSlots(p.estudio)}</span>`
+      : '';
+    const status = `${p.magiaLibre ? '✦' : '<span class="muted">✦</span>'}${p.connected || p.bot ? '' : ' · desconectado'}${S.startId === p.id ? ' · 1º' : ''}`;
     return `<div class="rival ${active ? 'active' : ''}">
-      <h3 class="rival-name">${esc(p.name)}${active ? ' <span class="turn-tag">turno</span>' : ''}</h3>
-      <div class="rival-top">
-        ${druidPortrait(p.druida, 'lgsq')}
-        <div class="rival-pet"><span class="label">Mascota</span>${petPortrait(p.mascota, 'md')}
-          <span class="small muted">${'●'.repeat(p.usos)}${'○'.repeat(Math.max(0, pet.usos - p.usos))}</span></div>
-        <div class="prestige-box"><span class="label">Prestigio</span><span class="prestige-num">${tok('lumen', { cls: 'md' })}<b>${p.puntos}</b></span></div>
+      <div class="r-head">
+        ${druidPortrait(p.druida, 'rsm')}
+        <div class="r-who"><b>${esc(p.name)}</b>
+          <span class="r-sub">${petPortrait(p.mascota, 'xs')}<span class="usos">${usosHtml(p)}</span> <span title="Magia de este turno">${status}</span></span></div>
+        ${prestigeHtml(p.puntos)}
       </div>
-      <div class="rival-cols">
-        <div><span class="label">Ingredientes visibles</span><div class="reserve sm">${reserveHtml(p)}</div></div>
-        <div><span class="label">Progreso de receta${p.estudio ? ` · ${esc(D.cartas[p.estudio.card].nombre)}` : ''}</span><div class="reserve sm">${progress}</div></div>
-      </div>
-      <div class="rival-foot">${learned}<span class="small muted">${p.magiaLibre ? '✦ libre' : '✦ usada'}${p.connected || p.bot ? '' : ' · desconectado'}${S.startId === p.id ? ' · inicial' : ''}</span></div>
+      <div class="reserve sm" title="Reserva">${reserveHtml(p)}</div>
+      ${study}
+      ${learned ? `<div class="r-learned">${learned}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -549,7 +523,7 @@ function renderRivals() {
 function cardSlots(st) {
   const c = D.cartas[st.card];
   const out = [];
-  for (const t of ING()) for (let k = 0; k < (c.req[t] || 0); k += 1) out.push(k < st.placed[t] ? tok(t, { cls: 'sm' }) : emptyTok(t, 'sm'));
+  for (const t of ING()) for (let k = 0; k < (c.req[t] || 0); k += 1) out.push(k < st.placed[t] ? tok(t, { cls: 'xs' }) : emptyTok(t, 'xs'));
   return out.join('');
 }
 

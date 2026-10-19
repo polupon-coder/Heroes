@@ -1624,3 +1624,9 @@ body { font-size: 18px; font-weight: 600; }
   .lobby .plist .pet-pic.sm { width: 50px !important; height: 50px !important; flex: none; }
   .lobby .plist li b { font-size: 1.1em; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 }
+/* tarjetas de la sala: nada se sale */
+.choice > * { min-width: 0; max-width: 100%; }
+.choice.pet .pet-pic { width: min(100%, 120px) !important; height: auto !important; aspect-ratio: 1; padding: 0 !important; margin: 0 auto; }
+.choice.pet .pet-pic img { width: 100% !important; height: 100% !important; max-width: 100%; object-fit: contain; }
+.choice.pet > span { font: 700 1.15em var(--title); }
+.choice.pet small { font-size: .85em; line-height: 1.25; }

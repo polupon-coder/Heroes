@@ -320,8 +320,8 @@ function renderLobby() {
       ${D.img.recortes[id] ? `<img class="choice-body" src="${D.img.recortes[id]}" alt="">` : druidPortrait(id, 'full')}
     </button>`).join('');
   const pets = Object.entries(D.mascotas).map(([id, m]) => `
-    <button class="choice pet ${p.mascota === id ? 'on' : ''}" data-a="mascota" data-v="${id}" ${taken('mascota', id) ? 'disabled' : ''}>
-      ${petPortrait(id, 'lg')}<span>${esc(petName(m))} · ${esc(petDon(m))}</span><small>${esc(L(m.texto, m.textoEn))} (${m.usos} ${m.usos > 1 ? L('usos', 'uses') : L('uso', 'use')})</small>
+    <button class="choice pet ${p.mascota === id ? 'on' : ''}" data-a="mascota" data-v="${id}" ${taken('mascota', id) ? 'disabled' : ''} title="${esc(petName(m))} · ${esc(petDon(m))}: ${esc(L(m.texto, m.textoEn))}">
+      ${petPortrait(id, 'lg')}<span>${esc(petName(m))}</span><small>${esc(L(m.corto, m.cortoEn))} · ${m.usos > 1 ? L(`${m.usos} veces`, `${m.usos} times`) : L('1 vez', 'once')}</small>
     </button>`).join('');
   const list = S.players.map((x) => `
     <li>${druidPortrait(x.druida, 'sm')} ${petPortrait(x.mascota, 'sm')} <b>${esc(x.name)}</b>

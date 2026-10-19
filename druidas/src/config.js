@@ -76,19 +76,19 @@ const INICIALES = {
 
 const MASCOTAS = {
   lechuza: {
-    nombre: 'Lechuza', don: 'Sabiduría', usos: 1, en: "Owl", donEn: "Wisdom", textoEn: "Once per game, when you finish your normal study, place one more valid ingredient from your reserve.",
+    nombre: 'Lechuza', don: 'Sabiduría', usos: 1, corto: '+1 ingrediente al estudiar', cortoEn: '+1 ingredient when studying', en: "Owl", donEn: "Wisdom", textoEn: "Once per game, when you finish your normal study, place one more valid ingredient from your reserve.",
     texto: 'Una vez por partida, al terminar tu estudio normal, coloca un ingrediente válido más de tu reserva.',
   },
   zorro: {
-    nombre: 'Zorro', don: 'Astucia', usos: 2, en: "Fox", donEn: "Cunning", textoEn: "Twice per game, take 5 ingredients from the Clearing instead of 3.",
+    nombre: 'Zorro', don: 'Astucia', usos: 2, corto: 'Recoge 5 en vez de 3', cortoEn: 'Take 5 instead of 3', en: "Fox", donEn: "Cunning", textoEn: "Twice per game, take 5 ingredients from the Clearing instead of 3.",
     texto: 'Dos veces por partida, recoge 5 ingredientes de El Claro en lugar de 3.',
   },
   liebre: {
-    nombre: 'Liebre', don: 'Transformación', usos: 2, en: "Hare", donEn: "Transformation", textoEn: "Twice per game, in your study, use an ingredient from your reserve as if it were another type.",
+    nombre: 'Liebre', don: 'Transformación', usos: 2, corto: 'Un ingrediente cuenta como otro', cortoEn: 'One ingredient counts as another', en: "Hare", donEn: "Transformation", textoEn: "Twice per game, in your study, use an ingredient from your reserve as if it were another type.",
     texto: 'Dos veces por partida, en tu estudio, usa un ingrediente de tu reserva como si fuera de otro tipo.',
   },
   cervatillo: {
-    nombre: 'Cervatillo', don: 'Energía natural', usos: 1, en: "Fawn", donEn: "Natural energy", textoEn: "Once per game, after using non-free magic, place one more valid ingredient from your reserve (also on rivals' turns).",
+    nombre: 'Cervatillo', don: 'Energía natural', usos: 1, corto: '+1 ingrediente tras usar magia', cortoEn: '+1 ingredient after using magic', en: "Fawn", donEn: "Natural energy", textoEn: "Once per game, after using non-free magic, place one more valid ingredient from your reserve (also on rivals' turns).",
     texto: 'Una vez por partida, tras usar una magia que no sea gratis, coloca un ingrediente válido más de tu reserva (también en turnos rivales).',
   },
 };

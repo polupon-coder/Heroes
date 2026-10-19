@@ -1,6 +1,6 @@
 """Prepara las ilustraciones originales para el juego (recortes, fondos transparentes, tamaños web).
 
-Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos]
+Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos|druidas]
 """
 import os
 import sys
@@ -19,7 +19,7 @@ def save(im, folder, name, **kw):
     im.save(os.path.join(OUT, folder, f'{name}.webp'), 'WEBP', quality=kw.get('q', 84), method=6)
 
 
-def cut_background(im, thr=40, feather=2, erode=3, grow=1, extra=()):
+def cut_background(im, thr=40, feather=2, erode=3, grow=1, extra=(), holes=0):
     """Quita el fondo liso (el color de la esquina) que toca los bordes."""
     bg = im.getpixel((3, 3))
     diff = ImageChops.difference(im, Image.new('RGB', im.size, bg)).convert('L')
@@ -32,6 +32,13 @@ def cut_background(im, thr=40, feather=2, erode=3, grow=1, extra=()):
     for s in seeds:
         if like.getpixel(s) == 255:
             ImageDraw.floodfill(like, s, 128)
+    if holes:  # huecos de fondo encerrados (entre ramas, hojas...) mayores de `holes` píxeles
+        for x in range(0, w, 6):
+            for y in range(0, h, 6):
+                if like.getpixel((x, y)) == 255:
+                    ImageDraw.floodfill(like, (x, y), 77)
+                    n = like.histogram()[77]
+                    ImageDraw.floodfill(like, (x, y), 128 if n > holes else 200)
     alpha = like.point(lambda v: 0 if v == 128 else 255)
     alpha = alpha.filter(ImageFilter.MinFilter(erode))
     if grow > 1:  # apertura: elimina motas y filos finos
@@ -144,8 +151,15 @@ def simbolos():
     save(fit(cut_background(load(23), thr=34, feather=1.5), 300), 'ui', 'hechizo', q=88)
 
 
+def druidas_recortados():
+    # Cuerpo entero sin el fondo de papel, para la mesa del druida.
+    for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
+        im = cut_background(load(n), thr=26, feather=1.2, erode=3)
+        save(fit(im, 1000), 'druidas-recorte', name, q=86)
+
+
 if __name__ == '__main__':
-    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos']
+    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos', 'druidas']
     if 'escenario' in que:
         escenario_y_fichas()
     if 'adornos' in que:
@@ -154,4 +168,6 @@ if __name__ == '__main__':
         libros_e_iconos()
     if 'simbolos' in que:
         simbolos()
+    if 'druidas' in que:
+        druidas_recortados()
     print('listo')

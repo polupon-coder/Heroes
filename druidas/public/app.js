@@ -66,8 +66,8 @@ function send(type, data, done) {
   });
 }
 
-function tok(t, { cls = '', n = null } = {}) {
-  const img = D.img.ingredientes[t];
+function tok(t, { cls = '', n = null, flat = false } = {}) {
+  const img = flat ? null : D.img.ingredientes[t];
   const inner = img ? `<img src="${img}" alt="">` : `<svg viewBox="0 0 24 24" aria-hidden="true">${SYMBOL[t]}</svg>`;
   return `<span class="tok tok-${t} ${img ? 'has-img' : ''} ${cls}" title="${N(t)}">${inner}${n !== null ? `<b>${n}</b>` : ''}</span>`;
 }
@@ -88,7 +88,8 @@ function druidPortrait(id, cls = '') {
   const info = D.druidas[id];
   if (!info) return '';
   const tall = /\b(xl|full|hero)\b/.test(cls);
-  const img = tall ? D.img.druidas[id] : (D.img.retratos[id] || D.img.druidas[id]);
+  const img = /\bhero\b/.test(cls) ? (D.img.recortes[id] || D.img.druidas[id])
+    : tall ? D.img.druidas[id] : (D.img.retratos[id] || D.img.druidas[id]);
   if (img) return `<span class="portrait ${cls} ${tall ? 'body' : ''}" style="--c:${info.hex}"><img src="${img}" alt="${esc(info.nombre)}"></span>`;
   return `<span class="portrait ph ${cls}" style="--c:${info.hex}" title="${esc(info.nombre)}"><svg viewBox="0 0 40 40" aria-hidden="true">
     <path d="M20 4C12 4 8 11.5 8 19.5L5.5 38h29L32 19.5C32 11.5 28 4 20 4z"/><path class="face" d="M20 12.5c-4.6 0-6.8 4.4-6.8 8.2 0 3.8 3 5.8 6.8 5.8s6.8-2 6.8-5.8c0-3.8-2.2-8.2-6.8-8.2z"/></svg></span>`;
@@ -363,7 +364,7 @@ function renderCatalog() {
   const cards = Object.keys(D.cartas).map((id) => {
     const c = D.cartas[id];
     const known = p.aprendidas.includes(id);
-    const dots = ING().map((t) => tok(t, { cls: 'dot' }).repeat(c.req[t] || 0)).join('');
+    const dots = ING().map((t) => tok(t, { cls: 'dot flat', flat: true }).repeat(c.req[t] || 0)).join('');
     return `<button class="kc ${c.tipo} ${c.ataque ? 'attack' : ''} ${known ? 'known' : ''} ${pick && !known && S.catalogo[id] > 0 ? 'pickable' : ''}"
         data-a="info" data-v="${id}" title="${esc(c.nombre)}: ${esc(c.texto)}">
       <span class="kc-kind">${kindIcon(c.tipo)}</span>
@@ -450,22 +451,26 @@ function renderMesa() {
     const tk = tok(k, { cls: 'xl', n: p.reserva[k] });
     return `<span class="ing-col ${p.reserva[k] ? '' : 'none'}" title="${N(k)}">${click && p.reserva[k] ? `<button class="tokbtn" data-a="res" data-v="${k}">${tk}</button>` : tk}</span>`;
   }).join('');
-  const spells = ['chispa', 'burbuja', ...p.aprendidas.filter((id) => D.cartas[id].tipo === 'hechizo')].map((id) => {
+  // Todos los hechizos y pociones: lo que aún no tienes, en gris y tenue.
+  const ids = (tipo) => Object.keys(D.cartas).filter((id) => D.cartas[id].tipo === tipo);
+  const spells = ['chispa', 'burbuja', ...ids('hechizo')].map((id) => {
     const c = card(id);
-    const live = id !== 'burbuja' && !c.ataque && canCast(id);
-    return `<button class="spell-ico ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.nombre)}: ${esc(c.texto)}">
-      ${cardIcon(id, 'md')}<span>${esc(c.nombre)}</span></button>`;
+    const known = !D.cartas[id] || p.aprendidas.includes(id);
+    const live = known && id !== 'burbuja' && !c.ataque && canCast(id);
+    return `<button class="spell-ico ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''} ${known ? '' : 'locked'}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'}
+      title="${esc(c.nombre)}${known ? '' : ' (sin aprender)'}: ${esc(c.texto)}">${cardIcon(id, 'md')}</button>`;
   }).join('');
-  const recipes = p.aprendidas.filter((id) => D.cartas[id].tipo === 'pocion');
-  const boxes = [0, 1].map((i) => {
-    const id = p.pociones[i];
-    if (!id) return `<span class="spell-ico empty" title="Hueco para una poción preparada">${kindIcon('pocion', 'ghost')}</span>`;
+  const potions = ids('pocion').map((id) => {
     const c = D.cartas[id];
-    const live = !c.ataque && canCast(id);
-    return `<button class="spell-ico potion ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.nombre)}: ${esc(c.texto)}">
-      ${cardIcon(id, 'md')}<span>${esc(c.nombre)}</span></button>`;
+    const ready = p.pociones.includes(id);
+    const known = p.aprendidas.includes(id);
+    const live = ready && !c.ataque && canCast(id);
+    const prep = !ready && canPrepare(id);
+    const state = ready ? '' : known ? 'unready' : 'locked';
+    const what = ready ? 'preparada' : known ? 'sin preparar' : 'sin aprender';
+    return `<button class="spell-ico potion ${c.ataque ? 'attack' : ''} ${live || prep ? 'live' : ''} ${state}" ${live ? `data-a="cast" data-v="${id}"` : prep ? `data-a="prep" data-v="${id}"` : 'disabled'}
+      title="${esc(c.nombre)} (${what}${prep ? ': pulsa para prepararla' : ''}): ${esc(c.texto)}">${cardIcon(id, 'md')}${prep ? `<span class="prep-cost">${costHtml(c.coste)}</span>` : ''}</button>`;
   }).join('');
-  const prep = recipes.filter(canPrepare).map((id) => `<button class="btn tiny" data-a="prep" data-v="${id}" title="Preparar ${esc(D.cartas[id].nombre)}">${cardIcon(id, 'xs')} ${costHtml(D.cartas[id].coste)}</button>`).join('');
   $('mesa').innerHTML = `
     <div class="m-hero">
       ${druidPortrait(p.druida, 'hero')}
@@ -479,9 +484,7 @@ function renderMesa() {
     </div>
     <section><h4 title="Al final de tu turno, como máximo ${D.limiteReserva}">Reserva ${sum(p.reserva)}/${D.limiteReserva}</h4><div class="ing-row">${ings}</div></section>
     <section><h4>En estudio</h4>${studyHtml(p, t)}</section>
-    <section><h4>${kindIcon('hechizo', 'sm')}Hechizos</h4><div class="spell-row">${spells}</div></section>
-    <section><h4>${kindIcon('pocion', 'sm')}Pociones</h4><div class="spell-row">${boxes}</div>
-      ${prep ? `<div class="prep-row">Preparar: ${prep}</div>` : ''}</section>`;
+    <section class="m-magic"><div class="spell-row">${spells}</div><div class="spell-row">${potions}</div></section>`;
 }
 
 function renderRivals() {

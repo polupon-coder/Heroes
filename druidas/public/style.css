@@ -106,7 +106,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .round-num { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #f6d27a, #c58f22); color: #fff; border: 2px solid #8a6216; font-size: .95em; }
 .round-of { font-size: .85em; }
 .top-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; position: relative; }
-.menu-btn { padding: 9px 26px; font-size: 1.05em; }
+.menu-btn { padding: 6px 14px; font-size: 1.5em; line-height: 1; }
 .menu {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; min-width: 230px; display: grid; padding: 6px;
   background: var(--parch); border: 2px solid var(--parch-edge); border-radius: 12px; box-shadow: 0 16px 40px rgba(0, 0, 0, .5);
@@ -127,13 +127,13 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 
 /* ---- paneles ---- */
 .panel {
-  background: rgba(248, 238, 214, .95);
-  border: 14px solid transparent;
-  border-image: url(img/ui/marco-carta.webp) 110 / 32px / 16px stretch;
-  border-radius: 6px;
+  background: rgba(248, 238, 214, .8);
+  border: 1px solid rgba(201, 166, 107, .7);
+  border-radius: 14px;
   padding: 10px 14px 12px;
-  margin: 16px;
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .35));
+  margin: 8px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .3);
+  backdrop-filter: blur(2px);
 }
 .ptitle { font: 700 1.2em var(--title); text-transform: uppercase; letter-spacing: .05em; text-align: center; color: var(--ink); margin: 0 0 8px; }
 .ptitle.sm { font-size: 1.1em; }
@@ -218,6 +218,10 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .tok.has-img img { width: 100%; height: 100%; object-fit: contain; }
 .tok-eter { --c: var(--eter); } .tok-umbra { --c: var(--umbra); } .tok-lumen { --c: var(--lumen); } .tok-raiz { --c: var(--raiz); }
 .tok.dot { width: 14px; height: 14px; border-width: 1.5px; }
+.tok.flat { background: var(--c); box-shadow: none; border: 1.5px solid color-mix(in srgb, var(--c) 55%, #000); }
+.tok.flat.dot { width: 20px; height: 20px; }
+.tok.flat svg { stroke-width: 2.6; }
+.kc-req { gap: 3px !important; }
 .tok.dot svg { stroke-width: 3; }
 .tok.xs { width: 18px; height: 18px; border-width: 1.5px; } .tok.xs svg { stroke-width: 2.8; }
 .tok.sm { width: 28px; height: 28px; border-width: 2px; }
@@ -242,37 +246,37 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .table {
   display: grid; gap: 0 6px;
   grid-template-columns: 380px minmax(0, 1fr) 360px;
-  grid-template-areas: "mesa claro rivals" "mesa catalog catalog";
+  grid-template-areas: "mesa claro rivals" "catalog catalog catalog";
   grid-template-rows: minmax(0, 1fr) auto;
-  min-height: calc(100vh - 80px); padding: 0 12px 6px; max-width: 1920px; margin: 0 auto;
+  height: calc(100vh - 80px); min-height: 640px; padding: 0 12px 6px; max-width: 1920px; margin: 0 auto;
 }
 .catalog { grid-area: catalog; align-self: end; }
-.claro-area { grid-area: claro; display: grid; place-items: center; min-height: 380px; }
-.mesa { grid-area: mesa; }
+.claro-area { grid-area: claro; display: grid; place-items: center; min-height: 0; }
+.mesa { grid-area: mesa; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
 .rivals { grid-area: rivals; align-self: start; }
 
 /* conocimientos: franja de fichas de iconos */
 .kcs { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; }
 .kc {
   position: relative; display: grid; justify-items: center; gap: 2px;
-  background: #fffaf0 padding-box; padding: 0 2px 2px; cursor: pointer; font: inherit; color: inherit;
-  transition: transform .1s;
+  background: none; border-radius: 12px; padding: 10px 4px 8px; cursor: pointer; font: inherit; color: inherit;
+  transition: transform .1s, background .15s;
 }
-.kc:hover { transform: translateY(-2px); }
-.kc-name { font: 700 .82em var(--title); text-transform: uppercase; letter-spacing: .03em; }
+.kc:hover { transform: translateY(-2px); background: rgba(255, 250, 240, .55); }
+.kc-name { font: 700 .9em var(--title); text-transform: uppercase; letter-spacing: .03em; }
 .kc-pts {
-  position: absolute; top: -14px; right: -14px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  position: absolute; top: 2px; right: 6px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #f6d27a, #c58f22); border: 2px solid #8a6216; color: #fff; font-weight: 800; font-size: .8em;
 }
 .kc-icon { min-height: 56px; display: grid; place-items: center; }
 .kc-req { display: flex; gap: 2px; }
-.kc-copies, .kc-done { position: absolute; bottom: -14px; right: -12px; font-size: .75em; color: var(--muted); font-weight: 700; }
+.kc-copies, .kc-done { position: absolute; bottom: 4px; right: 8px; font-size: .75em; color: var(--muted); font-weight: 700; }
 .kc-done { color: var(--ok); font-size: .95em; }
 .kc.known { opacity: .55; }
 .kc.pickable { box-shadow: 0 0 0 3px var(--gold), 0 0 18px rgba(227, 181, 74, .6); border-radius: 10px; }
 
 /* El Claro: cada ingrediente sobre su propio círculo de piedras, en corro sobre el bosque */
-.ring { position: relative; width: min(100%, 760px, calc((100vh - 300px) * 1.25)); aspect-ratio: 5 / 4; }
+.ring { position: relative; width: min(100%, 760px, calc((100vh - 290px) * 1.2)); aspect-ratio: 5 / 4; }
 .cslot {
   position: absolute; width: 27%; aspect-ratio: 992 / 847; transform: translate(-50%, -50%);
   display: grid; place-items: center; z-index: 1; border: 0; padding: 0; cursor: default;
@@ -299,12 +303,12 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   color: var(--parch);
 }
 .mesa h4 { display: flex; align-items: center; justify-content: center; margin: 0 0 4px; font-size: .78em; color: #f1dfb8; text-shadow: 0 1px 2px #000; }
-.mesa > section { background: rgba(248, 238, 214, .9); color: var(--ink); border-radius: 10px; padding: 6px 8px 8px; }
+.mesa > section { background: rgba(248, 238, 214, .78); color: var(--ink); border-radius: 10px; padding: 6px 8px 8px; }
 .mesa > section h4 { color: var(--ink-soft); text-shadow: none; }
 .m-hero { position: relative; display: grid; justify-items: center; }
-.portrait.hero { width: 100%; height: 380px; background: none; border: 0; box-shadow: none; overflow: visible; }
+.portrait.hero { width: 100%; height: 390px; background: none; border: 0; box-shadow: none; overflow: visible; }
 .portrait.hero { position: relative; }
-.portrait.hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .55)); }
+.portrait.hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .55)); }
 .portrait.hero.body { background: none; }
 .m-pet-pic { position: absolute; right: -6px; bottom: 30px; z-index: 1; }
 .pet-pic.free { width: 120px; height: 120px; overflow: visible; background: none; font-size: 80px; }
@@ -329,7 +333,14 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .spell-ico.live { cursor: pointer; border-color: var(--gold-dark); box-shadow: 0 0 0 3px var(--gold), 0 0 12px rgba(227, 181, 74, .7); }
 .spell-ico.live:hover { transform: translateY(-2px); }
 .spell-ico.attack { color: var(--attack); }
-.spell-ico.empty { border-style: dashed; place-items: center; min-height: 64px; }
+.spell-ico { position: relative; width: auto; padding: 3px; border-radius: 50%; }
+.spell-ico .card-icon.md { width: 38px; height: 38px; }
+.m-magic .spell-row { gap: 4px; flex-wrap: nowrap; }
+.spell-ico.locked { opacity: .28; filter: grayscale(1); border-style: dashed; }
+.spell-ico.unready { opacity: .6; filter: grayscale(1); }
+.spell-ico.unready.live { opacity: 1; filter: none; }
+.prep-cost { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); display: flex; gap: 1px; }
+.m-magic { display: grid; gap: 8px; }
 .prep-row { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; font-size: .8em; color: var(--ink-soft); margin-top: 6px; }
 .skill {
   font: 600 .9em var(--text); text-transform: uppercase; letter-spacing: .04em;
@@ -419,11 +430,11 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .chip-card:disabled, .potion-box:disabled { color: var(--ink-soft); opacity: 1; }
 .potion-box.empty { border: 0; opacity: .75; }
 
-.kc, .recipe, .modal-card.framed {
+.recipe, .modal-card.framed {
   border-style: solid; border-color: transparent;
   border-image: url(img/ui/marco-carta.webp) 110 / 1 / 0 stretch;
 }
-.kc { border-width: 18px; box-shadow: none; }
+.kc { border: 0; box-shadow: none; }
 .kc.attack .kc-name { color: var(--attack); }
 .kc.pickable { box-shadow: 0 0 0 3px var(--gold), 0 0 18px rgba(227, 181, 74, .55); border-radius: 12px; }
 .recipe { border-width: 34px; padding: 4px 6px; box-shadow: none; }
@@ -447,7 +458,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .kind-ico.sm { height: 22px; margin-right: 6px; }
 .kind-ico.xs { height: 16px; margin-left: 4px; }
 .kind-ico.ghost { height: 34px; opacity: .3; filter: grayscale(.6); }
-.kc-kind { position: absolute; top: -15px; left: -15px; }
+.kc-kind { position: absolute; top: 2px; left: 6px; }
 .kc-kind .kind-ico { height: 26px; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .25)); }
 .side-label, .kind, .recipe-sub, .mesa h4 { display: inline-flex; align-items: center; }
 .mesa h4 { display: flex; justify-content: center; }
@@ -554,7 +565,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .portrait.hero { height: 240px; }
   .pet-pic.free { width: 96px; height: 96px; }
   .tok.xl { width: 50px; height: 50px; }
-  .spell-ico { width: 62px; }
+
   .portrait.rsm { width: 68px; height: 68px; }
 }
 @media (min-width: 1151px) and (max-height: 920px) {
@@ -570,7 +581,8 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .kc-icon { min-height: 40px; }
   .kc-name { font-size: .72em; }
   .tok.dot { width: 11px; height: 11px; }
-  .portrait.hero { height: 170px; }
+  .portrait.hero { height: 150px; }
+  .kc { padding: 6px 4px 4px; }
   .pet-pic.free { width: 74px; height: 74px; }
   .m-pet-pic { bottom: 30px; }
   .mesa { gap: 5px; }
@@ -579,7 +591,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .study-mini { min-height: 40px; }
   .study-mini .card-icon.md { width: 34px; height: 34px; }
   .recipe-slots .tok { width: 28px; height: 28px; }
-  .spell-ico { width: 54px; font-size: .62em; }
+
   .spell-ico .card-icon.md { width: 32px; height: 32px; }
   .spell-ico.empty { min-height: 48px; }
   .rival { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 4px 4px 6px; }
@@ -591,7 +603,8 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .learned .card-icon.sm { width: 26px; height: 26px; }
 }
 @media (max-width: 1150px) {
-  .table { grid-template-columns: 1fr 1fr; grid-template-areas: "claro claro" "mesa rivals" "catalog catalog"; grid-template-rows: auto; min-height: 0; }
+  .mesa { overflow: visible; }
+  .table { height: auto; grid-template-columns: 1fr 1fr; grid-template-areas: "claro claro" "mesa rivals" "catalog catalog"; grid-template-rows: auto; min-height: 0; }
   .kcs { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 10px; }
 }
 @media (max-width: 760px) {
@@ -599,7 +612,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .topbar { padding: 10px 16px 6px; gap: 10px; }
   .brand { font-size: 1.4em; }
   .prompt { order: 10; flex-basis: 100%; }
-  .table { grid-template-columns: 1fr; grid-template-areas: "claro" "mesa" "catalog" "rivals"; padding: 4px 16px 24px; }
+  .table { height: auto; grid-template-columns: 1fr; grid-template-areas: "claro" "mesa" "catalog" "rivals"; padding: 4px 16px 24px; }
   .panel { border-image-width: 24px; border-image-outset: 12px; margin: 12px 4px; }
   .claro-area { min-height: 0; }
   .ring { width: 100%; }

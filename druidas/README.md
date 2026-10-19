@@ -33,7 +33,7 @@ Abre <http://localhost:3000>, escribe tu nombre y pulsa **Crear partida**. Compa
 
 ## Pantalla de juego
 
-El fondo es el claro del bosque. En el centro, **El Claro**: los 6 ingredientes en corro, cada uno sobre su propio círculo de piedras. A la izquierda, la **Mesa del druida** sobre la mesa de madera: tu druida de cuerpo entero con tu mascota, la habilidad de la mascota, tu reserva, la receta en estudio, tus hechizos y tus pociones (se pulsan para usarlos). A la derecha, los **Rivales**, y abajo, la franja de **Conocimientos** (pulsa uno para ver la carta y estudiarla). Los paneles van enmarcados con ramitas de moras. Lo que toca hacer aparece en la cabecera, y el botón **Menú** abre las reglas, la crónica con el chat y la pantalla principal. En pantallas más bajas todo se encoge para caber sin desplazarse; en móvil los paneles se apilan.
+El fondo es el claro del bosque. En el centro, **El Claro**: los 6 ingredientes en corro, cada uno sobre su propio círculo de piedras. A la izquierda, tu personaje sobre la mesa de madera: tu druida recortado de cuerpo entero con su mascota, la habilidad de la mascota, tu reserva, la receta en estudio y todos los hechizos y pociones (lo que aún no tienes aparece en gris y tenue; se pulsan para usarlos o prepararlos). A la derecha, los **Rivales**, y abajo, a todo el ancho, la franja de **Conocimientos** (pulsa uno para ver la carta y estudiarla). El botón ☰ abre las reglas, la crónica con el chat y la pantalla principal. En pantallas más bajas todo se encoge para caber; en móvil los paneles se apilan.
 
 ## Ilustraciones
 
@@ -42,6 +42,7 @@ El juego muestra dibujos provisionales hasta que estén las ilustraciones. Basta
 | Carpeta | Archivos |
 | --- | --- |
 | `public/img/druidas/` | `mostaza`, `azul`, `verde`, `lila` (cuerpo entero) ✅ |
+| `public/img/druidas-recorte/` | `mostaza`, `azul`, `verde`, `lila` (cuerpo entero sin fondo, para tu personaje) ✅ |
 | `public/img/retratos/` | `mostaza`, `azul`, `verde`, `lila` (cara, para los retratos redondos) ✅ |
 | `public/img/mascotas/` | `lechuza`, `zorro`, `liebre`, `cervatillo` ✅ |
 | `public/img/cartas/` | iconos de magia: `chispa`, `burbuja`, `robo`, `cambio`, `idea`, `lio`, `memoria`, `sueno`, `suerte`, `pensar` ✅ |

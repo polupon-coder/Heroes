@@ -1471,3 +1471,21 @@ body { font-size: 18px; font-weight: 600; }
   .rivals > .rival { min-height: 150px !important; overflow: visible !important; }
   .mesa > section.m-card { padding: 4px 8px 8px !important; }
 }
+@media (max-width: 760px) {
+  /* papiros del panel propio repartidos sin huecos: la cara ocupa su papiro entero */
+  .mesa { gap: 8px !important; }
+  .mesa > .m-hero { min-height: 0 !important; }
+  .mesa .portrait.hero { height: 170px !important; }
+  .mesa .portrait.hero img { height: 128px !important; bottom: 4px !important; }
+  .mesa > section.m-card { padding: 6px 10px 10px !important; }
+}
+@media (max-width: 760px) {
+  /* en móvil el fondo fijo no funciona (iOS): una capa fija detrás de todo */
+  body.has-table-art { background: #3d4a22; }
+  body.has-table-art::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 45%, rgba(20, 30, 10, 0) 30%, rgba(20, 25, 10, .45) 100%),
+      url(img/ui/claro-fondo.webp) center / cover no-repeat;
+  }
+  .mesa .portrait.hero img { height: 120px !important; }
+}

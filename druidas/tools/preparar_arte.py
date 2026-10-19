@@ -1,6 +1,6 @@
 """Prepara las ilustraciones originales para el juego (recortes, fondos transparentes, tamaños web).
 
-Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos|druidas|mesa|fichas|cartas]
+Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros|simbolos|druidas|mesa|fichas|cartas|pincel]
 """
 import os
 import sys
@@ -242,6 +242,32 @@ def cartas_ilustradas():
             save(fit(cut_background(cell, thr=22, feather=1.2), 360), 'cartas-ilustradas', name, q=88)
 
 
+def mascara_pincel(seed=7):
+    # Máscara de pinceladas: centro opaco y bordes que se deshacen en trazos de pincel.
+    import random
+    rnd = random.Random(seed)
+    W, H = 600, 400
+    centro = Image.new('L', (W, H), 0)
+    ImageDraw.Draw(centro).rounded_rectangle((90, 70, W - 90, H - 70), 60, fill=255)
+    centro = centro.filter(ImageFilter.GaussianBlur(18))
+    trazos = Image.new('L', (W, H), 0)
+    d = ImageDraw.Draw(trazos)
+    for _ in range(90):  # pinceladas horizontales que llegan a distintas distancias del borde
+        y = rnd.uniform(30, H - 30)
+        x0 = rnd.uniform(14, 90)
+        x1 = W - rnd.uniform(14, 90)
+        d.line((x0, y, x1, y + rnd.uniform(-6, 6)), fill=rnd.randint(200, 255), width=int(rnd.uniform(10, 26)))
+    for _ in range(70):  # y verticales
+        x = rnd.uniform(40, W - 40)
+        y0 = rnd.uniform(12, 70)
+        y1 = H - rnd.uniform(12, 70)
+        d.line((x, y0, x + rnd.uniform(-6, 6), y1), fill=rnd.randint(200, 255), width=int(rnd.uniform(10, 24)))
+    trazos = trazos.filter(ImageFilter.GaussianBlur(2.5))
+    m = ImageChops.lighter(centro, trazos)
+    os.makedirs(os.path.join(OUT, 'ui'), exist_ok=True)
+    m.save(os.path.join(OUT, 'ui', 'pincel.png'), optimize=True)
+
+
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
@@ -250,7 +276,7 @@ def druidas_recortados():
 
 
 if __name__ == '__main__':
-    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos', 'druidas', 'mesa', 'fichas', 'cartas']
+    que = sys.argv[2:] or ['escenario', 'adornos', 'libros', 'simbolos', 'druidas', 'mesa', 'fichas', 'cartas', 'pincel']
     if 'escenario' in que:
         escenario_y_fichas()
     if 'adornos' in que:
@@ -268,4 +294,6 @@ if __name__ == '__main__':
         fichas_piedra()
     if 'cartas' in que:
         cartas_ilustradas()
+    if 'pincel' in que:
+        mascara_pincel()
     print('listo')

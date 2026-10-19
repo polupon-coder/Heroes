@@ -145,9 +145,27 @@ def libros_e_iconos():
             save(sq.resize((256, 256), Image.LANCZOS), 'cartas', name, q=88)
 
 
+def vaciar_frasco(im):
+    """Cambia el líquido violeta por cristal claro, para ver lo que haya dentro."""
+    import numpy as np
+    rgb = np.asarray(im.convert('RGB')).astype(float)
+    a = np.asarray(im.getchannel('A'))
+    hsv = np.asarray(im.convert('RGB').convert('HSV')).astype(float)
+    h, sat, val = hsv[..., 0], hsv[..., 1], hsv[..., 2]
+    liquid = (h > 175) & (h < 230) & (sat > 50)
+    m = np.asarray(Image.fromarray((liquid * 255).astype('uint8')).filter(ImageFilter.GaussianBlur(1.5))).astype(float)[..., None] / 255
+    glass = np.array([236, 230, 240]) * (0.75 + 0.25 * val[..., None] / 255)
+    out = rgb * (1 - m) + glass * m
+    res = Image.fromarray(out.clip(0, 255).astype('uint8')).convert('RGBA')
+    res.putalpha(Image.fromarray(a))
+    return res
+
+
 def simbolos():
     # Frasco (poción) y pergamino sellado (hechizo).
-    save(fit(cut_background(load(22), thr=30, feather=1.5), 300), 'ui', 'pocion', q=88)
+    pocion = fit(cut_background(load(22), thr=30, feather=1.5), 300)
+    save(pocion, 'ui', 'pocion', q=88)
+    save(vaciar_frasco(pocion), 'ui', 'pocion-vacia', q=88)
     save(fit(cut_background(load(23), thr=34, feather=1.5), 300), 'ui', 'hechizo', q=88)
 
 

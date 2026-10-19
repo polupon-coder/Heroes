@@ -278,9 +278,9 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 /* el icono va dentro de un pergamino abierto (hechizo) o de un frasco (poción) */
 .kc-icon.scroll, .kc-icon.flask { width: 92px; height: 104px; background: center / contain no-repeat; }
 .kc-icon.scroll { background-image: url(img/ui/pergamino.webp); }
-.kc-icon.flask { background-image: url(img/ui/pocion.webp); }
+.kc-icon.flask { background-image: url(img/ui/pocion-vacia.webp); }
 .kc-icon.scroll .card-icon.lg { width: 52px; height: 52px; }
-.kc-icon.flask .card-icon.lg { width: 46px; height: 46px; margin-top: 34px; filter: brightness(2.4) sepia(.2); }
+.kc-icon.flask .card-icon.lg { width: 50px; height: 50px; margin-top: 36px; }
 
 /* El Claro: cada ingrediente sobre su propio círculo de piedras, en corro sobre el bosque */
 .ring { position: relative; width: min(100%, 760px, calc((100vh - 290px) * 1.2)); aspect-ratio: 5 / 4; }

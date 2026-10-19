@@ -1246,3 +1246,13 @@ body { font-size: 18px; font-weight: 600; }
   .catalog .kc-name { font-size: .82em !important; }
   .catalog .kc-count { display: none; }
 }
+/* esferas de requisitos pegadas a su ilustración */
+.catalog .kc-top { gap: 0 !important; grid-template-columns: 76px 16px !important; }
+.catalog .kc-icon { width: 76px !important; }
+.catalog .kc-req { margin-left: -6px; }
+@media (max-width: 1500px), (max-height: 920px) {
+  .catalog .kc-top { grid-template-columns: 40px 10px !important; }
+  .catalog .kc-req { margin-left: -3px; }
+}
+/* papiro del personaje algo más bajo: más sitio para los ingredientes */
+.mesa > .m-hero { flex-grow: 1.25 !important; }

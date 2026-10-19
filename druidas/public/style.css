@@ -777,3 +777,12 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .mesa .spell-ico .card-icon.md, .mesa .spell-ico .card-icon.ill.md { width: 36px; height: 36px; }
 }
 .spell-name { font-size: .8em; } .pet-usos { font-size: .95em; }
+/* cada zona del panel, un pergamino abierto; la mesa con su color original */
+.mesa::before { filter: none; }
+.mesa::after { display: none; }
+.mesa > section.m-card {
+  background: url(img/ui/papiro.webp) center / 100% 100% no-repeat; box-shadow: none; border-radius: 0;
+  padding: 16px 13% 18%; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .35));
+}
+.mesa > section.m-card { padding: 4% 12% 5%; }
+.kc-count { font: inherit; color: var(--muted); }

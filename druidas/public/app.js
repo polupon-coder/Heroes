@@ -371,7 +371,6 @@ function renderCatalog() {
     return `<button class="kc ${c.tipo} ${c.ataque ? 'attack' : ''} ${known ? 'known' : ''} ${pick && !known && S.catalogo[id] > 0 ? 'pickable' : ''}"
         data-a="info" data-v="${id}" title="${esc(c.nombre)}: ${esc(c.texto)}">
       <span class="kc-top">
-        <span class="kc-pts" title="Prestigio">${c.puntos}</span>
         <span class="kc-icon ${D.img.ilustradas && D.img.ilustradas[id] ? '' : c.tipo === 'pocion' ? 'flask' : 'scroll'}" title="${c.tipo === 'pocion' ? 'Poción' : 'Hechizo'}">${cardIcon(id)}</span>
         <span class="kc-req" title="Para aprenderlo">${dots}</span>
       </span>

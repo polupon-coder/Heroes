@@ -158,13 +158,11 @@ def libros_e_iconos():
     # Libros y pergamino: se quita solo el fondo exterior (las páginas quedan).
     save(fit(cut_background(load(18), thr=28, feather=1), 1500), 'ui', 'libro', q=84)
     libro_inclinado()
-    perg = cut_background(load(20), thr=45, feather=1.5, erode=13, grow=7, extra=[(0, 0, 0)])
-    # El papel es pardo y apagado: los píxeles amarillos o rojos muy saturados del borde son restos del fondo.
-    hsv = perg.convert('RGB').convert('HSV')
-    sat, val = hsv.getchannel('S'), hsv.getchannel('V')
-    vivid = ImageChops.multiply(sat.point(lambda v: 255 if v > 175 else 0), val.point(lambda v: 255 if v > 150 else 0))
-    vivid = vivid.filter(ImageFilter.MaxFilter(3))
-    perg.putalpha(ImageChops.subtract(perg.getchannel('A'), vivid))
+    # El pergamino original ya trae transparencia: se usa tal cual (solo se recorta y se limpia el halo).
+    perg = Image.open(os.path.join(SRC, '20.webp')).convert('RGBA')
+    alfa = perg.getchannel('A').point(lambda v: 0 if v < 40 else min(255, int((v - 40) * 255 / 175)))
+    perg.putalpha(alfa)
+    perg = perg.crop(alfa.point(lambda v: 255 if v > 20 else 0).getbbox())
     save(fit(perg, 1100), 'ui', 'pergamino', q=84)
     # Iconos de magia: hoja de 5 × 2 en tinta sepia sobre pergamino.
     sheet = load(21)
@@ -201,7 +199,8 @@ def simbolos():
     pocion = fit(cut_background(load(22), thr=30, feather=1.5), 300)
     save(pocion, 'ui', 'pocion', q=88)
     save(vaciar_frasco(pocion), 'ui', 'pocion-vacia', q=88)
-    # pergamino lacrado sin saturación (tinta parda apagada)
+    # pergamino lacrado: en color para la portada y sin saturación para los iconos
+    save(fit(cut_background(load(23), thr=34, feather=1.5), 300), 'ui', 'hechizo-color', q=88)
     sello = fit(cut_background(load(23), thr=34, feather=1.5), 300)
     alfa = sello.getchannel('A')
     sello = ImageEnhance.Color(sello.convert('RGB')).enhance(0.12).convert('RGBA')

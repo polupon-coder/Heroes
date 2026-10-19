@@ -31,8 +31,10 @@ function applyStaticTexts() {
     if (logo) el.innerHTML = `<img class="title-art" src="${logo}" alt="${L('Escuela de Magia', 'School of Magic')}">`;
     else el.textContent = L('Escuela de Magia', 'School of Magic');
   }
-  set('homeIntro', 'Recoge ingredientes en El Claro, aprende hechizos y pociones, y consigue más Prestigio que los demás aprendices.',
-    'Gather ingredients in the Clearing, learn spells and potions, and earn more Prestige than the other apprentices.');
+  if (D && (D.img.ui['hechizo-color'] || D.img.ui.hechizo)) {
+    $('homeSeal').src = D.img.ui['hechizo-color'] || D.img.ui.hechizo;
+    $('homeSeal').classList.remove('hidden');
+  }
   document.title = L('Escuela de Magia', 'School of Magic');
   $('nameInput').placeholder = L('Tu nombre', 'Your name');
   $('codeInput').placeholder = L('CÓDIGO', 'CODE');

@@ -1687,3 +1687,11 @@ body { font-size: 18px; font-weight: 600; }
 }
 .lobby .plist li .btn.kick { width: 30px; height: 30px; padding: 0 !important; border-radius: 50%; display: grid; place-items: center; font-size: .9em; }
 .study-n { color: var(--green) !important; }
+.float-act .float-msg { font-size: 1.02em; }
+/* cabecera: «Fase N · Nombre» en una línea y la explicación debajo */
+.prompt .msg .ph { display: block; }
+.prompt .msg { text-align: center; }
+@media (max-width: 760px) {
+  /* el aviso «Recoges…» sobre El Claro, sin tapar la cabecera */
+  .toast { top: auto !important; bottom: 18px; position: fixed; }
+}

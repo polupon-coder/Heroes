@@ -343,8 +343,8 @@ function attackDesc(a) {
 // Icono grande de una carta: su ilustración o el ingrediente con que se usa.
 function cardIcon(id, cls = 'lg') {
   const img = D.img.cartas[id];
-  if (img) return `<span class="card-art"><img src="${img}" alt=""></span>`;
-  return tok(Object.keys(card(id).coste)[0], { cls });
+  if (img) return `<span class="card-icon ${cls}"><img src="${img}" alt=""></span>`;
+  return tok(Object.keys(card(id).coste)[0] || 'lumen', { cls });
 }
 
 function canPickCard() {
@@ -366,7 +366,7 @@ function renderCatalog() {
       <span class="kc-pts" title="Prestigio">${c.puntos}</span>
       <span class="kc-icon">${cardIcon(id)}</span>
       <span class="kc-req">${dots}</span>
-      <span class="kc-copies">${known ? '✓ aprendido' : `×${S.catalogo[id] || 0}`}</span>
+      <span class="kc-copies"><span class="kc-use" title="${c.tipo === 'pocion' ? 'Preparar' : 'Lanzar'}">${costHtml(c.coste)}</span>${known ? '✓ aprendido' : `×${S.catalogo[id] || 0}`}</span>
     </button>`;
   }).join('');
   const nH = ids.filter((id) => D.cartas[id].tipo === 'hechizo').length;
@@ -490,7 +490,7 @@ function renderMesa() {
   const spells = ['chispa', 'burbuja', ...p.aprendidas.filter((id) => D.cartas[id].tipo === 'hechizo')].map((id) => {
     const c = card(id);
     const live = id !== 'burbuja' && !c.ataque && canCast(id);
-    const icon = id === 'chispa' ? tok('lumen', { cls: 'sm' }) : cardIcon(id, 'sm');
+    const icon = cardIcon(id, 'sm');
     return `<button class="chip-card ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.texto)}">
       ${icon}<span>${esc(c.nombre)}</span></button>`;
   }).join('');
@@ -667,7 +667,7 @@ function renderModal() {
     ok = sum(m.ings) === extra ? 'Devolver' : '';
   }
   const closable = m.kind !== 'descartar';
-  el.innerHTML = `<div class="modal-card ${m.kind === 'rules' ? 'wide' : ''} ${m.kind === 'info' ? 'framed' : ''}">
+  el.innerHTML = `<div class="modal-card ${{ rules: 'book-card', info: 'framed', final: 'scroll-card' }[m.kind] || ''}">
     ${closable ? '<button class="modal-close" data-a="closeModal" aria-label="Cerrar">×</button>' : ''}
     ${body}
     ${ok ? `<div class="row end"><button class="btn primary" data-a="mOk">${ok}</button></div>` : ''}
@@ -699,26 +699,34 @@ function modalOk() {
 }
 
 function rulesHtml() {
-  const spells = ['chispa', 'burbuja', ...Object.keys(D.cartas)].map((id) => {
+  const knowledge = ['chispa', 'burbuja', ...Object.keys(D.cartas)].map((id) => {
     const c = card(id);
-    const req = c.req ? ING().map((t) => tok(t, { cls: 'xs' }).repeat(c.req[t] || 0)).join('') : 'inicial';
-    return `<tr><td><b>${esc(c.nombre)}</b><br><span class="small muted">${c.tipo === 'pocion' ? 'poción' : 'hechizo'}${c.ataque ? ' · ataque' : ''}</span></td>
-      <td>${req}</td><td>${costHtml(c.coste)}</td><td>${c.puntos}</td><td class="small">${esc(c.texto)}</td></tr>`;
+    const req = c.req ? ING().map((t) => tok(t, { cls: 'xs' }).repeat(c.req[t] || 0)).join('') : '<i>inicial</i>';
+    return `<div class="rule-card ${c.ataque ? 'attack' : ''}">${cardIcon(id, 'md')}
+      <div><b>${esc(c.nombre)}</b> <span class="small muted">${c.tipo === 'pocion' ? 'poción' : 'hechizo'}${c.ataque ? ' · ataque' : ''}${c.puntos ? ` · ${c.puntos} pts` : ''}</span>
+        <div class="small">Aprender: ${req} · ${c.tipo === 'pocion' ? 'Preparar' : 'Usar'}: ${costHtml(c.coste)}</div>
+        <div class="small">${esc(c.texto)}</div></div></div>`;
   }).join('');
   const pets = Object.values(D.mascotas).map((m) => `<li><b>${esc(m.nombre)}</b> (${m.usos} ${m.usos > 1 ? 'usos' : 'uso'}): ${esc(m.texto)}</li>`).join('');
-  return `<h2>Cómo se juega</h2>
-    <p>Gana quien tenga más <b>Prestigio</b> al terminar la ronda ${D.rondas}. Solo se consigue aprendiendo conocimientos (3 o 4 puntos).</p>
-    <h3>Tu turno</h3>
-    <ol><li><b>Recoger:</b> 3 ingredientes de El Claro (se rellena desde la bolsa).</li>
-      <li><b>Ataques:</b> los rivales pueden lanzarte <i>un</i> ataque. Te defiendes con Burbuja (2 Lumen).</li>
-      <li><b>Estudiar:</b> una sola receta a la vez; coloca hasta 2 ingredientes que encajen. Al completarla la aprendes y los ingredientes vuelven a la bolsa. Una poción recién aprendida viene preparada gratis.</li>
-      <li><b>Preparar:</b> 1 poción conocida pagando su coste (máx. 2 preparadas, distintas).</li>
-      <li>Al final del turno conservas como máximo ${D.limiteReserva} ingredientes.</li></ol>
-    <h3>Magia</h3>
-    <p>Un efecto mágico por jugador <b>en el turno de cada jugador</b>, también en el tuyo. Chispa es gratis, una vez en tu turno, y no gasta tu magia. Los hechizos se aprenden para siempre; cada poción preparada sirve una vez.</p>
-    <h3>Conocimientos</h3>
-    <div class="table-wrap"><table class="rules-table"><tr><th>Nombre</th><th>Aprender</th><th>Uso</th><th>Pts</th><th>Efecto</th></tr>${spells}</table></div>
-    <h3>Mascotas</h3><ul>${pets}</ul>`;
+  return `<div class="book">
+    <section class="page left">
+      <h2 class="ptitle">Cómo se juega</h2>
+      <p>Gana quien tenga más <b>Prestigio</b> al terminar la ronda ${D.rondas}. Solo se consigue aprendiendo conocimientos (3 o 4 puntos).</p>
+      <h3>Tu turno</h3>
+      <ol><li><b>Recoger:</b> 3 ingredientes de El Claro (se rellena desde la bolsa).</li>
+        <li><b>Ataques:</b> los rivales pueden lanzarte <i>un</i> ataque. Te defiendes con Burbuja (2 Lumen).</li>
+        <li><b>Estudiar:</b> una sola receta a la vez; coloca hasta 2 ingredientes que encajen. Al completarla la aprendes y los ingredientes vuelven a la bolsa. Una poción recién aprendida viene preparada gratis.</li>
+        <li><b>Preparar:</b> 1 poción conocida pagando su coste (máx. 2 preparadas, distintas).</li>
+        <li>Al final del turno conservas como máximo ${D.limiteReserva} ingredientes.</li></ol>
+      <h3>Magia</h3>
+      <p>Un efecto mágico por jugador <b>en el turno de cada jugador</b>, también en el tuyo. Chispa es gratis, una vez en tu turno, y no gasta tu magia. Los hechizos se aprenden para siempre; cada poción preparada sirve una vez.</p>
+      <h3>Mascotas</h3><ul>${pets}</ul>
+    </section>
+    <section class="page right">
+      <h2 class="ptitle">Conocimientos</h2>
+      ${knowledge}
+    </section>
+  </div>`;
 }
 
 // ------------------------------------------------------------ eventos

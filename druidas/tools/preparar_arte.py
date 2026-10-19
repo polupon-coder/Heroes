@@ -1,6 +1,6 @@
 """Prepara las ilustraciones originales para el juego (recortes, fondos transparentes, tamaños web).
 
-Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos]
+Uso: python3 tools/preparar_arte.py <carpeta con los originales numerados> [escenario|adornos|libros]
 """
 import os
 import sys
@@ -19,10 +19,12 @@ def save(im, folder, name, **kw):
     im.save(os.path.join(OUT, folder, f'{name}.webp'), 'WEBP', quality=kw.get('q', 84), method=6)
 
 
-def cut_background(im, thr=40, feather=2):
+def cut_background(im, thr=40, feather=2, erode=3, grow=1, extra=()):
     """Quita el fondo liso (el color de la esquina) que toca los bordes."""
     bg = im.getpixel((3, 3))
     diff = ImageChops.difference(im, Image.new('RGB', im.size, bg)).convert('L')
+    for col in extra:  # otros colores de fondo (p. ej. una franja negra)
+        diff = ImageChops.darker(diff, ImageChops.difference(im, Image.new('RGB', im.size, col)).convert('L'))
     # 255 = parecido al fondo; 0 = figura
     like = diff.point(lambda v: 255 if v < thr else 0)
     w, h = im.size
@@ -31,7 +33,10 @@ def cut_background(im, thr=40, feather=2):
         if like.getpixel(s) == 255:
             ImageDraw.floodfill(like, s, 128)
     alpha = like.point(lambda v: 0 if v == 128 else 255)
-    alpha = alpha.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(feather))
+    alpha = alpha.filter(ImageFilter.MinFilter(erode))
+    if grow > 1:  # apertura: elimina motas y filos finos
+        alpha = alpha.filter(ImageFilter.MaxFilter(grow))
+    alpha = alpha.filter(ImageFilter.GaussianBlur(feather))
     out = im.convert('RGBA')
     out.putalpha(alpha)
     return out.crop(alpha.point(lambda v: 255 if v > 20 else 0).getbbox())
@@ -106,10 +111,38 @@ def adornos():
     save(fit(trim(drop_paper(load(16))), 800), 'ui', 'marco-carta', q=86)
 
 
+def libros_e_iconos():
+    # Libros y pergamino: se quita solo el fondo exterior (las páginas quedan).
+    save(fit(cut_background(load(18), thr=28, feather=1), 1500), 'ui', 'libro', q=84)
+    save(fit(cut_background(load(19), thr=28, feather=1), 1500), 'ui', 'libro-perspectiva', q=84)
+    perg = cut_background(load(20), thr=45, feather=1.5, erode=13, grow=7, extra=[(0, 0, 0)])
+    # El papel es pardo y apagado: los píxeles amarillos o rojos muy saturados del borde son restos del fondo.
+    hsv = perg.convert('RGB').convert('HSV')
+    sat, val = hsv.getchannel('S'), hsv.getchannel('V')
+    vivid = ImageChops.multiply(sat.point(lambda v: 255 if v > 175 else 0), val.point(lambda v: 255 if v > 150 else 0))
+    vivid = vivid.filter(ImageFilter.MaxFilter(3))
+    perg.putalpha(ImageChops.subtract(perg.getchannel('A'), vivid))
+    save(fit(perg, 1100), 'ui', 'pergamino', q=84)
+    # Iconos de magia: hoja de 5 × 2 en tinta sepia sobre pergamino.
+    sheet = load(21)
+    cw, ch = sheet.width // 5, sheet.height // 2
+    nombres = [['chispa', 'burbuja', 'robo', 'cambio', 'idea'], ['lio', 'pensar', 'sueno', 'suerte', 'memoria']]
+    for fy, fila in enumerate(nombres):
+        for fx, name in enumerate(fila):
+            cell = sheet.crop((fx * cw + 10, fy * ch + 10, (fx + 1) * cw - 10, (fy + 1) * ch - 10))
+            ico = trim(drop_paper(cell, t0=28, t1=80), pad=10)
+            side = max(ico.size)
+            sq = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+            sq.alpha_composite(ico, ((side - ico.width) // 2, (side - ico.height) // 2))
+            save(sq.resize((256, 256), Image.LANCZOS), 'cartas', name, q=88)
+
+
 if __name__ == '__main__':
-    que = sys.argv[2:] or ['escenario', 'adornos']
+    que = sys.argv[2:] or ['escenario', 'adornos', 'libros']
     if 'escenario' in que:
         escenario_y_fichas()
     if 'adornos' in que:
         adornos()
+    if 'libros' in que:
+        libros_e_iconos()
     print('listo')

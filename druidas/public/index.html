@@ -25,21 +25,27 @@
   </header>
 
   <main id="home" class="home hidden">
-    <div class="home-card">
-      <div class="home-title">
-        <h1>Escuela de Magia</h1>
-        <p class="subtitle">El bosque de los druidas</p>
-      </div>
-      <div id="backRow"></div>
-      <input id="nameInput" class="input" maxlength="20" placeholder="Tu nombre" aria-label="Tu nombre">
-      <div class="home-actions">
-        <button id="createBtn" class="btn primary">Crear partida</button>
-        <div class="join-row">
-          <input id="codeInput" class="input code" maxlength="4" placeholder="CÓDIGO" aria-label="Código de sala">
-          <button id="joinBtn" class="btn">Entrar</button>
+    <div class="home-card book-home">
+      <div class="home-page left">
+        <div class="home-title">
+          <h1>Escuela de Magia</h1>
+          <p class="subtitle">El bosque de los druidas</p>
         </div>
+        <div class="home-orn" aria-hidden="true"></div>
+        <p class="home-intro">Recoge ingredientes en El Claro, aprende hechizos y pociones, y consigue más Prestigio que los demás aprendices.</p>
       </div>
-      <p id="homeError" class="error"></p>
+      <div class="home-page right">
+        <div id="backRow"></div>
+        <input id="nameInput" class="input" maxlength="20" placeholder="Tu nombre" aria-label="Tu nombre">
+        <div class="home-actions">
+          <button id="createBtn" class="btn primary">Crear partida</button>
+          <div class="join-row">
+            <input id="codeInput" class="input code" maxlength="4" placeholder="CÓDIGO" aria-label="Código de sala">
+            <button id="joinBtn" class="btn">Entrar</button>
+          </div>
+        </div>
+        <p id="homeError" class="error"></p>
+      </div>
     </div>
   </main>
 

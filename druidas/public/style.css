@@ -1038,3 +1038,8 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 }
 .cslot { isolation: isolate; }
 .cslot.on::before { filter: sepia(.4) saturate(.8) brightness(1.05) drop-shadow(0 0 8px var(--gold)); }
+/* caras completas: sin difuminado ni recorte */
+.portrait.hero img, .portrait.rsm img { -webkit-mask: none !important; mask: none !important; object-fit: contain !important; }
+.portrait.rsm img { position: absolute; inset: 6% 8% !important; width: 84% !important; height: 88% !important; }
+.portrait.rsm { width: 150px !important; height: 108px !important; }
+@media (max-width: 1500px), (max-height: 920px) { .portrait.rsm { width: 104px !important; height: 76px !important; } }

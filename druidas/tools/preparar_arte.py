@@ -283,6 +283,16 @@ def mascara_pincel(seed=7):
     m2.save(os.path.join(OUT, 'ui', 'pincel-cara.png'), optimize=True)
 
 
+def retratos_enteros():
+    # Hoja 28: las cuatro caras completas sobre papel; cada una recortada a su contorno y sin fondo.
+    sheet = load(28)
+    w, h = sheet.size
+    for (qx, qy), name in {(0, 0): 'mostaza', (1, 0): 'azul', (0, 1): 'verde', (1, 1): 'lila'}.items():
+        q = sheet.crop((qx * w // 2, qy * h // 2, (qx + 1) * w // 2, (qy + 1) * h // 2))
+        cut = cut_background(q, thr=30, feather=1.2, erode=3)
+        save(cut, 'retratos-sin-fondo', name, q=88)
+
+
 def retratos_sin_fondo():
     # Caras sin el papel de fondo (transparente), para que se vea el pergamino de detrás.
     for name in ['mostaza', 'azul', 'verde', 'lila']:
@@ -310,7 +320,7 @@ if __name__ == '__main__':
     if 'druidas' in que:
         druidas_recortados()
         retratos()
-        retratos_sin_fondo()
+        retratos_enteros()
     if 'mesa' in que:
         mesa_y_papiro()
     if 'fichas' in que:

@@ -318,7 +318,7 @@ function renderLobby() {
     : `<p class="muted">${L('El anfitrión empezará la partida.', 'The host will start the game.')}</p>`}
       </div>
       <div class="panel lobby-main">
-        <h3 class="ptitle sm">${L('Tu druida', 'Your druid')}</h3>
+        <h3 class="ptitle sm">${L('Tu aspecto', 'Your look')}</h3>
         <div class="choices">${druids}</div>
         <h3 class="ptitle sm">${L('Tu animal del bosque', 'Your forest animal')}</h3>
         <div class="choices">${pets}</div>

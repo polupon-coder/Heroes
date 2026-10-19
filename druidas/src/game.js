@@ -2,17 +2,24 @@
 
 const C = require('./config');
 
-class GameError extends Error {}
+class GameError extends Error {
+  constructor(msg, en) {
+    super(msg);
+    this.en = en || msg;
+  }
+}
 
-function fail(msg) {
-  throw new GameError(msg);
+function fail(msg, en) {
+  throw new GameError(msg, en);
 }
 
 const emptyIng = () => ({ eter: 0, umbra: 0, lumen: 0, raiz: 0 });
 const total = (o) => C.ING.reduce((s, t) => s + (o[t] || 0), 0);
 const isIng = (t) => C.ING.includes(t);
 const N = (t) => C.ING_INFO[t].nombre;
+const NE = (t) => C.ING_INFO[t].en;
 const cardName = (id) => (C.CARTAS[id] || C.INICIALES[id]).nombre;
+const cardNameEn = (id) => (C.CARTAS[id] || C.INICIALES[id]).en;
 
 // Ingredientes que aún faltan en una receta en estudio.
 function pendingOf(study) {
@@ -23,8 +30,8 @@ function pendingOf(study) {
   return out;
 }
 
-function costText(coste) {
-  return C.ING.filter((t) => coste[t]).map((t) => `${coste[t] > 1 ? `${coste[t]} ` : ''}${N(t)}`).join(' + ');
+function costText(coste, name = N) {
+  return C.ING.filter((t) => coste[t]).map((t) => `${coste[t] > 1 ? `${coste[t]} ` : ''}${name(t)}`).join(' + ');
 }
 
 class Game {
@@ -49,14 +56,15 @@ class Game {
     this.winners = null;
   }
 
-  say(text) {
-    this.log.push({ n: this.log.length ? this.log[this.log.length - 1].n + 1 : 0, text });
+  // Crónica: cada mensaje en español y en inglés.
+  say(text, en) {
+    this.log.push({ n: this.log.length ? this.log[this.log.length - 1].n + 1 : 0, text, en: en || text });
     if (this.log.length > 300) this.log.splice(0, this.log.length - 300);
   }
 
   player(id) {
     const p = this.players.find((x) => x.id === id);
-    if (!p) fail('Jugador desconocido');
+    if (!p) fail('Jugador desconocido', "Unknown player");
     return p;
   }
 
@@ -72,8 +80,8 @@ class Game {
   // ---------------------------------------------------------------- Sala
 
   addPlayer(name, { bot = false } = {}) {
-    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
-    if (this.players.length >= 4) fail('La sala está llena (4 jugadores)');
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado', "The game has already started");
+    if (this.players.length >= 4) fail('La sala está llena (4 jugadores)', "The room is full (4 players)");
     this._id += 1;
     const p = {
       id: `p${this._id}`,
@@ -85,15 +93,15 @@ class Game {
     };
     if (bot) p.name = C.MASCOTAS[p.mascota].nombre;
     this.players.push(p);
-    this.say(`${p.name} entra en la escuela.`);
+    this.say(`${p.name} entra en la escuela.`, `${p.name} joins the school.`);
     return p;
   }
 
   removePlayer(id) {
-    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado', "The game has already started");
     const p = this.player(id);
     this.players = this.players.filter((x) => x !== p);
-    this.say(`${p.name} sale de la escuela.`);
+    this.say(`${p.name} sale de la escuela.`, `${p.name} leaves the school.`);
   }
 
   // ---------------------------------------------------------------- Acciones
@@ -101,7 +109,7 @@ class Game {
   act(playerId, type, data = {}) {
     const p = this.player(playerId);
     const handler = ACTIONS[type];
-    if (!handler) fail('Acción desconocida');
+    if (!handler) fail('Acción desconocida', "Unknown action");
     handler.call(this, p, data || {});
     this.version += 1;
   }
@@ -149,11 +157,11 @@ class Game {
   // ---------------------------------------------------------------- Comienzo
 
   start() {
-    if (this.players.length < 2) fail('Hacen falta al menos 2 druidas');
+    if (this.players.length < 2) fail('Hacen falta al menos 2 druidas', "At least 2 druids are needed");
     const ds = this.players.map((p) => p.druida);
     const ms = this.players.map((p) => p.mascota);
-    if (ds.some((d) => !d) || new Set(ds).size !== ds.length) fail('Cada jugador necesita un druida diferente');
-    if (ms.some((m) => !m) || new Set(ms).size !== ms.length) fail('Cada jugador necesita una mascota diferente');
+    if (ds.some((d) => !d) || new Set(ds).size !== ds.length) fail('Cada jugador necesita un druida diferente', "Each player needs a different druid");
+    if (ms.some((m) => !m) || new Set(ms).size !== ms.length) fail('Cada jugador necesita una mascota diferente', "Each player needs a different pet");
     for (const t of C.ING) this.bag[t] = C.POR_TIPO;
     this.claro = new Array(C.CLARO).fill(null);
     this.refill();
@@ -175,7 +183,7 @@ class Game {
     this.round = 1;
     this.turnInRound = 0;
     this.startIdx = Math.floor(this.rng() * this.players.length);
-    this.say(`Empieza el aprendizaje. Abre la ronda ${this.players[this.startIdx].name}.`);
+    this.say(`Empieza el aprendizaje. Abre la ronda ${this.players[this.startIdx].name}.`, `The learning begins. ${this.players[this.startIdx].name} opens the round.`);
     this.beginTurn();
   }
 
@@ -197,7 +205,7 @@ class Game {
       ataque: null,
       deadline: null,
     };
-    this.say(`— Ronda ${this.round}: turno de ${p.name}.`);
+    this.say(`— Ronda ${this.round}: turno de ${p.name}.`, `— Round ${this.round}: ${p.name}'s turn.`);
   }
 
   nextTurn() {
@@ -218,7 +226,9 @@ class Game {
     const best = Math.max(...this.players.map((p) => this.points(p)));
     this.winners = this.players.filter((p) => this.points(p) === best).map((p) => p.id);
     const names = this.winners.map((id) => this.player(id).name).join(' y ');
-    this.say(this.winners.length > 1 ? `Empate con ${best} de Prestigio: ganan ${names}.` : `¡${names} gana con ${best} de Prestigio!`);
+    const namesEn = this.winners.map((id) => this.player(id).name).join(' and ');
+    this.say(this.winners.length > 1 ? `Empate con ${best} de Prestigio: ganan ${names}.` : `¡${names} gana con ${best} de Prestigio!`,
+      this.winners.length > 1 ? `Tie at ${best} Prestige: ${namesEn} win.` : `${namesEn} wins with ${best} Prestige!`);
   }
 
   // ---------------------------------------------------------------- Consultas
@@ -249,7 +259,7 @@ class Game {
   }
 
   pay(p, coste) {
-    if (!this.canPay(p, coste)) fail(`Necesitas ${costText(coste)}`);
+    if (!this.canPay(p, coste)) fail(`Necesitas ${costText(coste)}`, `You need ${costText(coste, NE)}`);
     for (const t of C.ING) {
       const n = coste[t] || 0;
       p.reserva[t] -= n;
@@ -293,22 +303,22 @@ class Game {
   // ---------------------------------------------------------------- Estudio
 
   requireStudy(p) {
-    if (!p.estudio) fail('No tienes ninguna receta en estudio');
+    if (!p.estudio) fail('No tienes ninguna receta en estudio', "You have no recipe in study");
   }
 
   // Coloca un ingrediente de la reserva (tipo) en el espacio "como".
   place(p, tipo, como = tipo) {
     this.requireStudy(p);
-    if (!isIng(tipo) || !isIng(como)) fail('Ingrediente no válido');
-    if (!(p.reserva[tipo] > 0)) fail(`No tienes ${N(tipo)} en tu reserva`);
-    if (!(pendingOf(p.estudio)[como] > 0)) fail(`Tu receta no necesita ${N(como)}`);
+    if (!isIng(tipo) || !isIng(como)) fail('Ingrediente no válido', "Invalid ingredient");
+    if (!(p.reserva[tipo] > 0)) fail(`No tienes ${N(tipo)} en tu reserva`, `You have no ${NE(tipo)} in your reserve`);
+    if (!(pendingOf(p.estudio)[como] > 0)) fail(`Tu receta no necesita ${N(como)}`, `Your recipe does not need ${NE(como)}`);
     p.reserva[tipo] -= 1;
-    this.addToStudy(p, como, tipo === como ? N(tipo) : `${N(tipo)} como ${N(como)}`);
+    this.addToStudy(p, como, tipo === como ? N(tipo) : `${N(tipo)} como ${N(como)}`, tipo === como ? NE(tipo) : `${NE(tipo)} as ${NE(como)}`);
   }
 
-  addToStudy(p, como, label) {
+  addToStudy(p, como, label, labelEn = label) {
     p.estudio.placed[como] += 1;
-    this.say(`${p.name} coloca ${label} en ${cardName(p.estudio.card)}.`);
+    this.say(`${p.name} coloca ${label} en ${cardName(p.estudio.card)}.`, `${p.name} places ${labelEn} on ${cardNameEn(p.estudio.card)}.`);
     if (total(pendingOf(p.estudio)) === 0) this.learn(p);
   }
 
@@ -319,21 +329,24 @@ class Game {
     p.estudio = null;
     p.aprendidas.push(id);
     let extra = '';
+    let extraEn = '';
     if (card.tipo === 'pocion') {
       if (p.pociones.length < C.MAX_POCIONES) {
         p.pociones.push(id);
         extra = ' y recibe una preparación gratis';
+        extraEn = ' and gets a free brew';
       } else {
         extra = ' (no tiene sitio para la preparación gratis)';
+        extraEn = ' (no room for the free brew)';
       }
     }
-    this.say(`✦ ${p.name} aprende ${card.nombre}: +${card.puntos} de Prestigio${extra}.`);
+    this.say(`✦ ${p.name} aprende ${card.nombre}: +${card.puntos} de Prestigio${extra}.`, `✦ ${p.name} learns ${card.en}: +${card.puntos} Prestige${extraEn}.`);
     if (this.turn && this.turn.pid === p.id && this.turn.paso === 'estudiar') this.turn.completada = true;
   }
 
   // Comprueba una lista de colocaciones sin cambiar nada. wild = cuántas pueden ser comodín.
   checkPlacements(p, list, { wild = 0, reserva = p.reserva } = {}) {
-    if (!Array.isArray(list)) fail('Colocaciones no válidas');
+    if (!Array.isArray(list)) fail('Colocaciones no válidas', "Invalid placements");
     this.requireStudy(p);
     const res = { ...reserva };
     const pend = pendingOf(p.estudio);
@@ -342,12 +355,12 @@ class Game {
     for (const pl of list) {
       const tipo = pl && pl.tipo;
       const como = (pl && pl.como) || tipo;
-      if (!isIng(tipo) || !isIng(como)) fail('Ingrediente no válido');
-      if (left === 0) fail('Tu receta ya estaría completa');
+      if (!isIng(tipo) || !isIng(como)) fail('Ingrediente no válido', "Invalid ingredient");
+      if (left === 0) fail('Tu receta ya estaría completa', "Your recipe would already be complete");
       if (tipo !== como) wilds += 1;
-      if (wilds > wild) fail(wild ? 'Solo un ingrediente puede ser comodín' : 'Los ingredientes deben coincidir con la receta');
-      if (!(res[tipo] > 0)) fail(`No tienes ${N(tipo)} suficiente`);
-      if (!(pend[como] > 0)) fail(`Tu receta no necesita ${N(como)}`);
+      if (wilds > wild) fail(wild ? 'Solo un ingrediente puede ser comodín' : 'Los ingredientes deben coincidir con la receta', wild ? 'Only one ingredient may be a wildcard' : 'Ingredients must match the recipe');
+      if (!(res[tipo] > 0)) fail(`No tienes ${N(tipo)} suficiente`, `Not enough ${NE(tipo)}`);
+      if (!(pend[como] > 0)) fail(`Tu receta no necesita ${N(como)}`, `Your recipe does not need ${NE(como)}`);
       res[tipo] -= 1;
       pend[como] -= 1;
       left -= 1;
@@ -362,7 +375,7 @@ class Game {
     for (const q of this.opponents()) {
       if (!this.attacksFor(q).length) {
         if (t.ventana[q.id] === undefined) t.ventana[q.id] = 'pasar';
-        if (t.ventana[q.id] !== 'pasar') this.say(`${q.name} ya no puede atacar.`);
+        if (t.ventana[q.id] !== 'pasar') this.say(`${q.name} ya no puede atacar.`, `${q.name} can no longer attack.`);
         t.ventana[q.id] = 'pasar';
         continue;
       }
@@ -373,7 +386,7 @@ class Game {
         this.validateAttack(q, r);
       } catch (e) {
         if (!(e instanceof GameError)) throw e;
-        this.say(`El ataque de ${q.name} ya no es posible.`);
+        this.say(`El ataque de ${q.name} ya no es posible.`, `${q.name}'s attack is no longer possible.`);
         t.ventana[q.id] = 'pasar';
         continue;
       }
@@ -399,11 +412,11 @@ class Game {
 
   validateAttack(q, r) {
     const target = this.active;
-    if (!this.attacksFor(q).includes(r.carta)) fail('No puedes lanzar ese ataque');
+    if (!this.attacksFor(q).includes(r.carta)) fail('No puedes lanzar ese ataque', "You cannot cast that attack");
     if (r.carta === 'robo') {
-      if (!isIng(r.tipo) || !(target.reserva[r.tipo] > 0)) fail(`${target.name} no tiene ese ingrediente`);
+      if (!isIng(r.tipo) || !(target.reserva[r.tipo] > 0)) fail(`${target.name} no tiene ese ingrediente`, `${target.name} does not have that ingredient`);
     } else if (r.carta === 'lio') {
-      if (!this.lioSwaps(target).some((s) => s.tipo === r.tipo && s.slot === Number(r.slot))) fail('Ese cambio no perjudica al rival');
+      if (!this.lioSwaps(target).some((s) => s.tipo === r.tipo && s.slot === Number(r.slot))) fail('Ese cambio no perjudica al rival', "That swap does not hurt the rival");
       if (r.bonus) {
         const res = { ...q.reserva };
         res.umbra -= 1;
@@ -423,7 +436,7 @@ class Game {
     q.cervTurno = this.turnIndex;
     t.atacado = true;
     t.ataque = { from: q.id, ...r };
-    this.say(`⚡ ${q.name} lanza ${cardName(r.carta)} contra ${target.name}.`);
+    this.say(`⚡ ${q.name} lanza ${cardName(r.carta)} contra ${target.name}.`, `⚡ ${q.name} casts ${cardNameEn(r.carta)} on ${target.name}.`);
     if (this.canDefend(target)) {
       t.paso = 'defensa';
       t.deadline = this.now() + this.ventanaMs;
@@ -439,7 +452,7 @@ class Game {
     this.pay(target, C.BURBUJA_COSTE);
     target.magiaTurno = this.turnIndex;
     target.cervTurno = this.turnIndex;
-    this.say(`🫧 ${target.name} se protege con Burbuja: el ${cardName(t.ataque.carta)} de ${q.name} no tiene efecto.`);
+    this.say(`🫧 ${target.name} se protege con Burbuja: el ${cardName(t.ataque.carta)} de ${q.name} no tiene efecto.`, `🫧 ${target.name} shields with Bubble: ${q.name}'s ${cardNameEn(t.ataque.carta)} has no effect.`);
     this.toStudy();
   }
 
@@ -450,8 +463,8 @@ class Game {
     const q = this.player(a.from);
     if (a.carta === 'robo') {
       target.reserva[a.tipo] -= 1;
-      this.say(`${q.name} roba ${N(a.tipo)} a ${target.name}.`);
-      if (a.colocar && q.estudio && pendingOf(q.estudio)[a.tipo] > 0) this.addToStudy(q, a.tipo, `el ${N(a.tipo)} robado`);
+      this.say(`${q.name} roba ${N(a.tipo)} a ${target.name}.`, `${q.name} steals ${NE(a.tipo)} from ${target.name}.`);
+      if (a.colocar && q.estudio && pendingOf(q.estudio)[a.tipo] > 0) this.addToStudy(q, a.tipo, `el ${N(a.tipo)} robado`, `the stolen ${NE(a.tipo)}`);
       else q.reserva[a.tipo] += 1;
     } else if (a.carta === 'lio') {
       const slot = Number(a.slot);
@@ -459,11 +472,11 @@ class Game {
       target.reserva[a.tipo] -= 1;
       target.reserva[c] += 1;
       this.claro[slot] = a.tipo;
-      this.say(`${q.name} cambia el ${N(a.tipo)} de ${target.name} por ${N(c)} de El Claro.`);
+      this.say(`${q.name} cambia el ${N(a.tipo)} de ${target.name} por ${N(c)} de El Claro.`, `${q.name} swaps ${target.name}'s ${NE(a.tipo)} for ${NE(c)} from the Clearing.`);
       if (a.bonus) this.tryPlace(q, a.bonus.tipo, a.bonus.como || a.bonus.tipo);
     } else if (a.carta === 'sueno') {
       target.suenoTurno = this.turnIndex;
-      this.say(`💤 ${target.name} solo podrá estudiar 1 ingrediente este turno.`);
+      this.say(`💤 ${target.name} solo podrá estudiar 1 ingrediente este turno.`, `💤 ${target.name} may study only 1 ingredient this turn.`);
       if (a.bonus) this.tryPlace(q, a.bonus.tipo);
     }
     this.toStudy();
@@ -480,10 +493,10 @@ class Game {
 
   // ¿Puede p usar ahora magia que no es un ataque?
   requireMagicMoment(p) {
-    if (this.phase !== 'juego') fail('La partida no está en marcha');
+    if (this.phase !== 'juego') fail('La partida no está en marcha', "The game is not running");
     const t = this.turn;
-    if (t.paso === 'defensa') fail('Espera a que se resuelva el ataque');
-    if (t.pid === p.id && t.paso === 'ventana') fail('Espera a que tus rivales decidan si te atacan');
+    if (t.paso === 'defensa') fail('Espera a que se resuelva el ataque', "Wait for the attack to resolve");
+    if (t.pid === p.id && t.paso === 'ventana') fail('Espera a que tus rivales decidan si te atacan', "Wait for your rivals to decide whether to attack you");
   }
 
   castPersonal(p, d) {
@@ -491,82 +504,82 @@ class Game {
     const t = this.turn;
     this.requireMagicMoment(p);
     if (id === 'chispa') {
-      if (t.pid !== p.id) fail('Chispa solo se usa en tu turno');
-      if (t.chispa) fail('Ya has usado Chispa en este turno');
+      if (t.pid !== p.id) fail('Chispa solo se usa en tu turno', "Spark is only used on your turn");
+      if (t.chispa) fail('Ya has usado Chispa en este turno', "You already used Spark this turn");
       const slot = Number(d.slot);
-      if (!isIng(d.tipo) || !(p.reserva[d.tipo] > 0)) fail('Elige un ingrediente de tu reserva');
-      if (!this.claro[slot]) fail('Elige un ingrediente de El Claro');
+      if (!isIng(d.tipo) || !(p.reserva[d.tipo] > 0)) fail('Elige un ingrediente de tu reserva', "Choose an ingredient from your reserve");
+      if (!this.claro[slot]) fail('Elige un ingrediente de El Claro', "Choose an ingredient from the Clearing");
       const c = this.claro[slot];
       this.claro[slot] = d.tipo;
       p.reserva[d.tipo] -= 1;
       p.reserva[c] += 1;
       t.chispa = true;
-      this.say(`✧ ${p.name} usa Chispa: cambia ${N(d.tipo)} por ${N(c)}.`);
+      this.say(`✧ ${p.name} usa Chispa: cambia ${N(d.tipo)} por ${N(c)}.`, `✧ ${p.name} uses Spark: swaps ${NE(d.tipo)} for ${NE(c)}.`);
       return;
     }
-    if (id === 'burbuja') fail('Burbuja solo sirve para defenderte de un ataque');
+    if (id === 'burbuja') fail('Burbuja solo sirve para defenderte de un ataque', "Bubble only defends you from an attack");
     const card = C.CARTAS[id];
-    if (!card) fail('Magia desconocida');
-    if (card.ataque) fail('Los ataques se lanzan cuando el rival termina de recoger');
-    if (!this.magicFree(p)) fail('Ya has usado tu magia en este turno');
+    if (!card) fail('Magia desconocida', "Unknown magic");
+    if (card.ataque) fail('Los ataques se lanzan cuando el rival termina de recoger', "Attacks are cast when the rival finishes gathering");
+    if (!this.magicFree(p)) fail('Ya has usado tu magia en este turno', "You already used your magic this turn");
     const potion = card.tipo === 'pocion';
-    if (potion ? !p.pociones.includes(id) : !this.knows(p, id)) fail(potion ? 'No tienes esa poción preparada' : 'No conoces ese hechizo');
+    if (potion ? !p.pociones.includes(id) : !this.knows(p, id)) fail(potion ? 'No tienes esa poción preparada' : 'No conoces ese hechizo', potion ? 'You do not have that potion brewed' : 'You do not know that spell');
     const reserva = { ...p.reserva };
     if (!potion) {
-      if (!this.canPay(p, card.coste)) fail(`${card.nombre} cuesta ${costText(card.coste)}`);
+      if (!this.canPay(p, card.coste)) fail(`${card.nombre} cuesta ${costText(card.coste)}`, `${card.en} costs ${costText(card.coste, NE)}`);
       for (const k of C.ING) reserva[k] -= card.coste[k] || 0;
     }
     let apply;
     if (id === 'cambio' || id === 'memoria') {
       const list = (d.colocar || []).slice(0, 2);
-      if (!list.length) fail('Elige qué ingredientes colocar');
+      if (!list.length) fail('Elige qué ingredientes colocar', "Choose which ingredients to place");
       this.checkPlacements(p, list, { wild: id === 'cambio' ? 1 : 0, reserva });
       apply = () => list.forEach((pl) => this.place(p, pl.tipo, pl.como || pl.tipo));
     } else if (id === 'idea') {
-      if (t.pid !== p.id || t.paso !== 'estudiar') fail('Idea se lanza en tu fase de estudio');
-      if (t.estudiadas > 0 || t.lechuza) fail('Idea se lanza antes de empezar a colocar ingredientes');
-      if (t.idea) fail('Ya has lanzado Idea');
+      if (t.pid !== p.id || t.paso !== 'estudiar') fail('Idea se lanza en tu fase de estudio', "Idea is cast in your study phase");
+      if (t.estudiadas > 0 || t.lechuza) fail('Idea se lanza antes de empezar a colocar ingredientes', "Idea is cast before you start placing ingredients");
+      if (t.idea) fail('Ya has lanzado Idea', "You have already cast Idea");
       apply = () => { t.idea = true; };
     } else if (id === 'pensar') {
       this.requireStudy(p);
       const slot = Number(d.slot);
       const c = this.claro[slot];
-      if (!c) fail('Elige un ingrediente de El Claro');
-      if (!(pendingOf(p.estudio)[c] > 0)) fail(`Tu receta no necesita ${N(c)}`);
+      if (!c) fail('Elige un ingrediente de El Claro', "Choose an ingredient from the Clearing");
+      if (!(pendingOf(p.estudio)[c] > 0)) fail(`Tu receta no necesita ${N(c)}`, `Your recipe does not need ${NE(c)}`);
       apply = () => {
         this.claro[slot] = null;
-        this.addToStudy(p, c, `${N(c)} de El Claro`);
+        this.addToStudy(p, c, `${N(c)} de El Claro`, `${NE(c)} from the Clearing`);
         this.refill();
       };
     } else if (id === 'suerte') {
       const avail = this.claro.map((c, i) => (c ? i : -1)).filter((i) => i >= 0);
       const slots = [...new Set((d.slots || []).map(Number))];
       const need = Math.min(3, avail.length);
-      if (slots.length !== need || !slots.every((i) => this.claro[i])) fail(`Elige ${need} ingredientes de El Claro`);
+      if (slots.length !== need || !slots.every((i) => this.claro[i])) fail(`Elige ${need} ingredientes de El Claro`, `Choose ${need} ingredients from the Clearing`);
       apply = () => {
         const got = slots.map((i) => this.claro[i]);
         for (const i of slots) this.claro[i] = null;
         for (const c of got) p.reserva[c] += 1;
-        this.say(`${p.name} recoge ${got.map(N).join(', ')} con Suerte.`);
+        this.say(`${p.name} recoge ${got.map(N).join(', ')} con Suerte.`, `${p.name} takes ${got.map(NE).join(', ')} with Luck.`);
         if (d.colocar && p.estudio) this.tryPlace(p, d.colocar);
         this.refill();
       };
     } else {
-      fail('Magia desconocida');
+      fail('Magia desconocida', "Unknown magic");
     }
     if (potion) p.pociones = p.pociones.filter((x) => x !== id);
     else this.pay(p, card.coste);
     p.magiaTurno = this.turnIndex;
     p.cervTurno = this.turnIndex;
-    this.say(`✦ ${p.name} ${potion ? 'bebe la poción' : 'lanza'} ${card.nombre}.`);
+    this.say(`✦ ${p.name} ${potion ? 'bebe la poción' : 'lanza'} ${card.nombre}.`, `✦ ${p.name} ${potion ? 'drinks the potion' : 'casts'} ${card.en}.`);
     apply();
     if (t.paso === 'ventana') this.resolveWindow();
   }
 
   requireActive(p, paso) {
-    if (this.phase !== 'juego') fail('La partida no está en marcha');
-    if (this.turn.pid !== p.id) fail('No es tu turno');
-    if (paso && ![].concat(paso).includes(this.turn.paso)) fail('Ahora no puedes hacer eso');
+    if (this.phase !== 'juego') fail('La partida no está en marcha', "The game is not running");
+    if (this.turn.pid !== p.id) fail('No es tu turno', "It is not your turn");
+    if (paso && ![].concat(paso).includes(this.turn.paso)) fail('Ahora no puedes hacer eso', "You cannot do that now");
   }
 
   // ---------------------------------------------------------------- Vista
@@ -645,31 +658,31 @@ class Game {
 const ACTIONS = {
   // ---------------- sala
   configurar(p, d) {
-    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado', "The game has already started");
     if (d.druida !== undefined) {
-      if (!C.DRUIDAS[d.druida]) fail('Druida no válido');
-      if (this.players.some((x) => x !== p && x.druida === d.druida)) fail('Ese druida ya está elegido');
+      if (!C.DRUIDAS[d.druida]) fail('Druida no válido', "Invalid druid");
+      if (this.players.some((x) => x !== p && x.druida === d.druida)) fail('Ese druida ya está elegido', "That druid is already taken");
       p.druida = d.druida;
     }
     if (d.mascota !== undefined) {
-      if (!C.MASCOTAS[d.mascota]) fail('Mascota no válida');
-      if (this.players.some((x) => x !== p && x.mascota === d.mascota)) fail('Esa mascota ya está elegida');
+      if (!C.MASCOTAS[d.mascota]) fail('Mascota no válida', "Invalid pet");
+      if (this.players.some((x) => x !== p && x.mascota === d.mascota)) fail('Esa mascota ya está elegida', "That pet is already taken");
       p.mascota = d.mascota;
     }
     if (d.name !== undefined) p.name = String(d.name).trim().slice(0, 20) || p.name;
   },
   bot(p) {
-    if (p.id !== this.hostId) fail('Solo el anfitrión puede añadir bots');
+    if (p.id !== this.hostId) fail('Solo el anfitrión puede añadir bots', "Only the host can add bots");
     this.addPlayer('', { bot: true });
   },
   expulsar(p, d) {
-    if (p.id !== this.hostId) fail('Solo el anfitrión puede expulsar');
-    if (d.id === p.id) fail('No puedes expulsarte');
+    if (p.id !== this.hostId) fail('Solo el anfitrión puede expulsar', "Only the host can remove players");
+    if (d.id === p.id) fail('No puedes expulsarte', "You cannot remove yourself");
     this.removePlayer(d.id);
   },
   empezar(p) {
-    if (this.phase !== 'lobby') fail('La partida ya ha empezado');
-    if (p.id !== this.hostId) fail('Solo el anfitrión puede empezar');
+    if (this.phase !== 'lobby') fail('La partida ya ha empezado', "The game has already started");
+    if (p.id !== this.hostId) fail('Solo el anfitrión puede empezar', "Only the host can start");
     this.start();
   },
 
@@ -677,25 +690,25 @@ const ACTIONS = {
   recoger(p, d) {
     this.requireActive(p, 'recoger');
     const zorro = !!d.zorro;
-    if (zorro && (p.mascota !== 'zorro' || p.usos <= 0)) fail('No puedes usar el Zorro');
+    if (zorro && (p.mascota !== 'zorro' || p.usos <= 0)) fail('No puedes usar el Zorro', "You cannot use the Fox");
     const avail = this.claro.filter(Boolean).length;
     const need = Math.min(zorro ? C.RECOGER_ZORRO : C.RECOGER, avail);
     const slots = [...new Set((d.slots || []).map(Number))];
-    if (slots.length !== need || !slots.every((i) => this.claro[i])) fail(`Elige ${need} ingredientes de El Claro`);
+    if (slots.length !== need || !slots.every((i) => this.claro[i])) fail(`Elige ${need} ingredientes de El Claro`, `Choose ${need} ingredients from the Clearing`);
     const got = slots.map((i) => this.claro[i]);
     for (const i of slots) this.claro[i] = null;
     for (const c of got) p.reserva[c] += 1;
     if (zorro) p.usos -= 1;
-    this.say(`${p.name} recoge ${got.map(N).join(', ')}${zorro ? ' gracias al Zorro' : ''}.`);
+    this.say(`${p.name} recoge ${got.map(N).join(', ')}${zorro ? ' gracias al Zorro' : ''}.`, `${p.name} takes ${got.map(NE).join(', ')}${zorro ? ' thanks to the Fox' : ''}.`);
     this.refill();
     this.openWindow();
   },
 
   // ---------------- ataques (rivales del activo)
   atacar(p, d) {
-    if (this.phase !== 'juego' || this.turn.paso !== 'ventana') fail('Ahora no se puede atacar');
-    if (p.id === this.turn.pid) fail('No puedes atacarte a ti mismo');
-    if (this.turn.ventana[p.id] !== undefined) fail('Ya has decidido');
+    if (this.phase !== 'juego' || this.turn.paso !== 'ventana') fail('Ahora no se puede atacar', "You cannot attack now");
+    if (p.id === this.turn.pid) fail('No puedes atacarte a ti mismo', "You cannot attack yourself");
+    if (this.turn.ventana[p.id] !== undefined) fail('Ya has decidido', "You have already decided");
     const r = { carta: d.carta };
     if (d.carta === 'robo') Object.assign(r, { tipo: d.tipo, colocar: !!d.colocar });
     if (d.carta === 'lio') Object.assign(r, { tipo: d.tipo, slot: Number(d.slot), bonus: d.bonus && d.bonus.tipo ? { tipo: d.bonus.tipo, como: d.bonus.como || d.bonus.tipo } : null });
@@ -705,14 +718,14 @@ const ACTIONS = {
     this.resolveWindow();
   },
   pasar(p) {
-    if (this.phase !== 'juego' || this.turn.paso !== 'ventana') fail('Ahora no hay nada que pasar');
-    if (p.id === this.turn.pid) fail('Espera a tus rivales');
+    if (this.phase !== 'juego' || this.turn.paso !== 'ventana') fail('Ahora no hay nada que pasar', "There is nothing to pass now");
+    if (p.id === this.turn.pid) fail('Espera a tus rivales', "Wait for your rivals");
     if (this.turn.ventana[p.id] === undefined) this.turn.ventana[p.id] = 'pasar';
     this.resolveWindow();
   },
   defender(p) {
     this.requireActive(p, 'defensa');
-    if (!this.canDefend(p)) fail('Necesitas 2 Lumen y tener tu magia libre');
+    if (!this.canDefend(p)) fail('Necesitas 2 Lumen y tener tu magia libre', "You need 2 Lumen and your magic unused");
     this.defend();
   },
   no_defender(p) {
@@ -725,38 +738,38 @@ const ACTIONS = {
     this.requireActive(p, 'estudiar');
     const t = this.turn;
     this.requireStudy(p);
-    if (t.tocado || t.estudiadas > 0) fail('Solo puedes abandonar al principio de tu fase de estudio');
+    if (t.tocado || t.estudiadas > 0) fail('Solo puedes abandonar al principio de tu fase de estudio', "You can only abandon at the start of your study phase");
     for (const k of C.ING) this.toBag(k, p.estudio.placed[k]);
     this.catalog[p.estudio.card] += 1;
-    this.say(`${p.name} abandona ${cardName(p.estudio.card)}.`);
+    this.say(`${p.name} abandona ${cardName(p.estudio.card)}.`, `${p.name} abandons ${cardNameEn(p.estudio.card)}.`);
     p.estudio = null;
     t.tocado = true;
   },
   elegir(p, d) {
     this.requireActive(p, 'estudiar');
     const t = this.turn;
-    if (p.estudio) fail('Ya tienes una receta en estudio');
-    if (t.completada) fail('Ya has aprendido algo en esta fase: elige receta en tu próximo turno');
+    if (p.estudio) fail('Ya tienes una receta en estudio', "You already have a recipe in study");
+    if (t.completada) fail('Ya has aprendido algo en esta fase: elige receta en tu próximo turno', "You already learned something this phase: choose a recipe next turn");
     const card = C.CARTAS[d.carta];
-    if (!card) fail('Conocimiento no válido');
-    if (this.knows(p, d.carta)) fail('Ya conoces ese conocimiento');
-    if (!(this.catalog[d.carta] > 0)) fail('No quedan copias de esa carta');
+    if (!card) fail('Conocimiento no válido', "Invalid knowledge");
+    if (this.knows(p, d.carta)) fail('Ya conoces ese conocimiento', "You already know that");
+    if (!(this.catalog[d.carta] > 0)) fail('No quedan copias de esa carta', "No copies of that card left");
     this.catalog[d.carta] -= 1;
     p.estudio = { card: d.carta, placed: emptyIng() };
     t.tocado = true;
-    this.say(`${p.name} empieza a estudiar ${card.nombre}.`);
+    this.say(`${p.name} empieza a estudiar ${card.nombre}.`, `${p.name} starts studying ${card.en}.`);
   },
   colocar(p, d) {
     this.requireActive(p, 'estudiar');
     const t = this.turn;
-    if (t.lechuza) fail('Ya has terminado tu estudio normal');
-    if (t.estudiadas >= this.studyLimit(p)) fail(`Ya has colocado ${this.studyLimit(p)} ingrediente(s) este turno`);
+    if (t.lechuza) fail('Ya has terminado tu estudio normal', "You have finished your normal study");
+    if (t.estudiadas >= this.studyLimit(p)) fail(`Ya has colocado ${this.studyLimit(p)} ingrediente(s) este turno`, `You already placed ${this.studyLimit(p)} ingredient(s) this turn`);
     const como = d.como || d.tipo;
     if (como !== d.tipo) {
-      if (p.mascota !== 'liebre' || p.usos <= 0) fail('Los ingredientes deben coincidir con la receta');
+      if (p.mascota !== 'liebre' || p.usos <= 0) fail('Los ingredientes deben coincidir con la receta', "Ingredients must match the recipe");
       this.place(p, d.tipo, como);
       p.usos -= 1;
-      this.say(`(La Liebre transforma el ingrediente.)`);
+      this.say('(La Liebre transforma el ingrediente.)', '(The Hare transforms the ingredient.)');
     } else {
       this.place(p, d.tipo);
     }
@@ -765,13 +778,13 @@ const ACTIONS = {
   },
   lechuza(p, d) {
     this.requireActive(p, 'estudiar');
-    if (p.mascota !== 'lechuza' || p.usos <= 0) fail('No puedes usar la Lechuza');
-    if (this.turn.lechuza) fail('Ya has usado la Lechuza');
+    if (p.mascota !== 'lechuza' || p.usos <= 0) fail('No puedes usar la Lechuza', "You cannot use the Owl");
+    if (this.turn.lechuza) fail('Ya has usado la Lechuza', "You already used the Owl");
     this.place(p, d.tipo);
     p.usos -= 1;
     this.turn.lechuza = true;
     this.turn.tocado = true;
-    this.say('(Ayuda de la Lechuza.)');
+    this.say('(Ayuda de la Lechuza.)', '(Help from the Owl.)');
   },
   fin_estudio(p) {
     this.requireActive(p, 'estudiar');
@@ -782,16 +795,16 @@ const ACTIONS = {
   preparar(p, d) {
     this.requireActive(p, ['estudiar', 'preparar']);
     const t = this.turn;
-    if (t.preparada) fail('Ya has preparado una poción este turno');
+    if (t.preparada) fail('Ya has preparado una poción este turno', "You already brewed a potion this turn");
     const card = C.CARTAS[d.carta];
-    if (!card || card.tipo !== 'pocion' || !this.knows(p, d.carta)) fail('No conoces esa receta de poción');
-    if (p.pociones.includes(d.carta)) fail('Ya tienes esa poción preparada');
-    if (p.pociones.length >= C.MAX_POCIONES) fail('Ya tienes 2 pociones preparadas');
+    if (!card || card.tipo !== 'pocion' || !this.knows(p, d.carta)) fail('No conoces esa receta de poción', "You do not know that potion recipe");
+    if (p.pociones.includes(d.carta)) fail('Ya tienes esa poción preparada', "You already have that potion brewed");
+    if (p.pociones.length >= C.MAX_POCIONES) fail('Ya tienes 2 pociones preparadas', "You already have 2 potions brewed");
     this.pay(p, card.coste);
     p.pociones.push(d.carta);
     t.preparada = true;
     t.paso = 'preparar';
-    this.say(`${p.name} prepara ${card.nombre}.`);
+    this.say(`${p.name} prepara ${card.nombre}.`, `${p.name} brews ${card.en}.`);
   },
   fin_turno(p) {
     this.requireActive(p, ['estudiar', 'preparar']);
@@ -806,13 +819,13 @@ const ACTIONS = {
     const out = emptyIng();
     for (const k of C.ING) out[k] = Math.max(0, Math.floor(Number((d.ings || {})[k]) || 0));
     const extra = total(p.reserva) - C.LIMITE_RESERVA;
-    if (total(out) !== extra) fail(`Devuelve exactamente ${extra} ingrediente(s)`);
-    if (!C.ING.every((k) => p.reserva[k] >= out[k])) fail('No tienes esos ingredientes');
+    if (total(out) !== extra) fail(`Devuelve exactamente ${extra} ingrediente(s)`, `Return exactly ${extra} ingredient(s)`);
+    if (!C.ING.every((k) => p.reserva[k] >= out[k])) fail('No tienes esos ingredientes', "You do not have those ingredients");
     for (const k of C.ING) {
       p.reserva[k] -= out[k];
       this.toBag(k, out[k]);
     }
-    this.say(`${p.name} devuelve ${extra} ingrediente(s) a la bolsa.`);
+    this.say(`${p.name} devuelve ${extra} ingrediente(s) a la bolsa.`, `${p.name} returns ${extra} ingredient(s) to the bag.`);
     this.nextTurn();
   },
 
@@ -822,12 +835,12 @@ const ACTIONS = {
   },
   cervatillo(p, d) {
     this.requireMagicMoment(p);
-    if (p.mascota !== 'cervatillo' || p.usos <= 0) fail('No puedes usar el Cervatillo');
-    if (p.cervTurno !== this.turnIndex) fail('El Cervatillo se usa justo después de una magia que no sea gratis');
+    if (p.mascota !== 'cervatillo' || p.usos <= 0) fail('No puedes usar el Cervatillo', "You cannot use the Fawn");
+    if (p.cervTurno !== this.turnIndex) fail('El Cervatillo se usa justo después de una magia que no sea gratis', "The Fawn is used right after non-free magic");
     this.place(p, d.tipo);
     p.usos -= 1;
     p.cervTurno = -1;
-    this.say('(Energía del Cervatillo.)');
+    this.say('(Energía del Cervatillo.)', '(Energy of the Fawn.)');
   },
 };
 

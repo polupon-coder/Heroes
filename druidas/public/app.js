@@ -10,7 +10,57 @@ let D = null; // tablas del reglamento e ilustraciones disponibles
 let receivedAt = 0;
 const ui = { key: '', sel: [], zorro: false, home: false, mode: null, chispaTipo: null, modal: null, logOpen: false, lastLog: -1 };
 
-const PASO = { recoger: 'Recoger', ventana: 'Ataques', defensa: 'Defensa', estudiar: 'Estudiar', preparar: 'Preparar', descartar: 'Devolver' };
+// Idioma: español o inglés (se recuerda en el navegador; por defecto, el del navegador).
+let LANG = (() => { try { return localStorage.getItem('druidas.lang'); } catch { return null; } })()
+  || (/^es\b/i.test(navigator.language || '') ? 'es' : 'en');
+const L = (es, en) => (LANG === 'en' ? en : es);
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem('druidas.lang', l); } catch { /* sin almacenamiento */ }
+  applyStaticTexts();
+  ui.lastLog = -1;
+  if (S && !ui.home) render();
+}
+// Textos fijos de la página (index.html) en el idioma elegido.
+function applyStaticTexts() {
+  document.documentElement.lang = LANG;
+  const set = (id, es, en) => { const el = $(id); if (el) el.textContent = L(es, en); };
+  const logo = D && D.img.ui.titulo;
+  for (const id of ['homeH1', 'brand']) {
+    const el = $(id);
+    if (logo) el.innerHTML = `<img class="title-art" src="${logo}" alt="${L('Escuela de Magia', 'School of Magic')}">`;
+    else el.textContent = L('Escuela de Magia', 'School of Magic');
+  }
+  set('homeSub', 'El bosque de los druidas', 'The Druids’ Forest');
+  set('homeIntro', 'Recoge ingredientes en El Claro, aprende hechizos y pociones, y consigue más Prestigio que los demás aprendices.',
+    'Gather ingredients in the Clearing, learn spells and potions, and earn more Prestige than the other apprentices.');
+  document.title = L('Escuela de Magia', 'School of Magic');
+  $('nameInput').placeholder = L('Tu nombre', 'Your name');
+  $('codeInput').placeholder = L('CÓDIGO', 'CODE');
+  set('createBtn', 'Crear partida', 'Create game');
+  set('joinBtn', 'Entrar', 'Join');
+  set('rulesBtn', '📖 Reglas', '📖 Rules');
+  set('logBtn', '📜 Crónica y chat', '📜 Chronicle and chat');
+  set('homeBtn', '🏠 Pantalla principal', '🏠 Main screen');
+  set('journalTitle', 'Crónica', 'Chronicle');
+  set('chatSend', 'Enviar', 'Send');
+  $('chatInput').placeholder = L('Escribe al grupo…', 'Write to the group…');
+  for (const id of ['rulesTopBtn']) { $(id).title = L('Reglas', 'Rules'); $(id).setAttribute('aria-label', $(id).title); }
+  $('menuBtn').title = L('Menú', 'Menu');
+  $('menuBtn').setAttribute('aria-label', $('menuBtn').title);
+  // El botón muestra el idioma al que se cambia.
+  $('langBtn').textContent = L('EN', 'ES');
+  $('langBtn').title = L('English', 'Español');
+  $('langBtn').setAttribute('aria-label', $('langBtn').title);
+  if (ui.modal && ui.modal.kind === 'rules' && D) renderModal();
+  const sess = loadSession();
+  const back = $('backRow').querySelector('button');
+  if (back && sess) back.textContent = `${L('Volver a la partida', 'Back to game')} ${sess.code}`;
+}
+
+const PASO_ES = { recoger: 'Recoger', ventana: 'Ataques', defensa: 'Defensa', estudiar: 'Estudiar', preparar: 'Preparar', descartar: 'Devolver' };
+const PASO_EN = { recoger: 'Gather', ventana: 'Attacks', defensa: 'Defence', estudiar: 'Study', preparar: 'Brew', descartar: 'Return' };
+const PASO = new Proxy({}, { get: (_, k) => (LANG === 'en' ? PASO_EN : PASO_ES)[k] });
 const PET_EMOJI = { lechuza: '🦉', zorro: '🦊', liebre: '🐇', cervatillo: '🦌' };
 
 // Símbolos de los ingredientes (se usan si no hay ilustración).
@@ -36,8 +86,12 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 const ING = () => D.ing;
-const N = (t) => D.ingInfo[t].nombre;
+const N = (t) => L(D.ingInfo[t].nombre, D.ingInfo[t].en);
 const card = (id) => D.cartas[id] || D.iniciales[id];
+const cname = (c) => L(c.nombre, c.en || c.nombre);
+const ctext = (c) => L(c.texto, c.textoEn || c.texto);
+const petName = (m) => L(m.nombre, m.en || m.nombre);
+const petDon = (m) => L(m.don, m.donEn || m.don);
 const sum = (o) => ING().reduce((s, t) => s + (o[t] || 0), 0);
 const me = () => S && S.players.find((p) => p.id === S.me);
 const pl = (id) => S.players.find((p) => p.id === id);
@@ -61,7 +115,7 @@ function toast(msg) {
 
 function send(type, data, done) {
   socket.emit('act', { type, data }, (r) => {
-    if (r && !r.ok) toast(r.error);
+    if (r && !r.ok) toast(L(r.error, r.errorEn || r.error));
     else if (done) done();
   });
 }
@@ -74,13 +128,13 @@ function tok(t, { cls = '', n = null, flat = false } = {}) {
 const emptyTok = (t, cls = '') => {
   const img = D.img.ingredientes[t];
   const inner = img ? `<img src="${img}" alt="">` : `<svg viewBox="0 0 24 24" aria-hidden="true">${SYMBOL[t]}</svg>`;
-  return `<span class="tok slot-empty tok-${t} ${img ? 'has-img' : ''} ${cls}" title="Falta ${N(t)}">${inner}</span>`;
+  return `<span class="tok slot-empty tok-${t} ${img ? 'has-img' : ''} ${cls}" title="${L('Falta', 'Missing')} ${N(t)}">${inner}</span>`;
 };
 
 function costHtml(coste) {
   const out = [];
   for (const t of ING()) for (let k = 0; k < (coste[t] || 0); k += 1) out.push(tok(t, { cls: 'xs' }));
-  return out.join('') || '<span class="free">gratis</span>';
+  return out.join('') || `<span class="free">${L('gratis', 'free')}</span>`;
 }
 
 // Retrato del druida: cuerpo entero en los formatos altos (xl, full); la cara en el resto.
@@ -97,7 +151,7 @@ function druidPortrait(id, cls = '') {
 
 function petPortrait(id, cls = '') {
   const img = D.img.mascotas[id];
-  if (img) return `<span class="pet-pic ${cls}"><img src="${img}" alt="${esc(D.mascotas[id].nombre)}"></span>`;
+  if (img) return `<span class="pet-pic ${cls}"><img src="${img}" alt="${esc(petName(D.mascotas[id]))}"></span>`;
   return `<span class="pet-pic ph ${cls}">${PET_EMOJI[id]}</span>`;
 }
 
@@ -115,15 +169,15 @@ function cardHtml(id, { estudio = null, footer = '', cls = '', prepared = false 
     }
     slots = `<div class="req">${out.join('')}</div>`;
   }
-  const kind = c.tipo === 'pocion' ? 'Poción' : 'Hechizo';
-  const use = c.tipo === 'pocion' ? 'Preparar' : 'Lanzar';
+  const kind = c.tipo === 'pocion' ? L('Poción', 'Potion') : L('Hechizo', 'Spell');
+  const use = c.tipo === 'pocion' ? L('Preparar', 'Brew') : L('Lanzar', 'Cast');
   return `<article class="kcard ${c.tipo} ${cls} ${c.ataque ? 'attack' : ''}">
-    <header><span class="kname">${esc(c.nombre)}</span>${c.puntos ? `<span class="pts" title="Prestigio">${c.puntos}</span>` : ''}</header>
+    <header><span class="kname">${esc(cname(c))}</span>${c.puntos ? `<span class="pts" title="${L('Prestigio', 'Prestige')}">${c.puntos}</span>` : ''}</header>
     ${img ? `<div class="art"><img src="${img}" alt=""></div>` : ''}
-    <div class="kind">${kindIcon(c.tipo, 'sm')}${kind}${c.ataque ? ' · ataque' : ''}${prepared ? ' · <b class="ready">preparada</b>' : ''}</div>
+    <div class="kind">${kindIcon(c.tipo, 'sm')}${kind}${c.ataque ? L(' · ataque', ' · attack') : ''}${prepared ? ` · <b class="ready">${L('preparada', 'brewed')}</b>` : ''}</div>
     ${slots}
     <div class="use">${use}: ${costHtml(c.coste)}</div>
-    <p class="ktext">${esc(c.texto)}</p>
+    <p class="ktext">${esc(ctext(c))}</p>
     ${footer}
   </article>`;
 }
@@ -135,7 +189,7 @@ function reserveHtml(p, { clickable = false } = {}) {
       out.push(clickable ? `<button class="tokbtn" data-a="res" data-v="${t}">${tok(t)}</button>` : tok(t, { cls: 'sm' }));
     }
   }
-  return out.join('') || '<span class="muted small">vacía</span>';
+  return out.join('') || `<span class="muted small">${L('vacía', 'empty')}</span>`;
 }
 
 // ------------------------------------------------------------ estado derivado
@@ -215,11 +269,11 @@ function render() {
 }
 
 function renderTop() {
-  $('sub').innerHTML = `Sala <code>${esc(S.code)}</code>`;
+  $('sub').innerHTML = `${L('Sala', 'Room')} <code>${esc(S.code)}</code>`;
   $('roundPill').before($('sub'));
   const pill = $('roundPill');
   pill.classList.toggle('hidden', S.phase === 'lobby');
-  if (S.phase !== 'lobby') pill.textContent = `Ronda ${Math.min(S.round, S.rondas)}/${S.rondas}`;
+  if (S.phase !== 'lobby') pill.textContent = `${L('Ronda', 'Round')} ${Math.min(S.round, S.rondas)}/${S.rondas}`;
   $('prompt').classList.toggle('hidden', S.phase === 'lobby');
 }
 
@@ -237,35 +291,35 @@ function renderLobby() {
   const taken = (field, v) => S.players.some((x) => x.id !== S.me && x[field] === v);
   const druids = Object.entries(D.druidas).map(([id, d]) => `
     <button class="choice ${p.druida === id ? 'on' : ''}" data-a="druida" data-v="${id}" ${taken('druida', id) ? 'disabled' : ''}>
-      ${druidPortrait(id, 'full')}<span>${esc(d.nombre)}</span><small>ropa ${esc(d.ropa)}</small>
+      ${druidPortrait(id, 'full')}<span>${esc(L(d.nombre, d.en || d.nombre))}</span>
     </button>`).join('');
   const pets = Object.entries(D.mascotas).map(([id, m]) => `
     <button class="choice pet ${p.mascota === id ? 'on' : ''}" data-a="mascota" data-v="${id}" ${taken('mascota', id) ? 'disabled' : ''}>
-      ${petPortrait(id, 'lg')}<span>${esc(m.nombre)} · ${esc(m.don)}</span><small>${esc(m.texto)} (${m.usos} ${m.usos > 1 ? 'usos' : 'uso'})</small>
+      ${petPortrait(id, 'lg')}<span>${esc(petName(m))} · ${esc(petDon(m))}</span><small>${esc(L(m.texto, m.textoEn))} (${m.usos} ${m.usos > 1 ? L('usos', 'uses') : L('uso', 'use')})</small>
     </button>`).join('');
   const list = S.players.map((x) => `
     <li>${druidPortrait(x.druida, 'sm')} ${petPortrait(x.mascota, 'sm')} <b>${esc(x.name)}</b>
-      ${x.id === S.hostId ? '<span class="tag">anfitrión</span>' : ''}${x.connected || x.bot ? '' : '<span class="tag off">desconectado</span>'}
-      ${host && x.id !== S.me ? `<button class="btn tiny ghost dark" data-a="kick" data-v="${x.id}">Quitar</button>` : ''}</li>`).join('');
+      ${x.id === S.hostId ? `<span class="tag">${L('anfitrión', 'host')}</span>` : ''}${x.connected || x.bot ? '' : `<span class="tag off">${L('desconectado', 'offline')}</span>`}
+      ${host && x.id !== S.me ? `<button class="btn tiny ghost dark" data-a="kick" data-v="${x.id}">${L('Quitar', 'Remove')}</button>` : ''}</li>`).join('');
   $('lobby').innerHTML = `
     <div class="lobby">
       <div class="panel lobby-side">
-        <h2 class="ptitle">Sala <span class="code-big">${esc(S.code)}</span></h2>
-        <p class="small">Comparte este enlace con tus amigos:</p>
-        <div class="share"><input class="input" readonly value="${esc(link)}" id="shareLink"><button class="btn small" data-a="copy">Copiar</button></div>
-        <h3 class="ptitle sm">Aprendices (${S.players.length}/4)</h3>
+        <h2 class="ptitle">${L('Sala', 'Room')} <span class="code-big">${esc(S.code)}</span></h2>
+        <p class="small">${L('Comparte este enlace con tus amigos:', 'Share this link with your friends:')}</p>
+        <div class="share"><input class="input" readonly value="${esc(link)}" id="shareLink"><button class="btn small" data-a="copy">${L('Copiar', 'Copy')}</button></div>
+        <h3 class="ptitle sm">${L('Aprendices', 'Apprentices')} (${S.players.length}/4)</h3>
         <ul class="plist">${list}</ul>
         ${host ? `<div class="row">
-            <button class="btn" data-a="bot" ${S.players.length >= 4 ? 'disabled' : ''}>+ Añadir bot</button>
-            <button class="btn primary" data-a="start" ${S.players.length < 2 ? 'disabled' : ''}>Empezar</button>
-          </div>${S.players.length < 2 ? '<p class="muted small">Hacen falta al menos 2 druidas.</p>' : ''}`
-    : '<p class="muted">El anfitrión empezará la partida.</p>'}
+            <button class="btn" data-a="bot" ${S.players.length >= 4 ? 'disabled' : ''}>${L('+ Añadir bot', '+ Add bot')}</button>
+            <button class="btn primary" data-a="start" ${S.players.length < 2 ? 'disabled' : ''}>${L('Empezar', 'Start')}</button>
+          </div>${S.players.length < 2 ? `<p class="muted small">${L('Hacen falta al menos 2 druidas.', 'At least 2 druids are needed.')}</p>` : ''}`
+    : `<p class="muted">${L('El anfitrión empezará la partida.', 'The host will start the game.')}</p>`}
       </div>
       <div class="panel lobby-main">
-        <h3 class="ptitle sm">Tu druida</h3>
-        <p class="muted small center">Todos funcionan igual: el aspecto no da ventajas.</p>
+        <h3 class="ptitle sm">${L('Tu druida', 'Your druid')}</h3>
+        <p class="muted small center">${L('Todos funcionan igual: el aspecto no da ventajas.', 'They all play the same: looks give no advantage.')}</p>
         <div class="choices">${druids}</div>
-        <h3 class="ptitle sm">Tu animal del bosque</h3>
+        <h3 class="ptitle sm">${L('Tu animal del bosque', 'Your forest animal')}</h3>
         <div class="choices">${pets}</div>
       </div>
     </div>`;
@@ -274,10 +328,10 @@ function renderLobby() {
 function renderPrompt() {
   const el = $('prompt');
   if (S.phase === 'fin') {
-    const w = S.winners.map((id) => esc(pl(id).name)).join(' y ');
+    const w = S.winners.map((id) => esc(pl(id).name)).join(L(' y ', ' and '));
     el.className = 'prompt';
-    el.innerHTML = `<div class="msg">Fin del aprendizaje · ${S.winners.length > 1 ? `Victoria compartida: ${w}` : `Gana ${w}`}</div>`;
-    ui.floatHtml = `<div class="float-act"><div class="float-msg"><b>${S.winners.length > 1 ? 'Victoria compartida' : `¡Gana ${w}!`}</b></div><div class="btns"><button class="btn primary" data-a="showFinal">Resultados</button></div></div>`;
+    el.innerHTML = `<div class="msg">${L('Fin del aprendizaje', 'End of the learning')} · ${S.winners.length > 1 ? `${L('Victoria compartida', 'Shared victory')}: ${w}` : `${L('Gana', 'Winner:')} ${w}`}</div>`;
+    ui.floatHtml = `<div class="float-act"><div class="float-msg"><b>${S.winners.length > 1 ? L('Victoria compartida', 'Shared victory') : L(`¡Gana ${w}!`, `${w} wins!`)}</b></div><div class="btns"><button class="btn primary" data-a="showFinal">${L('Resultados', 'Results')}</button></div></div>`;
     return;
   }
   const t = S.turn;
@@ -288,46 +342,47 @@ function renderPrompt() {
   if (isMyTurn()) {
     if (t.paso === 'recoger') {
       const need = recogerNeed();
-      msg = `<b>Fase 1 · Recoger.</b> Elige ${need} ingredientes de El Claro (${ui.sel.length}/${need})${ui.zorro ? ' 🦊' : ''}.`;
+      msg = L(`<b>Fase 1 · Recoger.</b> Elige ${need} ingredientes de El Claro`, `<b>Phase 1 · Gather.</b> Choose ${need} ingredients from the Clearing`) + ` (${ui.sel.length}/${need})${ui.zorro ? ' 🦊' : ''}.`;
     } else if (t.paso === 'ventana') {
-      msg = `Tus rivales deciden si te atacan…${timerHtml()}`;
+      msg = `${L('Tus rivales deciden si te atacan…', 'Your rivals decide whether to attack you…')}${timerHtml()}`;
     } else if (t.paso === 'defensa') {
-      msg = `<b>¡${esc(pl(t.ataque.from).name)} te ataca con ${esc(card(t.ataque.carta).nombre)}!</b> ${attackDesc(t.ataque)}${timerHtml()}`;
-      btns = `<button class="btn primary" data-a="defender" ${p.magiaLibre && p.reserva.lumen >= 2 ? '' : 'disabled'}>🫧 Burbuja ${tok('lumen', { cls: 'xs' })}${tok('lumen', { cls: 'xs' })}</button>
-        <button class="btn" data-a="noDefender">Aceptar el ataque</button>`;
+      msg = `<b>${L(`¡${esc(pl(t.ataque.from).name)} te ataca con ${esc(cname(card(t.ataque.carta)))}!`, `${esc(pl(t.ataque.from).name)} attacks you with ${esc(cname(card(t.ataque.carta)))}!`)}</b> ${attackDesc(t.ataque)}${timerHtml()}`;
+      btns = `<button class="btn primary" data-a="defender" ${p.magiaLibre && p.reserva.lumen >= 2 ? '' : 'disabled'}>🫧 ${L('Burbuja', 'Bubble')} ${tok('lumen', { cls: 'xs' })}${tok('lumen', { cls: 'xs' })}</button>
+        <button class="btn" data-a="noDefender">${L('Aceptar el ataque', 'Accept the attack')}</button>`;
     } else if (t.paso === 'estudiar') {
-      if (!p.estudio && !t.completada) msg = '<b>Fase 2 · Estudiar.</b> Elige un conocimiento disponible para estudiarlo.';
-      else if (!p.estudio) msg = '<b>Fase 2 · Estudiar.</b> ¡Aprendido! Elegirás nueva receta en tu próximo turno.';
-      else if (t.lechuza || t.estudiadas >= t.limite) msg = '<b>Fase 2 · Estudiar.</b> Has terminado tu estudio normal.';
-      else msg = `<b>Fase 2 · Estudiar.</b> Pulsa ingredientes de tu reserva para colocarlos (${t.estudiadas}/${t.limite}${t.limite === 1 ? ' 💤' : ''}).`;
-      if (ui.mode === 'liebre') msg = '🐇 Pulsa el ingrediente de tu reserva que quieres transformar.';
-      if (ui.mode === 'lechuza') msg = '🦉 Pulsa el ingrediente de tu reserva que la Lechuza colocará.';
-      btns += '<button class="btn primary" data-a="finEstudio">Terminar estudio</button>';
+      const ph = L('<b>Fase 2 · Estudiar.</b>', '<b>Phase 2 · Study.</b>');
+      if (!p.estudio && !t.completada) msg = `${ph} ${L('Elige un conocimiento disponible para estudiarlo.', 'Choose an available knowledge to study.')}`;
+      else if (!p.estudio) msg = `${ph} ${L('¡Aprendido! Elegirás nueva receta en tu próximo turno.', 'Learned! You will choose a new recipe next turn.')}`;
+      else if (t.lechuza || t.estudiadas >= t.limite) msg = `${ph} ${L('Has terminado tu estudio normal.', 'You have finished your normal study.')}`;
+      else msg = `${ph} ${L('Pulsa ingredientes de tu reserva para colocarlos', 'Tap ingredients from your reserve to place them')} (${t.estudiadas}/${t.limite}${t.limite === 1 ? ' 💤' : ''}).`;
+      if (ui.mode === 'liebre') msg = L('🐇 Pulsa el ingrediente de tu reserva que quieres transformar.', '🐇 Tap the ingredient from your reserve you want to transform.');
+      if (ui.mode === 'lechuza') msg = L('🦉 Pulsa el ingrediente de tu reserva que la Lechuza colocará.', '🦉 Tap the ingredient from your reserve the Owl will place.');
+      btns += `<button class="btn primary" data-a="finEstudio">${L('Terminar estudio', 'Finish study')}</button>`;
     } else if (t.paso === 'preparar') {
-      msg = t.preparada ? '<b>Fase 3 · Preparar.</b> Ya has preparado una poción.' : '<b>Fase 3 · Preparar.</b> Puedes preparar 1 poción que conozcas.';
-      btns = '<button class="btn primary" data-a="finTurno">Terminar turno</button>';
+      msg = `${L('<b>Fase 3 · Preparar.</b>', '<b>Phase 3 · Brew.</b>')} ${t.preparada ? L('Ya has preparado una poción.', 'You have brewed a potion.') : L('Puedes preparar 1 poción que conozcas.', 'You may brew 1 potion you know.')}`;
+      btns = `<button class="btn primary" data-a="finTurno">${L('Terminar turno', 'End turn')}</button>`;
     } else if (t.paso === 'descartar') {
-      msg = `Tienes más de ${D.limiteReserva} ingredientes: devuelve los que sobran.`;
-      btns = '<button class="btn primary" data-a="openDescartar">Elegir</button>';
+      msg = L(`Tienes más de ${D.limiteReserva} ingredientes: devuelve los que sobran.`, `You have more than ${D.limiteReserva} ingredients: return the extra ones.`);
+      btns = `<button class="btn primary" data-a="openDescartar">${L('Elegir', 'Choose')}</button>`;
     }
   } else {
-    msg = `Turno de <b>${esc(a.name)}</b> · ${PASO[t.paso]}.`;
+    msg = L(`Turno de <b>${esc(a.name)}</b>`, `<b>${esc(a.name)}</b>'s turn`) + ` · ${PASO[t.paso]}.`;
     if (t.paso === 'ventana') {
       if (S.ataques.length && !t.miRespuesta) {
-        msg = `<b>${esc(a.name)} ha recogido.</b> ¿Le atacas?${timerHtml()}`;
-        btns = S.ataques.map((id) => `<button class="btn attack" data-a="atacar" data-v="${id}">⚡ ${esc(card(id).nombre)}</button>`).join('')
-          + '<button class="btn" data-a="pasar">No atacar</button>';
+        msg = L(`<b>${esc(a.name)} ha recogido.</b> ¿Le atacas?`, `<b>${esc(a.name)} has gathered.</b> Attack?`) + timerHtml();
+        btns = S.ataques.map((id) => `<button class="btn attack" data-a="atacar" data-v="${id}">⚡ ${esc(cname(card(id)))}</button>`).join('')
+          + `<button class="btn" data-a="pasar">${L('No atacar', 'Do not attack')}</button>`;
       } else {
-        msg = `${esc(a.name)} ha recogido. Los rivales deciden si le atacan…${timerHtml()}`;
+        msg = L(`${esc(a.name)} ha recogido. Los rivales deciden si le atacan…`, `${esc(a.name)} has gathered. Rivals decide whether to attack…`) + timerHtml();
       }
     } else if (t.paso === 'defensa') {
-      msg = `${esc(pl(t.ataque.from).name)} ataca a ${esc(a.name)} con ${esc(card(t.ataque.carta).nombre)}. ¿Se defenderá con Burbuja?${timerHtml()}`;
+      msg = L(`${esc(pl(t.ataque.from).name)} ataca a ${esc(a.name)} con ${esc(cname(card(t.ataque.carta)))}. ¿Se defenderá con Burbuja?`, `${esc(pl(t.ataque.from).name)} attacks ${esc(a.name)} with ${esc(cname(card(t.ataque.carta)))}. Will they use Bubble?`) + timerHtml();
     }
   }
-  if (ui.mode === 'chispa') msg = ui.chispaTipo ? `✧ Chispa: pulsa un ingrediente de El Claro para cambiarlo por ${N(ui.chispaTipo)}.` : '✧ Chispa: pulsa el ingrediente de tu reserva que quieres cambiar.';
-  if (ui.mode === 'pensar') msg = '✦ Pensar: pulsa un ingrediente de El Claro que necesite tu receta.';
-  if (ui.mode === 'cerv') msg = '🦌 Cervatillo: pulsa el ingrediente de tu reserva que quieres colocar.';
-  if (ui.mode) btns += '<button class="btn ghost" data-a="cancelMode">Cancelar</button>';
+  if (ui.mode === 'chispa') msg = ui.chispaTipo ? L(`✧ Chispa: pulsa un ingrediente de El Claro para cambiarlo por ${N(ui.chispaTipo)}.`, `✧ Spark: tap an ingredient in the Clearing to swap it for ${N(ui.chispaTipo)}.`) : L('✧ Chispa: pulsa el ingrediente de tu reserva que quieres cambiar.', '✧ Spark: tap the ingredient from your reserve you want to swap.');
+  if (ui.mode === 'pensar') msg = L('✦ Pensar: pulsa un ingrediente de El Claro que necesite tu receta.', '✦ Think: tap an ingredient in the Clearing your recipe needs.');
+  if (ui.mode === 'cerv') msg = L('🦌 Cervatillo: pulsa el ingrediente de tu reserva que quieres colocar.', '🦌 Fawn: tap the ingredient from your reserve you want to place.');
+  if (ui.mode) btns += `<button class="btn ghost" data-a="cancelMode">${L('Cancelar', 'Cancel')}</button>`;
   // La cabecera solo informa; lo que hay que decidir aparece en una ventana flotante sobre El Claro.
   el.className = 'prompt';
   el.innerHTML = `<div class="msg">${msg}</div>`;
@@ -337,9 +392,9 @@ function renderPrompt() {
 }
 
 function attackDesc(a) {
-  if (a.carta === 'robo') return `Quiere robarte un ${N(a.tipo)}.`;
-  if (a.carta === 'lio') return `Quiere cambiar tu ${N(a.tipo)} por ${N(S.claro[a.slot])} de El Claro.`;
-  if (a.carta === 'sueno') return 'Solo podrás colocar 1 ingrediente en tu estudio.';
+  if (a.carta === 'robo') return L(`Quiere robarte un ${N(a.tipo)}.`, `They want to steal a ${N(a.tipo)}.`);
+  if (a.carta === 'lio') return L(`Quiere cambiar tu ${N(a.tipo)} por ${N(S.claro[a.slot])} de El Claro.`, `They want to swap your ${N(a.tipo)} for ${N(S.claro[a.slot])} from the Clearing.`);
+  if (a.carta === 'sueno') return L('Solo podrás colocar 1 ingrediente en tu estudio.', 'You may place only 1 ingredient in your study.');
   return '';
 }
 
@@ -347,7 +402,7 @@ function attackDesc(a) {
 // Símbolo del tipo de conocimiento: frasco (poción) o pergamino sellado (hechizo).
 function kindIcon(tipo, cls = '') {
   const img = D.img.ui[tipo === 'pocion' ? 'pocion' : 'hechizo'];
-  const label = tipo === 'pocion' ? 'Poción' : 'Hechizo';
+  const label = tipo === 'pocion' ? L('Poción', 'Potion') : L('Hechizo', 'Spell');
   return img ? `<img class="kind-ico ${cls}" src="${img}" alt="${label}" title="${label}">` : '';
 }
 
@@ -373,12 +428,12 @@ function renderCatalog() {
     const known = p.aprendidas.includes(id);
     const dots = ING().map((t) => `<span class="req-dot tok-${t}" title="${N(t)}"></span>`.repeat(c.req[t] || 0)).join('');
     return `<button class="kc ${c.tipo} ${c.ataque ? 'attack' : ''} ${known ? 'known' : ''} ${pick && !known && S.catalogo[id] > 0 ? 'pickable' : ''}"
-        data-a="info" data-v="${id}" title="${esc(c.nombre)}: ${esc(c.texto)}">
+        data-a="info" data-v="${id}" title="${esc(cname(c))}: ${esc(ctext(c))}">
       <span class="kc-top">
-        <span class="kc-icon ${D.img.ilustradas && D.img.ilustradas[id] ? '' : c.tipo === 'pocion' ? 'flask' : 'scroll'}" title="${c.tipo === 'pocion' ? 'Poción' : 'Hechizo'}">${cardIcon(id)}</span>
-        <span class="kc-req" title="Para aprenderlo">${dots}</span>
+        <span class="kc-icon ${D.img.ilustradas && D.img.ilustradas[id] ? '' : c.tipo === 'pocion' ? 'flask' : 'scroll'}" title="${c.tipo === 'pocion' ? L('Poción', 'Potion') : L('Hechizo', 'Spell')}">${cardIcon(id)}</span>
+        <span class="kc-req" title="${L('Para aprenderlo', 'To learn it')}">${dots}</span>
       </span>
-      <span class="kc-name">${esc(c.nombre)} <span class="kc-count">${known ? '✓' : `×${S.catalogo[id] || 0}`}</span></span>
+      <span class="kc-name">${esc(cname(c))} <span class="kc-count">${known ? '✓' : `×${S.catalogo[id] || 0}`}</span></span>
     </button>`;
   }).join('');
   $('catalog').innerHTML = `<div class="kcs">${cards}</div>`;
@@ -404,7 +459,7 @@ function resClickable() {
 
 const usosHtml = (p) => `${'●'.repeat(p.usos)}${'○'.repeat(Math.max(0, D.mascotas[p.mascota].usos - p.usos))}`;
 // Prestigio: número en negro sobre una esfera del color del druida.
-const prestigeHtml = (n, cls = '', druida = null) => `<span class="pts-ball ${cls}" title="Prestigio"${druida && D.druidas[druida] ? ` style="--pc:${D.druidas[druida].hex}"` : ''}>${n}</span>`;
+const prestigeHtml = (n, cls = '', druida = null) => `<span class="pts-ball ${cls}" title="${L('Prestigio', 'Prestige')}"${druida && D.druidas[druida] ? ` style="--pc:${D.druidas[druida].hex}"` : ''}>${n}</span>`;
 
 // Los 6 espacios de El Claro, en corro; cada ingrediente sobre su propio círculo de piedras.
 const CLARO_ANG = [-90, -30, 30, 90, 150, 210];
@@ -425,12 +480,12 @@ function renderClaro() {
     return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos} title="${N(c)}">${inner}</button>`
       : `<span class="cslot" ${pos} title="${N(c)}">${inner}</span>`;
   }).join('');
-  $('claro').innerHTML = `<div class="ring">${slots}<span class="bag-pill" title="Ingredientes que quedan en la bolsa">${sum(S.bolsa)}</span></div>${ui.floatHtml || ''}`;
+  $('claro').innerHTML = `<div class="ring">${slots}<span class="bag-pill" title="${L('Ingredientes que quedan en la bolsa', 'Ingredients left in the bag')}">${sum(S.bolsa)}</span></div>${ui.floatHtml || ''}`;
 }
 
 function studyHtml(p, t) {
   if (!p.estudio) {
-    return `<div class="study-mini empty">${canPickCard() ? 'Elige un conocimiento abajo ↓' : 'Nada en estudio'}</div>`;
+    return `<div class="study-mini empty">${canPickCard() ? L('Elige un conocimiento abajo ↓', 'Choose a knowledge below ↓') : L('Nada en estudio', 'Nothing in study')}</div>`;
   }
   const c = D.cartas[p.estudio.card];
   const slots = [];
@@ -438,10 +493,10 @@ function studyHtml(p, t) {
     for (let j = 0; j < (c.req[k] || 0); j += 1) slots.push(j < p.estudio.placed[k] ? tok(k) : emptyTok(k));
   }
   const canAbandon = isMyTurn() && t.paso === 'estudiar' && !t.tocado && t.estudiadas === 0;
-  return `<div class="study-mini ${c.tipo}" title="${esc(c.texto)}">
-      <div class="study-ico">${cardIcon(p.estudio.card, 'md')}<b class="study-title">${esc(c.nombre)}</b></div>
+  return `<div class="study-mini ${c.tipo}" title="${esc(ctext(c))}">
+      <div class="study-ico">${cardIcon(p.estudio.card, 'md')}<b class="study-title">${esc(cname(c))}</b></div>
       <div class="recipe-slots">${slots.join('')}</div>
-      ${canAbandon ? '<button class="btn tiny ghost dark" data-a="abandonar" title="Abandonar receta">✕</button>' : ''}
+      ${canAbandon ? `<button class="btn tiny ghost dark" data-a="abandonar" title="${L('Abandonar receta', 'Abandon recipe')}">✕</button>` : ''}
     </div>`;
 }
 
@@ -454,13 +509,13 @@ function renderMesa() {
   // Ingredientes: solo los que tienes, uno por ficha.
   const ings = ING().flatMap((k) => Array.from({ length: p.reserva[k] }, () => (click
     ? `<button class="tokbtn" data-a="res" data-v="${k}" title="${N(k)}">${tok(k, { cls: 'lg' })}</button>`
-    : tok(k, { cls: 'lg' })))).join('') || '<span class="none-txt">Sin ingredientes</span>';
+    : tok(k, { cls: 'lg' })))).join('') || `<span class="none-txt">${L('Sin ingredientes', 'No ingredients')}</span>`;
   // Magia: solo lo que conoces. Las pociones sin preparar, en gris (con su coste si puedes prepararlas).
   const spell = (id) => {
     const c = card(id);
     const live = id !== 'burbuja' && !c.ataque && canCast(id);
-    return `<button class="spell-ico ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(c.texto)}">
-      ${cardIcon(id, 'md')}<span class="spell-name">${esc(c.nombre)}</span></button>`;
+    return `<button class="spell-ico ${c.ataque ? 'attack' : ''} ${live ? 'live' : ''}" ${live ? `data-a="cast" data-v="${id}"` : 'disabled'} title="${esc(cname(c))}: ${esc(ctext(c))}">
+      ${cardIcon(id, 'md')}<span class="spell-name">${esc(cname(c))}</span></button>`;
   };
   const potion = (id) => {
     const c = D.cartas[id];
@@ -469,8 +524,8 @@ function renderMesa() {
     const prep = !ready && canPrepare(id);
     return `<button class="spell-ico potion ${c.ataque ? 'attack' : ''} ${live || prep ? 'live' : ''} ${ready ? '' : 'unready'}"
       ${live ? `data-a="cast" data-v="${id}"` : prep ? `data-a="prep" data-v="${id}"` : 'disabled'}
-      title="${ready ? 'Preparada' : prep ? 'Pulsa para prepararla' : 'Sin preparar'}: ${esc(c.texto)}">
-      ${cardIcon(id, 'md')}<span class="spell-name">${esc(c.nombre)}</span>${prep ? `<span class="prep-cost">${costHtml(c.coste)}</span>` : ''}</button>`;
+      title="${esc(cname(c))} · ${ready ? L('Preparada', 'Brewed') : prep ? L('Pulsa para prepararla', 'Tap to brew it') : L('Sin preparar', 'Not brewed')}: ${esc(ctext(c))}">
+      ${cardIcon(id, 'md')}<span class="spell-name">${esc(cname(c))}</span>${prep ? `<span class="prep-cost">${costHtml(c.coste)}</span>` : ''}</button>`;
   };
   const known = (tipo) => p.aprendidas.filter((id) => D.cartas[id].tipo === tipo);
   const magic = [...['chispa', 'burbuja', ...known('hechizo')].map(spell), ...known('pocion').map(potion)].join('');
@@ -478,34 +533,34 @@ function renderMesa() {
     <div class="m-hero">
       <div class="m-name-row">
       <b class="m-name">${esc(p.name)}</b>${prestigeHtml(p.puntos, '', p.druida)}
-      <span class="magic-dot ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Te queda la magia de este turno' : 'Ya has usado tu magia en este turno'}">✦</span>${p.dormido ? '<span title="Dormido: solo 1 ingrediente">💤</span>' : ''}
+      <span class="magic-dot ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? L('Te queda la magia de este turno', 'You still have this turn\'s magic') : L('Ya has usado tu magia en este turno', 'You already used your magic this turn')}">✦</span>${p.dormido ? `<span title="${L('Dormido: solo 1 ingrediente', 'Asleep: only 1 ingredient')}">💤</span>` : ''}
     </div>
       ${druidPortrait(p.druida, 'hero')}
       <button class="m-pet-pic ${petUsable() ? 'live' : ''} ${petOn ? 'on' : ''}" data-a="habilidad" ${petUsable() ? '' : 'disabled'}
-        title="${esc(pet.nombre)} · ${esc(pet.don)}: ${esc(pet.texto)}">${petPortrait(p.mascota, 'free')}</button>
+        title="${esc(petName(pet))} · ${esc(petDon(pet))}: ${esc(L(pet.texto, pet.textoEn))}">${petPortrait(p.mascota, 'free')}</button>
     </div>
-    <section class="m-card"><h4>Ingredientes <span class="h4-n">${sum(p.reserva)}/${D.limiteReserva}</span></h4><div class="ing-row">${ings}</div></section>
-    <section class="m-card"><h4>Aprendiendo</h4>${studyHtml(p, t)}</section>
-    <section class="m-card"><h4>Magia</h4><div class="spell-row">${magic}</div></section>`;
+    <section class="m-card"><h4>${L('Ingredientes', 'Ingredients')} <span class="h4-n">${sum(p.reserva)}/${D.limiteReserva}</span></h4><div class="ing-row">${ings}</div></section>
+    <section class="m-card"><h4>${L('Aprendiendo', 'Learning')}</h4>${studyHtml(p, t)}</section>
+    <section class="m-card"><h4>${L('Magia', 'Magic')}</h4><div class="spell-row">${magic}</div></section>`;
 }
 
 function renderRivals() {
   const rivals = S.players.filter((p) => p.id !== S.me);
   $('rivals').innerHTML = rivals.map((p) => {
     const active = S.turn && S.turn.pid === p.id;
-    const learned = p.aprendidas.map((id) => `<span class="learned ${D.cartas[id].ataque ? 'attack' : ''} ${D.cartas[id].tipo === 'pocion' && !p.pociones.includes(id) ? 'unready' : ''}" title="${esc(D.cartas[id].nombre)}${p.pociones.includes(id) ? ' (preparada)' : ''}: ${esc(D.cartas[id].texto)}">
+    const learned = p.aprendidas.map((id) => `<span class="learned ${D.cartas[id].ataque ? 'attack' : ''} ${D.cartas[id].tipo === 'pocion' && !p.pociones.includes(id) ? 'unready' : ''}" title="${esc(cname(D.cartas[id]))}${p.pociones.includes(id) ? L(' (preparada)', ' (brewed)') : ''}: ${esc(ctext(D.cartas[id]))}">
       ${cardIcon(id, 'sm')}</span>`).join('');
-    const star = `<span class="magic-dot ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? 'Le queda la magia de este turno' : 'Ya ha usado su magia en este turno'}">✦</span>`;
-    const status = `${p.connected || p.bot ? '' : 'desconectado'}${S.startId === p.id ? `${p.connected || p.bot ? '' : ' · '}abre la ronda` : ''}`;
+    const star = `<span class="magic-dot ${p.magiaLibre ? 'on' : ''}" title="${p.magiaLibre ? L('Le queda la magia de este turno', 'Still has this turn\'s magic') : L('Ya ha usado su magia en este turno', 'Already used their magic this turn')}">✦</span>`;
+    const status = `${p.connected || p.bot ? '' : L('desconectado', 'offline')}${S.startId === p.id ? `${p.connected || p.bot ? '' : ' · '}${L('abre la ronda', 'opens the round')}` : ''}`;
     return `<div class="rival ${active ? 'active' : ''}">
       <div class="r-head">
         ${druidPortrait(p.druida, 'rsm')}
-        <span class="r-pet" title="${esc(D.mascotas[p.mascota].nombre)}: ${esc(D.mascotas[p.mascota].texto)}">${petPortrait(p.mascota, 'free')}</span>
+        <span class="r-pet" title="${esc(petName(D.mascotas[p.mascota]))}: ${esc(L(D.mascotas[p.mascota].texto, D.mascotas[p.mascota].textoEn))}">${petPortrait(p.mascota, 'free')}</span>
         <div class="r-who"><span class="r-name"><b title="${esc(p.name)}">${esc([...p.name].slice(0, 2).join(''))}</b>${star}</span>
           ${status ? `<span class="r-sub">${status}</span>` : ''}</div>
         ${prestigeHtml(p.puntos, '', p.druida)}
       </div>
-      ${learned ? `<div class="r-learned">${learned}</div>` : '<div class="r-learned none-txt">Nada aprendido</div>'}
+      ${learned ? `<div class="r-learned">${learned}</div>` : `<div class="r-learned none-txt">${L('Nada aprendido', 'Nothing learned')}</div>`}
     </div>`;
   }).join('');
 }
@@ -523,12 +578,12 @@ function renderLog() {
   if (!S) return;
   const last = S.log.length ? S.log[S.log.length - 1].n : -1;
   if (last !== ui.lastLog) {
-    $('log').innerHTML = S.log.map((l) => `<p class="${l.text.startsWith('—') ? 'turn' : ''}">${esc(l.text)}</p>`).join('');
+    $('log').innerHTML = S.log.map((l) => `<p class="${l.text.startsWith('—') ? 'turn' : ''}">${esc(L(l.text, l.en || l.text))}</p>`).join('');
     $('log').scrollTop = $('log').scrollHeight;
     // Avisos de lo que hacen los demás.
     if (ui.lastLog >= 0) {
       const fresh = S.log.filter((l) => l.n > ui.lastLog && /^[⚡🫧✦💤]/u.test(l.text));
-      if (fresh.length) toast(fresh[fresh.length - 1].text);
+      if (fresh.length) { const f = fresh[fresh.length - 1]; toast(L(f.text, f.en || f.text)); }
     }
     ui.lastLog = last;
   }
@@ -540,7 +595,7 @@ function picker(field, values, current, { multi = false } = {}) {
   return values.map((v, i) => {
     const on = multi ? false : current === v.value;
     return `<button class="pick ${on ? 'on' : ''}" data-a="${multi ? 'mAdd' : 'm'}" data-f="${field}" data-v="${esc(v.value)}" data-i="${i}">${v.html}</button>`;
-  }).join('') || '<span class="muted small">nada disponible</span>';
+  }).join('') || `<span class="muted small">${L('nada disponible', 'nothing available')}</span>`;
 }
 
 // Ingredientes de mi reserva disponibles (descontando lo ya elegido y un coste).
@@ -569,78 +624,78 @@ function renderModal() {
   } else if (m.kind === 'info') {
     const known = p.aprendidas.includes(m.id);
     const can = canPickCard() && !known && S.catalogo[m.id] > 0;
-    body = cardHtml(m.id, { cls: 'big', footer: `<div class="kfoot"><span class="muted small">${S.catalogo[m.id] || 0} copias en el catálogo</span>${known ? '<span class="tag ok">aprendido</span>' : ''}</div>` });
-    ok = can ? 'Estudiar este conocimiento' : '';
+    body = cardHtml(m.id, { cls: 'big', footer: `<div class="kfoot"><span class="muted small">${S.catalogo[m.id] || 0} ${L('copias en el catálogo', 'copies in the catalogue')}</span>${known ? `<span class="tag ok">${L('aprendido', 'learned')}</span>` : ''}</div>` });
+    ok = can ? L('Estudiar este conocimiento', 'Study this knowledge') : '';
   } else if (m.kind === 'final') {
     const rank = [...S.players].sort((a, b) => b.puntos - a.puntos);
-    body = `<h2 class="ptitle">${S.winners.length > 1 ? 'Victoria compartida' : `¡${esc(pl(S.winners[0]).name)} gana!`}</h2>
-      <ol class="final">${rank.map((x) => `<li>${druidPortrait(x.druida, 'sm')} <b>${esc(x.name)}</b> — ${x.puntos} de Prestigio
-        <div class="small muted">${x.aprendidas.map((id) => esc(card(id).nombre)).join(', ') || 'nada aprendido'}</div></li>`).join('')}</ol>`;
-    ok = 'Nueva partida';
+    body = `<h2 class="ptitle">${S.winners.length > 1 ? L('Victoria compartida', 'Shared victory') : L(`¡${esc(pl(S.winners[0]).name)} gana!`, `${esc(pl(S.winners[0]).name)} wins!`)}</h2>
+      <ol class="final">${rank.map((x) => `<li>${druidPortrait(x.druida, 'sm')} <b>${esc(x.name)}</b> — ${x.puntos} ${L('de Prestigio', 'Prestige')}
+        <div class="small muted">${x.aprendidas.map((id) => esc(cname(card(id)))).join(', ') || L('nada aprendido', 'nothing learned')}</div></li>`).join('')}</ol>`;
+    ok = L('Nueva partida', 'New game');
   } else if (m.kind === 'memoria') {
     const r = freeRes(m.list);
     const left = { ...pend };
     for (const t of m.list) left[t] -= 1;
-    body = `<h3>Memoria</h3><p>Coloca hasta 2 ingredientes de tu reserva que encajen en tu receta.</p>
+    body = `<h3>${L('Memoria', 'Memory')}</h3><p>${L('Coloca hasta 2 ingredientes de tu reserva que encajen en tu receta.', 'Place up to 2 ingredients from your reserve that fit your recipe.')}</p>
       <div class="picked">${m.list.map((t, i) => `<button class="pick on" data-a="mDel" data-f="list" data-i="${i}">${tok(t)}</button>`).join('') || '<span class="muted">—</span>'}</div>
       ${m.list.length < 2 ? `<div class="picks">${picker('list', resValues(r, (t) => left[t] > 0), null, { multi: true })}</div>` : ''}`;
-    ok = m.list.length ? 'Beber Memoria' : '';
+    ok = m.list.length ? L('Beber Memoria', 'Drink Memory') : '';
   } else if (m.kind === 'cambio') {
     const left = { ...pend };
     if (m.wComo) left[m.wComo] -= 1;
     if (m.match) left[m.match] -= 1;
     const pendValues = ING().filter((t) => pend[t] > 0 && (t === m.wComo || left[t] > 0)).map((t) => ({ value: t, html: emptyTok(t) }));
-    body = `<h3>Cambio <span class="small">(paga ${tok('eter', { cls: 'xs' })})</span></h3>
-      <p>Coloca hasta 2 ingredientes en tu receta. Uno puede ser comodín.</p>
-      <h4>Comodín (opcional): este ingrediente…</h4><div class="picks">${picker('wTipo', resValues(freeRes(['eter', m.match]), (t) => true), m.wTipo)}</div>
-      <h4>…ocupa este espacio</h4><div class="picks">${picker('wComo', pendValues, m.wComo)}</div>
-      <h4>Ingrediente que coincide (opcional)</h4><div class="picks">${picker('match', resValues(freeRes(['eter', m.wTipo]), (t) => (pend[t] || 0) - (m.wComo === t ? 1 : 0) > 0), m.match)}</div>`;
-    ok = (m.wTipo && m.wComo) || m.match ? 'Lanzar Cambio' : '';
+    body = `<h3>${L('Cambio', 'Change')} <span class="small">(${L('paga', 'pay')} ${tok('eter', { cls: 'xs' })})</span></h3>
+      <p>${L('Coloca hasta 2 ingredientes en tu receta. Uno puede ser comodín.', 'Place up to 2 ingredients on your recipe. One may be a wildcard.')}</p>
+      <h4>${L('Comodín (opcional): este ingrediente…', 'Wildcard (optional): this ingredient…')}</h4><div class="picks">${picker('wTipo', resValues(freeRes(['eter', m.match]), (t) => true), m.wTipo)}</div>
+      <h4>${L('…ocupa este espacio', '…fills this slot')}</h4><div class="picks">${picker('wComo', pendValues, m.wComo)}</div>
+      <h4>${L('Ingrediente que coincide (opcional)', 'Matching ingredient (optional)')}</h4><div class="picks">${picker('match', resValues(freeRes(['eter', m.wTipo]), (t) => (pend[t] || 0) - (m.wComo === t ? 1 : 0) > 0), m.match)}</div>`;
+    ok = (m.wTipo && m.wComo) || m.match ? L('Lanzar Cambio', 'Cast Change') : '';
   } else if (m.kind === 'suerte') {
     const need = Math.min(3, S.claro.filter(Boolean).length);
     const slots = S.claro.map((c, i) => (c ? `<button class="pick ${m.slots.includes(i) ? 'on' : ''}" data-a="mSlot" data-v="${i}">${tok(c)}</button>` : '')).join('');
     const after = { ...p.reserva };
     for (const i of m.slots) after[S.claro[i]] += 1;
-    body = `<h3>Suerte</h3><p>Recoge ${need} ingredientes de El Claro (${m.slots.length}/${need}).</p>
+    body = `<h3>${L('Suerte', 'Luck')}</h3><p>${L(`Recoge ${need} ingredientes de El Claro`, `Take ${need} ingredients from the Clearing`)} (${m.slots.length}/${need}).</p>
       <div class="picks">${slots}</div>
-      ${p.estudio ? `<h4>Después, coloca uno en tu receta (opcional)</h4><div class="picks">${picker('colocar', resValues(after, (t) => pend[t] > 0), m.colocar)}</div>` : ''}`;
-    ok = m.slots.length === need ? 'Beber Suerte' : '';
+      ${p.estudio ? `<h4>${L('Después, coloca uno en tu receta (opcional)', 'Then place one on your recipe (optional)')}</h4><div class="picks">${picker('colocar', resValues(after, (t) => pend[t] > 0), m.colocar)}</div>` : ''}`;
+    ok = m.slots.length === need ? L('Beber Suerte', 'Drink Luck') : '';
   } else if (m.kind === 'robo') {
     const target = pl(S.turn.pid);
-    body = `<h3>Robo <span class="small">(paga ${tok('umbra', { cls: 'xs' })})</span></h3><p>Elige qué ingrediente robas a ${esc(target.name)}.</p>
+    body = `<h3>${L('Robo', 'Steal')} <span class="small">(${L('paga', 'pay')} ${tok('umbra', { cls: 'xs' })})</span></h3><p>${L(`Elige qué ingrediente robas a ${esc(target.name)}.`, `Choose which ingredient to steal from ${esc(target.name)}.`)}</p>
       <div class="picks">${picker('tipo', resValues(target.reserva), m.tipo)}</div>
-      ${m.tipo && pend[m.tipo] > 0 ? `<label class="check"><input type="checkbox" data-a="mCheck" data-f="colocar" ${m.colocar ? 'checked' : ''}> Colocarlo directamente en mi receta</label>` : ''}`;
-    ok = m.tipo ? 'Lanzar Robo' : '';
+      ${m.tipo && pend[m.tipo] > 0 ? `<label class="check"><input type="checkbox" data-a="mCheck" data-f="colocar" ${m.colocar ? 'checked' : ''}>${L(' Colocarlo directamente en mi receta', ' Place it straight on my recipe')}</label>` : ''}`;
+    ok = m.tipo ? L('Lanzar Robo', 'Cast Steal') : '';
   } else if (m.kind === 'lio') {
     const target = pl(S.turn.pid);
     const swaps = S.lio.map((s, i) => ({ value: String(i), html: `<span class="swap">${tok(s.tipo, { cls: 'sm' })} ⇄ ${tok(S.claro[s.slot], { cls: 'sm' })}</span>` }));
     const r = freeRes(['umbra']);
-    body = `<h3>Lío <span class="small">(paga ${tok('umbra', { cls: 'xs' })})</span></h3>
-      <p>Cambia un ingrediente que ${esc(target.name)} necesita (izquierda) por uno de El Claro que no le sirve (derecha).</p>
+    body = `<h3>${L('Lío', 'Mix-up')} <span class="small">(${L('paga', 'pay')} ${tok('umbra', { cls: 'xs' })})</span></h3>
+      <p>${L(`Cambia un ingrediente que ${esc(target.name)} necesita (izquierda) por uno de El Claro que no le sirve (derecha).`, `Swap an ingredient ${esc(target.name)} needs (left) for one from the Clearing that is useless to them (right).`)}</p>
       <div class="picks">${picker('swap', swaps, m.swap)}</div>
-      ${p.estudio ? `<h4>Si no te bloquean: coloca uno de tu reserva como comodín (opcional)</h4>
+      ${p.estudio ? `<h4>${L('Si no te bloquean: coloca uno de tu reserva como comodín (opcional)', 'If not blocked: place one of yours as a wildcard (optional)')}</h4>
         <div class="picks">${picker('bTipo', resValues(r), m.bTipo)}</div>
-        ${m.bTipo ? `<h4>…en este espacio</h4><div class="picks">${picker('bComo', ING().filter((t) => pend[t] > 0).map((t) => ({ value: t, html: emptyTok(t) })), m.bComo)}</div>` : ''}` : ''}`;
-    ok = m.swap !== null && (!m.bTipo || m.bComo) ? 'Lanzar Lío' : '';
+        ${m.bTipo ? `<h4>${L('…en este espacio', '…in this slot')}</h4><div class="picks">${picker('bComo', ING().filter((t) => pend[t] > 0).map((t) => ({ value: t, html: emptyTok(t) })), m.bComo)}</div>` : ''}` : ''}`;
+    ok = m.swap !== null && (!m.bTipo || m.bComo) ? L('Lanzar Lío', 'Cast Mix-up') : '';
   } else if (m.kind === 'sueno') {
-    body = `<h3>Sueño</h3><p>${esc(pl(S.turn.pid).name)} solo podrá colocar 1 ingrediente en su estudio.</p>
-      ${p.estudio ? `<h4>Si no te bloquean: coloca un ingrediente válido de tu reserva (opcional)</h4>
+    body = `<h3>${L('Sueño', 'Sleep')}</h3><p>${L(`${esc(pl(S.turn.pid).name)} solo podrá colocar 1 ingrediente en su estudio.`, `${esc(pl(S.turn.pid).name)} may place only 1 ingredient in their study.`)}</p>
+      ${p.estudio ? `<h4>${L('Si no te bloquean: coloca un ingrediente válido de tu reserva (opcional)', 'If not blocked: place a valid ingredient of yours (optional)')}</h4>
       <div class="picks">${picker('bTipo', resValues(p.reserva, (t) => pend[t] > 0), m.bTipo)}</div>` : ''}`;
-    ok = 'Beber Sueño';
+    ok = L('Beber Sueño', 'Drink Sleep');
   } else if (m.kind === 'liebre') {
-    body = `<h3>🐇 Liebre</h3><p>Tu ${N(m.tipo)} contará como…</p>
+    body = `<h3>🐇 ${L('Liebre', 'Hare')}</h3><p>${L(`Tu ${N(m.tipo)} contará como…`, `Your ${N(m.tipo)} will count as…`)}</p>
       <div class="picks">${picker('como', ING().filter((t) => t !== m.tipo && pend[t] > 0).map((t) => ({ value: t, html: emptyTok(t) })), m.como)}</div>`;
-    ok = m.como ? 'Transformar y colocar' : '';
+    ok = m.como ? L('Transformar y colocar', 'Transform and place') : '';
   } else if (m.kind === 'descartar') {
     const extra = sum(p.reserva) - D.limiteReserva;
     const rows = ING().filter((t) => p.reserva[t] > 0).map((t) => `<div class="drow">${tok(t, { n: p.reserva[t] })}
       <button class="btn tiny" data-a="dMinus" data-v="${t}">−</button><b>${m.ings[t]}</b><button class="btn tiny" data-a="dPlus" data-v="${t}">+</button></div>`).join('');
-    body = `<h3>Devolver a la bolsa</h3><p>Al final del turno solo puedes conservar ${D.limiteReserva}. Devuelve ${extra} (${sum(m.ings)}/${extra}).</p>${rows}`;
-    ok = sum(m.ings) === extra ? 'Devolver' : '';
+    body = `<h3>${L('Devolver a la bolsa', 'Return to the bag')}</h3><p>${L(`Al final del turno solo puedes conservar ${D.limiteReserva}. Devuelve ${extra}`, `At the end of your turn you may keep only ${D.limiteReserva}. Return ${extra}`)} (${sum(m.ings)}/${extra}).</p>${rows}`;
+    ok = sum(m.ings) === extra ? L('Devolver', 'Return') : '';
   }
   const closable = m.kind !== 'descartar';
   el.innerHTML = `<div class="modal-card ${{ rules: 'book-card', info: 'framed', final: 'scroll-card' }[m.kind] || ''}">
-    ${closable ? '<button class="modal-close" data-a="closeModal" aria-label="Cerrar">×</button>' : ''}
+    ${closable ? `<button class="modal-close" data-a="closeModal" aria-label="${L('Cerrar', 'Close')}">×</button>` : ''}
     ${body}
     ${ok ? `<div class="row end"><button class="btn primary" data-a="mOk">${ok}</button></div>` : ''}
   </div>`;
@@ -673,15 +728,15 @@ function modalOk() {
 function rulesHtml() {
   const knowledge = ['chispa', 'burbuja', ...Object.keys(D.cartas)].map((id) => {
     const c = card(id);
-    const req = c.req ? ING().map((t) => tok(t, { cls: 'xs' }).repeat(c.req[t] || 0)).join('') : '<i>inicial</i>';
+    const req = c.req ? ING().map((t) => tok(t, { cls: 'xs' }).repeat(c.req[t] || 0)).join('') : `<i>${L('inicial', 'starting')}</i>`;
+    const tipo = c.tipo === 'pocion' ? L('poción', 'potion') : L('hechizo', 'spell');
     return `<div class="rule-card ${c.ataque ? 'attack' : ''}">${cardIcon(id, 'md')}
-      <div><b>${esc(c.nombre)}</b> <span class="small muted">${c.tipo === 'pocion' ? 'poción' : 'hechizo'}${c.ataque ? ' · ataque' : ''}${c.puntos ? ` · ${c.puntos} pts` : ''}</span>
-        <div class="small">Aprender: ${req} · ${c.tipo === 'pocion' ? 'Preparar' : 'Usar'}: ${costHtml(c.coste)}</div>
-        <div class="small">${esc(c.texto)}</div></div></div>`;
+      <div><b>${esc(cname(c))}</b> <span class="small muted">${tipo}${c.ataque ? L(' · ataque', ' · attack') : ''}${c.puntos ? ` · ${c.puntos} ${L('pts', 'pts')}` : ''}</span>
+        <div class="small">${L('Aprender', 'Learn')}: ${req} · ${c.tipo === 'pocion' ? L('Preparar', 'Brew') : L('Usar', 'Use')}: ${costHtml(c.coste)}</div>
+        <div class="small">${esc(ctext(c))}</div></div></div>`;
   }).join('');
-  const pets = Object.values(D.mascotas).map((m) => `<li><b>${esc(m.nombre)}</b> (${m.usos} ${m.usos > 1 ? 'usos' : 'uso'}): ${esc(m.texto)}</li>`).join('');
-  return `<div class="book">
-    <section class="page left">
+  const pets = Object.values(D.mascotas).map((m) => `<li><b>${esc(petName(m))}</b> (${m.usos} ${m.usos > 1 ? L('usos', 'uses') : L('uso', 'use')}): ${esc(L(m.texto, m.textoEn || m.texto))}</li>`).join('');
+  const es = `
       <h2 class="ptitle">Cómo se juega</h2>
       <p>Gana quien tenga más <b>Prestigio</b> al terminar la ronda ${D.rondas}. Solo se consigue aprendiendo conocimientos (3 o 4 puntos).</p>
       <h3>Tu turno</h3>
@@ -692,10 +747,24 @@ function rulesHtml() {
         <li>Al final del turno conservas como máximo ${D.limiteReserva} ingredientes.</li></ol>
       <h3>Magia</h3>
       <p>Un efecto mágico por jugador <b>en el turno de cada jugador</b>, también en el tuyo. Chispa es gratis, una vez en tu turno, y no gasta tu magia. Los hechizos se aprenden para siempre; cada poción preparada sirve una vez.</p>
-      <h3>Mascotas</h3><ul>${pets}</ul>
+      <h3>Mascotas</h3>`;
+  const en = `
+      <h2 class="ptitle">How to play</h2>
+      <p>Whoever has the most <b>Prestige</b> at the end of round ${D.rondas} wins. You only earn it by learning knowledge (3 or 4 points).</p>
+      <h3>Your turn</h3>
+      <ol><li><b>Gather:</b> 3 ingredients from the Clearing (refilled from the bag).</li>
+        <li><b>Attacks:</b> rivals may cast <i>one</i> attack on you. You defend with Bubble (2 Lumen).</li>
+        <li><b>Study:</b> one recipe at a time; place up to 2 ingredients that fit. When it is complete you learn it and the ingredients go back to the bag. A newly learned potion comes brewed for free.</li>
+        <li><b>Brew:</b> 1 known potion by paying its cost (max. 2 brewed, different ones).</li>
+        <li>At the end of your turn you keep at most ${D.limiteReserva} ingredients.</li></ol>
+      <h3>Magic</h3>
+      <p>One magic effect per player <b>on each player's turn</b>, yours included. Spark is free, once on your turn, and does not use your magic. Spells are learned forever; each brewed potion works once.</p>
+      <h3>Pets</h3>`;
+  return `<div class="book">
+    <section class="page left">${L(es, en)}<ul>${pets}</ul>
     </section>
     <section class="page right">
-      <h2 class="ptitle">Conocimientos</h2>
+      <h2 class="ptitle">${L('Conocimientos', 'Knowledge')}</h2>
       ${knowledge}
     </section>
   </div>`;
@@ -712,7 +781,7 @@ const H = {
   copy: () => {
     const i = $('shareLink');
     i.select();
-    navigator.clipboard?.writeText(i.value).then(() => toast('Enlace copiado'), () => {});
+    navigator.clipboard?.writeText(i.value).then(() => toast(L('Enlace copiado', 'Link copied')), () => {});
   },
   leave: () => {
     saveSession(null);
@@ -764,7 +833,7 @@ const H = {
   },
   cancelMode: () => { ui.mode = null; ui.chispaTipo = null; render(); },
   elegir: (v) => send('elegir', { carta: v }),
-  abandonar: () => { if (confirm('¿Abandonar la receta? Los ingredientes colocados vuelven a la bolsa.')) send('abandonar'); },
+  abandonar: () => { if (confirm(L('¿Abandonar la receta? Los ingredientes colocados vuelven a la bolsa.', 'Abandon the recipe? The placed ingredients go back to the bag.'))) send('abandonar'); },
   finEstudio: () => send('fin_estudio'),
   finTurno: () => send('fin_turno'),
   openDescartar: () => { ui.modal = { kind: 'descartar', ings: { eter: 0, umbra: 0, lumen: 0, raiz: 0 } }; render(); },
@@ -850,6 +919,8 @@ $('rulesBtn').onclick = () => {
   ui.modal = { kind: 'rules' };
   renderModal();
 };
+$('rulesTopBtn').onclick = $('rulesBtn').onclick;
+$('langBtn').onclick = () => setLang(LANG === 'en' ? 'es' : 'en');
 $('logBtn').onclick = () => { ui.logOpen = !ui.logOpen; renderLog(); };
 $('chatForm').onsubmit = (e) => {
   e.preventDefault();
@@ -877,7 +948,7 @@ function showHome() {
   $('logBtn').classList.add('hidden');
   $('sub').textContent = '';
   const sess = S && loadSession();
-  $('backRow').innerHTML = sess ? `<button class="btn green" data-a="back">Volver a la partida ${esc(sess.code)}</button>` : '';
+  $('backRow').innerHTML = sess ? `<button class="btn green" data-a="back">${L('Volver a la partida', 'Back to game')} ${esc(sess.code)}</button>` : '';
   const code = new URLSearchParams(location.search).get('sala');
   if (code) $('codeInput').value = code.toUpperCase();
   try { $('nameInput').value = localStorage.getItem('druidas.name') || ''; } catch { /* sin almacenamiento */ }
@@ -885,7 +956,7 @@ function showHome() {
 
 function enter(r) {
   if (!r || !r.ok) {
-    $('homeError').textContent = (r && r.error) || 'No se pudo conectar';
+    $('homeError').textContent = (r && L(r.error, r.errorEn || r.error)) || L('No se pudo conectar', 'Could not connect');
     return false;
   }
   ui.home = false;
@@ -903,7 +974,7 @@ function myName() {
 $('createBtn').onclick = () => socket.emit('create', { name: myName() }, enter);
 $('joinBtn').onclick = () => {
   const code = $('codeInput').value.trim().toUpperCase();
-  if (code.length !== 4) return void ($('homeError').textContent = 'Escribe el código de 4 letras');
+  if (code.length !== 4) return void ($('homeError').textContent = L('Escribe el código de 4 letras', 'Type the 4-letter code'));
   socket.emit('join', { code, name: myName() }, enter);
 };
 $('codeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('joinBtn').click(); });
@@ -916,7 +987,7 @@ socket.on('state', (st) => {
 socket.on('kicked', () => {
   saveSession(null);
   S = null;
-  toast('Te han quitado de la sala');
+  toast(L('Te han quitado de la sala', 'You were removed from the room'));
   showHome();
 });
 socket.on('connect', () => {
@@ -939,9 +1010,12 @@ setInterval(() => {
   if (el && S && S.turn && S.turn.restante !== null) el.textContent = `${Math.ceil(remaining() / 1000)} s`;
 }, 250);
 
+applyStaticTexts();
+
 fetch('/api/datos').then((r) => r.json()).then((d) => {
   D = d;
   document.body.classList.toggle('has-table-art', !!D.img.ui.mesa);
   for (const el of [$('mesa'), $('rivals')]) el.classList.toggle('vertical', !!D.img.ui['mesa-vertical']);
+  applyStaticTexts();
   render();
 });

@@ -12,13 +12,15 @@
 <body>
   <header class="topbar">
     <div class="titleblock">
-      <div class="brand">Escuela de Magia</div>
+      <div id="brand" class="brand">Escuela de Magia</div>
       <div id="sub" class="sub">El bosque de los druidas</div>
     </div>
     <div id="roundPill" class="round-pill hidden"></div>
     <div id="prompt" class="prompt hidden"></div>
     <div class="top-actions">
-      <button id="menuBtn" class="btn green menu-btn" aria-haspopup="true" aria-expanded="false"aria-label="Menú" title="Menú"><span class="burger"><i></i><i></i><i></i></span></button>
+      <button id="rulesTopBtn" class="btn green menu-btn round-btn" aria-label="Reglas" title="Reglas">📖</button>
+      <button id="langBtn" class="btn green menu-btn round-btn lang-btn" aria-label="English" title="English">EN</button>
+      <button id="menuBtn" class="btn green menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Menú" title="Menú"><span class="burger"><i></i><i></i><i></i></span></button>
       <div id="menu" class="menu hidden" role="menu">
         <button id="rulesBtn" class="menu-item" role="menuitem">📖 Reglas</button>
         <button id="logBtn" class="menu-item hidden" role="menuitem">📜 Crónica y chat</button>
@@ -31,11 +33,11 @@
     <div class="home-card book-home">
       <div class="home-page left">
         <div class="home-title">
-          <h1>Escuela de Magia</h1>
-          <p class="subtitle">El bosque de los druidas</p>
+          <h1 id="homeH1">Escuela de Magia</h1>
+          <p id="homeSub" class="subtitle">El bosque de los druidas</p>
         </div>
         <div class="home-orn" aria-hidden="true"></div>
-        <p class="home-intro">Recoge ingredientes en El Claro, aprende hechizos y pociones, y consigue más Prestigio que los demás aprendices.</p>
+        <p id="homeIntro" class="home-intro">Recoge ingredientes en El Claro, aprende hechizos y pociones, y consigue más Prestigio que los demás aprendices.</p>
       </div>
       <div class="home-page right">
         <div id="backRow"></div>
@@ -63,11 +65,11 @@
   </main>
 
   <aside id="journal" class="journal hidden">
-    <div class="journal-head"><h3>Crónica</h3><button class="btn tiny" data-a="closeLog">✕</button></div>
+    <div class="journal-head"><h3 id="journalTitle">Crónica</h3><button class="btn tiny" data-a="closeLog">✕</button></div>
     <div id="log" class="log"></div>
     <form id="chatForm" class="chat-row">
       <input id="chatInput" class="input" maxlength="200" placeholder="Escribe al grupo…" autocomplete="off">
-      <button class="btn small">Enviar</button>
+      <button id="chatSend" class="btn small">Enviar</button>
     </form>
   </aside>
 

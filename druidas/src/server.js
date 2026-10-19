@@ -129,7 +129,7 @@ io.on('connection', (socket) => {
 
   socket.on('join', ({ code, name, token } = {}, cb) => {
     const room = rooms.get(String(code || '').toUpperCase().trim());
-    if (!room) return reply(cb, { ok: false, error: 'No existe ninguna sala con ese código' });
+    if (!room) return reply(cb, { ok: false, error: 'No existe ninguna sala con ese código', errorEn: 'There is no room with that code' });
     let pid = token && room.tokens.get(token);
     if (pid && !room.game.players.some((p) => p.id === pid)) pid = null;
     if (!pid) {
@@ -139,7 +139,7 @@ io.on('connection', (socket) => {
         token = crypto.randomUUID();
         room.tokens.set(token, pid);
       } catch (e) {
-        return reply(cb, { ok: false, error: e.message });
+        return reply(cb, { ok: false, error: e.message, errorEn: e.en || e.message });
       }
     }
     attach(room, socket, pid, token);
@@ -149,13 +149,13 @@ io.on('connection', (socket) => {
 
   socket.on('act', ({ type, data } = {}, cb) => {
     const room = rooms.get(socket.data && socket.data.room);
-    if (!room) return reply(cb, { ok: false, error: 'No estás en ninguna sala' });
+    if (!room) return reply(cb, { ok: false, error: 'No estás en ninguna sala', errorEn: 'You are not in a room' });
     try {
       room.game.act(socket.data.playerId, type, data);
       reply(cb, { ok: true });
     } catch (e) {
       if (!(e instanceof GameError)) console.error(e);
-      reply(cb, { ok: false, error: e instanceof GameError ? e.message : 'Error interno' });
+      reply(cb, { ok: false, error: e instanceof GameError ? e.message : 'Error interno', errorEn: e instanceof GameError ? e.en : 'Internal error' });
     }
     // Si alguien fue expulsado, cerrar sus conexiones.
     for (const [pid, set] of room.sockets) {

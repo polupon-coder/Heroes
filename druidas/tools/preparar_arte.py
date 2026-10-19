@@ -169,6 +169,14 @@ def simbolos():
     save(fit(cut_background(load(23), thr=34, feather=1.5), 300), 'ui', 'hechizo', q=88)
 
 
+def retratos():
+    # Caras: los cuatro cuadrantes completos de la hoja de retratos.
+    sheet = load(6)
+    w, h = sheet.size
+    for (qx, qy), name in {(0, 0): 'mostaza', (1, 0): 'azul', (0, 1): 'verde', (1, 1): 'lila'}.items():
+        save(sheet.crop((qx * w // 2, qy * h // 2, (qx + 1) * w // 2, (qy + 1) * h // 2)), 'retratos', name, q=86)
+
+
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
@@ -188,4 +196,5 @@ if __name__ == '__main__':
         simbolos()
     if 'druidas' in que:
         druidas_recortados()
+        retratos()
     print('listo')

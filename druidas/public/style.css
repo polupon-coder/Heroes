@@ -278,9 +278,11 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 /* el icono va dentro de un pergamino abierto (hechizo) o de un frasco (poción) */
 .kc-icon.scroll, .kc-icon.flask { width: 92px; height: 104px; background: center / contain no-repeat; }
 .kc-icon.scroll { background-image: url(img/ui/pergamino.webp); }
-.kc-icon.flask { background-image: url(img/ui/pocion-vacia.webp); }
+.kc-icon.flask { background-image: url(img/ui/pocion-vacia.webp); position: relative; width: 73px; background-size: 100% 100%; }
+/* el símbolo, en el centro del cuerpo de cristal del frasco */
+.kc-icon.flask .card-icon { position: absolute; left: 57%; top: 73%; transform: translate(-50%, -50%); }
 .kc-icon.scroll .card-icon.lg { width: 52px; height: 52px; }
-.kc-icon.flask .card-icon.lg { width: 50px; height: 50px; margin-top: 36px; }
+.kc-icon.flask .card-icon.lg { width: 44px; height: 44px; }
 
 /* El Claro: cada ingrediente sobre su propio círculo de piedras, en corro sobre el bosque */
 .ring { position: relative; width: min(100%, 760px, calc((100vh - 290px) * 1.2)); aspect-ratio: 5 / 4; }
@@ -293,7 +295,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .cslot.live { cursor: pointer; }
 .cslot.live:hover { transform: translate(-50%, -50%) scale(1.04); }
 .cslot.empty { opacity: .55; }
-.cslot .tok { width: 46%; height: auto; aspect-ratio: 1; }
+.cslot .tok { width: 46%; height: auto; aspect-ratio: 1; transform: perspective(500px) rotateX(38deg); }
 .cslot.live .tok { box-shadow: 0 0 0 3px rgba(255, 255, 255, .7), 0 4px 10px rgba(0, 0, 0, .4); }
 .cslot.on { filter: drop-shadow(0 0 10px var(--gold)) drop-shadow(0 0 4px var(--gold)); }
 .cslot.on .tok { box-shadow: 0 0 0 5px var(--gold), 0 0 24px var(--gold); }
@@ -321,7 +323,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .mesa .study-mini, .mesa .study-name b { color: #fff3d6; text-shadow: 0 1px 3px #000; }
 .mesa .study-mini.empty { color: #f1dfb8; border-color: rgba(241, 223, 184, .5); }
 .m-hero { position: relative; display: grid; justify-items: center; }
-.portrait.hero { width: 100%; height: 340px; background: none; border: 0; box-shadow: none; overflow: visible; }
+.portrait.hero { width: 100%; height: auto; aspect-ratio: 3 / 2; background: none; border: 0; box-shadow: none; overflow: visible; }
 .portrait.hero { position: relative; }
 .portrait.hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 10px; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .5)); }
 .portrait.hero.body { background: none; }
@@ -394,11 +396,11 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 .learned { position: relative; display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #fffaf0; border: 1px solid var(--parch-edge); }
 .learned.attack { border-color: #c27a64; }
 .kind-ico.badge { position: absolute; right: -6px; bottom: -6px; height: 20px; }
-.portrait.rsm { width: 76px; height: 96px; border-radius: 8px; background: #f6ecd3; }
-.portrait.rsm img, .portrait.sm img, .portrait.lg img { object-fit: contain; }
-.portrait.sm, .portrait.lg { border-radius: 8px; background: #f6ecd3; }
-.portrait.sm { width: 30px; height: 38px; }
-.portrait.lg { width: 84px; height: 106px; }
+.portrait.rsm { width: 120px; height: 80px; border-radius: 8px; }
+.portrait.rsm img, .portrait.sm img, .portrait.lg img, .portrait.full img { object-fit: cover; }
+.portrait.sm, .portrait.lg { border-radius: 8px; }
+.portrait.sm { width: 48px; height: 32px; }
+.portrait.lg { width: 120px; height: 80px; }
 
 /* cartas completas (ventana de detalle) */
 .kcard { display: flex; flex-direction: column; gap: 8px; }
@@ -427,7 +429,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   background: url(img/ui/marco-retrato.webp) center / 100% 100% no-repeat;
 }
 .portrait.xl { width: 172px; height: 218px; padding: 18px 20px; }
-.portrait.full { width: 140px; height: 178px; padding: 14px 16px; }
+.portrait.full { width: 168px; height: 112px; padding: 0; border-radius: 8px; overflow: hidden; background: none; }
 .portrait.mid {
   width: 104px; height: 132px; padding: 11px 12px; border: 0; border-radius: 0; box-shadow: none; overflow: visible;
   background: url(img/ui/marco-retrato.webp) center / 100% 100% no-repeat;
@@ -585,11 +587,11 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 @media (max-width: 1500px) {
   .table { grid-template-columns: 390px minmax(0, 1fr) 390px; }
   .topbar { padding: 10px 20px 6px; }
-  .portrait.hero { height: 240px; }
+  .portrait.hero { height: auto; }
   .pet-pic.free { width: 96px; height: 96px; }
   .tok.xl { width: 50px; height: 50px; }
 
-  .portrait.rsm { width: 64px; height: 80px; }
+  .portrait.rsm { width: 96px; height: 64px; }
 }
 @media (min-width: 1151px) and (max-height: 920px) {
   .topbar { padding-top: 6px; padding-bottom: 2px; }
@@ -602,10 +604,11 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .kc { border-width: 14px; }
   .kc-icon.scroll, .kc-icon.flask { width: 62px; height: 70px; }
   .kc-icon.scroll .card-icon.lg { width: 36px; height: 36px; }
-  .kc-icon.flask .card-icon.lg { width: 30px; height: 30px; margin-top: 24px; }
+  .kc-icon.flask { width: 49px; }
+  .kc-icon.flask .card-icon.lg { width: 30px; height: 30px; }
   .kc-name { font-size: .72em; }
   .tok.dot { width: 11px; height: 11px; }
-  .portrait.hero { height: 150px; }
+  .portrait.hero { height: auto; width: 78%; }
   .kc { padding: 6px 4px 4px; }
   .pet-pic.free { width: 74px; height: 74px; }
   .m-pet-pic { bottom: 30px; }
@@ -620,7 +623,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .spell-ico.empty { min-height: 48px; }
   .rival { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 4px 4px 6px; }
   .r-head { flex-basis: 100%; }
-  .portrait.rsm { width: 52px; height: 66px; }
+  .portrait.rsm { width: 78px; height: 52px; }
   .reserve.sm { min-height: 0; }
   .reserve.sm .tok.sm { width: 22px; height: 22px; }
   .learned { width: 32px; height: 32px; }
@@ -640,7 +643,7 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .panel { border-image-width: 24px; border-image-outset: 12px; margin: 12px 4px; }
   .claro-area { min-height: 0; }
   .ring { width: 100%; }
-  .portrait.hero { height: 220px; }
+  .portrait.hero { height: auto; }
   .tok.xl { width: 46px; height: 46px; }
   .kcs { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 8px; }
   .kc .card-icon.lg { width: 36px; height: 36px; }

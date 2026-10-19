@@ -43,7 +43,7 @@ El juego muestra dibujos provisionales hasta que estén las ilustraciones. Basta
 | --- | --- |
 | `public/img/druidas/` | `mostaza`, `azul`, `verde`, `lila` (cuerpo entero) ✅ |
 | `public/img/druidas-recorte/` | `mostaza`, `azul`, `verde`, `lila` (cuerpo entero sin fondo, para tu personaje) ✅ |
-| `public/img/retratos/` | `mostaza`, `azul`, `verde`, `lila` (cara, para los retratos redondos) ✅ |
+| `public/img/retratos/` | `mostaza`, `azul`, `verde`, `lila` (caras: cada cuadrante completo de la hoja de retratos; es la imagen de los personajes) ✅ |
 | `public/img/mascotas/` | `lechuza`, `zorro`, `liebre`, `cervatillo` ✅ |
 | `public/img/cartas/` | iconos de magia: `chispa`, `burbuja`, `robo`, `cambio`, `idea`, `lio`, `memoria`, `sueno`, `suerte`, `pensar` ✅ |
 | `public/img/ingredientes/` | `eter`, `umbra`, `lumen`, `raiz` ✅ |

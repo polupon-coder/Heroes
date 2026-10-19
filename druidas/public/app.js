@@ -393,14 +393,14 @@ function renderPrompt() {
       if (ui.mode === 'lechuza') msg = L('🦉 Pulsa el ingrediente de tu reserva que la Lechuza colocará.', '🦉 Tap the ingredient from your reserve the Owl will place.');
       const canPlace = p.estudio && !t.lechuza && t.estudiadas < t.limite && ING().some((k) => p.reserva[k] > 0 && p.estudio.pend[k] > 0);
       if (!ui.mode && !canPickCard() && !canPlace && !anyMagic()) {
-        stuck = L('No puedes colocar nada más. Termina tu estudio.', 'You cannot place anything else. Finish your study.');
+        stuck = L('No puedes colocar nada más.', 'You cannot place anything else.');
       }
       btns += `<button class="btn primary" data-a="finEstudio">${L('Terminar estudio', 'Finish study')}</button>`;
     } else if (t.paso === 'preparar') {
       msg = `${L('<b class="ph">Fase 3 · Preparar.</b>', '<b class="ph">Phase 3 · Brew.</b>')} ${t.preparada ? L('Ya has preparado una poción.', 'You have brewed a potion.') : L('Puedes preparar 1 poción que conozcas.', 'You may brew 1 potion you know.')}`;
       if (!Object.keys(D.cartas).some(canPrepare) && !anyMagic(false)) {
-        stuck = t.preparada ? L('Ya no puedes hacer nada más. Termina tu turno.', 'There is nothing else you can do. End your turn.')
-          : L('No tienes ninguna poción que puedas preparar. Termina tu turno.', 'You have no potion you can brew. End your turn.');
+        stuck = t.preparada ? L('Ya no puedes hacer nada más.', 'There is nothing else you can do.')
+          : L('No tienes ninguna poción que puedas preparar.', 'You have no potion you can brew.');
         msg = `${L('<b class="ph">Fase 3 · Preparar.</b>', '<b class="ph">Phase 3 · Brew.</b>')} ${L('No hay nada que preparar.', 'Nothing to brew.')}`;
       }
       btns = `<button class="btn primary" data-a="finTurno">${L('Terminar turno', 'End turn')}</button>`;

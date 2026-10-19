@@ -889,3 +889,24 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
   .rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: 42px; height: 42px; }
   .rivals .learned { width: 44px; height: 44px; }
 }
+
+/* cabecera minimalista: ronda y fase como texto */
+.prompt, .prompt.mine { background: none; border: 0; box-shadow: none; padding: 0; font: 500 .95em var(--text); color: rgba(244, 236, 212, .8); }
+.prompt b { font-weight: 600; color: rgba(244, 236, 212, .95); }
+.prompt .timer { background: none; color: var(--gold); padding: 0; }
+/* ventana flotante de decisión, sobre El Claro */
+.claro-area { position: relative; }
+.float-act {
+  position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%); z-index: 5;
+  max-width: min(560px, 92%); display: grid; gap: 8px; justify-items: center; text-align: center;
+  background: rgba(250, 243, 225, .96); color: var(--ink); border-radius: 14px; padding: 12px 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+}
+.float-act .btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.float-act .timer { background: var(--gold); color: #2a1c05; }
+.float-act .btn.ghost { color: var(--ink-soft); border-color: var(--line); }
+/* nombres de conocimientos sin sombreado claro */
+.catalog .kc-name { background: none !important; padding: 0; }
+/* el pergamino de la cara, del mismo ancho que los demás */
+.portrait.hero, .m-hero { width: 100% !important; margin: 0 !important; }
+.m-hero { justify-items: stretch; }

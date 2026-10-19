@@ -274,9 +274,9 @@ function renderPrompt() {
   const el = $('prompt');
   if (S.phase === 'fin') {
     const w = S.winners.map((id) => esc(pl(id).name)).join(' y ');
-    el.className = 'prompt mine';
-    el.innerHTML = `<div class="msg"><b>Fin del aprendizaje.</b> ${S.winners.length > 1 ? `Victoria compartida: ${w}.` : `¡Gana ${w}!`}</div>
-      <div class="btns"><button class="btn primary" data-a="showFinal">Resultados</button></div>`;
+    el.className = 'prompt';
+    el.innerHTML = `<div class="msg">Fin del aprendizaje · ${S.winners.length > 1 ? `Victoria compartida: ${w}` : `Gana ${w}`}</div>`;
+    ui.floatHtml = `<div class="float-act"><div class="float-msg"><b>${S.winners.length > 1 ? 'Victoria compartida' : `¡Gana ${w}!`}</b></div><div class="btns"><button class="btn primary" data-a="showFinal">Resultados</button></div></div>`;
     return;
   }
   const t = S.turn;
@@ -288,7 +288,6 @@ function renderPrompt() {
     if (t.paso === 'recoger') {
       const need = recogerNeed();
       msg = `<b>Fase 1 · Recoger.</b> Elige ${need} ingredientes de El Claro (${ui.sel.length}/${need})${ui.zorro ? ' 🦊' : ''}.`;
-      btns += `<button class="btn primary" data-a="recoger" ${ui.sel.length === need ? '' : 'disabled'}>Recoger</button>`;
     } else if (t.paso === 'ventana') {
       msg = `Tus rivales deciden si te atacan…${timerHtml()}`;
     } else if (t.paso === 'defensa') {
@@ -328,8 +327,12 @@ function renderPrompt() {
   if (ui.mode === 'pensar') msg = '✦ Pensar: pulsa un ingrediente de El Claro que necesite tu receta.';
   if (ui.mode === 'cerv') msg = '🦌 Cervatillo: pulsa el ingrediente de tu reserva que quieres colocar.';
   if (ui.mode) btns += '<button class="btn ghost" data-a="cancelMode">Cancelar</button>';
-  el.className = `prompt ${isMyTurn() || (t.paso === 'ventana' && S.ataques.length && !t.miRespuesta) ? 'mine' : ''}`;
-  el.innerHTML = `<div class="msg">${msg}</div>${btns ? `<div class="btns">${btns}</div>` : ''}`;
+  // La cabecera solo informa; lo que hay que decidir aparece en una ventana flotante sobre El Claro.
+  el.className = 'prompt';
+  el.innerHTML = `<div class="msg">${msg}</div>`;
+  // En ataques y defensa la ventana explica qué pasa; en el resto basta con el botón.
+  const explain = t.paso === 'ventana' || t.paso === 'defensa';
+  ui.floatHtml = btns ? `<div class="float-act">${explain ? `<div class="float-msg">${msg}</div>` : ''}<div class="btns">${btns}</div></div>` : '';
 }
 
 function attackDesc(a) {
@@ -420,7 +423,7 @@ function renderClaro() {
     return clickable ? `<button class="cslot live ${on ? 'on' : ''} ${hint}" data-a="claro" data-v="${i}" ${pos} title="${N(c)}">${inner}</button>`
       : `<span class="cslot" ${pos} title="${N(c)}">${inner}</span>`;
   }).join('');
-  $('claro').innerHTML = `<div class="ring">${slots}<span class="bag-pill" title="Ingredientes en la bolsa">👜 ${sum(S.bolsa)}</span></div>`;
+  $('claro').innerHTML = `<div class="ring">${slots}<span class="bag-pill" title="Ingredientes en la bolsa">👜 ${sum(S.bolsa)}</span></div>${ui.floatHtml || ''}`;
 }
 
 function studyHtml(p, t) {
@@ -739,6 +742,8 @@ const H = {
     if (ui.mode === 'pensar') return send('magia', { carta: 'pensar', slot: i }, () => { ui.mode = null; render(); });
     if (ui.sel.includes(i)) ui.sel = ui.sel.filter((x) => x !== i);
     else if (ui.sel.length < recogerNeed()) ui.sel.push(i);
+    // Al elegir el último ingrediente se recogen directamente.
+    if (isMyTurn() && S.turn.paso === 'recoger' && ui.sel.length === recogerNeed()) return send('recoger', { slots: ui.sel, zorro: ui.zorro });
     render();
   },
   recoger: () => send('recoger', { slots: ui.sel, zorro: ui.zorro }),

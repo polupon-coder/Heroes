@@ -1599,3 +1599,5 @@ body { font-size: 18px; font-weight: 600; }
     padding: 6px 26px 14px !important; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .45));
   }
 }
+/* botón de reglas: un librito abierto, del mismo trazo que el menú */
+#rulesTopBtn .book-ico { width: 20px; height: 20px; fill: none; stroke: #5a3a1c; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }

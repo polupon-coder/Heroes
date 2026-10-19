@@ -171,6 +171,12 @@ def boton():
     red = ((r - g) > 55)[..., None]
     brown = np.stack([r * .55 + g * .45, g * .95 + r * .05, bl], -1)
     a[..., :3] = np.where(red, brown, a[..., :3])
+    # encima de la rama de arriba, en el tramo central que se estira, queda una franja de rayitas: fuera
+    alpha = a[..., 3]
+    w = alpha.shape[1]
+    mid = alpha[:, int(w * .15):int(w * .85)]
+    top = next(y for y in range(alpha.shape[0]) if (mid[y] > 40).mean() > .95)
+    a[:top, int(w * .15):int(w * .85), 3] = 0
     im = Image.fromarray(a.clip(0, 255).astype('uint8'), 'RGBA')
     save(fit(im, 1000), 'ui', 'boton', q=88)
 

@@ -716,3 +716,8 @@ code { font-family: var(--title); font-weight: 700; letter-spacing: .15em; color
 /* tablero de madera de fondo: entero, sin recuadro del panel */
 .wood { border: 0 !important; box-shadow: none !important; backdrop-filter: none; background: none !important; }
 .wood::before { filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .5)); border-radius: 0; }
+/* esferas de requisitos: solo el color, sin símbolo */
+.req-dot { display: block; width: 18px; height: 18px; border-radius: 50%; background: var(--c); border: 1.5px solid color-mix(in srgb, var(--c) 55%, #000); }
+.kc-count { font: 700 .85em var(--text); color: var(--muted); letter-spacing: 0; }
+.kc.known .kc-count { color: var(--ok); }
+@media (min-width: 1151px) and (max-height: 920px) { .req-dot { width: 14px; height: 14px; } }

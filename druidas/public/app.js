@@ -367,7 +367,7 @@ function renderCatalog() {
   const cards = Object.keys(D.cartas).map((id) => {
     const c = D.cartas[id];
     const known = p.aprendidas.includes(id);
-    const dots = ING().map((t) => tok(t, { cls: 'dot flat', flat: true }).repeat(c.req[t] || 0)).join('');
+    const dots = ING().map((t) => `<span class="req-dot tok-${t}" title="${N(t)}"></span>`.repeat(c.req[t] || 0)).join('');
     return `<button class="kc ${c.tipo} ${c.ataque ? 'attack' : ''} ${known ? 'known' : ''} ${pick && !known && S.catalogo[id] > 0 ? 'pickable' : ''}"
         data-a="info" data-v="${id}" title="${esc(c.nombre)}: ${esc(c.texto)}">
       <span class="kc-top">
@@ -375,8 +375,7 @@ function renderCatalog() {
         <span class="kc-icon ${D.img.ilustradas && D.img.ilustradas[id] ? '' : c.tipo === 'pocion' ? 'flask' : 'scroll'}" title="${c.tipo === 'pocion' ? 'Poción' : 'Hechizo'}">${cardIcon(id)}</span>
         <span class="kc-req" title="Para aprenderlo">${dots}</span>
       </span>
-      <span class="kc-name">${esc(c.nombre)}</span>
-      ${known ? '<span class="kc-done" title="Aprendido">✓</span>' : `<span class="kc-copies" title="Copias en el catálogo">×${S.catalogo[id] || 0}</span>`}
+      <span class="kc-name">${esc(c.nombre)} <span class="kc-count">${known ? '✓' : `×${S.catalogo[id] || 0}`}</span></span>
     </button>`;
   }).join('');
   $('catalog').innerHTML = `<div class="kcs">${cards}</div>`;

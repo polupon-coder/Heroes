@@ -71,8 +71,14 @@ def escenario_y_fichas():
     for (cx, cy), name in {(1, 0): 'lechuza', (2, 0): 'zorro', (0, 1): 'cervatillo', (2, 1): 'liebre'}.items():  # la liebre usa el conejo (la liebre tiene las orejas cortadas)
         # Márgenes para no arrastrar orejas o colas de los vecinos.
         # (la fila de abajo empieza algo antes para no cortar las orejas del cervatillo)
-        cell = sheet.crop((cx * cw + 12, cy * ch - (20 if cy else -8), (cx + 1) * cw - 12, (cy + 1) * ch - (40 if cy == 0 else 8)))
-        save(fit(cut_background(cell, thr=28, holes=600), 420), 'mascotas', name)
+        cell = sheet.crop((cx * cw + 12, cy * ch + 8, (cx + 1) * cw - 12, (cy + 1) * ch - (40 if cy == 0 else 8)))
+        if name == 'cervatillo':  # sus orejas y las hierbas de la derecha salen de su casilla
+            cell = sheet.crop((0, ch - 53, cw + 30, 2 * ch - 8))
+        # huecos de fondo solo en el cervatillo (entre las patas); en la lechuza se comerían el pecho blanco
+        im = cut_background(cell, thr=28, holes=600 if name == 'cervatillo' else 0)
+        if name == 'cervatillo':  # restos de la sombra del gato de arriba, a la izquierda de las orejas
+            ImageDraw.Draw(im).rectangle((0, 0, int(im.width * 0.38), 14), fill=(0, 0, 0, 0))
+        save(fit(im, 420), 'mascotas', name)
 
     # Ingredientes: las fichas de piedra de fichas_piedra() las sustituyen.
     return
@@ -388,7 +394,8 @@ def suavizar_pociones():
 def druidas_recortados():
     # Cuerpo entero sin el fondo de papel, para la mesa del druida.
     for n, name in [(2, 'mostaza'), (3, 'azul'), (4, 'verde'), (5, 'lila')]:
-        im = cut_background(load(n), thr=26, feather=1.2, erode=3, holes=1500)  # también los huecos de papel entre brazos, ramas y piernas
+        # huecos de papel grandes (entre el brazo y el arbusto, junto al caldero); los pequeños serían ropa blanca
+        im = cut_background(load(n), thr=26, feather=1.2, erode=3, holes=20000 if name in ('verde', 'lila') else 0)
         save(fit(im, 1000), 'druidas-recorte', name, q=86)
 
 

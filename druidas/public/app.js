@@ -317,7 +317,7 @@ function renderTop() {
   const pill = $('roundPill');
   pill.classList.toggle('hidden', S.phase === 'lobby');
   if (S.phase !== 'lobby') pill.textContent = S.ultima ? L(`Ronda ${S.round} · ¡última!`, `Round ${S.round} · last one!`) : `${L('Ronda', 'Round')} ${S.round}`;
-  $('prompt').classList.toggle('hidden', S.phase === 'lobby');
+  $('prompt').classList.add('hidden');
 }
 
 function timerHtml() {
@@ -385,63 +385,63 @@ function renderPrompt() {
   if (isMyTurn()) {
     if (t.paso === 'recoger') {
       const need = recogerNeed();
-      msg = L(`<b class="ph">Fase 1 · Recoger.</b> Elige ${need} ingredientes de El Claro`, `<b class="ph">Phase 1 · Gather.</b> Choose ${need} ingredients from the Clearing`) + ` (${ui.sel.length}/${need})${ui.zorro ? ' 🦊' : ''}.`;
+      msg = L(`<b>Recoge</b> ${need} ingredientes`, `<b>Take</b> ${need} ingredients`) + ` (${ui.sel.length}/${need})${ui.zorro ? ' 🦊' : ''}`;
     } else if (t.paso === 'ventana') {
-      msg = `${L('Tus rivales deciden si te atacan…', 'Your rivals decide whether to attack you…')}${timerHtml()}`;
+      msg = `${L('Los rivales deciden si atacan…', 'Rivals decide whether to attack…')}${timerHtml()}`;
     } else if (t.paso === 'defensa') {
-      msg = `<b>${L(`¡${esc(pl(t.ataque.from).name)} te ataca con ${esc(cname(card(t.ataque.carta)))}!`, `${esc(pl(t.ataque.from).name)} attacks you with ${esc(cname(card(t.ataque.carta)))}!`)}</b> ${attackDesc(t.ataque)}${timerHtml()}`;
+      msg = `<b>${L(`¡${esc(pl(t.ataque.from).name)} te lanza ${esc(cname(card(t.ataque.carta)))}!`, `${esc(pl(t.ataque.from).name)} casts ${esc(cname(card(t.ataque.carta)))}!`)}</b>${timerHtml()}`;
       btns = `<button class="btn primary" data-a="defender" ${p.magiaLibre && p.reserva.lumen >= 2 ? '' : 'disabled'}>🫧 ${L('Burbuja', 'Bubble')} ${tok('lumen', { cls: 'xs' })}${tok('lumen', { cls: 'xs' })}</button>
         <button class="btn" data-a="noDefender">${L('Aceptar el ataque', 'Accept the attack')}</button>`;
     } else if (t.paso === 'estudiar') {
-      const ph = L('<b class="ph">Fase 2 · Estudiar.</b>', '<b class="ph">Phase 2 · Study.</b>');
-      if (!p.estudio && !t.completada) msg = `${ph} ${L('Elige un conocimiento disponible para estudiarlo.', 'Choose an available knowledge to study.')}`;
-      else if (!p.estudio) msg = `${ph} ${L('¡Aprendido! Elegirás nueva receta en tu próximo turno.', 'Learned! You will choose a new recipe next turn.')}`;
-      else if (t.lechuza || t.estudiadas >= t.limite) msg = `${ph} ${L('Has terminado tu estudio normal.', 'You have finished your normal study.')}`;
-      else msg = `${ph} ${L('Pulsa ingredientes de tu reserva para colocarlos', 'Tap ingredients from your reserve to place them')} (${t.estudiadas}/${t.limite}${t.limite === 1 ? ' 💤' : ''}).`;
-      if (ui.mode === 'liebre') msg = L('🐇 Pulsa el ingrediente de tu reserva que quieres transformar.', '🐇 Tap the ingredient from your reserve you want to transform.');
-      if (ui.mode === 'lechuza') msg = L('🦉 Pulsa el ingrediente de tu reserva que la Lechuza colocará.', '🦉 Tap the ingredient from your reserve the Owl will place.');
+      const ph = L('<b>Estudiar:</b>', '<b>Study:</b>');
+      if (!p.estudio && !t.completada) msg = `${ph} ${L('elige un conocimiento', 'choose a knowledge')}`;
+      else if (!p.estudio) msg = `${ph} ${L('¡aprendido!', 'learned!')}`;
+      else if (t.lechuza || t.estudiadas >= t.limite) msg = `${ph} ${L('terminado', 'done')}`;
+      else msg = `${ph} ${L('coloca ingredientes', 'place ingredients')} (${t.estudiadas}/${t.limite}${t.limite === 1 ? ' 💤' : ''})`;
+      if (ui.mode === 'liebre') msg = L('🐇 Elige el ingrediente a transformar', '🐇 Choose the ingredient to transform');
+      if (ui.mode === 'lechuza') msg = L('🦉 Elige el ingrediente de la Lechuza', '🦉 Choose the Owl\'s ingredient');
       const canPlace = p.estudio && !t.lechuza && t.estudiadas < t.limite && ING().some((k) => p.reserva[k] > 0 && p.estudio.pend[k] > 0);
       if (!ui.mode && !canPickCard() && !canPlace && !anyMagic()) {
-        stuck = L('No puedes colocar nada más.', 'You cannot place anything else.');
+        stuck = L('No puedes colocar más', 'Nothing more to place');
       }
       btns += `<button class="btn primary" data-a="finEstudio">${L('Terminar estudio', 'Finish study')}</button>`;
     } else if (t.paso === 'preparar') {
-      msg = `${L('<b class="ph">Fase 3 · Preparar.</b>', '<b class="ph">Phase 3 · Brew.</b>')} ${t.preparada ? L('Ya has preparado una poción.', 'You have brewed a potion.') : L('Puedes preparar 1 poción que conozcas.', 'You may brew 1 potion you know.')}`;
+      msg = `${L('<b>Preparar:</b>', '<b>Brew:</b>')} ${t.preparada ? L('poción preparada', 'potion brewed') : L('puedes preparar 1 poción', 'you may brew 1 potion')}`;
       if (!Object.keys(D.cartas).some(canPrepare) && !anyMagic(false)) {
-        stuck = t.preparada ? L('Ya no puedes hacer nada más.', 'There is nothing else you can do.')
-          : L('No tienes ninguna poción que puedas preparar.', 'You have no potion you can brew.');
-        msg = `${L('<b class="ph">Fase 3 · Preparar.</b>', '<b class="ph">Phase 3 · Brew.</b>')} ${L('No hay nada que preparar.', 'Nothing to brew.')}`;
+        stuck = t.preparada ? L('Ya no puedes hacer nada más', 'Nothing else to do')
+          : L('No hay nada que preparar', 'Nothing to brew');
+        msg = '';
       }
       btns = `<button class="btn primary" data-a="finTurno">${L('Terminar turno', 'End turn')}</button>`;
     } else if (t.paso === 'descartar') {
-      msg = L(`Tienes más de ${D.limiteReserva} ingredientes: devuelve los que sobran.`, `You have more than ${D.limiteReserva} ingredients: return the extra ones.`);
+      msg = L(`Devuelve los que pasen de ${D.limiteReserva}`, `Return those over ${D.limiteReserva}`);
       btns = `<button class="btn primary" data-a="openDescartar">${L('Elegir', 'Choose')}</button>`;
     }
   } else {
-    msg = L(`Turno de <b>${esc(a.name)}</b>`, `<b>${esc(a.name)}</b>'s turn`) + ` · ${PASO[t.paso]}.`;
+    msg = L(`Turno de <b>${esc(a.name)}</b>`, `<b>${esc(a.name)}</b>'s turn`) + ` · ${PASO[t.paso]}`;
     if (t.paso === 'ventana') {
       if (S.ataques.length && !t.miRespuesta) {
-        msg = L(`<b>${esc(a.name)} ha recogido.</b> ¿Le atacas?`, `<b>${esc(a.name)} has gathered.</b> Attack?`) + timerHtml();
+        msg = L(`¿Atacas a <b>${esc(a.name)}</b>?`, `Attack <b>${esc(a.name)}</b>?`) + timerHtml();
         btns = S.ataques.map((id) => `<button class="btn attack" data-a="atacar" data-v="${id}">⚡ ${esc(cname(card(id)))}</button>`).join('')
           + `<button class="btn" data-a="pasar">${L('No atacar', 'Do not attack')}</button>`;
       } else {
-        msg = L(`${esc(a.name)} ha recogido. Los rivales deciden si le atacan…`, `${esc(a.name)} has gathered. Rivals decide whether to attack…`) + timerHtml();
+        msg = L(`Los rivales deciden si atacan a ${esc(a.name)}…`, `Rivals decide whether to attack ${esc(a.name)}…`) + timerHtml();
       }
     } else if (t.paso === 'defensa') {
-      msg = L(`${esc(pl(t.ataque.from).name)} ataca a ${esc(a.name)} con ${esc(cname(card(t.ataque.carta)))}. ¿Se defenderá con Burbuja?`, `${esc(pl(t.ataque.from).name)} attacks ${esc(a.name)} with ${esc(cname(card(t.ataque.carta)))}. Will they use Bubble?`) + timerHtml();
+      msg = L(`${esc(pl(t.ataque.from).name)} ataca a ${esc(a.name)}`, `${esc(pl(t.ataque.from).name)} attacks ${esc(a.name)}`) + timerHtml();
     }
   }
-  if (ui.mode === 'chispa') msg = ui.chispaTipo ? L(`✧ Chispa: pulsa un ingrediente de El Claro para cambiarlo por ${N(ui.chispaTipo)}.`, `✧ Spark: tap an ingredient in the Clearing to swap it for ${N(ui.chispaTipo)}.`) : L('✧ Chispa: pulsa el ingrediente de tu reserva que quieres cambiar.', '✧ Spark: tap the ingredient from your reserve you want to swap.');
-  if (ui.mode === 'pensar') msg = L('✦ Pensar: pulsa un ingrediente de El Claro que necesite tu receta.', '✦ Think: tap an ingredient in the Clearing your recipe needs.');
-  if (ui.mode === 'cerv') msg = L('🦌 Cervatillo: pulsa el ingrediente de tu reserva que quieres colocar.', '🦌 Fawn: tap the ingredient from your reserve you want to place.');
+  if (ui.mode === 'chispa') msg = L('✧ Chispa', '✧ Spark');
+  if (ui.mode === 'pensar') msg = L('✦ Pensar: elige un ingrediente de El Claro', '✦ Think: choose one from the Clearing');
+  if (ui.mode === 'cerv') msg = L('🦌 Elige el ingrediente del Cervatillo', '🦌 Choose the Fawn\'s ingredient');
   if (ui.mode) btns += `<button class="btn ghost" data-a="cancelMode">${L('Cancelar', 'Cancel')}</button>`;
   // La cabecera solo informa; lo que hay que decidir aparece en una ventana flotante sobre El Claro.
-  el.className = 'prompt';
+  el.className = 'prompt hidden';
   el.innerHTML = `<div class="msg">${msg}</div>`;
   // En ataques y defensa la ventana explica qué pasa; en el resto basta con el botón.
-  const explain = t.paso === 'ventana' || t.paso === 'defensa';
-  const note = explain ? msg : stuck;
-  ui.floatHtml = btns ? `<div class="float-act ${note ? '' : 'bare'}">${note ? `<div class="float-msg">${note}</div>` : ''}<div class="btns">${btns}</div></div>` : '';
+  // Las frases salen siempre en la ventana de El Claro (no en la barra de arriba), con los botones si los hay.
+  const text = stuck && msg ? `${msg} · ${stuck}` : (msg || stuck);
+  ui.floatHtml = text || btns ? `<div class="float-act">${text ? `<div class="float-msg">${text}</div>` : ''}${btns ? `<div class="btns">${btns}</div>` : ''}</div>` : '';
 }
 
 function attackDesc(a) {
@@ -622,7 +622,7 @@ function renderRivals() {
           ${status ? `<span class="r-sub">${status}</span>` : ''}</div>
         ${prestigeHtml(p.puntos, '', p.druida)}
       </div>
-      <div class="r-learned">${initial}${learned}</div>
+      <div class="r-learned" style="--cols:${Math.min(6, Math.max(4, 2 + p.aprendidas.length))};--rows:${Math.ceil((2 + p.aprendidas.length) / Math.min(6, Math.max(4, 2 + p.aprendidas.length)))}">${initial}${learned}</div>
     </div>`;
   }).join('');
 }

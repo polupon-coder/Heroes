@@ -1785,3 +1785,40 @@ body.on-splash .topbar { background: none !important; position: relative; z-inde
   .m-magic-card .spell-row .card-icon img { width: 100%; height: 100%; object-fit: contain; }
   .m-magic-card .spell-row .spell-name { font-size: min(15px, calc(var(--cw) * .2)) !important; }
 }
+
+/* ---- ventana de El Claro: siempre con la frase de la fase; en ordenador, centrada abajo ---- */
+.float-act .float-msg { font-size: 1.05em; line-height: 1.3; }
+.float-act .float-msg .ph { display: block; font-size: 1.1em; }
+.float-act .float-note { margin-top: 4px; font-style: italic; color: var(--ink-soft); }
+@media (min-width: 761px) {
+  .float-act { left: 50% !important; right: auto !important; bottom: 2% !important; transform: translateX(-50%) !important; max-width: min(560px, 92%) !important; }
+}
+
+/* ---- rivales: pergaminos y frascos aprendidos grandes, que se reducen al haber más ---- */
+@media (min-width: 761px) {
+  .rivals.wood .rival { container-type: size; }
+  .rivals .r-learned {
+    --cols: clamp(4, var(--k), 6);
+    --ci: min(76px, calc((100cqw - 70px) / var(--cols) - 4px), calc((100cqh - 96px) / ((var(--k) + var(--cols) - 1) / var(--cols)) - 6px));
+    display: flex !important; flex-wrap: wrap; align-content: center; justify-content: flex-start;
+  }
+  .rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: var(--ci) !important; height: calc(var(--ci) * 1.1) !important; }
+  .rivals .r-learned .learned { width: auto !important; height: auto !important; }
+}
+@media (min-width: 761px) {
+  /* El Claro y su ventana uno encima de otra: la ventana nunca tapa los ingredientes */
+  .claro-area { display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .float-act { position: relative !important; left: auto !important; bottom: auto !important; transform: none !important; flex: none; }
+  .ring { width: min(100%, 700px, calc((100vh - 440px) * 1.25)) !important; }
+  .float-act .float-msg { font-size: .98em; }
+  .rivals .r-learned {
+    --cell: calc((100cqw - 70px) / var(--cols) - 4px);
+    --ch: min(120px, calc((100cqh - 96px) / var(--rows) - 6px), calc(var(--cell) * 1.6));
+  }
+  .rivals .r-learned .card-icon.sm, .rivals .r-learned .card-icon.ill.sm { width: var(--cell) !important; height: var(--ch) !important; }
+  .rivals .r-learned .card-icon img { width: 100%; height: 100%; object-fit: contain; }
+}
+/* la frase de la ventana, en una sola línea */
+.float-act .float-msg { white-space: nowrap; font-size: clamp(.82em, 2.6vw, 1.05em) !important; }
+.float-act .float-msg .ph { display: inline !important; }
+.float-act { max-width: calc(100% - 8px) !important; }

@@ -18,6 +18,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// PIRATAS: otro juego servido desde el mismo servidor, en /piratas.
+require('./piratas/server')(app, io);
+
 // Siempre se revalida con el servidor (ETag): tras cada despliegue se ven las
 // ilustraciones y estilos nuevos, no los que el navegador tenía guardados.
 app.use(express.static(path.join(__dirname, '..', 'public'), {

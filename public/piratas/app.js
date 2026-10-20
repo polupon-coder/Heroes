@@ -348,6 +348,23 @@ function renderBoard() {
   const targets = new Set(me.objetivos.filter((o) => o.canon || o.abordaje).map((o) => o.id));
   const portsById = new Map(S.map.ports.map((p) => [p.id, p]));
   const islandMarked = new Set();
+  // Islas conocidas: tamaño y la casilla más interior (lleva la colina si la isla es grande).
+  const islandCells = new Map();
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const c = S.map.tiles[y][x];
+      if (!isLandT(c)) continue;
+      if (!islandCells.has(c.isla)) islandCells.set(c.isla, []);
+      islandCells.get(c.isla).push([x, y]);
+    }
+  }
+  const hill = new Map();
+  for (const [id, cells] of islandCells) {
+    if (cells.length < 3) continue;
+    const inner = (x, y) => [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => cells.some(([a, b]) => a === x + dx && b === y + dy)).length;
+    const best = cells.filter(([x, y]) => S.map.tiles[y][x].t === 'tierra').sort((p, q) => inner(...q) - inner(...p))[0];
+    if (best) hill.set(id, `${best[0]},${best[1]}`);
+  }
   let html = '';
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
@@ -365,7 +382,12 @@ function renderBoard() {
           return isLandT(n) && n.isla === c.isla;
         };
         const r = (a, b) => (!L(a, 0) && !L(0, b) ? '45%' : '0');
-        inner += `<div class="land" style="border-radius:${r(-1, -1)} ${r(1, -1)} ${r(1, 1)} ${r(-1, 1)}"></div>`;
+        const solo = islandCells.get(c.isla).length === 1 && ![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+          const n = S.map.tiles[y + dy] && S.map.tiles[y + dy][x + dx];
+          return n === null && x + dx >= 0 && y + dy >= 0 && x + dx < N && y + dy < N;
+        });
+        const kind = solo ? ' solo' : hill.get(c.isla) === k ? ' colina' : '';
+        inner += `<div class="land${kind}" style="border-radius:${r(-1, -1)} ${r(1, -1)} ${r(1, 1)} ${r(-1, 1)}"></div>`;
         if (!islandMarked.has(c.isla)) {
           islandMarked.add(c.isla);
           if (S.map.explored.includes(c.isla)) inner += '<span class="mark" title="Isla explorada">✔️</span>';
@@ -387,7 +409,7 @@ function renderBoard() {
       const rc = myTurn && reach.get(k);
       if (rc) cls.push('reach');
       else if (clickable) cls.push('clickable');
-      html += `<div class="${cls.join(' ')}" data-x="${x}" data-y="${y}" ${rc ? `data-cost="${rc.coste}"` : ''}>${inner}</div>`;
+      html += `<div class="${cls.join(' ')}" style="--x:${x};--y:${y}" data-x="${x}" data-y="${y}" ${rc ? `data-cost="${rc.coste}"` : ''}>${inner}</div>`;
     }
   }
   $('board').innerHTML = html;

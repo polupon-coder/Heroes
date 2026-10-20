@@ -180,6 +180,15 @@ Se buscan en `public/piratas/img/` en `.webp` o `.png`. Si falta alguna, se usa 
 
 Mejor con fondo transparente. El color de cada jugador se muestra con una franja bajo su barco.
 
+Texturas del tablero (en `public/piratas/img/`):
+
+| Archivo | Uso |
+| --- | --- |
+| `mar.webp` | Mar, continuo de casilla en casilla (los arrecifes llevan rocas encima). |
+| `tierra.webp` | Tierra de las islas de varias casillas. |
+| `colina.webp` | La casilla más interior de cada isla de 3 o más casillas. |
+| `isla.webp` | Islotes de una sola casilla. |
+
 ## Decisiones tomadas donde el reglamento no lo especifica
 
 1. **Precios:** cada puerto paga por cada mercancía su valor base −1…+2 y la vende 1 oro más cara. Son fijos toda la partida. Los precios de un puerto se conocen en cuanto se descubre su casilla.

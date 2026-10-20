@@ -658,7 +658,8 @@ class Game {
     c.obs = this.observers([att.x, att.y], [def.x, def.y]);
     const verb = first === 'abordaje' ? 'aborda' : 'cañonea';
     this.say(`⚔ ${this.shipName(att)} ${verb} a ${this.shipName(def)}.`, c.obs);
-    if (def.kind === 'pirata') this.notify(def, `¡${this.shipName(att)} te ataca!`, 'combate');
+    const who = this.shipName(att);
+    if (def.kind === 'pirata') this.notify(def, `¡${who.charAt(0).toUpperCase()}${who.slice(1)} te ataca!`, 'combate');
     this.autoPicks();
   }
 

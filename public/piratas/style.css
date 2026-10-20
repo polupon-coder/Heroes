@@ -144,34 +144,37 @@ button { font: inherit; cursor: pointer; }
     linear-gradient(135deg, #1d262d, #151b20);
   box-shadow: inset 0 0 0 .5px #0006;
 }
+/* El mar y la tierra son texturas continuas: cada casilla muestra su trozo (--x, --y). */
 .cell.mar, .cell.arrecife, .cell.tierra, .cell.puerto {
-  background:
-    repeating-radial-gradient(ellipse at 50% 120%, transparent 0 7px, #ffffff0d 8px 9px, transparent 10px 16px),
-    linear-gradient(160deg, var(--sea-2), var(--sea));
-  box-shadow: inset 0 0 0 .5px #0b2c3c55;
+  background: url(img/mar.webp) var(--sea);
+  background-size: calc(var(--cell) * 4) calc(var(--cell) * 4);
+  background-position: calc(var(--cell) * var(--x) * -1) calc(var(--cell) * var(--y) * -1);
 }
 .cell.arrecife::before {
   content: ''; position: absolute; inset: 0;
   background:
-    radial-gradient(circle at 25% 30%, #d8e6d0aa 0 6%, transparent 7%),
-    radial-gradient(circle at 65% 55%, #d8e6d0aa 0 8%, transparent 9%),
-    radial-gradient(circle at 40% 75%, #c9dcc0aa 0 5%, transparent 6%),
-    radial-gradient(circle at 78% 22%, #c9dcc0aa 0 4%, transparent 5%),
-    radial-gradient(ellipse at 50% 50%, #57b0a066 0 50%, transparent 70%);
+    radial-gradient(circle at 25% 30%, #8a8070 0 7%, #5e554acc 8%, transparent 10%),
+    radial-gradient(circle at 66% 56%, #958b7a 0 9%, #5e554acc 10%, transparent 12%),
+    radial-gradient(circle at 38% 76%, #8a8070 0 6%, #5e554acc 7%, transparent 9%),
+    radial-gradient(circle at 80% 22%, #958b7a 0 5%, #5e554acc 6%, transparent 8%),
+    radial-gradient(ellipse at 50% 50%, #e9f7f066 0 45%, transparent 70%);
 }
 .land {
   position: absolute; inset: 0;
-  background:
-    radial-gradient(circle at 35% 35%, #9bb35a 0 28%, transparent 29%),
-    radial-gradient(circle at 65% 60%, #8aa54d 0 22%, transparent 23%),
-    linear-gradient(var(--sand), #c9ab6f);
-  box-shadow: inset 0 0 0 2px #e9d8a6aa;
+  background: url(img/tierra.webp) var(--sand);
+  background-size: calc(var(--cell) * 3) calc(var(--cell) * 3);
+  background-position: calc(var(--cell) * var(--x) * -1) calc(var(--cell) * var(--y) * -1);
+  box-shadow: inset 0 0 0 2px #fff3d6cc, 0 0 0 1px #ffffff55;
 }
+.land.colina { background: url(img/colina.webp) center / cover; }
+.land.solo { background: url(img/isla.webp) center / 135%; border-radius: 0 !important; box-shadow: none; }
 .dim > * , .cell.dim { filter: brightness(.72) saturate(.8); }
 .cell.dim .ship, .cell.dim .mark { filter: none; }
 .port-icon {
-  position: absolute; inset: 0; display: grid; place-items: center;
-  font-size: calc(var(--cell) * .5); filter: drop-shadow(0 1px 1px #000);
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 62%; height: 62%; border-radius: 50%; display: grid; place-items: center;
+  font-size: calc(var(--cell) * .36); background: #f3e6c8e6; border: 2px solid #5a3a1c;
+  box-shadow: 0 2px 4px #0009;
 }
 .port-name {
   position: absolute; left: 50%; bottom: -2px; transform: translate(-50%, 100%);

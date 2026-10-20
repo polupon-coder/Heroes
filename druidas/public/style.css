@@ -1716,3 +1716,22 @@ body { font-size: 18px; font-weight: 600; }
 @media (max-width: 760px) {
   .modal-card.parch-card { border-width: 46px 16px !important; border-image-width: 46px 16px !important; padding: 0 12px !important; font-size: .95em; }
 }
+
+/* ---- portada: el claro de fondo, el título grande, «Jugar» y la firma ---- */
+.splash {
+  position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(28px, 6vh, 64px); padding: 24px 16px 70px; text-align: center;
+  background: radial-gradient(ellipse at 50% 45%, rgba(20, 30, 10, 0) 25%, rgba(15, 20, 8, .55) 100%), url(img/ui/claro.webp) center / cover no-repeat, #3d4a22;
+}
+.splash.hidden { display: none; }
+.splash-title { margin: 0; line-height: 1; font: 700 clamp(3em, 9vw, 7em) var(--title); color: #f6ebd0; text-shadow: 0 3px 12px rgba(0, 0, 0, .6); }
+.splash-title .title-art { display: block; width: min(92vw, 980px); height: auto; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, .7)); }
+.splash .play-btn { --bh: 74px !important; font-size: 1.9em !important; min-width: 260px; padding: 0 30px !important; }
+.splash-by { position: absolute; bottom: 22px; left: 0; right: 0; margin: 0; font: 600 1.35em var(--title); color: rgba(246, 235, 208, .92); text-shadow: 0 2px 6px rgba(0, 0, 0, .7); }
+body.on-splash .topbar .titleblock, body.on-splash .topbar #sub { visibility: hidden; }
+body.on-splash .topbar { background: none !important; position: relative; z-index: 6; }
+@media (max-width: 760px) {
+  .splash .play-btn { --bh: 62px !important; font-size: 1.6em !important; min-width: 210px; }
+  .splash-by { font-size: 1.2em; }
+}
+@media (min-width: 761px) { .splash .play-btn { --bh: 96px !important; font-size: 2.5em !important; min-width: 360px; } }

@@ -26,7 +26,7 @@ function applyStaticTexts() {
   document.documentElement.lang = LANG;
   const set = (id, es, en) => { const el = $(id); if (el) el.textContent = L(es, en); };
   const logo = D && ((LANG === 'en' && D.img.ui['titulo-en']) || D.img.ui.titulo);
-  for (const id of ['homeH1', 'brand']) {
+  for (const id of ['homeH1', 'brand', 'splashTitle']) {
     const el = $(id);
     if (logo) el.innerHTML = `<img class="title-art" src="${logo}" alt="${L('Escuela de Magia', 'School of Magic')}">`;
     else el.textContent = L('Escuela de Magia', 'School of Magic');
@@ -39,6 +39,8 @@ function applyStaticTexts() {
   $('nameInput').placeholder = L('Tu nombre', 'Your name');
   $('codeInput').placeholder = L('CÓDIGO', 'CODE');
   set('createBtn', 'Crear partida', 'Create game');
+  set('playBtn', 'Jugar', 'Play');
+  set('splashBy', 'Un juego de Pol Lupon', 'A game by Pol Lupon');
   set('joinBtn', 'Entrar', 'Join');
   set('rulesBtn', '📖 Reglas', '📖 Rules');
   set('logBtn', '📜 Crónica y chat', '📜 Chronicle and chat');
@@ -272,6 +274,8 @@ function toastHtml(html) {
 function render() {
   if (!S || !D || ui.home) return;
   $('home').classList.add('hidden');
+  $('splash').classList.add('hidden');
+  document.body.classList.remove('on-splash');
   $('app').classList.remove('hidden');
   $('logBtn').classList.toggle('hidden', S.phase === 'lobby');
   $('homeBtn').classList.remove('hidden');
@@ -1073,7 +1077,19 @@ socket.on('chat', (m) => {
 
 // ------------------------------------------------------------ portada y conexión
 
+// Portada: el claro, el título grande y «Jugar». Quien llega con el enlace de una sala va directo.
+function showSplash() {
+  $('app').classList.add('hidden');
+  $('home').classList.add('hidden');
+  $('splash').classList.remove('hidden');
+  document.body.classList.add('on-splash');
+}
+
 function showHome() {
+  const code0 = new URLSearchParams(location.search).get('sala');
+  if (!ui.splashDone && !code0) return showSplash();
+  $('splash').classList.add('hidden');
+  document.body.classList.remove('on-splash');
   $('app').classList.add('hidden');
   $('home').classList.remove('hidden');
   $('homeBtn').classList.add('hidden');
@@ -1105,6 +1121,7 @@ function myName() {
   return n;
 }
 
+$('playBtn').onclick = () => { ui.splashDone = true; showHome(); };
 $('createBtn').onclick = () => socket.emit('create', { name: myName() }, enter);
 $('joinBtn').onclick = () => {
   const code = $('codeInput').value.trim().toUpperCase();

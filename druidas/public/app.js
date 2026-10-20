@@ -386,6 +386,7 @@ function renderPrompt() {
     if (t.paso === 'recoger') {
       const need = recogerNeed();
       msg = L(`<b>Recoge</b> ${need} ingredientes`, `<b>Take</b> ${need} ingredients`) + ` (${ui.sel.length}/${need})${ui.zorro ? ' 🦊' : ''}`;
+      if (ui.sel.length === need) btns = `<button class="btn primary" data-a="recoger">${L('Recoger', 'Take')}</button>`;
     } else if (t.paso === 'ventana') {
       msg = `${L('Los rivales deciden si atacan…', 'Rivals decide whether to attack…')}${timerHtml()}`;
     } else if (t.paso === 'defensa') {
@@ -953,8 +954,7 @@ const H = {
     if (ui.mode === 'pensar') return send('magia', { carta: 'pensar', slot: i }, () => { ui.mode = null; render(); });
     if (ui.sel.includes(i)) ui.sel = ui.sel.filter((x) => x !== i);
     else if (ui.sel.length < recogerNeed()) ui.sel.push(i);
-    // Al elegir el último ingrediente se recogen directamente.
-    if (isMyTurn() && S.turn.paso === 'recoger' && ui.sel.length === recogerNeed()) return send('recoger', { slots: ui.sel, zorro: ui.zorro });
+    // Pulsar otra vez un ingrediente elegido lo deja; se recoge con el botón «Recoger».
     render();
   },
   recoger: () => send('recoger', { slots: ui.sel, zorro: ui.zorro }),

@@ -1746,3 +1746,42 @@ body.on-splash .topbar { background: none !important; position: relative; z-inde
   .lobby .lobby-main { order: 1; }
   .lobby .lobby-side { order: 2; }
 }
+
+/* ---- ordenador: hechizos y pociones grandes, que se encogen solos si no caben ---- */
+@media (min-width: 761px) {
+  .mesa > section.m-magic-card { container-type: size; display: flex; flex-direction: column; }
+  .m-magic-card .spell-row {
+    --gap: 8px; --label: 18px;
+    --s: min(120px, calc((100cqw - 12px - var(--gap) * (var(--n) - 1)) / var(--n)), calc((100cqh - 40px - var(--gap) * (var(--r) - 1)) / var(--r) - var(--label)));
+    flex: 1; display: grid !important; grid-template-columns: repeat(var(--n), var(--s)) !important;
+    justify-content: center; align-content: center; gap: var(--gap) !important;
+  }
+  .m-magic-card .spell-row .spell-ico { width: var(--s) !important; padding: 0 !important; display: flex; flex-direction: column; align-items: center; }
+  .m-magic-card .spell-row .card-icon, .m-magic-card .spell-row .card-icon.ill.md { width: var(--s) !important; height: var(--s) !important; }
+  .m-magic-card .spell-row .spell-name { display: block !important; height: var(--label); line-height: var(--label); font-size: min(15px, calc(var(--s) * .2)) !important; white-space: nowrap; }
+
+  /* franja de conocimientos: iconos según el ancho disponible */
+  .catalog { container-type: inline-size; }
+  .catalog .kc-top { grid-template-columns: var(--ki) max(10px, calc(var(--ki) * .2)) !important; gap: 4px !important; }
+  .catalog .kcs { --ki: clamp(44px, min(7cqw, 13vh), 120px); }
+  .catalog .kc-icon { width: var(--ki) !important; }
+  .catalog .card-icon.ill.lg { width: var(--ki) !important; height: calc(var(--ki) * 1.12) !important; }
+  .catalog .req-dot { width: max(9px, calc(var(--ki) * .19)) !important; height: max(9px, calc(var(--ki) * .19)) !important; }
+}
+@media (min-width: 761px) {
+  /* el panel de Magia crece cuando tienes más (los de Ingredientes y Aprendiendo ceden sitio) */
+  .mesa > section.m-magic-card { flex: calc(1.3 + var(--r) * .7) 1 0 !important; }
+  .catalog .kcs { --ki: clamp(48px, min(9cqw, 12vh), 120px); }
+}
+@media (min-width: 761px) {
+  /* los pergaminos y frascos son más altos que anchos: la celda manda en ancho y el alto se aprovecha */
+  .m-magic-card .spell-row {
+    --cw: calc((100cqw - 12px - var(--gap) * (var(--n) - 1)) / var(--n));
+    --h: min(150px, calc((100cqh - 40px - var(--gap) * (var(--r) - 1)) / var(--r) - var(--label)), calc(var(--cw) * 1.7));
+    grid-template-columns: repeat(var(--n), var(--cw)) !important;
+  }
+  .m-magic-card .spell-row .spell-ico { width: var(--cw) !important; }
+  .m-magic-card .spell-row .card-icon, .m-magic-card .spell-row .card-icon.ill.md { width: var(--cw) !important; height: var(--h) !important; }
+  .m-magic-card .spell-row .card-icon img { width: 100%; height: 100%; object-fit: contain; }
+  .m-magic-card .spell-row .spell-name { font-size: min(15px, calc(var(--cw) * .2)) !important; }
+}

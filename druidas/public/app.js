@@ -587,6 +587,8 @@ function renderMesa() {
   const studying = isMyTurn() && t && t.paso === 'estudiar' && !!p.estudio && !t.lechuza;
   const magicIds = [...['chispa', 'burbuja', ...known('hechizo')].map(spell), ...known('pocion').map(potion)];
   const magicCount = magicIds.length;
+  // columnas: hasta 5 en una fila; si hay más, dos filas repartidas (los iconos se encogen solos para caber)
+  const magicCols = magicCount <= 5 ? Math.max(1, magicCount) : Math.ceil(magicCount / 2);
   const magic = magicIds.join('');
   $('mesa').innerHTML = `
     <div class="m-hero">
@@ -600,7 +602,7 @@ function renderMesa() {
     </div>
     <section class="m-card"><h4>${L('Ingredientes', 'Ingredients')} <span class="h4-n">${sum(p.reserva)}/${D.limiteReserva}</span></h4><div class="ing-row">${ings}</div></section>
     <section class="m-card"><h4>${L('Aprendiendo', 'Learning')}${studying ? ` <span class="h4-n study-n" title="${L('Ingredientes que puedes colocar en este turno', 'Ingredients you can place this turn')}">${t.estudiadas}/${t.limite}</span>` : ''}</h4>${studyHtml(p, t)}</section>
-    <section class="m-card"><h4>${L('Magia', 'Magic')}</h4><div class="spell-row" style="--n:${Math.min(5, magicCount)}">${magic}</div></section>`;
+    <section class="m-card m-magic-card" style="--n:${magicCols};--r:${Math.ceil(magicCount / magicCols)}"><h4>${L('Magia', 'Magic')}</h4><div class="spell-row">${magic}</div></section>`;
 }
 
 function renderRivals() {

@@ -1735,3 +1735,9 @@ body.on-splash .topbar { background: none !important; position: relative; z-inde
   .splash-by { font-size: 1.2em; }
 }
 @media (min-width: 761px) { .splash .play-btn { --bh: 96px !important; font-size: 2.5em !important; min-width: 360px; } }
+/* título liso: contorno oscuro suave para que destaque sobre el claro */
+.splash-title .title-art, .brand .title-art {
+  filter: drop-shadow(0 0 1px rgba(40, 25, 10, .9)) drop-shadow(0 0 6px rgba(30, 20, 8, .75)) drop-shadow(0 4px 14px rgba(0, 0, 0, .6)) !important;
+}
+/* texto de los botones de papiro centrado en el papel (la rama de abajo es más gruesa que la de arriba) */
+.btn.primary, .float-act .btn, .home-actions .btn, .lobby .row .btn, .parch-card .row .btn { padding-bottom: .22em !important; line-height: 1 !important; }

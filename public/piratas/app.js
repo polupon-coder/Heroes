@@ -334,12 +334,22 @@ setInterval(() => {
 
 const isLandT = (c) => c && (c.t === 'tierra' || c.t === 'puerto');
 
-// Casilla de mar junto a tierra (en cruz): la lámina de costa tiene la playa arriba
-// y se gira hacia la tierra. null si no toca tierra.
-function coastRotation(x, y) {
+// Playa en cada lado de la casilla de mar que toca tierra, y en las esquinas que la tocan
+// solo en diagonal. La lámina de costa tiene la playa arriba: se gira hacia la tierra.
+function coastHtml(x, y) {
   const land = (dx, dy) => isLandT(S.map.tiles[y + dy] && S.map.tiles[y + dy][x + dx]);
-  for (const [dx, dy, rot] of [[0, -1, 0], [1, 0, 90], [0, 1, 180], [-1, 0, 270]]) if (land(dx, dy)) return rot;
-  return null;
+  let html = '';
+  const sides = [[0, -1, 0, 'to bottom'], [1, 0, 90, 'to left'], [0, 1, 180, 'to top'], [-1, 0, 270, 'to right']];
+  for (const [dx, dy, rot, dir] of sides) {
+    if (!land(dx, dy)) continue;
+    html += `<div class="coast" style="--m:linear-gradient(${dir}, #000 0, #000 20%, transparent 42%)"><i style="--rot:${rot}deg"></i></div>`;
+  }
+  const corners = [[1, -1, 45, '100% 0'], [1, 1, 135, '100% 100%'], [-1, 1, 225, '0 100%'], [-1, -1, 315, '0 0']];
+  for (const [dx, dy, rot, at] of corners) {
+    if (!land(dx, dy) || land(dx, 0) || land(0, dy)) continue;
+    html += `<div class="coast" style="--m:radial-gradient(circle at ${at}, #000 0, #000 22%, transparent 40%)"><i style="--rot:${rot}deg;--sc:1.42"></i></div>`;
+  }
+  return html;
 }
 
 // Mar profundo: las 8 casillas vecinas son mar conocido (fuera del tablero cuenta como mar).
@@ -426,11 +436,6 @@ function renderBoard() {
       let inner = '';
       let clickable = false;
       if (isLandT(c)) {
-        const L = (dx, dy) => {
-          const n = S.map.tiles[y + dy] && S.map.tiles[y + dy][x + dx];
-          return isLandT(n) && n.isla === c.isla;
-        };
-        const r = (a, b) => (!L(a, 0) && !L(0, b) ? '45%' : '0');
         const solo = islandCells.get(c.isla).length === 1 && ![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
           const n = S.map.tiles[y + dy] && S.map.tiles[y + dy][x + dx];
           return n === null && x + dx >= 0 && y + dy >= 0 && x + dx < N && y + dy < N;
@@ -439,7 +444,7 @@ function renderBoard() {
           inner += `<div class="land puerto" style="--port-img:url(img/puerto-${(c.puerto % 3) + 1}.webp);--rot:${portRotation(x, y)}deg"></div>`;
         } else {
           const kind = solo ? ' solo' : village.get(c.isla) === k ? ' poblado' : hill.get(c.isla) === k ? ' colina' : '';
-          inner += `<div class="land${kind}" style="border-radius:${r(-1, -1)} ${r(1, -1)} ${r(1, 1)} ${r(-1, 1)}"></div>`;
+          inner += `<div class="land${kind}"></div>`;
         }
         if (!islandMarked.has(c.isla)) {
           islandMarked.add(c.isla);
@@ -448,8 +453,8 @@ function renderBoard() {
         if (me.explorables.includes(c.isla) && myTurn) clickable = true;
       }
       if (c.t === 'mar') {
-        const rot = coastRotation(x, y);
-        if (rot !== null) inner += `<div class="coast" style="--rot:${rot}deg"></div>`;
+        const coast = coastHtml(x, y);
+        if (coast) inner += coast;
         else if (isDeep(x, y)) {
           // Se difumina solo hacia los lados que no son mar profundo.
           const e = (dx, dy) => (x + dx < 0 || y + dy < 0 || x + dx >= N || y + dy >= N || isDeep(x + dx, y + dy) ? '#000' : 'transparent');

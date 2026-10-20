@@ -191,7 +191,7 @@ Texturas del tablero (en `public/piratas/img/`):
 | `puerto-1/2/3.webp` | Puertos (se reparten entre los 9). Se giran para que el muelle mire al lado con más mar. |
 | `niebla.webp` | Niebla de guerra sobre lo que aún no se ha descubierto. |
 | `arrecife.webp` | Arrecifes. |
-| `costa.webp` | Mar junto a tierra (en cruz), girado para que la playa quede del lado de la isla. |
+| `costa.webp` | Borde de playa en cada lado (y esquina) de una casilla de mar que toca tierra: la lámina se gira hacia la tierra y solo se usa su franja de playa. |
 | `oceano.webp` | Mar profundo: casillas de mar rodeadas de mar por los 8 lados; se funde con el mar normal. |
 | `poblado.webp` | La casilla de tierra más cercana al puerto en las islas con puerto. |
 

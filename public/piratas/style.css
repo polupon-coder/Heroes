@@ -162,18 +162,19 @@ button { font: inherit; cursor: pointer; }
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
-.coast { position: absolute; inset: 0; background: url(img/costa.webp) center / cover; transform: rotate(var(--rot)); }
+/* Borde de playa: la lámina de costa girada hacia la tierra; solo se ve su franja de playa. */
+.coast { position: absolute; inset: 0; overflow: hidden; -webkit-mask-image: var(--m); mask-image: var(--m); }
+.coast > i { position: absolute; inset: 0; background: url(img/costa.webp) center / cover; transform: rotate(var(--rot)) scale(var(--sc, 1)); }
 .land {
   position: absolute; inset: 0;
   background: url(img/tierra.webp) var(--sand);
   background-size: calc(var(--cell) * 3) calc(var(--cell) * 3);
   background-position: calc(var(--cell) * var(--x) * -1) calc(var(--cell) * var(--y) * -1);
-  box-shadow: inset 0 0 0 2px #fff3d6cc, 0 0 0 1px #ffffff55;
 }
 .land.poblado { background: url(img/poblado.webp) center / cover; }
 .land.colina { background: url(img/colina.webp) center / cover; }
-.land.puerto { background: var(--port-img) center / cover; border-radius: 0 !important; box-shadow: none; transform: rotate(var(--rot)); }
-.land.solo { background: url(img/isla.webp) center / 135%; border-radius: 0 !important; box-shadow: none; }
+.land.puerto { background: var(--port-img) center / cover; transform: rotate(var(--rot)); }
+.land.solo { background: url(img/isla.webp) center / 135%; }
 .dim > * , .cell.dim { filter: brightness(.72) saturate(.8); }
 .cell.dim .ship, .cell.dim .mark { filter: none; }
 .port-icon {

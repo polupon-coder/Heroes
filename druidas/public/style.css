@@ -1741,3 +1741,8 @@ body.on-splash .topbar { background: none !important; position: relative; z-inde
 }
 /* texto de los botones de papiro centrado en el papel (la rama de abajo es más gruesa que la de arriba) */
 .btn.primary, .float-act .btn, .home-actions .btn, .lobby .row .btn, .parch-card .row .btn { padding-bottom: .22em !important; line-height: 1 !important; }
+@media (max-width: 760px) {
+  /* en móvil: primero eliges aspecto y animal; la sala (enlace, aprendices, Empezar) va después */
+  .lobby .lobby-main { order: 1; }
+  .lobby .lobby-side { order: 2; }
+}

@@ -334,6 +334,23 @@ setInterval(() => {
 
 const isLandT = (c) => c && (c.t === 'tierra' || c.t === 'puerto');
 
+// Las láminas de puerto tienen el mar abajo: se giran para que miren al lado con más mar.
+function portRotation(x, y) {
+  const sea = (dx, dy) => {
+    const n = S.map.tiles[y + dy] && S.map.tiles[y + dy][x + dx];
+    return n && (n.t === 'mar' || n.t === 'arrecife') ? 1 : 0;
+  };
+  const sides = [[0, 1, 0], [-1, 0, 90], [0, -1, 180], [1, 0, 270]];
+  let best = sides[0];
+  let bestScore = -1;
+  for (const side of sides) {
+    const [dx, dy] = side;
+    const score = sea(dx, dy) * 2 + (dx ? sea(dx, -1) + sea(dx, 1) : sea(-1, dy) + sea(1, dy));
+    if (score > bestScore) { best = side; bestScore = score; }
+  }
+  return best[2];
+}
+
 function renderBoard() {
   const me = S.me;
   const N = S.map.size;
@@ -370,7 +387,7 @@ function renderBoard() {
     for (let x = 0; x < N; x++) {
       const c = S.map.tiles[y][x];
       const k = `${x},${y}`;
-      if (!c) { html += `<div class="cell fog" data-x="${x}" data-y="${y}"></div>`; continue; }
+      if (!c) { html += `<div class="cell fog" style="--x:${x};--y:${y}" data-x="${x}" data-y="${y}"></div>`; continue; }
       const inView = Math.max(Math.abs(me.x - x), Math.abs(me.y - y)) <= S.reglas.terrainView;
       const cls = ['cell', c.t];
       if (!inView) cls.push('dim');
@@ -386,8 +403,12 @@ function renderBoard() {
           const n = S.map.tiles[y + dy] && S.map.tiles[y + dy][x + dx];
           return n === null && x + dx >= 0 && y + dy >= 0 && x + dx < N && y + dy < N;
         });
-        const kind = solo ? ' solo' : hill.get(c.isla) === k ? ' colina' : '';
-        inner += `<div class="land${kind}" style="border-radius:${r(-1, -1)} ${r(1, -1)} ${r(1, 1)} ${r(-1, 1)}"></div>`;
+        if (c.t === 'puerto') {
+          inner += `<div class="land puerto" style="--port-img:url(img/puerto-${(c.puerto % 3) + 1}.webp);--rot:${portRotation(x, y)}deg"></div>`;
+        } else {
+          const kind = solo ? ' solo' : hill.get(c.isla) === k ? ' colina' : '';
+          inner += `<div class="land${kind}" style="border-radius:${r(-1, -1)} ${r(1, -1)} ${r(1, 1)} ${r(-1, 1)}"></div>`;
+        }
         if (!islandMarked.has(c.isla)) {
           islandMarked.add(c.isla);
           if (S.map.explored.includes(c.isla)) inner += '<span class="mark" title="Isla explorada">✔️</span>';

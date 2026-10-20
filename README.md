@@ -188,6 +188,8 @@ Texturas del tablero (en `public/piratas/img/`):
 | `tierra.webp` | Tierra de las islas de varias casillas. |
 | `colina.webp` | La casilla más interior de cada isla de 3 o más casillas. |
 | `isla.webp` | Islotes de una sola casilla. |
+| `puerto-1/2/3.webp` | Puertos (se reparten entre los 9). Se giran para que el muelle mire al lado con más mar. |
+| `niebla.webp` | Niebla de guerra sobre lo que aún no se ha descubierto. |
 
 ## Decisiones tomadas donde el reglamento no lo especifica
 

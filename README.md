@@ -186,10 +186,14 @@ Texturas del tablero (en `public/piratas/img/`):
 | --- | --- |
 | `mar.webp` | Mar, continuo de casilla en casilla (los arrecifes llevan rocas encima). |
 | `tierra.webp` | Tierra de las islas de varias casillas. |
-| `colina.webp` | La casilla más interior de cada isla de 3 o más casillas. |
+| `colina.webp` | La casilla más interior de cada isla sin puerto de 3 o más casillas. |
 | `isla.webp` | Islotes de una sola casilla. |
 | `puerto-1/2/3.webp` | Puertos (se reparten entre los 9). Se giran para que el muelle mire al lado con más mar. |
 | `niebla.webp` | Niebla de guerra sobre lo que aún no se ha descubierto. |
+| `arrecife.webp` | Arrecifes. |
+| `costa.webp` | Mar junto a tierra (en cruz), girado para que la playa quede del lado de la isla. |
+| `oceano.webp` | Mar profundo: casillas de mar rodeadas de mar por los 8 lados; se funde con el mar normal. |
+| `poblado.webp` | La casilla de tierra más cercana al puerto en las islas con puerto. |
 
 ## Decisiones tomadas donde el reglamento no lo especifica
 

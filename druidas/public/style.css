@@ -1822,3 +1822,21 @@ body.on-splash .topbar { background: none !important; position: relative; z-inde
 .float-act .float-msg { white-space: nowrap; font-size: clamp(.82em, 2.6vw, 1.05em) !important; }
 .float-act .float-msg .ph { display: inline !important; }
 .float-act { max-width: calc(100% - 8px) !important; }
+/* ventana de El Claro: frase y botones en la misma línea */
+.float-act { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center; gap: 12px !important; flex-wrap: nowrap; white-space: nowrap; }
+.float-act .btns { flex-wrap: nowrap !important; }
+.float-act .float-msg { text-align: left; }
+@media (max-width: 760px) {
+  .float-act { gap: 8px !important; padding: 2px 8px !important; }
+  .float-act .float-msg { font-size: .85em !important; }
+  .float-act .btn { --bh: 38px !important; font-size: .9em !important; }
+}
+/* que frase y botón quepan en una línea dentro del papiro */
+.float-act { max-width: 100% !important; padding: 2px 18px !important; box-sizing: border-box; }
+.float-act .float-msg { font-size: clamp(12px, 1.25vw, 17px) !important; }
+.float-act .btn { font-size: clamp(12px, 1.2vw, 17px) !important; }
+@media (max-width: 760px) {
+  .float-act { border-width: 12px 24px !important; border-image-width: 12px 24px !important; padding: 0 6px !important; gap: 6px !important; }
+  .float-act .float-msg { font-size: 3.5vw !important; }
+  .float-act .btn { font-size: 3.6vw !important; --bh: 36px !important; padding: 0 2px !important; }
+}
